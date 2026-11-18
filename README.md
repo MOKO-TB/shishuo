@@ -93,6 +93,16 @@ npm run eval:retrieval
 
 > 种子从 17 升到 18。已有旧演示工作区需要在教师端重置一次，才能加载新增 FAQ；正式部署应改为数据库内容迁移。仓库里仍保留其余 27 门课程的导师与 FAQ 资料：课程问答 / 知识库 / 教师待办通过 `src/data/pilot.ts` 的 `PILOT_COURSE_IDS` 白名单只展示上述 5 门，其余导师可在「AI 导师 → 管理导师」中自行添加或移除，用于导师答疑。新增正式试点课程时，需要同时更新客户端白名单和服务端 `server/policy.mjs`。
 
+### 校园知识库（引路学长）
+
+学生端新增「校园生活」入口，内置 73 条校园经验卡，覆盖考研、实习就业、学业规划、竞赛、证书、心理情绪、校园生活 7 个分类。数据来自 [MOKO-TB/yinlu-xuezhang](https://github.com/MOKO-TB/yinlu-xuezhang) 的 `kb/knowledge.json`（MIT License），采集于 2026-10-31，许可证原文见 [LICENSES/yinlu-xuezhang-MIT.txt](file:///D:/100h/jiaoshi%20ai/LICENSES/yinlu-xuezhang-MIT.txt)。
+
+- 每条卡片保留 `category / tags / credibility / source_channel / source_url`；页面明确区分「官方来源」与「待核实」，60 条待核实内容仅供参考。
+- 学生端支持搜索、分类筛选、可信度筛选、官方优先 / 待核实优先排序。
+- 教师端「校园知识库」提供运营视角：待核实统计、按分类的待核实分布、待核实筛选、导出 CSV。
+- 当前为**只读 v1**：不建校园问答线程、不改课程权限、不接 AI/工具；下一阶段再接入校园域 FAQ、运营编辑与评测。
+- 重新生成数据：`node dev/import-campus-kb.mjs /path/to/yinlu-xuezhang/kb/knowledge.json`。
+
 ---
 
 ## 3. 架构
