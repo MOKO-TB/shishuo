@@ -560,8 +560,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </div>
       </div>
 
-      <CampusTools />
-
       {role === 'student' && (
         <section className="campus-ask card">
           <div className="campus-ask-head">
@@ -697,6 +695,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
           </div>
         </section>
       )}
+
+      <CampusTools />
 
       {role === 'teacher' && (
         <div className="campus-ops card">

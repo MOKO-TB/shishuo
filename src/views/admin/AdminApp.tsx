@@ -33,6 +33,7 @@ export function AdminApp() {
     setFormError(null)
     try {
       await login(email.trim(), password)
+      setEmail('')
       setPassword('')
       setAttemptedLogin(true)
     } catch (err) {
