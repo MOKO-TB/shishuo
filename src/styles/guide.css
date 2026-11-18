@@ -1,0 +1,115 @@
+.guide-lead {
+  padding: 11px 13px;
+  border-left: 3px solid var(--jade);
+  border-radius: 0 9px 9px 0;
+  background: var(--jade-mist);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.guide-lead strong {
+  color: var(--jade-deep);
+  font-weight: 650;
+}
+
+.guide-steps {
+  margin-top: 14px;
+}
+
+.guide-step {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 13px;
+  padding: 14px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.guide-step-art {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 7px;
+}
+
+.guide-step-number {
+  font-family: var(--serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--clay);
+}
+
+.guide-step-icon {
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.guide-step-copy {
+  min-width: 0;
+}
+
+.guide-step-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.guide-step-head h3 {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.guide-step-head span {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.guide-step-copy p {
+  margin-top: 4px;
+  max-width: 100%;
+  font-size: 10.5px;
+  line-height: 1.75;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.guide-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.guide-tip svg {
+  margin-top: 1px;
+}
+
+.guide-tip p {
+  font-size: 9.5px;
+  line-height: 1.7;
+}
+
+.guide-reset-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 9px;
+  color: var(--muted);
+}

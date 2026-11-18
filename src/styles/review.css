@@ -1,0 +1,142 @@
+.review-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.review-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.review-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.review-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--jade);
+  transition: width 0.35s var(--ease);
+}
+
+.review-question {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.review-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.review-date {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.review-question p {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.review-flip {
+  padding: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.review-flip:hover {
+  border-color: var(--jade);
+  color: var(--jade-deep);
+}
+
+.review-answer {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--jade-soft);
+  border-radius: var(--radius-lg);
+  background: var(--jade-mist);
+  animation: fadeUp 0.3s var(--ease);
+}
+
+.review-answer-source {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--jade-deep);
+}
+
+.review-summary {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.review-summary h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.review-summary p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.review-summary-list {
+  display: grid;
+  gap: 5px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-summary-list li {
+  padding-left: 14px;
+  position: relative;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.review-summary-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--clay);
+}

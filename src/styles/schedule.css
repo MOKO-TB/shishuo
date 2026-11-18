@@ -1,0 +1,253 @@
+/* 学生端课程表：手机优先的按天视图。 */
+
+.schedule-page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.schedule-head {
+  display: grid;
+  gap: 10px;
+}
+
+.schedule-head .display-title {
+  margin: 0;
+}
+
+.schedule-head .page-lede {
+  margin: 0;
+}
+
+.schedule-controls {
+  display: grid;
+  gap: 13px;
+  padding: 14px;
+}
+
+.schedule-weeknav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.schedule-weekarrow {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  flex: 0 0 auto;
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+
+.schedule-weekarrow:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.schedule-weekarrow:disabled {
+  opacity: 0.4;
+}
+
+.schedule-weeklabel {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-weeklabel strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.schedule-weeklabel span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.schedule-weeknav .text-button {
+  flex: 0 0 auto;
+  font-size: 10px;
+}
+
+.schedule-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.schedule-day {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  padding: 9px 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--muted);
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.schedule-day span {
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.schedule-day em {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.schedule-day.is-empty {
+  opacity: 0.62;
+}
+
+.schedule-day.is-today span {
+  color: var(--jade-deep);
+}
+
+.schedule-day.is-active {
+  border-color: var(--jade);
+  background: var(--jade-soft);
+}
+
+.schedule-day.is-active span,
+.schedule-day.is-active em {
+  color: var(--jade-deep);
+}
+
+.schedule-list {
+  display: grid;
+  gap: 10px;
+}
+
+.schedule-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--jade);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.schedule-card.tone-jade { border-left-color: #146c56; }
+.schedule-card.tone-clay { border-left-color: #b8613e; }
+.schedule-card.tone-blue { border-left-color: #4d6e8a; }
+.schedule-card.tone-gold { border-left-color: #ad7f1d; }
+.schedule-card.tone-mint { border-left-color: #3f8f74; }
+.schedule-card.tone-rose { border-left-color: #a94f6d; }
+.schedule-card.tone-sea { border-left-color: #3a7a8c; }
+.schedule-card.tone-plum { border-left-color: #7a4d8a; }
+.schedule-card.tone-olive { border-left-color: #6b7a2e; }
+.schedule-card.tone-sky { border-left-color: #4a86b8; }
+.schedule-card.tone-sand { border-left-color: #a08a4a; }
+.schedule-card.tone-iris { border-left-color: #5f5aa8; }
+
+.schedule-time {
+  display: grid;
+  gap: 3px;
+  align-content: start;
+}
+
+.schedule-time strong {
+  font-size: 13px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.schedule-time span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.schedule-body {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+
+.schedule-body h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.schedule-body p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.schedule-weeks {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: 9.5px;
+}
+
+.schedule-foot {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 10px;
+}
+
+@media (max-width: 560px) {
+  .schedule-page {
+    gap: 14px;
+  }
+
+  .schedule-controls {
+    padding: 12px;
+  }
+
+  .schedule-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 12px;
+    padding: 13px 14px;
+  }
+
+  .schedule-time strong {
+    font-size: 12px;
+  }
+
+  .schedule-day {
+    padding: 8px 0;
+  }
+
+  .schedule-day span {
+    font-size: 10px;
+  }
+
+  .schedule-day em {
+    font-size: 8.5px;
+  }
+
+  .schedule-body h3 {
+    font-size: 16px;
+  }
+}

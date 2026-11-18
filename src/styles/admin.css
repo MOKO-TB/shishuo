@@ -1,0 +1,498 @@
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-2);
+}
+
+.admin-tabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-tabs button span {
+  min-width: 17px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(23, 36, 30, 0.06);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.admin-tabs button.is-active {
+  background: var(--surface-3);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(23, 36, 30, 0.08);
+}
+
+.admin-error {
+  margin-top: 12px;
+}
+
+.admin-users {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  margin-top: 15px;
+}
+
+.admin-user-list,
+.admin-user-editor {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.admin-user-list {
+  padding: 12px;
+}
+
+.admin-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.admin-list-head strong {
+  color: var(--ink);
+}
+
+.admin-create {
+  display: grid;
+  gap: 10px;
+  margin-top: 11px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.admin-create .field {
+  gap: 4px;
+}
+
+.admin-create .field-label {
+  font-size: 10px;
+}
+
+.admin-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.admin-create-actions .button {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.admin-course-picker {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.admin-course-picker > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-course-picker button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.admin-course-picker button:hover:not(:disabled) {
+  border-color: var(--jade);
+  color: var(--jade-deep);
+}
+
+.admin-course-picker button.is-active {
+  border-color: rgba(20, 108, 86, 0.32);
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+.admin-course-picker button:disabled {
+  opacity: 0.55;
+}
+
+.admin-user-rows {
+  display: grid;
+  gap: 4px;
+  max-height: 430px;
+  margin-top: 11px;
+  overflow-y: auto;
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.admin-user-row:hover {
+  background: var(--surface-2);
+}
+
+.admin-user-row.is-active {
+  border-color: rgba(20, 108, 86, 0.2);
+  background: var(--jade-mist);
+}
+
+.admin-user-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.admin-user-icon.is-teacher {
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+.admin-user-info {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-user-info strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-info em {
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 9.5px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-side {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.admin-user-side small {
+  max-width: 100px;
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-editor {
+  padding: 16px;
+}
+
+.admin-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-editor-head h3 {
+  margin-top: 3px;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.admin-editor-head p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.admin-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-editor-actions .button {
+  height: 32px;
+  font-size: 10.5px;
+}
+
+.admin-password-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.admin-password-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.admin-password-head strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.admin-password-head p {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.admin-password-row {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.admin-password-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-password-row .button {
+  height: 34px;
+  padding: 0 11px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.admin-password-warn {
+  margin-top: 7px;
+  color: var(--danger);
+  font-size: 9.5px;
+}
+
+.admin-empty {
+  padding: 28px 12px;
+  color: var(--faint);
+  font-size: 11px;
+  text-align: center;
+}
+
+.admin-audit {
+  display: grid;
+  gap: 8px;
+  max-height: 540px;
+  margin-top: 15px;
+  overflow-y: auto;
+}
+
+.admin-audit-row {
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.admin-audit-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.admin-audit-top strong {
+  color: var(--ink);
+  font-size: 11.5px;
+}
+
+.admin-audit-top em {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-style: normal;
+}
+
+.admin-audit-main p {
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.admin-audit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.admin-audit-tags span {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 8.5px;
+}
+
+.admin-audit-tags span.is-course {
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+.admin-usage {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-usage-card {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.admin-usage-card span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.admin-usage-card strong {
+  font-size: 20px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.admin-usage-card em {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.admin-usage-days {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-usage-users-head {
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.admin-usage-day {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-usage-day-date {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.admin-usage-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.admin-usage-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--jade);
+}
+
+.admin-usage-day em,
+.admin-usage-user em {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-usage-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-usage-user strong {
+  font-size: 11px;
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .admin-usage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-users {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-rows {
+    max-height: 250px;
+  }
+
+  .admin-user-editor {
+    padding: 14px;
+  }
+}

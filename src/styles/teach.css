@@ -1,0 +1,357 @@
+.teach-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(244, 236, 211, 0.45), rgba(251, 249, 243, 0.9));
+}
+
+.teach-entry-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.teach-entry-copy {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.teach-entry-copy strong {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.teach-entry-copy span {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.teach-entry .button {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+.teach-modal {
+  display: grid;
+  gap: 14px;
+}
+
+.teach-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.teach-hero {
+  padding: 14px 16px;
+  border-left: 3px solid var(--jade);
+  border-radius: 0 12px 12px 0;
+  background: var(--jade-mist);
+}
+
+.teach-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--jade-deep);
+}
+
+.teach-hero p {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.teach-section {
+  display: grid;
+  gap: 7px;
+}
+
+.teach-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--jade-deep);
+}
+
+.teach-section-head h3 {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.teach-points {
+  display: grid;
+  gap: 5px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.teach-points li::marker {
+  color: var(--jade);
+}
+
+.teach-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.teach-note {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.teach-note.is-example {
+  background: linear-gradient(160deg, rgba(244, 236, 211, 0.4), var(--surface));
+}
+
+.teach-note.is-pitfall {
+  background: linear-gradient(160deg, rgba(247, 230, 226, 0.55), var(--surface));
+}
+
+.teach-note .teach-section-head {
+  color: var(--gold-deep);
+}
+
+.teach-note.is-pitfall .teach-section-head {
+  color: var(--danger);
+}
+
+.teach-note p {
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  white-space: pre-line;
+}
+
+.teach-check {
+  display: grid;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.teach-check-question {
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.teach-check .button {
+  justify-self: start;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 11.5px;
+}
+
+.teach-check-answer {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--jade);
+  background: var(--surface);
+}
+
+.teach-check-answer > span {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--jade-deep);
+}
+
+.teach-check-answer p {
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+.teach-check-answer em {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  font-style: normal;
+}
+
+.teach-source {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-align: left;
+}
+
+.teach-source span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teach-source:hover {
+  border-color: var(--jade);
+  color: var(--jade-deep);
+}
+
+.teach-footnote {
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+.teach-diagnose {
+  display: grid;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(231, 241, 236, 0.6), var(--surface));
+}
+
+.teach-diagnose .teach-section-head {
+  color: var(--jade-deep);
+}
+
+.teach-diagnose-lead {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.teach-diagnose-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.teach-diagnose-chip {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-align: left;
+}
+
+.teach-diagnose-chip:hover {
+  border-color: var(--jade);
+}
+
+.teach-diagnose-chip.is-active {
+  border-color: var(--jade);
+  background: var(--jade-mist);
+  color: var(--ink);
+}
+
+.teach-diagnose-note {
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--jade-deep);
+}
+
+.teach-prereq {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--line);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.teach-prereq > span {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  font-size: 9px;
+}
+
+.teach-prereq p {
+  margin: 0;
+}
+
+.teach-transfer-note {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.teach-attribution {
+  display: grid;
+  gap: 3px;
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+.teach-attribution p {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .teach-entry {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .teach-diagnose-chip {
+    flex-basis: 100%;
+  }
+
+  .teach-entry-copy {
+    flex: 1 1 180px;
+  }
+
+  .teach-entry .button {
+    margin-left: 40px;
+  }
+
+  .teach-two {
+    grid-template-columns: 1fr;
+  }
+}

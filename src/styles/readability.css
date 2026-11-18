@@ -1,0 +1,1245 @@
+/* Typography pass: readable at normal zoom, not a miniature UI. */
+
+/* Shared controls + labels */
+
+body {
+  font-size: 15px;
+}
+
+.button {
+  font-size: 14px;
+}
+
+.button-escalate {
+  font-size: 13.5px;
+}
+
+.text-button {
+  font-size: 13px;
+}
+
+.input,
+.textarea,
+select {
+  font-size: 14.5px;
+}
+
+.field-label {
+  font-size: 13.5px;
+}
+
+.field-hint {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.badge {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.tag {
+  font-size: 12px;
+}
+
+.confidence-meter-label {
+  font-size: 12px;
+}
+
+.inline-note {
+  font-size: 13px;
+}
+
+.empty-state p {
+  font-size: 13.5px;
+}
+
+.section-head-note {
+  font-size: 12.5px;
+}
+
+.modal-copy {
+  font-size: 14.5px;
+}
+
+.modal-foot-note {
+  font-size: 12.5px;
+}
+
+.toast-message {
+  font-size: 13.5px;
+}
+
+.feedback-label {
+  font-size: 12.5px;
+}
+
+.feedback-button {
+  font-size: 12.5px;
+}
+
+/* Shell, navigation and top bar */
+
+.brand-text span {
+  font-size: 10px;
+}
+
+.sidebar-role-note {
+  font-size: 11.5px;
+}
+
+.nav-section-label {
+  font-size: 10.5px;
+}
+
+.nav-item {
+  min-height: 43px;
+  font-size: 14px;
+}
+
+.nav-badge {
+  min-width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.side-profile-copy strong {
+  font-size: 14px;
+}
+
+.side-profile-copy span {
+  font-size: 10.5px;
+}
+
+.side-profile-role {
+  font-size: 10px;
+}
+
+.side-utility-button {
+  font-size: 11px;
+}
+
+.side-version {
+  font-size: 9px;
+}
+
+.breadcrumb {
+  font-size: 12.5px;
+}
+
+.demo-pill {
+  height: 28px;
+  font-size: 11px;
+}
+
+.role-switch button {
+  height: 31px;
+  font-size: 12.5px;
+}
+
+.guide-button {
+  height: 34px;
+  font-size: 12.5px;
+}
+
+.bell-badge {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.mobile-nav button {
+  font-size: 11.5px;
+}
+
+/* Student home: course header + composer */
+
+.head-flow-head {
+  font-size: 11.5px;
+}
+
+.head-flow-tag {
+  font-size: 10px;
+}
+
+.head-flow-step strong {
+  font-size: 13.5px;
+}
+
+.head-flow-step p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.course-switch-note {
+  font-size: 12.5px;
+}
+
+.course-chip-copy strong {
+  font-size: 13.5px;
+}
+
+.course-chip-copy em {
+  font-size: 11.5px;
+}
+
+.ask-identity span {
+  font-size: 12px;
+}
+
+.ask-suggestions-label {
+  font-size: 12px;
+}
+
+.suggestion-chip {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: 12.5px;
+}
+
+.anon-toggle {
+  font-size: 12.5px;
+}
+
+.ask-tool-button {
+  height: 34px;
+  padding: 0 11px;
+  font-size: 12.5px;
+}
+
+.ask-shortcut {
+  font-size: 10.5px;
+}
+
+.ask-submit {
+  font-size: 14px;
+}
+
+.ask-preview-faq strong,
+.ask-preview-pending strong {
+  font-size: 12.5px;
+}
+
+.ask-preview-faq em,
+.ask-preview-pending em {
+  font-size: 11.5px;
+}
+
+.ask-preview-pending .same-button {
+  font-size: 11.5px;
+}
+
+.ask-preview-joined {
+  font-size: 11.5px;
+}
+
+.ask-attachment-copy strong {
+  font-size: 12.5px;
+}
+
+.ask-attachment-copy span {
+  font-size: 11.5px;
+}
+
+.thinking-question {
+  font-size: 13px;
+}
+
+.thinking-step {
+  font-size: 12px;
+}
+
+/* Answer card */
+
+.answer-name strong {
+  font-size: 15px;
+}
+
+.answer-name span {
+  font-size: 11.5px;
+}
+
+.answer-sub {
+  font-size: 12px;
+}
+
+.answer-reason {
+  font-size: 13px;
+}
+
+.answer-state-note {
+  font-size: 12px;
+}
+
+.answer-state-note em {
+  font-size: 11.5px;
+}
+
+.source-caption {
+  font-size: 12px;
+}
+
+.source-card-copy strong {
+  font-size: 13px;
+}
+
+.source-card-copy span {
+  font-size: 11.5px;
+}
+
+.external-answer-head strong {
+  font-size: 13px;
+}
+
+.external-answer-head span {
+  font-size: 11.5px;
+}
+
+.external-answer .rich-text {
+  font-size: 14px;
+}
+
+.external-answer-foot {
+  font-size: 11.5px;
+}
+
+.ai-no-answer p {
+  font-size: 13px;
+}
+
+.ai-no-answer-eyebrow {
+  font-size: 10px;
+}
+
+.closest-caption {
+  font-size: 11.5px;
+}
+
+.closest-card strong {
+  font-size: 12.5px;
+}
+
+.closest-card > span > span {
+  font-size: 11.5px;
+}
+
+.answer-action-hint {
+  font-size: 11.5px;
+}
+
+.answer-supplement-button {
+  font-size: 12px;
+}
+
+/* Recent questions */
+
+.recent-meta {
+  font-size: 11.5px;
+}
+
+.recent-question {
+  font-size: 14.5px;
+}
+
+.recent-sub {
+  font-size: 12.5px;
+}
+
+.recent-kind {
+  font-size: 10.5px;
+}
+
+/* Right rail */
+
+.daily-number span {
+  font-size: 12.5px;
+}
+
+.daily-foot,
+.daily-note {
+  font-size: 12px;
+}
+
+.hot-copy strong {
+  font-size: 13px;
+}
+
+.hot-copy span {
+  font-size: 11.5px;
+}
+
+.hot-rank {
+  font-size: 12px;
+}
+
+.hot-count {
+  height: 26px;
+  font-size: 12px;
+}
+
+.rail-link {
+  font-size: 12.5px;
+}
+
+.waiting-live {
+  font-size: 10.5px;
+}
+
+.waiting-copy strong {
+  font-size: 13px;
+}
+
+.waiting-copy span {
+  font-size: 11.5px;
+}
+
+.same-button {
+  height: 31px;
+  font-size: 11.5px;
+}
+
+.waiting-empty {
+  font-size: 12px;
+}
+
+.rail-footnote {
+  font-size: 11.5px;
+}
+
+.teacher-intro-head span {
+  font-size: 11.5px;
+}
+
+.teacher-slots span {
+  font-size: 12px;
+}
+
+.teacher-quote p {
+  font-size: 13.5px;
+}
+
+.rail-mini-card strong {
+  font-size: 13px;
+}
+
+.rail-mini-card p {
+  font-size: 12px;
+}
+
+.demo-tag {
+  font-size: 10px;
+}
+
+/* Personal AI settings */
+
+.ai-config-intro p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ai-test-row .button {
+  height: 38px;
+  font-size: 13px;
+  padding: 0 13px;
+}
+
+.ai-test-result {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.ai-config-note p {
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+/* Join / follow-up / escalation modals */
+
+.join-summary-head > span:last-child {
+  font-size: 11px;
+}
+
+.join-question {
+  font-size: 13px;
+}
+
+.join-meta {
+  font-size: 12px;
+}
+
+.join-note-field .textarea {
+  font-size: 14px;
+}
+
+.join-inline-note {
+  font-size: 12px;
+}
+
+.followup-modal-head {
+  font-size: 11px;
+}
+
+.followup-modal-reply strong {
+  font-size: 12.5px;
+}
+
+.followup-modal-reply p {
+  font-size: 13px;
+}
+
+.followup-textarea {
+  font-size: 14px;
+}
+
+.escalate-context-head {
+  font-size: 11.5px;
+}
+
+.escalate-question {
+  font-size: 13px;
+}
+
+.duplicate-hint strong {
+  font-size: 13px;
+}
+
+.duplicate-hint p {
+  font-size: 12px;
+}
+
+.escalate-grid .textarea {
+  font-size: 14px;
+}
+
+.urgency-option span {
+  font-size: 12.5px;
+}
+
+.urgency-option em {
+  font-size: 11px;
+}
+
+.anonymous-toggle strong {
+  font-size: 12.5px;
+}
+
+.anonymous-toggle em {
+  font-size: 11.5px;
+}
+
+.escalate-preview-head {
+  font-size: 11.5px;
+}
+
+.escalate-preview li {
+  font-size: 12px;
+}
+
+/* Thread detail */
+
+.thread-bubble-head {
+  font-size: 11px;
+}
+
+.thread-bubble-head strong {
+  font-size: 13px;
+}
+
+.thread-external-warning {
+  font-size: 11.5px;
+}
+
+.thread-bubble .rich-text {
+  font-size: 14px;
+}
+
+.thread-ai-empty {
+  font-size: 12.5px;
+}
+
+.thread-source,
+.thread-event {
+  font-size: 11px;
+}
+
+.teacher-reply-foot {
+  font-size: 11.5px;
+}
+
+.teacher-reply-foot .text-button {
+  font-size: 12.5px;
+}
+
+.thread-pending-note strong {
+  font-size: 12.5px;
+}
+
+.thread-pending-note p {
+  font-size: 11.5px;
+}
+
+/* Teacher workspace */
+
+.teacher-switch-label {
+  font-size: 11.5px;
+}
+
+.teacher-switch select {
+  font-size: 12.5px;
+}
+
+.queue-ticket-top {
+  font-size: 11.5px;
+}
+
+.queue-ticket-number span {
+  font-size: 12px;
+}
+
+.queue-ticket p {
+  font-size: 11.5px;
+}
+
+.queue-ticket-foot {
+  font-size: 11px;
+}
+
+.teacher-guide-button {
+  font-size: 12px;
+}
+
+.stat-label {
+  font-size: 11.5px;
+}
+
+.stat-copy strong em {
+  font-size: 11.5px;
+}
+
+.stat-copy p {
+  font-size: 11.5px;
+}
+
+.work-tabs button {
+  font-size: 12.5px;
+}
+
+.work-tabs button span {
+  font-size: 10.5px;
+}
+
+.course-filters button {
+  font-size: 12px;
+}
+
+.case-course {
+  font-size: 11.5px;
+}
+
+.case-time {
+  font-size: 11.5px;
+}
+
+.case-question {
+  font-size: 13.5px;
+}
+
+.case-evidence {
+  font-size: 11.5px;
+}
+
+.case-ai .badge {
+  font-size: 11px;
+}
+
+.case-students {
+  font-size: 11.5px;
+}
+
+.case-students em {
+  font-size: 11px;
+}
+
+.case-ai {
+  font-size: 11.5px;
+}
+
+.case-open {
+  font-size: 12px;
+}
+
+.answered-meta {
+  font-size: 11.5px;
+}
+
+.answered-main strong {
+  font-size: 13px;
+}
+
+.answered-main p {
+  font-size: 12px;
+}
+
+.gap-copy strong {
+  font-size: 12.5px;
+}
+
+.gap-copy span {
+  font-size: 11.5px;
+}
+
+.gap-empty {
+  font-size: 12px;
+}
+
+.teacher-page .rail-footnote {
+  font-size: 11.5px;
+}
+
+.saving-number span {
+  font-size: 12px;
+}
+
+.saving-caption {
+  font-size: 11.5px;
+}
+
+.saving-legend {
+  font-size: 11px;
+}
+
+.health-grid span {
+  font-size: 11px;
+}
+
+.health-alert {
+  font-size: 11.5px;
+}
+
+/* Teacher reply drawer */
+
+.drawer-section-head {
+  font-size: 12.5px;
+}
+
+.drawer-section-note {
+  font-size: 11.5px;
+}
+
+.teacher-question-head {
+  font-size: 11.5px;
+}
+
+.teacher-question-head strong {
+  font-size: 12.5px;
+}
+
+.teacher-question-copy p {
+  font-size: 13.5px;
+}
+
+.teacher-question-external summary {
+  font-size: 12px;
+}
+
+.teacher-question-external p {
+  font-size: 12.5px;
+}
+
+.teacher-question-note {
+  font-size: 11.5px;
+}
+
+.followup-context-head strong {
+  font-size: 12.5px;
+}
+
+.followup-context-head span {
+  font-size: 11px;
+}
+
+.followup-context-question {
+  font-size: 13.5px;
+}
+
+.followup-context-reply strong {
+  font-size: 11.5px;
+}
+
+.followup-context-reply p {
+  font-size: 12.5px;
+}
+
+.ai-reference-title strong {
+  font-size: 12.5px;
+}
+
+.ai-reference-reason {
+  font-size: 12px;
+}
+
+.ai-source-copy strong {
+  font-size: 12px;
+}
+
+.ai-source-copy span {
+  font-size: 11px;
+}
+
+.ai-safe-note {
+  font-size: 11.5px;
+}
+
+.reply-draft {
+  font-size: 14px;
+}
+
+.draft-meta {
+  font-size: 11px;
+}
+
+.sediment-copy strong {
+  font-size: 12.5px;
+}
+
+.sediment-copy span {
+  font-size: 11.5px;
+}
+
+.drawer-foot-copy strong {
+  font-size: 12.5px;
+}
+
+.drawer-foot-copy span {
+  font-size: 11.5px;
+}
+
+/* Knowledge base */
+
+.knowledge-card-head {
+  font-size: 11.5px;
+}
+
+.knowledge-health-copy span {
+  font-size: 11.5px;
+}
+
+.knowledge-health-copy em {
+  font-size: 11px;
+}
+
+.knowledge-card-foot {
+  font-size: 11px;
+}
+
+.gap-banner-copy strong {
+  font-size: 13px;
+}
+
+.gap-banner-copy span {
+  font-size: 12px;
+}
+
+.gap-draft-topic {
+  font-size: 12px;
+}
+
+.gap-draft-action {
+  font-size: 11px;
+}
+
+.gap-banner-action {
+  font-size: 12px;
+}
+
+.knowledge-search input {
+  font-size: 13.5px;
+}
+
+.knowledge-actions .button {
+  font-size: 12.5px;
+}
+
+.sort-switch button {
+  font-size: 11.5px;
+}
+
+.filter-pill {
+  font-size: 11.5px;
+}
+
+.filter-pill > span:last-child {
+  font-size: 10px;
+}
+
+.knowledge-result {
+  font-size: 11.5px;
+}
+
+.faq-card-time {
+  font-size: 11px;
+}
+
+.faq-card-answer {
+  font-size: 13px;
+}
+
+.faq-card-foot {
+  font-size: 11.5px;
+}
+
+.faq-stat em {
+  font-size: 12px;
+}
+
+.knowledge-footnote {
+  font-size: 11.5px;
+}
+
+.faq-detail-time {
+  font-size: 11.5px;
+}
+
+.faq-detail-stats span {
+  font-size: 11.5px;
+}
+
+.faq-answer-input {
+  font-size: 14px;
+}
+
+/* FAQ import / export */
+
+.transfer-tabs button {
+  font-size: 12.5px;
+}
+
+.import-drop strong {
+  font-size: 13px;
+}
+
+.import-drop em {
+  font-size: 12px;
+}
+
+.import-file {
+  font-size: 11px;
+}
+
+.transfer-count {
+  font-size: 12px;
+}
+
+.transfer-file-name {
+  font-size: 11.5px;
+}
+
+.import-preview-head {
+  font-size: 11px;
+}
+
+.import-index {
+  font-size: 11px;
+}
+
+.import-question {
+  font-size: 13px;
+}
+
+.import-tags {
+  font-size: 12px;
+}
+
+.import-status .badge {
+  font-size: 11.5px;
+}
+
+.format-switch button {
+  font-size: 12.5px;
+}
+
+.export-summary span {
+  font-size: 12px;
+}
+
+.export-hint {
+  font-size: 12px;
+}
+
+/* Notifications */
+
+.notif-toolbar {
+  font-size: 12px;
+}
+
+.notif-head strong {
+  font-size: 12.5px;
+}
+
+.notif-head > span {
+  font-size: 11px;
+}
+
+.notif-body {
+  font-size: 13px;
+}
+
+.notif-meta {
+  font-size: 11px;
+}
+
+.notif-empty p {
+  font-size: 12.5px;
+}
+
+/* Guide */
+
+.guide-lead {
+  font-size: 13.5px;
+}
+
+.guide-step-number {
+  font-size: 11.5px;
+}
+
+.guide-step-head span {
+  font-size: 10.5px;
+}
+
+.guide-step-copy p {
+  font-size: 13px;
+}
+
+.guide-tip p {
+  font-size: 12.5px;
+}
+
+.guide-reset-confirm {
+  font-size: 11.5px;
+}
+
+/* Insights charts */
+
+.donut-center span {
+  font-size: 11px;
+}
+
+.stacked-legend {
+  font-size: 11.5px;
+}
+
+.stacked-total {
+  height: 15px;
+  font-size: 11px;
+}
+
+.stacked-label {
+  font-size: 11px;
+}
+
+/* Insights */
+
+.insights-head-card-top {
+  font-size: 11px;
+}
+
+.insights-head-main-row strong em {
+  font-size: 12px;
+}
+
+.insights-head-main-row span {
+  font-size: 10.5px;
+}
+
+.insights-head-foot {
+  font-size: 11px;
+}
+
+.metric-label {
+  font-size: 11px;
+}
+
+.metric-card strong em {
+  font-size: 10.5px;
+}
+
+.metric-card p {
+  font-size: 11.5px;
+}
+
+.chart-insight {
+  font-size: 12px;
+}
+
+.chart-insight span {
+  font-size: 11px;
+}
+
+.chart-foot {
+  font-size: 11px;
+}
+
+.rank-index {
+  font-size: 11.5px;
+}
+
+.rank-question {
+  font-size: 12px;
+}
+
+.rank-meta span {
+  font-size: 10.5px;
+}
+
+.insights-card-note {
+  font-size: 11px;
+}
+
+.insight-gap-row strong {
+  font-size: 12px;
+}
+
+.insight-gap-row em {
+  font-size: 11px;
+}
+
+.gap-impact {
+  font-size: 11px;
+}
+
+.quality-row > span {
+  font-size: 11px;
+}
+
+.quality-summary span {
+  font-size: 11px;
+}
+
+.course-table-head {
+  font-size: 10.5px;
+}
+
+.course-table-row {
+  font-size: 11.5px;
+}
+
+.course-table-row > span:not(:first-child) {
+  font-size: 12px;
+}
+
+.course-cell strong {
+  font-size: 12px;
+}
+
+.course-cell em {
+  font-size: 10px;
+}
+
+.insights-footnote p {
+  font-size: 11px;
+}
+
+/* About */
+
+.about-tags span {
+  font-size: 10px;
+}
+
+.visual-question-card p {
+  font-size: 12px;
+}
+
+.visual-teacher-card p {
+  font-size: 11.5px;
+}
+
+.pain-card p {
+  font-size: 12.5px;
+}
+
+.pain-card blockquote {
+  font-size: 12.5px;
+}
+
+.loop-step p {
+  font-size: 12.5px;
+}
+
+.ai-cap-card h3 {
+  font-size: 14px;
+}
+
+.ai-cap-card p {
+  font-size: 13px;
+}
+
+.criteria-card p {
+  font-size: 12.5px;
+}
+
+.boundary-card li {
+  font-size: 12.5px;
+}
+
+.about-feasibility p {
+  font-size: 12px;
+}
+
+.about-section-note {
+  font-size: 10.5px;
+}
+
+.about-metric-note {
+  font-size: 10.5px;
+}
+
+.about-metric-grid strong em {
+  font-size: 12.5px;
+}
+
+.about-metric-grid span {
+  font-size: 11px;
+}
+
+.about-metrics-foot {
+  font-size: 11px;
+}
+
+.about-visual-caption,
+.visual-card-meta,
+.visual-footnote {
+  font-size: 9.5px;
+}
+
+.visual-card-meta > span:last-child,
+.visual-teacher-head em,
+.visual-ai-foot {
+  font-size: 9px;
+}
+
+.visual-ai-head strong,
+.visual-teacher-head strong {
+  font-size: 10px;
+}
+
+.visual-ai-card p {
+  font-size: 10px;
+}
+
+.visual-connector em {
+  font-size: 9.5px;
+}
+
+@media (max-width: 700px) {
+  .course-switch-note,
+  .demo-pill {
+    display: none;
+  }
+}

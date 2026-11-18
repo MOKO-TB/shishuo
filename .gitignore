@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.screenshots/
+*.local
+.DS_Store
+npm-debug.log*
+
+# local academic-browser profile (contains real login cookies)
+.jw-profile/
+.jw-state.json
+
+# temporary research artifacts (raw subtitles, page dumps)
+.tmp-gh/
+
+# local dev logs and screenshots
+dev/dev-server.log
+dev/screenshots/
+
+# server secrets and local database
+.env
+data/
