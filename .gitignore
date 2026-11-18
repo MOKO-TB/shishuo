@@ -1,21 +1,43 @@
+# 依赖与构建产物
 node_modules/
 dist/
+build/
 .screenshots/
-*.local
-.DS_Store
-npm-debug.log*
 
-# local academic-browser profile (contains real login cookies)
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+*.local
+*.local.json
+config.local.json
+*.key
+*.pem
+
+# 本地教务系统登录态（含真实 Cookie）
 .jw-profile/
 .jw-state.json
 
-# temporary research artifacts (raw subtitles, page dumps)
+# 临时研究与调试产物
 .tmp-gh/
-
-# local dev logs and screenshots
+_tmp/
+*.log
+npm-debug.log*
 dev/dev-server.log
 dev/screenshots/
 
-# server secrets and local database (root only; keep src/data tracked)
-.env
+# 服务端数据库（仅忽略根目录；src/data 需要入库）
 /data/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+
+# 打包产物
+*.tar.gz
+*.zip
