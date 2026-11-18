@@ -3,8 +3,10 @@ import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { createApiHandler } from './api.mjs'
-import { demoAccountSummary, openDatabase, seedDemoAccounts } from './db.mjs'
+import { demoAccountSummary, openDatabase, seedDemoAccounts, WORKSPACE_ID } from './db.mjs'
 import { loadConfig, ROOT_DIR } from './config.mjs'
+import { recordAudit } from './audit.mjs'
+import { campusReviewSummary } from './campus-review.mjs'
 
 const config = loadConfig()
 const apiOnly = process.argv.includes('--api')
@@ -13,6 +15,39 @@ const uploadsDir = config.uploadsDir
 const db = openDatabase(config.dbPath)
 const insertedDemoAccounts = seedDemoAccounts(db, config)
 const handleApi = createApiHandler({ db, config })
+
+/** 每日校园内容复核提醒：有未核实/过期内容时，往审计写一条系统记录。 */
+function checkCampusReview() {
+  try {
+    const row = db
+      .prepare('SELECT data_json FROM workspaces WHERE id = ?')
+      .get(WORKSPACE_ID)
+    if (!row?.data_json) return
+    const { summary } = campusReviewSummary(JSON.parse(row.data_json))
+    if (summary.unverified + summary.overdue === 0) return
+    const dayStart = new Date()
+    dayStart.setHours(0, 0, 0, 0)
+    const existing = db
+      .prepare(
+        "SELECT id FROM audit_log WHERE actions_json LIKE '%campus-review-due%' AND created_at >= ? LIMIT 1",
+      )
+      .get(dayStart.getTime())
+    if (existing) return
+    recordAudit(db, {
+      user: { id: 'system', name: '系统', role: 'system' },
+      action: 'campus-review-due',
+      actions: ['campus-review-due'],
+      summary: `校园内容复核：${summary.unverified} 条待核实、${summary.overdue} 条过期、${summary.soon} 条 14 天内到期`,
+      courseIds: ['campus'],
+    })
+  } catch {
+    // 提醒失败不能影响主服务。
+  }
+}
+
+checkCampusReview()
+const campusReviewTimer = setInterval(checkCampusReview, 6 * 60 * 60 * 1000)
+campusReviewTimer.unref?.()
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

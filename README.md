@@ -101,12 +101,17 @@ npm run eval:retrieval
 - 学生端支持搜索、分类筛选、可信度筛选、可信优先 / 待核实优先排序；可以直接提问，先查校园 FAQ，没把握时转交校园主理人。
 - 教师端「校园知识库」提供运营视角：待核实统计、待处理队列、回复并沉淀 FAQ、编辑可信度/来源/答案、导出 CSV。
 - 校园域复用课程 FAQ / 问答 / 权限模型，但使用独立的 `campus` 课程 ID，不进入 5 门课程白名单；普通课程老师看不到校园问答，管理员兼任校园主理人。
+- 校园工具：GPA 试算（优先用教务同步成绩，支持手动试算）、校历倒计时、图书馆馆藏/找书、手绘校园地图（36 个建筑，可搜索/高亮）。数据生成：`node dev/import-campus-tools.mjs /path/to/yinlu-xuezhang`。
+- 校园评测集：`src/data/campusEval.ts` + `npm run eval:campus`，41 个问题（37 个可答 + 4 个负例），门槛为可答 Top-1 ≥ 85%、负例转人工 ≥ 75%。当前 37/37 + 4/4。
+- 内容复核：校园 FAQ 带 `lastVerifiedAt / reviewIntervalDays / nextReviewAt`；管理台「内容核实」可标记核实并设置 30/90/180/365 天周期。服务端每 6 小时检查一次，每天写一条 `campus-review-due` 审计提醒；外部 cron 可跑 `npm run review:campus -- --db <db>`。
 - 现有工作区导入：`node dev/import-campus-faqs.mjs --db <db> --apply --backup-dir <dir>`（幂等，只补缺失 ID）。
 - 重新生成数据：`node dev/import-campus-kb.mjs /path/to/yinlu-xuezhang/kb/knowledge.json`（同时生成 `src/data/campusKb.ts` 和 `server/data/campus-faqs.json`）。
 
+校园工具/评测/复核的详细维护说明见 [docs/campus-tools-and-eval.md](docs/campus-tools-and-eval.md)。
+
 ### 管理台（Admin Console）
 
-管理员登录后，左侧「管理台」进入全页管理端，与学生端 / 教师端并列：概览、账号管理、风控审核、操作审计、AI 用量、内容运营、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
+管理台是**独立页面 `/admin/`**，有自己的登录页和管理台顶栏，不占用教师端导航；教师端顶部「管理台」只是跳转链接。8 个 tab：概览、账号管理、风控审核、操作审计、AI 用量、内容运营、内容核实、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
 
 「风控审核」是服务器后台能力：维护敏感词表（学生提问、转交、补充和 AI 调用都会过词表）、审核/撤下违规图片、禁言或封禁学生/教师、查看内容队列。禁言和封禁在服务端强制执行，不只是前端隐藏按钮。
 

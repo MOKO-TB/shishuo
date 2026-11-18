@@ -28,6 +28,7 @@ import {
 } from '../lib/utils'
 import { Badge, EmptyState, Modal, RichText, type BadgeTone } from '../components/ui'
 import type { AnswerResult, Faq, Role, Thread } from '../types'
+import { CampusTools } from './campus/CampusTools'
 
 type CredFilter = 'all' | 'verified' | 'unverified' | 'no-source'
 type SortMode = 'verified' | 'review'
@@ -53,7 +54,11 @@ interface FaqDraft {
   reviewNeeded: boolean
 }
 
-const CREDIBILITY_OPTIONS = ['A', 'A-官方公众号', 'B-教师回复', 'D-待核实']
+const CREDIBILITY_OPTIONS = ['A', 'A-官方公众号', 'B-教师回复', 'V-已核实', 'D-待核实']
+
+function isVerifiedCredibility(credibility: string) {
+  return /^[ABV]/.test(credibility)
+}
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, '')
@@ -72,6 +77,9 @@ function credibilityMeta(credibility: string): {
   }
   if (credibility.startsWith('B')) {
     return { label: '教师回复', tone: 'blue', hint: '校园问答沉淀，由校园主理人回复' }
+  }
+  if (credibility.startsWith('V')) {
+    return { label: '已核实', tone: 'jade', hint: '运营已对照来源核实，复核周期见管理台' }
   }
   if (credibility.startsWith('D')) {
     return { label: '待核实', tone: 'medium', hint: '学长经验整理，尚未核实来源' }
@@ -238,9 +246,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
   )
 
   const total = items.length
-  const verifiedCount = items.filter(
-    (item) =>
-      item.card.credibility.startsWith('A') || item.card.credibility.startsWith('B'),
+  const verifiedCount = items.filter((item) =>
+    isVerifiedCredibility(item.card.credibility),
   ).length
   const unverifiedCount = items.filter((item) =>
     item.card.credibility.startsWith('D'),
@@ -271,10 +278,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
       .filter((item) => category === 'all' || item.card.category === category)
       .filter((item) => {
         if (credFilter === 'verified') {
-          return (
-            item.card.credibility.startsWith('A') ||
-            item.card.credibility.startsWith('B')
-          )
+          return isVerifiedCredibility(item.card.credibility)
         }
         if (credFilter === 'unverified') return item.card.credibility.startsWith('D')
         if (credFilter === 'no-source') return !item.card.sourceUrl
@@ -295,14 +299,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
           if (sourceDiff !== 0) return sourceDiff
         } else {
           const verifiedDiff =
-            Number(
-              b.card.credibility.startsWith('A') ||
-                b.card.credibility.startsWith('B'),
-            ) -
-            Number(
-              a.card.credibility.startsWith('A') ||
-                a.card.credibility.startsWith('B'),
-            )
+            Number(isVerifiedCredibility(b.card.credibility)) -
+            Number(isVerifiedCredibility(a.card.credibility))
           if (verifiedDiff !== 0) return verifiedDiff
           const sourceDiff =
             Number(Boolean(b.card.sourceUrl)) - Number(Boolean(a.card.sourceUrl))
@@ -561,6 +559,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
           </span>
         </div>
       </div>
+
+      <CampusTools />
 
       {role === 'student' && (
         <section className="campus-ask card">

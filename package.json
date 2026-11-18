@@ -9,6 +9,8 @@
     "dev:api": "node server/index.mjs --api",
     "build": "tsc -b && vite build",
     "eval:retrieval": "node dev/eval-retrieval.mjs",
+    "eval:campus": "node dev/eval-campus.mjs",
+    "review:campus": "node dev/check-campus-review.mjs",
     "test:api": "node dev/test-api.mjs",
     "maintain:archive": "node dev/archive-threads.mjs",
     "start": "node server/index.mjs",

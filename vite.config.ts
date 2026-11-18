@@ -17,6 +17,14 @@ const apiProxy = {
 
 export default defineConfig({
   plugins: [react(), jwProxyPlugin()],
+  build: {
+    rolldownOptions: {
+      input: {
+        main: 'index.html',
+        admin: 'admin/index.html',
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: apiProxy,

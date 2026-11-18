@@ -14,7 +14,6 @@ import { KnowledgeView } from './views/KnowledgeView'
 import { CampusView } from './views/CampusView'
 import { InsightsView } from './views/InsightsView'
 import { AboutView } from './views/AboutView'
-import { AdminConsoleView } from './views/admin/AdminConsoleView'
 import { useStore } from './store'
 import { groupPendingThreads } from './lib/engine'
 import { TEACHERS, allCourses, courseById, isSeededCourse } from './data/seed'
@@ -96,7 +95,17 @@ export default function App() {
   const navigate = useCallback((next: ViewKey) => {
     setView(next)
     if (next === 'student' || next === 'schedule') setRole('student')
-    if (next === 'teacher' || next === 'insights' || next === 'admin') setRole('teacher')
+    if (next === 'teacher' || next === 'insights') setRole('teacher')
+  }, [])
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('view')
+    const allowed: ViewKey[] = ['student', 'teacher', 'knowledge', 'campus', 'insights', 'about', 'schedule']
+    if (requested && (allowed as string[]).includes(requested)) {
+      navigate(requested as ViewKey)
+    }
+    // Only apply the deep link once on entry; normal navigation uses state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const switchRole = useCallback(
@@ -283,7 +292,7 @@ export default function App() {
         unreadCount={unreadCount}
         onOpenNotifications={() => setNotificationsOpen(true)}
         onOpenAccount={openAccount}
-        onOpenAdmin={() => navigate('admin')}
+        onOpenAdmin={() => window.location.assign('/admin/')}
         onOpenMentor={openMentor}
         onNavigate={navigate}
         onOpenGuide={openGuide}
@@ -330,13 +339,6 @@ export default function App() {
           />
         )}
         {view === 'campus' && <CampusView role={role} notify={notify} />}
-        {view === 'admin' && (
-          <AdminConsoleView
-            notify={notify}
-            onNavigate={navigate}
-            onOpenBackup={() => setBackupOpen(true)}
-          />
-        )}
         {view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}

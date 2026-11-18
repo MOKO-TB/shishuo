@@ -31,6 +31,8 @@ const API_ROWS = [
   ['POST', '/api/admin/moderation/threads/:id/review', '通过 / 撤下问题'],
   ['GET', '/api/admin/moderation/images', '图片审核队列'],
   ['POST', '/api/admin/moderation/images/review', '通过 / 撤下图片'],
+  ['GET', '/api/admin/campus/verification', '校园 FAQ 复核计划'],
+  ['POST', '/api/admin/campus/faqs/:id/verify', '标记已核实并设置下次复核'],
   ['GET', '/api/admin/audit?limit=200', '操作审计'],
   ['GET', '/api/admin/workspace-summary', '全量内容统计（FAQ / 校园 / 待处理）'],
   ['GET', '/api/admin/ai-usage', 'AI 调用与 Token 用量'],

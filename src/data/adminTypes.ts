@@ -138,6 +138,31 @@ export interface ModerationImage {
 
 export type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn'
 
+export type CampusReviewStatus = 'unverified' | 'overdue' | 'soon' | 'ok'
+
+export interface CampusVerificationItem {
+  id: string
+  question: string
+  category: string
+  credibility: string
+  sourceChannel: string
+  sourceUrl: string
+  lastVerifiedAt: number | null
+  reviewIntervalDays: number
+  nextReviewAt: number
+  reviewNeeded: boolean
+  verifiedBy: string
+  status: CampusReviewStatus
+}
+
+export interface CampusVerificationSummary {
+  total: number
+  unverified: number
+  overdue: number
+  soon: number
+  ok: number
+}
+
 export type AdminTab =
   | 'overview'
   | 'users'
@@ -145,4 +170,5 @@ export type AdminTab =
   | 'audit'
   | 'usage'
   | 'content'
+  | 'verification'
   | 'system'

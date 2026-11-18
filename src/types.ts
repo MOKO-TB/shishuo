@@ -4,7 +4,6 @@ export type ViewKey =
   | 'teacher'
   | 'knowledge'
   | 'campus'
-  | 'admin'
   | 'insights'
   | 'about'
   | 'schedule'
@@ -71,6 +70,14 @@ export interface Faq {
   sourceChannel?: string
   /** 校园知识卡采集日期，YYYY-MM-DD。 */
   collectedAt?: string
+  /** 校园内容上次核实时间（毫秒）。 */
+  lastVerifiedAt?: number
+  /** 校园内容复核周期（天）。 */
+  reviewIntervalDays?: number
+  /** 下次复核时间（毫秒）。 */
+  nextReviewAt?: number
+  /** 最近一次核实人。 */
+  verifiedBy?: string
   /** Last few snapshots before teacher edits; newest first. */
   history?: FaqVersion[]
 }

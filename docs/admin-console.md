@@ -6,18 +6,23 @@
 
 ## 1. 入口与权限
 
-- 入口：管理员账号登录后，左侧导航「管理台」；顶部账号菜单里的「管理台」也指向同一页。
-- 权限：服务端 `requireAdmin(req)` 要求 `users.is_admin = 1`；普通教师即使知道路由也拿不到数据。
+- 入口：**独立的 `/admin/` 页面**，有自己的登录页和管理台顶栏；不在教师端导航里。教师端顶部的「管理台」只是一个跳转链接。
+- 权限：服务端 `requireAdmin(req)` 要求 `users.is_admin = 1`；普通教师即使知道 `/admin/` 也进不去。
 - 前端只负责隐藏入口，**真正的权限必须在服务端**。新增管理接口时先加 `requireAdmin`，写操作再加 `sameOrigin(req)`，并补审计。
 - 管理员自动拥有校园生活域（`campus`）权限，因此可以处理校园待办、编辑校园 FAQ；普通课程老师看不到校园问答。
+- `/admin/` 与主站同源、同 Cookie、同部署产物；不需要第二个 Node 进程或端口。要独立端口时可用 Nginx/Caddy 把 `/admin/` 反代到主服务，但当前服务器没有 nginx。
 
 ## 2. 代码地图
 
 | 文件 | 职责 |
 | --- | --- |
-| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、7 个 tab、概览、权限守卫 |
+| `admin/index.html` | 独立管理端 HTML 入口，Vite 多页构建输出 `dist/admin/index.html` |
+| `src/admin-main.tsx` | 管理端 React 入口（只挂 AuthProvider，不挂 StoreProvider） |
+| `src/views/admin/AdminApp.tsx` | 管理端登录页、管理员守卫、独立顶栏 |
+| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、8 个 tab、概览、权限守卫 |
 | `src/views/admin/AdminUsersPanel.tsx` | 账号列表、创建账号、改姓名/课程、重置密码 |
 | `src/views/admin/AdminModerationPanel.tsx` | 敏感词、图片审核、用户禁言/封禁、内容队列 |
+| `src/views/admin/AdminVerificationPanel.tsx` | 校园 FAQ 复核计划、到期状态、标记已核实 |
 | `src/views/admin/AdminAuditPanel.tsx` | 审计日志、按账号/动作/课程/摘要筛选 |
 | `src/views/admin/AdminUsagePanel.tsx` | AI 调用量、Token、失败、Top 用户 |
 | `src/views/admin/AdminContentPanel.tsx` | 课程 FAQ 分布、校园内容健康度、导入命令 |
@@ -47,6 +52,8 @@
 | POST | `/api/admin/moderation/threads/:id/review` | 通过 / 拒绝并撤下 / 仅撤下 |
 | GET | `/api/admin/moderation/images` | 图片审核队列 |
 | POST | `/api/admin/moderation/images/review` | 通过 / 撤下图片 |
+| GET | `/api/admin/campus/verification` | 校园 FAQ 复核计划（状态 + 全部条目） |
+| POST | `/api/admin/campus/faqs/:id/verify` | 标记已核实并设置下次复核周期 |
 | GET | `/api/admin/audit?limit=200` | 审计日志 |
 | GET | `/api/admin/ai-usage` | 近 7 天 AI 用量 |
 | GET | `/api/admin/archived-threads` | 归档问答 |
@@ -100,6 +107,19 @@
 
 ## 3.2 为什么需要 workspace-summary
 
+## 3.3 内容核实与定时复核
+
+- 校园 FAQ 支持 `lastVerifiedAt / reviewIntervalDays / nextReviewAt / verifiedBy` 四个字段；旧数据没有字段时，服务端按 `collectedAt` + 可信度推导。
+- 管理台「内容核实」按状态分组：待核实（从未标记）、已过期、14 天内到期、正常。
+- 点击「标记已核实」会写入核实人、核实时间、周期和下次复核时间，并清除 `reviewNeeded`；动作写审计。
+- 服务端每 6 小时检查一次；有未核实/过期内容时，每天往 `audit_log` 写一条 `campus-review-due` 系统记录（同一天只写一次）。
+- 外部 cron/systemd timer 可以调用：
+  ```bash
+  npm run review:campus -- --db /opt/shishuo/data/shishuo.db
+  ```
+  有未核实/过期内容时退出码为 1，方便接告警。
+- 复核周期建议：政策/截止日期 30 天，常规校园信息 90 天，稳定流程 180 天，长期有效 365 天。
+
 ## 4. 新增一个管理面板
 
 1. 在 `src/data/adminTypes.ts` 的 `AdminTab` 里加 key，例如 `'moderation'`。
@@ -123,11 +143,10 @@ npm run dev
 ```
 
 登录后：
-- 学生端：`/` → 学生视角
-- 教师端：待办台 / 课程知识库 / 校园知识库
-- 管理端：左侧「管理台」
+- 主站：`/` → 学生/教师视角
+- 管理端：**`/admin/`**（独立登录页；教师端顶部「管理台」只是跳转链接）
 
-管理台的 7 个 tab：
+管理台的 8 个 tab：
 
 1. **概览**：账号数、FAQ 总数、待处理问答、AI 状态、最近审计、工作区快捷入口。
 2. **账号管理**：创建/编辑账号、课程分配、重置密码。
@@ -135,7 +154,8 @@ npm run dev
 4. **操作审计**：按账号、动作、课程、摘要筛选。
 5. **AI 用量**：今日/近 7 天调用、Token、失败、Top 用户。
 6. **内容运营**：课程 FAQ 分布、校园内容健康度、导入命令。
-7. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
+7. **内容核实**：校园 FAQ 复核计划与到期提醒。
+8. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
 
 ## 6. 构建与部署
 
@@ -154,7 +174,7 @@ systemctl restart shishuo
 curl -sS http://127.0.0.1/api/health
 ```
 
-管理台是同一份前端构建产物，不需要单独部署；只要 `dist/` 更新并重启服务即可。
+管理台是同一份前端构建产物，不需要单独部署；`npm run build` 会同时生成 `dist/index.html` 和 `dist/admin/index.html`。只要 `dist/` 更新并重启服务即可。访问 `/admin/` 即可进入独立管理端。
 
 ## 7. 安全与上线检查
 

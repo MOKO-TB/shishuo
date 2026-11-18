@@ -19,6 +19,9 @@ export function createCampusFaqs(baseTime = CAMPUS_KB_TIME): Faq[] {
   return CAMPUS_CARDS.map((card, index) => {
     const tags = unique([card.category, ...card.tags], 8)
     const aliases = unique([card.title, card.category, ...card.tags], 12)
+    const unverified = card.credibility.startsWith('D')
+    const lastVerifiedAt = unverified ? undefined : baseTime + index
+    const reviewIntervalDays = unverified ? 30 : 180
     return {
       id: `${CAMPUS_FAQ_PREFIX}${card.id}`,
       courseId: CAMPUS_COURSE_ID,
@@ -34,11 +37,16 @@ export function createCampusFaqs(baseTime = CAMPUS_KB_TIME): Faq[] {
       helpful: 0,
       unhelpful: 0,
       chapter: card.category,
-      reviewNeeded: card.credibility.startsWith('D'),
+      reviewNeeded: unverified,
       credibility: card.credibility,
       sourceUrl: card.sourceUrl,
       sourceChannel: card.sourceChannel,
       collectedAt: card.collectedAt,
+      ...(lastVerifiedAt ? { lastVerifiedAt } : {}),
+      reviewIntervalDays,
+      nextReviewAt: unverified
+        ? baseTime + index
+        : (lastVerifiedAt ?? baseTime) + reviewIntervalDays * 86_400_000,
     }
   })
 }

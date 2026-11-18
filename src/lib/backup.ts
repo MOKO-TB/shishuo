@@ -139,6 +139,13 @@ function sanitizeFaq(value: unknown): Faq | null {
     sourceUrl: optionalString(value.sourceUrl),
     sourceChannel: optionalString(value.sourceChannel),
     collectedAt: optionalString(value.collectedAt),
+    lastVerifiedAt:
+      typeof value.lastVerifiedAt === 'number' ? value.lastVerifiedAt : undefined,
+    reviewIntervalDays:
+      typeof value.reviewIntervalDays === 'number' ? value.reviewIntervalDays : undefined,
+    nextReviewAt:
+      typeof value.nextReviewAt === 'number' ? value.nextReviewAt : undefined,
+    verifiedBy: optionalString(value.verifiedBy),
     history: sanitizeFaqHistory(value.history),
   }
 }

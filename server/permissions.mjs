@@ -481,9 +481,15 @@ function validateFaqShape(faq) {
     ['sourceUrl', 2_000],
     ['sourceChannel', 300],
     ['collectedAt', 40],
+    ['verifiedBy', 120],
   ]) {
     if (faq[field] !== undefined && !isString(faq[field], max, true)) {
       bad('FAQ 溯源字段不合法。')
+    }
+  }
+  for (const field of ['lastVerifiedAt', 'reviewIntervalDays', 'nextReviewAt']) {
+    if (faq[field] !== undefined && !isNumber(faq[field])) {
+      bad('FAQ 复核字段不合法。')
     }
   }
   if (faq.history !== undefined) {

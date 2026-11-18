@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowRight,
   BookOpen,
+  CalendarClock,
   CircleAlert,
   Compass,
   LayoutDashboard,
@@ -30,6 +31,7 @@ import { AdminModerationPanel } from './AdminModerationPanel'
 import { AdminAuditPanel } from './AdminAuditPanel'
 import { AdminUsagePanel } from './AdminUsagePanel'
 import { AdminContentPanel } from './AdminContentPanel'
+import { AdminVerificationPanel } from './AdminVerificationPanel'
 import { AdminSystemPanel } from './AdminSystemPanel'
 
 interface AdminConsoleViewProps {
@@ -45,6 +47,7 @@ const TABS: Array<{ key: AdminTab; label: string; icon: typeof LayoutDashboard }
   { key: 'audit', label: '操作审计', icon: ShieldCheck },
   { key: 'usage', label: 'AI 用量', icon: Activity },
   { key: 'content', label: '内容运营', icon: Compass },
+  { key: 'verification', label: '内容核实', icon: CalendarClock },
   { key: 'system', label: '系统与开发', icon: Server },
 ]
 
@@ -159,6 +162,12 @@ export function AdminConsoleView({
       label: '内容运营',
       description: '课程与校园知识域的健康度',
       icon: Compass,
+    },
+    {
+      tab: 'verification',
+      label: '内容核实',
+      description: '校园 FAQ 复核计划与到期提醒',
+      icon: CalendarClock,
     },
     {
       tab: 'system',
@@ -370,6 +379,7 @@ export function AdminConsoleView({
       {tab === 'content' && (
         <AdminContentPanel onNavigate={onNavigate} onOpenBackup={onOpenBackup} />
       )}
+      {tab === 'verification' && <AdminVerificationPanel notify={notify} />}
       {tab === 'system' && <AdminSystemPanel notify={notify} />}
     </div>
   )

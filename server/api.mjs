@@ -21,6 +21,7 @@ import {
   reviewFor,
   upsertReview,
 } from './moderation.mjs'
+import { campusReviewSummary, reviewStateForFaq } from './campus-review.mjs'
 import { sendMail, sendVerificationCode } from './mail.mjs'
 import {
   checkSendRate,
@@ -968,7 +969,7 @@ export function createApiHandler({ db, config }) {
             campus: {
               total: campusFaqs.length,
               verified: campusFaqs.filter((faq) =>
-                /^[AB]/.test(String(faq.credibility ?? '')),
+                /^[ABV]/.test(String(faq.credibility ?? '')),
               ).length,
               unverified: campusFaqs.filter((faq) =>
                 String(faq.credibility ?? '').startsWith('D'),
@@ -1322,6 +1323,59 @@ export function createApiHandler({ db, config }) {
           reviewer: admin.name,
         })
         return sendJson(res, 200, { ok: true, status: 'rejected', revision: result.revision })
+      }
+
+      if (pathname === '/api/admin/campus/verification' && req.method === 'GET') {
+        requireAdmin(req)
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const result = campusReviewSummary(data)
+        return sendJson(res, 200, result)
+      }
+
+      const campusVerifyMatch =
+        /^\/api\/admin\/campus\/faqs\/([\w.-]+)\/verify$/.exec(pathname)
+      if (campusVerifyMatch && req.method === 'POST') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const intervalDays = Number(body.intervalDays)
+        if (!Number.isFinite(intervalDays) || intervalDays < 7 || intervalDays > 730) {
+          return sendError(res, 400, '复核周期需要在 7–730 天之间。')
+        }
+        const faqId = decodeURIComponent(campusVerifyMatch[1])
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const original = (data.faqs ?? []).find(
+          (faq) => faq.id === faqId && faq.courseId === 'campus',
+        )
+        if (!original) return sendError(res, 404, '校园 FAQ 不存在。')
+        const note = String(body.note ?? '').trim().slice(0, 500)
+        const now = Date.now()
+        const result = mutateWorkspaceAsAdmin(db, {
+          user: admin,
+          action: 'campus-faq-verify',
+          summary: `核实校园 FAQ：${String(original.question ?? '').slice(0, 60)}（${intervalDays} 天）${note ? ` · ${note}` : ''}`,
+          courseIds: ['campus'],
+          mutate: (next) => {
+            const target = (next.faqs ?? []).find((faq) => faq.id === faqId)
+            if (!target) return false
+            target.lastVerifiedAt = now
+            target.reviewIntervalDays = intervalDays
+            target.nextReviewAt = now + intervalDays * 86_400_000
+            target.reviewNeeded = false
+            target.verifiedBy = admin.name
+            if (String(target.credibility ?? '').startsWith('D')) {
+              target.credibility = 'V-已核实'
+            }
+            if (note) target.reviewNote = note
+            return true
+          },
+        })
+        const updated = (result.data.faqs ?? []).find((faq) => faq.id === faqId)
+        return sendJson(res, 200, {
+          ok: true,
+          revision: result.revision,
+          item: updated ? reviewStateForFaq(updated, now) : null,
+        })
       }
 
       if (pathname === '/api/admin/audit' && req.method === 'GET') {

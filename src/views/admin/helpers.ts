@@ -31,6 +31,8 @@ export const ACTION_LABELS: Record<string, string> = {
   'moderation-thread-review': '内容审核',
   'moderation-image-review': '图片审核',
   'moderation-blocked': '敏感词拦截',
+  'campus-faq-verify': '核实校园 FAQ',
+  'campus-review-due': '复核到期提醒',
   reset: '重置空间',
   restore: '恢复备份',
   'state-save': '同步状态',
@@ -39,6 +41,7 @@ export const ACTION_LABELS: Record<string, string> = {
 export function roleLabel(role: string) {
   if (role === 'teacher') return '教师'
   if (role === 'admin') return '管理员'
+  if (role === 'system') return '系统'
   return '学生'
 }
 
