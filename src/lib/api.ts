@@ -6,6 +6,9 @@ export interface SessionUser {
   profile: Record<string, unknown> | null
   courses: string[]
   isAdmin: boolean
+  status?: 'active' | 'muted' | 'banned'
+  statusReason?: string
+  statusUntil?: number | null
   createdAt: number
 }
 
