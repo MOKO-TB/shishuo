@@ -16,6 +16,6 @@ npm-debug.log*
 dev/dev-server.log
 dev/screenshots/
 
-# server secrets and local database
+# server secrets and local database (root only; keep src/data tracked)
 .env
-data/
+/data/
