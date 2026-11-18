@@ -98,3 +98,7 @@ export function apiPut<T>(path: string, body: unknown, options: Omit<RequestOpti
 export function apiPatch<T>(path: string, body: unknown, options: Omit<RequestOptions, 'method' | 'body'> = {}) {
   return apiRequest<T>(path, { ...options, method: 'PATCH', body })
 }
+
+export function apiDelete<T>(path: string, body?: unknown, options: Omit<RequestOptions, 'method' | 'body'> = {}) {
+  return apiRequest<T>(path, { ...options, method: 'DELETE', body })
+}

@@ -942,3 +942,84 @@ test('对象存储配置：S3 缺凭证时回落本地磁盘', () => {
     }
   }
 })
+
+test('风控：敏感词管理仅管理员可用，命中词拒绝学生提问', async () => {
+  const deniedList = await api('/api/admin/moderation/terms', { as: 'student1' })
+  assert.equal(deniedList.status, 403)
+  const deniedAdd = await api('/api/admin/moderation/terms', {
+    as: 'student1',
+    method: 'POST',
+    body: { term: '越权词', category: '测试' },
+  })
+  assert.equal(deniedAdd.status, 403)
+
+  const added = await api('/api/admin/moderation/terms', {
+    as: 'teacherDs',
+    method: 'POST',
+    body: { term: '测试敏感词', category: '测试' },
+  })
+  assert.equal(added.status, 201)
+  try {
+    const current = await state('student1')
+    const thread = makeThread(
+      's1-blocked-1',
+      session.get('student1').user,
+      '请问测试敏感词能写吗？',
+    )
+    const blocked = await putState(
+      'student1',
+      { ...current.json.data, threads: [...current.json.data.threads, thread] },
+      current.json.revision,
+    )
+    assert.equal(blocked.status, 400)
+    assert.match(JSON.stringify(blocked.json), /不允许的词/)
+  } finally {
+    await api(`/api/admin/moderation/terms/${added.json.term.id}`, {
+      as: 'teacherDs',
+      method: 'DELETE',
+    })
+  }
+})
+
+test('风控：禁言学生不能提问，封禁后不能登录', async () => {
+  const target = session.get('student2').user
+  try {
+    const muted = await api(`/api/admin/users/${target.id}/status`, {
+      as: 'teacherDs',
+      method: 'POST',
+      body: { status: 'muted', reason: '测试禁言', until: Date.now() + 60 * 60 * 1000 },
+    })
+    assert.equal(muted.status, 200)
+    assert.equal(muted.json.user.status, 'muted')
+
+    const current = await state('student2')
+    const thread = makeThread('s2-muted-1', target, '禁言期间还能提问吗？')
+    const blocked = await putState(
+      'student2',
+      { ...current.json.data, threads: [...current.json.data.threads, thread] },
+      current.json.revision,
+    )
+    assert.equal(blocked.status, 403)
+
+    const banned = await api(`/api/admin/users/${target.id}/status`, {
+      as: 'teacherDs',
+      method: 'POST',
+      body: { status: 'banned', reason: '测试封禁' },
+    })
+    assert.equal(banned.status, 200)
+    assert.equal(banned.json.user.status, 'banned')
+
+    const login = await api('/api/auth/login', {
+      method: 'POST',
+      body: { email: 'student2@shishuo.local', password: 'student123' },
+    })
+    assert.equal(login.status, 403)
+  } finally {
+    await api(`/api/admin/users/${target.id}/status`, {
+      as: 'teacherDs',
+      method: 'POST',
+      body: { status: 'active', reason: '测试结束恢复' },
+    })
+  }
+})
+

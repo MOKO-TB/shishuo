@@ -106,7 +106,9 @@ npm run eval:retrieval
 
 ### 管理台（Admin Console）
 
-管理员登录后，左侧「管理台」进入全页管理端，与学生端 / 教师端并列：概览、账号管理、操作审计、AI 用量、内容运营、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
+管理员登录后，左侧「管理台」进入全页管理端，与学生端 / 教师端并列：概览、账号管理、风控审核、操作审计、AI 用量、内容运营、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
+
+「风控审核」是服务器后台能力：维护敏感词表（学生提问、转交、补充和 AI 调用都会过词表）、审核/撤下违规图片、禁言或封禁学生/教师、查看内容队列。禁言和封禁在服务端强制执行，不只是前端隐藏按钮。
 
 开发说明、接口索引、新增面板步骤和安全检查见 [docs/admin-console.md](docs/admin-console.md)。
 

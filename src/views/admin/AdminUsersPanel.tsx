@@ -17,6 +17,18 @@ import { Badge } from '../../components/ui'
 import type { AdminUser } from '../../data/adminTypes'
 import { courseLabel, roleLabel, shortTime } from './helpers'
 
+function accountStatusLabel(status: string) {
+  if (status === 'muted') return '禁言中'
+  if (status === 'banned') return '已封禁'
+  return '正常'
+}
+
+function accountStatusTone(status: string) {
+  if (status === 'banned') return 'danger' as const
+  if (status === 'muted') return 'medium' as const
+  return 'jade' as const
+}
+
 interface AdminUsersPanelProps {
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
 }
@@ -298,6 +310,11 @@ export function AdminUsersPanel({ notify }: AdminUsersPanelProps) {
                 </span>
                 <span className="admin-user-side">
                   {item.isAdmin && <Badge tone="gold">管理员</Badge>}
+                  {item.status && item.status !== 'active' && (
+                    <Badge tone={accountStatusTone(item.status)}>
+                      {accountStatusLabel(item.status)}
+                    </Badge>
+                  )}
                   <small>
                     {item.isAdmin
                       ? '校园主理人'
@@ -323,7 +340,20 @@ export function AdminUsersPanel({ notify }: AdminUsersPanelProps) {
                     <ShieldCheck size={12} /> 管理员 · 校园主理人
                   </Badge>
                 )}
+                {selected.status && selected.status !== 'active' && (
+                  <Badge tone={accountStatusTone(selected.status)}>
+                    {accountStatusLabel(selected.status)}
+                  </Badge>
+                )}
               </div>
+              {selected.statusReason && (
+                <p className="admin-panel-note-inline">
+                  风控备注：{selected.statusReason}
+                  {selected.statusUntil
+                    ? ` · 到 ${shortTime(selected.statusUntil)}`
+                    : ''}
+                </p>
+              )}
 
               <label className="field">
                 <span className="field-label">显示姓名</span>

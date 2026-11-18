@@ -8,6 +8,19 @@ import { redactMessages } from './redact.mjs'
 import { saveUpload } from './storage.mjs'
 import { listArchivedThreads, syncWorkspaceEntities } from './maintenance.mjs'
 import { listAudit, recordAudit, summarizeStateChange } from './audit.mjs'
+import {
+  activeTerms,
+  addTerm,
+  assertUserCanWrite,
+  deleteTerm,
+  effectiveUserStatus,
+  findBlockedTerm as findModerationTerm,
+  findBlockedTermInThread,
+  listReviews,
+  listTerms,
+  reviewFor,
+  upsertReview,
+} from './moderation.mjs'
 import { sendMail, sendVerificationCode } from './mail.mjs'
 import {
   checkSendRate,
@@ -165,6 +178,42 @@ function parsedWorkspace(row) {
   }
 }
 
+/** 管理台直接改工作区（撤下内容 / 删除违规图片）；仍走 revision 乐观锁 + 审计。 */
+function mutateWorkspaceAsAdmin(db, { user, action, summary, courseIds = [], mutate }) {
+  const row = workspaceRow(db)
+  const prev = parsedWorkspace(row)
+  if (!prev) throw new HttpError(409, '共享空间还没有初始化。')
+  const next = JSON.parse(JSON.stringify(prev))
+  const changed = mutate(next)
+  if (!changed) throw new HttpError(400, '没有可更新的内容。')
+  if (!validateState(next)) throw new HttpError(400, '更新后的工作区结构不正确。')
+  const now = Date.now()
+  const result = db
+    .prepare(
+      `UPDATE workspaces
+          SET data_json = ?, revision = revision + 1, updated_at = ?, updated_by = ?
+        WHERE id = ? AND revision = ?`,
+    )
+    .run(JSON.stringify(next), now, user.id, WORKSPACE_ID, Number(row?.revision ?? 0))
+  if (Number(result.changes) === 0) {
+    throw new HttpError(409, '共享空间已有更新，请刷新后重试。')
+  }
+  recordAudit(db, {
+    user,
+    revision: Number(row?.revision ?? 0) + 1,
+    action,
+    actions: [action],
+    summary,
+    courseIds,
+  })
+  try {
+    syncWorkspaceEntities(db, next, now)
+  } catch {
+    // 镜像尽力而为；工作区本体已落库。
+  }
+  return { revision: Number(row?.revision ?? 0) + 1, updatedAt: now, data: next }
+}
+
 function validateState(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return false
   if (!Number.isFinite(Number(data.version))) return false
@@ -303,6 +352,7 @@ export function createApiHandler({ db, config }) {
     } catch {
       courses = []
     }
+    const status = effectiveUserStatus(row)
     return {
       id: row.id,
       email: row.email,
@@ -310,6 +360,10 @@ export function createApiHandler({ db, config }) {
       role: row.role,
       courses,
       isAdmin: Boolean(row.is_admin),
+      status: status.status,
+      statusReason: status.reason,
+      statusUntil: status.until,
+      statusUpdatedAt: row.status_updated_at == null ? null : Number(row.status_updated_at),
       createdAt: Number(row.created_at),
     }
   }
@@ -355,6 +409,9 @@ export function createApiHandler({ db, config }) {
         return sendError(res, 401, '邮箱或密码不正确。')
       }
       loginAttempts.delete(rateKey)
+      if (effectiveUserStatus(row).status === 'banned') {
+        return sendError(res, 403, '账号已被封禁，请联系管理员。')
+      }
       const token = createSession(db, row.id)
       res.setHeader('Set-Cookie', sessionCookie(token, { secure: config.cookieSecure }))
       return sendJson(res, 200, { user: publicUser(row) })
@@ -527,6 +584,44 @@ export function createApiHandler({ db, config }) {
   async function runAction(req, res, action, payload) {
     const user = requireUser(req)
     if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+    const postActions = new Set([
+      'thread-create',
+      'thread-escalate',
+      'thread-supplement',
+      'thread-reply',
+      'thread-info-request',
+    ])
+    assertUserCanWrite(user, postActions.has(action) ? 'post' : 'interact')
+    if (postActions.has(action)) {
+      const terms = activeTerms(db)
+      let blockedTerm = null
+      if (action === 'thread-create') {
+        blockedTerm = findBlockedTermInThread(payload?.thread, terms)
+      } else {
+        const texts =
+          action === 'thread-escalate'
+            ? [payload?.escalation?.title, payload?.escalation?.note]
+            : action === 'thread-supplement'
+              ? [payload?.supplement?.text]
+              : action === 'thread-reply'
+                ? [payload?.reply?.text]
+                : action === 'thread-info-request'
+                  ? [payload?.request?.text]
+                  : []
+        blockedTerm = texts.map((text) => findModerationTerm(text, terms)).find(Boolean) ?? null
+      }
+      if (blockedTerm) {
+        recordAudit(db, {
+          user,
+          revision: 0,
+          action: 'moderation-blocked',
+          actions: ['moderation-blocked'],
+          summary: `内容包含敏感词「${blockedTerm}」，已拒绝提交`,
+          courseIds: [],
+        })
+        return sendError(res, 400, `内容包含不允许的词：${blockedTerm}`)
+      }
+    }
     const baseRevision = Number(payload?.baseRevision)
     if (!Number.isFinite(baseRevision) || baseRevision < 0) {
       return sendError(res, 400, '缺少工作区版本号。')
@@ -634,7 +729,8 @@ export function createApiHandler({ db, config }) {
         requireAdmin(req)
         const rows = db
           .prepare(
-            `SELECT id, email, name, role, courses_json, is_admin, created_at
+            `SELECT id, email, name, role, courses_json, is_admin,
+                    status, status_reason, status_until, status_updated_at, created_at
                FROM users
               ORDER BY is_admin DESC, role DESC, created_at ASC`,
           )
@@ -677,7 +773,9 @@ export function createApiHandler({ db, config }) {
         }
         const row = db
           .prepare(
-            'SELECT id, email, name, role, courses_json, is_admin, created_at FROM users WHERE id = ?',
+            `SELECT id, email, name, role, courses_json, is_admin,
+                    status, status_reason, status_until, status_updated_at, created_at
+               FROM users WHERE id = ?`,
           )
           .get(id)
         recordAudit(db, {
@@ -705,6 +803,57 @@ export function createApiHandler({ db, config }) {
           .prepare('SELECT * FROM users WHERE id = ?')
           .get(targetId)
         if (!target) return sendError(res, 404, '账号不存在。')
+
+        if (suffix === 'status' && req.method === 'POST') {
+          const body = await readJson(req, SMALL_BODY_LIMIT)
+          const status = ['active', 'muted', 'banned'].includes(body.status)
+            ? body.status
+            : null
+          if (!status) return sendError(res, 400, '账号状态不合法。')
+          if (target.is_admin) {
+            return sendError(res, 400, '管理员账号不能被禁言或封禁，请先取消其管理员身份。')
+          }
+          if (target.id === admin.id) return sendError(res, 400, '不能修改自己的账号状态。')
+          const reason = String(body.reason ?? '').trim().slice(0, 300)
+          let until = null
+          if (status === 'muted' && body.until !== undefined && body.until !== null && body.until !== '') {
+            until = Number(body.until)
+            if (!Number.isFinite(until) || until <= Date.now()) {
+              return sendError(res, 400, '禁言结束时间必须晚于现在。')
+            }
+          }
+          db.prepare(
+            `UPDATE users
+                SET status = ?, status_reason = ?, status_until = ?, status_updated_at = ?
+              WHERE id = ?`,
+          ).run(
+            status,
+            reason || null,
+            status === 'muted' ? until : null,
+            Date.now(),
+            target.id,
+          )
+          if (status === 'banned') {
+            db.prepare('DELETE FROM sessions WHERE user_id = ?').run(target.id)
+          }
+          const updated = db
+            .prepare(
+              `SELECT id, email, name, role, courses_json, is_admin,
+                      status, status_reason, status_until, status_updated_at, created_at
+                 FROM users WHERE id = ?`,
+            )
+            .get(target.id)
+          const label =
+            status === 'banned' ? '封禁' : status === 'muted' ? '禁言' : '恢复正常'
+          recordAudit(db, {
+            user: admin,
+            action: 'moderation-user-status',
+            actions: ['moderation-user-status'],
+            summary: `${label}账号 ${target.name}（${target.email}）${reason ? `：${reason}` : ''}`,
+            courseIds: [],
+          })
+          return sendJson(res, 200, { user: adminUserView(updated) })
+        }
 
         if (suffix === 'password' && req.method === 'POST') {
           const body = await readJson(req, SMALL_BODY_LIMIT)
@@ -769,7 +918,9 @@ export function createApiHandler({ db, config }) {
           }
           const updated = db
             .prepare(
-              'SELECT id, email, name, role, courses_json, is_admin, created_at FROM users WHERE id = ?',
+              `SELECT id, email, name, role, courses_json, is_admin,
+                      status, status_reason, status_until, status_updated_at, created_at
+                 FROM users WHERE id = ?`,
             )
             .get(target.id)
           recordAudit(db, {
@@ -836,6 +987,341 @@ export function createApiHandler({ db, config }) {
           },
           courseNotes: (data?.courseNotes ?? []).length,
         })
+      }
+
+      if (pathname === '/api/admin/moderation/terms' && req.method === 'GET') {
+        requireAdmin(req)
+        return sendJson(res, 200, { terms: listTerms(db) })
+      }
+
+      if (pathname === '/api/admin/moderation/terms' && req.method === 'POST') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const term = addTerm(db, {
+          term: body.term,
+          category: body.category,
+          createdBy: admin.name,
+        })
+        recordAudit(db, {
+          user: admin,
+          action: 'moderation-term-add',
+          actions: ['moderation-term-add'],
+          summary: `新增敏感词「${term.term}」（${term.category}）`,
+          courseIds: [],
+        })
+        return sendJson(res, 201, { term })
+      }
+
+      const moderationTermMatch = /^\/api\/admin\/moderation\/terms\/(\d+)$/.exec(pathname)
+      if (moderationTermMatch && req.method === 'DELETE') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const term = db
+          .prepare('SELECT term FROM moderation_terms WHERE id = ?')
+          .get(Number(moderationTermMatch[1]))
+        deleteTerm(db, moderationTermMatch[1])
+        recordAudit(db, {
+          user: admin,
+          action: 'moderation-term-delete',
+          actions: ['moderation-term-delete'],
+          summary: `删除敏感词「${term?.term ?? moderationTermMatch[1]}」`,
+          courseIds: [],
+        })
+        return sendJson(res, 200, { ok: true })
+      }
+
+      if (pathname === '/api/admin/moderation/overview' && req.method === 'GET') {
+        requireAdmin(req)
+        const terms = listTerms(db)
+        const userRows = db.prepare('SELECT status, status_until FROM users').all()
+        const statuses = userRows.map((row) => effectiveUserStatus(row))
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const threads = Array.isArray(data.threads) ? data.threads : []
+        const active = activeTerms(db)
+        const imageReviews = new Map(
+          listReviews(db, 'image').map((review) => [review.targetId, review]),
+        )
+        const withImages = threads.filter(
+          (thread) => thread.attachment?.url && !thread.withdrawnAt,
+        )
+        const pendingImages = withImages.filter(
+          (thread) =>
+            (imageReviews.get(thread.attachment.url)?.status ?? 'pending') === 'pending',
+        ).length
+        const flaggedThreads = threads.filter(
+          (thread) => !thread.withdrawnAt && findBlockedTermInThread(thread, active),
+        ).length
+        return sendJson(res, 200, {
+          terms: {
+            total: terms.length,
+            enabled: terms.filter((term) => term.enabled).length,
+          },
+          users: {
+            muted: statuses.filter((status) => status.status === 'muted').length,
+            banned: statuses.filter((status) => status.status === 'banned').length,
+          },
+          images: {
+            total: withImages.length,
+            pending: pendingImages,
+            approved: withImages.filter(
+              (thread) => imageReviews.get(thread.attachment.url)?.status === 'approved',
+            ).length,
+            rejected: withImages.filter(
+              (thread) => imageReviews.get(thread.attachment.url)?.status === 'rejected',
+            ).length,
+          },
+          threads: {
+            total: threads.length,
+            withImages: withImages.length,
+            flagged: flaggedThreads,
+            withdrawn: threads.filter((thread) => Boolean(thread.withdrawnAt)).length,
+          },
+        })
+      }
+
+      if (pathname === '/api/admin/moderation/threads' && req.method === 'GET') {
+        requireAdmin(req)
+        const limit = Math.min(300, Math.max(1, Number(url.searchParams.get('limit') ?? 100)))
+        const filter = String(url.searchParams.get('filter') ?? 'all')
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const threads = Array.isArray(data.threads) ? data.threads : []
+        const active = activeTerms(db)
+        const imageReviews = new Map(
+          listReviews(db, 'image').map((review) => [review.targetId, review]),
+        )
+        const threadReviews = new Map(
+          listReviews(db, 'thread').map((review) => [review.targetId, review]),
+        )
+        let items = threads.map((thread) => {
+          const attachmentUrl = thread.attachment?.url ?? ''
+          const imageReview = attachmentUrl ? imageReviews.get(attachmentUrl) : null
+          const threadReview = threadReviews.get(thread.id)
+          return {
+            id: thread.id,
+            courseId: thread.courseId,
+            student: {
+              id: thread.student?.id ?? '',
+              name: thread.student?.name ?? '',
+              anonymous: Boolean(thread.student?.anonymous),
+            },
+            question: thread.question,
+            createdAt: Number(thread.createdAt ?? 0),
+            status: thread.status,
+            withdrawn: Boolean(thread.withdrawnAt),
+            attachment: thread.attachment
+              ? {
+                  url: thread.attachment.url,
+                  name: thread.attachment.name,
+                  type: thread.attachment.type,
+                  review: imageReview?.status ?? 'pending',
+                  reason: imageReview?.reason ?? '',
+                }
+              : null,
+            matchedTerm: findBlockedTermInThread(thread, active),
+            review: threadReview?.status ?? 'pending',
+            reviewReason: threadReview?.reason ?? '',
+          }
+        })
+        if (filter === 'flagged') {
+          items = items.filter((item) => item.matchedTerm)
+        } else if (filter === 'images') {
+          items = items.filter((item) => item.attachment)
+        } else if (filter === 'pending') {
+          items = items.filter(
+            (item) =>
+              item.review === 'pending' ||
+              item.attachment?.review === 'pending' ||
+              item.matchedTerm,
+          )
+        }
+        items.sort((a, b) => b.createdAt - a.createdAt)
+        return sendJson(res, 200, { threads: items.slice(0, limit) })
+      }
+
+      const moderationThreadMatch =
+        /^\/api\/admin\/moderation\/threads\/([\w.-]+)\/review$/.exec(pathname)
+      if (moderationThreadMatch && req.method === 'POST') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const action = ['approve', 'reject', 'withdraw'].includes(body.action)
+          ? body.action
+          : null
+        if (!action) return sendError(res, 400, '审核动作不合法。')
+        const threadId = decodeURIComponent(moderationThreadMatch[1])
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const thread = (data.threads ?? []).find((item) => item.id === threadId)
+        if (!thread) return sendError(res, 404, '问答不存在。')
+        const reason = String(body.reason ?? '').trim().slice(0, 500)
+        if (action !== 'approve' && reason.length < 2) {
+          return sendError(res, 400, '撤下或拒绝时请填写原因。')
+        }
+        if (action === 'approve') {
+          upsertReview(db, {
+            kind: 'thread',
+            targetId: threadId,
+            threadId,
+            status: 'approved',
+            reason,
+            reviewer: admin.name,
+          })
+          recordAudit(db, {
+            user: admin,
+            action: 'moderation-thread-review',
+            actions: ['moderation-thread-review'],
+            summary: `通过问答审核：${String(thread.question ?? '').slice(0, 60)}`,
+            courseIds: [thread.courseId].filter(Boolean),
+          })
+          return sendJson(res, 200, { ok: true, status: 'approved' })
+        }
+        const result = mutateWorkspaceAsAdmin(db, {
+          user: admin,
+          action: 'moderation-thread-review',
+          summary: `${action === 'reject' ? '拒绝并撤下' : '撤下'}问答：${String(thread.question ?? '').slice(0, 60)}（${reason}）`,
+          courseIds: [thread.courseId].filter(Boolean),
+          mutate: (next) => {
+            const target = (next.threads ?? []).find((item) => item.id === threadId)
+            if (!target) return false
+            target.withdrawnAt = Date.now()
+            target.moderation = {
+              status: action === 'reject' ? 'rejected' : 'withdrawn',
+              reason,
+              by: admin.id,
+              at: Date.now(),
+            }
+            if (action === 'reject' && target.attachment) {
+              delete target.attachment
+            }
+            return true
+          },
+        })
+        if (action === 'reject' && thread.attachment?.url) {
+          upsertReview(db, {
+            kind: 'image',
+            targetId: thread.attachment.url,
+            threadId,
+            status: 'rejected',
+            reason,
+            reviewer: admin.name,
+          })
+        }
+        upsertReview(db, {
+          kind: 'thread',
+          targetId: threadId,
+          threadId,
+          status: action === 'reject' ? 'rejected' : 'withdrawn',
+          reason,
+          reviewer: admin.name,
+        })
+        return sendJson(res, 200, {
+          ok: true,
+          status: action === 'reject' ? 'rejected' : 'withdrawn',
+          revision: result.revision,
+        })
+      }
+
+      if (pathname === '/api/admin/moderation/images' && req.method === 'GET') {
+        requireAdmin(req)
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const threads = Array.isArray(data.threads) ? data.threads : []
+        const reviews = new Map(
+          listReviews(db, 'image').map((review) => [review.targetId, review]),
+        )
+        const images = threads
+          .filter((thread) => thread.attachment?.url && !thread.withdrawnAt)
+          .map((thread) => {
+            const review = reviews.get(thread.attachment.url)
+            return {
+              url: thread.attachment.url,
+              name: thread.attachment.name,
+              type: thread.attachment.type,
+              threadId: thread.id,
+              courseId: thread.courseId,
+              question: thread.question,
+              createdAt: Number(thread.createdAt ?? 0),
+              student: {
+                id: thread.student?.id ?? '',
+                name: thread.student?.name ?? '',
+                anonymous: Boolean(thread.student?.anonymous),
+              },
+              review: review?.status ?? 'pending',
+              reason: review?.reason ?? '',
+              reviewedBy: review?.reviewedBy ?? '',
+              reviewedAt: review?.reviewedAt ?? null,
+            }
+          })
+          .sort(
+            (a, b) =>
+              Number(a.review !== 'pending') - Number(b.review !== 'pending') ||
+              b.createdAt - a.createdAt,
+          )
+        return sendJson(res, 200, { images })
+      }
+
+      if (pathname === '/api/admin/moderation/images/review' && req.method === 'POST') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const action = ['approve', 'reject'].includes(body.action) ? body.action : null
+        if (!action) return sendError(res, 400, '审核动作不合法。')
+        const threadId = String(body.threadId ?? '')
+        const imageUrl = String(body.url ?? '')
+        if (!threadId || !imageUrl) return sendError(res, 400, '缺少问答或图片地址。')
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const thread = (data.threads ?? []).find((item) => item.id === threadId)
+        if (!thread || thread.attachment?.url !== imageUrl) {
+          return sendError(res, 404, '图片不存在或已被撤下。')
+        }
+        const reason = String(body.reason ?? '').trim().slice(0, 500)
+        if (action === 'reject' && reason.length < 2) {
+          return sendError(res, 400, '拒绝图片时请填写原因。')
+        }
+        if (action === 'approve') {
+          upsertReview(db, {
+            kind: 'image',
+            targetId: imageUrl,
+            threadId,
+            status: 'approved',
+            reason,
+            reviewer: admin.name,
+          })
+          recordAudit(db, {
+            user: admin,
+            action: 'moderation-image-review',
+            actions: ['moderation-image-review'],
+            summary: `通过图片审核：${String(thread.question ?? '').slice(0, 50)}`,
+            courseIds: [thread.courseId].filter(Boolean),
+          })
+          return sendJson(res, 200, { ok: true, status: 'approved' })
+        }
+        const result = mutateWorkspaceAsAdmin(db, {
+          user: admin,
+          action: 'moderation-image-review',
+          summary: `拒绝图片并移除附件：${String(thread.question ?? '').slice(0, 50)}（${reason}）`,
+          courseIds: [thread.courseId].filter(Boolean),
+          mutate: (next) => {
+            const target = (next.threads ?? []).find((item) => item.id === threadId)
+            if (!target || target.attachment?.url !== imageUrl) return false
+            delete target.attachment
+            target.moderation = {
+              status: 'image-rejected',
+              reason,
+              by: admin.id,
+              at: Date.now(),
+            }
+            return true
+          },
+        })
+        upsertReview(db, {
+          kind: 'image',
+          targetId: imageUrl,
+          threadId,
+          status: 'rejected',
+          reason,
+          reviewer: admin.name,
+        })
+        return sendJson(res, 200, { ok: true, status: 'rejected', revision: result.revision })
       }
 
       if (pathname === '/api/admin/audit' && req.method === 'GET') {
@@ -1000,6 +1486,35 @@ export function createApiHandler({ db, config }) {
           })
         }
         const prev = parsedWorkspace(row)
+        const incomingThreads = Array.isArray(body.data?.threads) ? body.data.threads : []
+        const prevThreadMap = new Map(
+          (Array.isArray(prev?.threads) ? prev.threads : []).map((thread) => [thread.id, thread]),
+        )
+        const newOrChanged = incomingThreads.filter(
+          (thread) =>
+            thread &&
+            typeof thread.id === 'string' &&
+            (!prevThreadMap.has(thread.id) ||
+              prevThreadMap.get(thread.id)?.question !== thread.question),
+        )
+        if (newOrChanged.length > 0) {
+          assertUserCanWrite(user, 'post')
+          const terms = activeTerms(db)
+          for (const thread of newOrChanged) {
+            const blockedTerm = findBlockedTermInThread(thread, terms)
+            if (blockedTerm) {
+              recordAudit(db, {
+                user,
+                revision: Number(row?.revision ?? 0),
+                action: 'moderation-blocked',
+                actions: ['moderation-blocked'],
+                summary: `内容包含敏感词「${blockedTerm}」，已拒绝提交`,
+                courseIds: [thread.courseId].filter(Boolean),
+              })
+              return sendError(res, 400, `内容包含不允许的词：${blockedTerm}`)
+            }
+          }
+        }
         let merged
         try {
           merged = authorizeAndMerge({
@@ -1091,6 +1606,7 @@ export function createApiHandler({ db, config }) {
       if (pathname === '/api/uploads/image' && req.method === 'POST') {
         const user = requireUser(req)
         if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        assertUserCanWrite(user, 'post')
         const body = await readJson(req, UPLOAD_BODY_LIMIT)
         const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=\s]+)$/i.exec(
           String(body.dataUrl ?? ''),
@@ -1148,11 +1664,30 @@ export function createApiHandler({ db, config }) {
       if (pathname === '/api/ai/chat/completions' && req.method === 'POST') {
         const user = requireUser(req)
         if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        assertUserCanWrite(user, 'post')
         const body = await readJson(req, CHAT_BODY_LIMIT)
         const messages = sanitizeMessages(body.messages)
         const blockedTerm = findBlockedTerm(config, messages)
         if (blockedTerm) {
           return sendError(res, 400, '问题包含不被允许的内容，请调整后再试。')
+        }
+        const dbTerms = activeTerms(db)
+        const dbBlockedTerm =
+          messages
+            .map((message) => {
+              const content = message?.content
+              return typeof content === 'string'
+                ? content
+                : Array.isArray(content)
+                  ? content
+                      .map((part) => (part?.type === 'text' ? part.text : ''))
+                      .join('\n')
+                  : ''
+            })
+            .map((text) => findModerationTerm(text, dbTerms))
+            .find(Boolean) ?? null
+        if (dbBlockedTerm) {
+          return sendError(res, 400, `问题包含不允许的词：${dbBlockedTerm}`)
         }
         if (!config.ai.configured) {
           return sendError(res, 503, '服务端 AI 网关尚未配置，请联系管理员设置 AI_API_KEY。')

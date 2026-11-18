@@ -15,8 +15,9 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、6 个 tab、概览、权限守卫 |
+| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、7 个 tab、概览、权限守卫 |
 | `src/views/admin/AdminUsersPanel.tsx` | 账号列表、创建账号、改姓名/课程、重置密码 |
+| `src/views/admin/AdminModerationPanel.tsx` | 敏感词、图片审核、用户禁言/封禁、内容队列 |
 | `src/views/admin/AdminAuditPanel.tsx` | 审计日志、按账号/动作/课程/摘要筛选 |
 | `src/views/admin/AdminUsagePanel.tsx` | AI 调用量、Token、失败、Top 用户 |
 | `src/views/admin/AdminContentPanel.tsx` | 课程 FAQ 分布、校园内容健康度、导入命令 |
@@ -36,7 +37,16 @@
 | GET | `/api/admin/users` | 账号列表 |
 | POST | `/api/admin/users` | 创建学生/教师账号 |
 | PATCH | `/api/admin/users/:id` | 修改姓名、课程分配 |
+| POST | `/api/admin/users/:id/status` | 禁言 / 封禁 / 恢复正常 |
 | POST | `/api/admin/users/:id/password` | 重置密码并注销旧会话 |
+| GET | `/api/admin/moderation/terms` | 敏感词列表 |
+| POST | `/api/admin/moderation/terms` | 新增敏感词 |
+| DELETE | `/api/admin/moderation/terms/:id` | 删除敏感词 |
+| GET | `/api/admin/moderation/overview` | 风控汇总（词表、图片、禁言/封禁、命中内容） |
+| GET | `/api/admin/moderation/threads?limit=200` | 内容审核队列 |
+| POST | `/api/admin/moderation/threads/:id/review` | 通过 / 拒绝并撤下 / 仅撤下 |
+| GET | `/api/admin/moderation/images` | 图片审核队列 |
+| POST | `/api/admin/moderation/images/review` | 通过 / 撤下图片 |
 | GET | `/api/admin/audit?limit=200` | 审计日志 |
 | GET | `/api/admin/ai-usage` | 近 7 天 AI 用量 |
 | GET | `/api/admin/archived-threads` | 归档问答 |
@@ -47,6 +57,48 @@
 `/api/state` 是**按当前账号权限投影**过的：管理员如果同时是课程教师，只看得到自己课程 + 校园域。管理台要展示全站内容统计，不能用 `/api/state` 的数字，否则会少算其他课程。
 
 新增统计维度时，优先扩展 `/api/admin/workspace-summary`，不要在管理台前端自己拼 `/api/state`。
+
+## 3.1 内容风控
+
+风控是管理台的一部分，不是教师端功能。核心代码：
+
+- `server/moderation.mjs`：敏感词、用户状态、审核记录、文本命中判断。
+- `server/db.mjs`：`moderation_terms`、`moderation_reviews` 表；`users.status/status_reason/status_until` 字段。
+- `src/views/admin/AdminModerationPanel.tsx`：敏感词 / 图片审核 / 用户风控 / 内容队列 4 个子页。
+
+### 敏感词
+
+- 存在 `moderation_terms`，管理台可增删；首次建库预置 8 个基础词（代写、代考、校园贷、赌博等）。
+- 命中点：
+  - `POST /api/threads`（新建提问、转交、补充、教师回复、要求补充）；
+  - `PUT /api/state`（学生新增或修改问题正文）；
+  - `POST /api/ai/chat/completions`（AI 消息）。
+- 命中后返回 400，并写入 `audit_log` 的 `moderation-blocked`。
+- 删除词表后不会在重启时自动恢复（只有空表才会重新写入预置词）。
+
+### 用户状态
+
+- `users.status`：`active | muted | banned`；`status_until` 用于限时禁言。
+- 禁言：不能新建提问、转交、补充、上传图片、调用 AI；仍可阅读。
+- 封禁：所有写操作被拒绝，并删除该账号所有会话；登录直接返回 403。
+- 管理员账号不能被禁言/封禁，避免把后台锁死。
+- 所有状态变更写审计，`/api/admin/users` 会返回 `status/statusReason/statusUntil`。
+
+### 图片审核
+
+- 图片上传仍走 `/api/uploads/image`；被禁言/封禁账号不能上传。
+- 当前是**事后审核**：图片先落到对象存储，管理员在「图片审核」里通过或撤下。
+- 撤下会从工作区线程里删除 `attachment`，并写入 `moderation_reviews`（kind=`image`）和审计；原文件保留在存储里，便于追溯，需定期人工清理。
+- 如果要**前置自动审核**：在 `saveUpload` 之后、返回 URL 之前接入外部内容安全 API，命中则删除对象并返回 400；或在线程审核通过前不展示附件。接口和数据结构已经为这个扩展留好位置。
+
+### 内容队列
+
+- 展示最近 200 条问答，带学生、课程、命中词、附件和审核状态。
+- 通过：只记录审核状态，不改工作区。
+- 拒绝并撤下：设置 `withdrawnAt`、写 `moderation` 备注、移除附件，并写审计。
+- 仅撤下：保留附件/内容，只让问答从队列消失。
+
+## 3.2 为什么需要 workspace-summary
 
 ## 4. 新增一个管理面板
 
@@ -75,14 +127,15 @@ npm run dev
 - 教师端：待办台 / 课程知识库 / 校园知识库
 - 管理端：左侧「管理台」
 
-管理台的 6 个 tab：
+管理台的 7 个 tab：
 
 1. **概览**：账号数、FAQ 总数、待处理问答、AI 状态、最近审计、工作区快捷入口。
 2. **账号管理**：创建/编辑账号、课程分配、重置密码。
-3. **操作审计**：按账号、动作、课程、摘要筛选。
-4. **AI 用量**：今日/近 7 天调用、Token、失败、Top 用户。
-5. **内容运营**：课程 FAQ 分布、校园内容健康度、导入命令。
-6. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
+3. **风控审核**：敏感词、图片审核、用户禁言/封禁、内容队列。
+4. **操作审计**：按账号、动作、课程、摘要筛选。
+5. **AI 用量**：今日/近 7 天调用、Token、失败、Top 用户。
+6. **内容运营**：课程 FAQ 分布、校园内容健康度、导入命令。
+7. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
 
 ## 6. 构建与部署
 
@@ -109,7 +162,7 @@ curl -sS http://127.0.0.1/api/health
 - 纯 HTTP 环境不要设置 `NODE_ENV=production`，否则 Secure Cookie 会让登录态失效。
 - 生产 AI 默认 OpenAI 端点不可达；需要同时配 `AI_API_KEY`、`AI_BASE_URL`、`AI_MODEL`。
 - 新增管理写操作时，必须同时考虑：权限、输入校验、审计、并发 revision、回滚/备份。
-- 管理台不直接改写学生问答；日常答疑仍在教师端和校园「校园待处理」完成。管理台只做账号、审计、用量、内容概览与系统信息。
+- 管理台可以撤下违规问答/图片，但不要直接改学生问题正文；正文修改仍走学生/教师业务流程。
 
 ## 8. 后续可以加的功能
 
@@ -118,6 +171,8 @@ curl -sS http://127.0.0.1/api/health
 - AI 用量按课程/按天筛选、配额调整；
 - 账号导入（CSV）与批量分配课程；
 - 系统告警（磁盘、内存、备份失败）；
-- 权限模板（课程教师 / 校园主理人 / 只读审计）。
+- 权限模板（课程教师 / 校园主理人 / 只读审计）；
+- 图片前置自动审核（接腾讯云/阿里云内容安全，或自建视觉模型）；
+- 禁言/封禁历史与申诉记录。
 
 新增功能时优先复用现有 API 和组件，不要复制旧 `AdminModal` 的实现。

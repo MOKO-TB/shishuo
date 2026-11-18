@@ -117,7 +117,9 @@ export function userForRequest(db, req) {
   if (!token) return null
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.name, u.role, u.profile_json, u.courses_json, u.is_admin, u.created_at, s.expires_at
+      `SELECT u.id, u.email, u.name, u.role, u.profile_json, u.courses_json, u.is_admin,
+              u.status, u.status_reason, u.status_until, u.status_updated_at,
+              u.created_at, s.expires_at
          FROM sessions s
          JOIN users u ON u.id = s.user_id
         WHERE s.token_hash = ?`,
@@ -157,6 +159,9 @@ export function publicUser(row) {
     profile,
     courses,
     isAdmin: Boolean(row.is_admin),
+    status: row.status ?? 'active',
+    statusReason: row.status_reason ?? '',
+    statusUntil: row.status_until ?? null,
     createdAt: Number(row.created_at),
   }
 }

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   RefreshCw,
   Server,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Users,
@@ -25,6 +26,7 @@ import type {
 import type { ViewKey } from '../../types'
 import { ACTION_LABELS, formatNumber, roleLabel, shortTime } from './helpers'
 import { AdminUsersPanel } from './AdminUsersPanel'
+import { AdminModerationPanel } from './AdminModerationPanel'
 import { AdminAuditPanel } from './AdminAuditPanel'
 import { AdminUsagePanel } from './AdminUsagePanel'
 import { AdminContentPanel } from './AdminContentPanel'
@@ -39,6 +41,7 @@ interface AdminConsoleViewProps {
 const TABS: Array<{ key: AdminTab; label: string; icon: typeof LayoutDashboard }> = [
   { key: 'overview', label: '概览', icon: LayoutDashboard },
   { key: 'users', label: '账号管理', icon: Users },
+  { key: 'moderation', label: '风控审核', icon: ShieldAlert },
   { key: 'audit', label: '操作审计', icon: ShieldCheck },
   { key: 'usage', label: 'AI 用量', icon: Activity },
   { key: 'content', label: '内容运营', icon: Compass },
@@ -132,6 +135,12 @@ export function AdminConsoleView({
       label: '账号管理',
       description: '创建账号、分配课程、重置密码',
       icon: Users,
+    },
+    {
+      tab: 'moderation',
+      label: '风控审核',
+      description: '敏感词、图片、禁言封禁与内容队列',
+      icon: ShieldAlert,
     },
     {
       tab: 'audit',
@@ -355,6 +364,7 @@ export function AdminConsoleView({
       )}
 
       {tab === 'users' && <AdminUsersPanel notify={notify} />}
+      {tab === 'moderation' && <AdminModerationPanel notify={notify} />}
       {tab === 'audit' && <AdminAuditPanel />}
       {tab === 'usage' && <AdminUsagePanel />}
       {tab === 'content' && (

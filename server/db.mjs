@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { hashPassword } from './auth.mjs'
+import { ensureModerationSeed } from './moderation.mjs'
 
 export const WORKSPACE_ID = 'pilot'
 
@@ -20,6 +21,10 @@ export function openDatabase(dbPath) {
       profile_json TEXT NOT NULL DEFAULT '{}',
       courses_json TEXT NOT NULL DEFAULT '[]',
       is_admin INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'active',
+      status_reason TEXT,
+      status_until INTEGER,
+      status_updated_at INTEGER,
       created_at INTEGER NOT NULL
     );
 
@@ -117,6 +122,34 @@ export function openDatabase(dbPath) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_archived_threads_time ON archived_threads(archived_at);
+
+    CREATE TABLE IF NOT EXISTS moderation_terms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      term TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      category TEXT NOT NULL DEFAULT '通用',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_by TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_moderation_terms_enabled
+      ON moderation_terms(enabled);
+
+    CREATE TABLE IF NOT EXISTS moderation_reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      thread_id TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      reason TEXT NOT NULL DEFAULT '',
+      reviewed_by TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL,
+      reviewed_at INTEGER,
+      UNIQUE(kind, target_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_moderation_reviews_kind
+      ON moderation_reviews(kind, status);
   `)
   try {
     const columns = db.prepare('PRAGMA table_info(users)').all()
@@ -126,9 +159,22 @@ export function openDatabase(dbPath) {
     if (!columns.some((column) => column.name === 'is_admin')) {
       db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0')
     }
+    if (!columns.some((column) => column.name === 'status')) {
+      db.exec("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+    }
+    if (!columns.some((column) => column.name === 'status_reason')) {
+      db.exec('ALTER TABLE users ADD COLUMN status_reason TEXT')
+    }
+    if (!columns.some((column) => column.name === 'status_until')) {
+      db.exec('ALTER TABLE users ADD COLUMN status_until INTEGER')
+    }
+    if (!columns.some((column) => column.name === 'status_updated_at')) {
+      db.exec('ALTER TABLE users ADD COLUMN status_updated_at INTEGER')
+    }
   } catch {
     // Very old SQLite builds may reject PRAGMA via prepare; the fresh schema still works.
   }
+  ensureModerationSeed(db)
   db.prepare(
     'INSERT OR IGNORE INTO workspaces (id, data_json, revision, updated_at) VALUES (?, NULL, 0, ?)',
   ).run(WORKSPACE_ID, Date.now())
