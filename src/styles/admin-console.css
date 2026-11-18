@@ -635,6 +635,15 @@
   color: var(--jade-deep);
 }
 
+.admin-course-row.is-other {
+  margin-top: 2px;
+  border-top-style: solid;
+}
+
+.admin-course-row.is-other .admin-course-name {
+  color: var(--muted);
+}
+
 .admin-import-card {
   margin-top: 0;
 }

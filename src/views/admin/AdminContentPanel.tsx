@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { apiGet } from '../../lib/api'
+import { PILOT_COURSE_IDS } from '../../data/pilot'
 import { courseById } from '../../data/seed'
 import type { WorkspaceSummary } from '../../data/adminTypes'
 import type { ViewKey } from '../../types'
@@ -19,6 +20,8 @@ interface AdminContentPanelProps {
   onNavigate: (view: ViewKey) => void
   onOpenBackup: () => void
 }
+
+const PILOT_SET = new Set<string>(PILOT_COURSE_IDS)
 
 export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPanelProps) {
   const [summary, setSummary] = useState<WorkspaceSummary | null>(null)
@@ -60,6 +63,19 @@ export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPane
       .map(([courseId, count]) => ({ courseId, count }))
       .sort((a, b) => b.count - a.count)
   }, [summary?.faqs.byCourse])
+  const pilotRows = useMemo(() => {
+    const order = new Map<string, number>(
+      PILOT_COURSE_IDS.map((id, index) => [id, index]),
+    )
+    return courseDistribution
+      .filter((item) => order.has(item.courseId))
+      .sort((a, b) => (order.get(a.courseId) ?? 0) - (order.get(b.courseId) ?? 0))
+  }, [courseDistribution])
+  const otherCourses = useMemo(
+    () => courseDistribution.filter((item) => !PILOT_SET.has(item.courseId)),
+    [courseDistribution],
+  )
+  const otherTotal = otherCourses.reduce((sum, item) => sum + item.count, 0)
 
   return (
     <div className="admin-panel admin-panel-content">
@@ -166,7 +182,7 @@ export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPane
             <p className="admin-empty">{loading ? '加载中…' : '还没有课程 FAQ。'}</p>
           ) : (
             <div className="admin-course-list">
-              {courseDistribution.map((item) => (
+              {pilotRows.map((item) => (
                 <div className="admin-course-row" key={item.courseId}>
                   <span className="admin-course-name">
                     {courseLabel(item.courseId)}
@@ -175,6 +191,15 @@ export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPane
                   <strong>{item.count}</strong>
                 </div>
               ))}
+              {otherCourses.length > 0 && (
+                <div className="admin-course-row is-other">
+                  <span className="admin-course-name">
+                    其他演示课程
+                    <em>{otherCourses.length} 门</em>
+                  </span>
+                  <strong>{otherTotal}</strong>
+                </div>
+              )}
             </div>
           )}
           <div className="admin-content-actions">
