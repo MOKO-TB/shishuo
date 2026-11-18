@@ -1,5 +1,12 @@
 export type Role = 'student' | 'teacher'
-export type ViewKey = 'student' | 'teacher' | 'knowledge' | 'insights' | 'about' | 'schedule'
+export type ViewKey =
+  | 'student'
+  | 'teacher'
+  | 'knowledge'
+  | 'campus'
+  | 'insights'
+  | 'about'
+  | 'schedule'
 export type Confidence = 'high' | 'medium' | 'low'
 export type ThreadStatus = 'ai' | 'pending' | 'needs-info' | 'answered'
 export type ThreadKind = 'ask' | 'same' | 'follow-up'

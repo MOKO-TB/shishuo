@@ -12,6 +12,7 @@ import { StudentView } from './views/StudentView'
 import { ScheduleView } from './views/student/StudentScheduleView'
 import { TeacherView } from './views/TeacherView'
 import { KnowledgeView } from './views/KnowledgeView'
+import { CampusView } from './views/CampusView'
 import { InsightsView } from './views/InsightsView'
 import { AboutView } from './views/AboutView'
 import { useStore } from './store'
@@ -329,6 +330,7 @@ export default function App() {
             onGoTeacher={() => navigate('teacher')}
           />
         )}
+        {view === 'campus' && <CampusView role={role} notify={notify} />}
         {view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}

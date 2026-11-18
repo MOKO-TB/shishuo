@@ -1,0 +1,314 @@
+.campus-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(292px, 0.56fr);
+  gap: 40px;
+  align-items: end;
+  margin-bottom: 22px;
+}
+
+.campus-head-main .display-title {
+  margin: 13px 0 0;
+  font-size: clamp(36px, 3.8vw, 50px);
+}
+
+.campus-head-main .page-lede {
+  margin-top: 14px;
+}
+
+.campus-head-card {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(173, 127, 29, 0.1), transparent 38%),
+    var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.campus-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.campus-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 10px;
+  margin: 12px 0 10px;
+}
+
+.campus-stats > div {
+  display: grid;
+  gap: 1px;
+}
+
+.campus-stats strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campus-stats span {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.campus-stats .is-warn strong {
+  color: var(--clay);
+}
+
+.campus-head-card .campus-card-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-size: 8.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.campus-head-card .campus-card-foot svg {
+  margin-top: 1px;
+  color: var(--gold);
+  flex: 0 0 auto;
+}
+
+.campus-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e6d7b2;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f8efd9, #fbf7ed);
+}
+
+.campus-notice-icon {
+  width: 31px;
+  height: 31px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  flex: 0 0 auto;
+}
+
+.campus-notice-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.campus-notice-copy strong {
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.campus-ops {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.campus-ops-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.campus-ops-copy strong {
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.campus-ops .button {
+  flex: 0 0 auto;
+  height: 34px;
+  font-size: 10px;
+}
+
+.campus-filter-row {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.campus-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.campus-filter-label {
+  margin-right: 2px;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+.campus-filter-row .knowledge-result {
+  margin-left: 0;
+}
+
+.campus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.campus-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px 17px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition:
+    transform 0.22s var(--ease),
+    border-color 0.22s var(--ease),
+    box-shadow 0.22s var(--ease);
+}
+
+.campus-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: 0 20px 44px -32px rgba(23, 36, 30, 0.42);
+}
+
+.campus-card.is-review {
+  background:
+    linear-gradient(180deg, rgba(173, 127, 29, 0.055), transparent 42%),
+    var(--surface);
+}
+
+.campus-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.campus-card h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campus-card > p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.campus-card .tag-row {
+  margin-top: auto;
+}
+
+.campus-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-size: 8.5px;
+  color: var(--muted);
+}
+
+.campus-source {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-card-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--jade-deep);
+  white-space: nowrap;
+}
+
+.campus-card-foot a:hover {
+  text-decoration: underline;
+}
+
+.campus-no-source {
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.campus-footnote {
+  margin-top: 18px;
+}
+
+.campus-footnote a {
+  color: var(--jade-deep);
+  text-decoration: underline;
+}
+
+[data-theme='dark'] .campus-notice {
+  border-color: rgba(173, 127, 29, 0.38);
+  background: linear-gradient(90deg, rgba(173, 127, 29, 0.16), rgba(173, 127, 29, 0.05));
+}
+
+[data-theme='dark'] .campus-card.is-review {
+  background:
+    linear-gradient(180deg, rgba(173, 127, 29, 0.1), transparent 42%),
+    var(--surface);
+}
+
+@media (max-width: 1180px) {
+  .campus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .campus-head {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .campus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-ops {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
