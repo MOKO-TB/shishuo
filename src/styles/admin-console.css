@@ -1273,6 +1273,41 @@
   box-shadow: var(--shadow-card);
 }
 
+.admin-login-current {
+  width: min(420px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e6d7b2;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f8efd9, #fbf7ed);
+}
+
+.admin-login-current > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-login-current strong {
+  font-size: 10.5px;
+  color: var(--ink);
+}
+
+.admin-login-current span {
+  font-size: 8.5px;
+  color: var(--muted);
+}
+
+.admin-login-current .button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 9px;
+}
+
 .admin-login-head {
   display: flex;
   align-items: flex-start;
@@ -1581,5 +1616,210 @@
 
   .admin-image-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* 手机端：登录页优先保证输入/按钮触控尺寸；管理台 tab 横向滑动，减少竖向占高。 */
+@media (max-width: 640px) {
+  .admin-login-page {
+    min-height: 100dvh;
+    justify-content: flex-start;
+    padding: max(22px, env(safe-area-inset-top)) 14px
+      calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .admin-login-brand {
+    margin-top: 4vh;
+    align-self: flex-start;
+  }
+
+  .admin-login-brand strong {
+    font-size: 17px;
+  }
+
+  .admin-login-card {
+    gap: 14px;
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  .admin-login-head h1 {
+    font-size: 21px;
+  }
+
+  .admin-login-card .input {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .admin-login-submit {
+    height: 46px;
+    font-size: 12px;
+  }
+
+  .admin-login-current {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-login-current .button {
+    width: 100%;
+    height: 38px;
+  }
+
+  .admin-login-foot {
+    text-align: left;
+    padding: 0 4px;
+  }
+
+  .admin-standalone-bar {
+    gap: 8px;
+  }
+
+  .admin-standalone-brand em {
+    display: none;
+  }
+
+  .admin-standalone-brand strong {
+    font-size: 13px;
+  }
+
+  .admin-standalone-main .page {
+    padding: 14px 12px 70px;
+  }
+
+  .admin-console-head {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .admin-console-head-main .display-title {
+    font-size: 30px;
+    line-height: 1.14;
+  }
+
+  .admin-console-head-main .page-lede {
+    margin-top: 9px;
+    font-size: 11.5px;
+    line-height: 1.7;
+  }
+
+  .admin-console-head-card {
+    padding: 12px 13px;
+  }
+
+  .admin-console-health strong {
+    font-size: 15px;
+  }
+
+  .admin-console-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 4px;
+    border-radius: 11px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-console-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-console-tabs button {
+    flex: 0 0 auto;
+    min-width: 92px;
+    height: 34px;
+    padding: 0 10px;
+    font-size: 9.5px;
+  }
+
+  .admin-panel {
+    padding: 12px;
+  }
+
+  .admin-panel-toolbar {
+    gap: 9px;
+  }
+
+  .admin-panel-toolbar strong {
+    font-size: 16px;
+  }
+
+  .admin-panel-actions {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .admin-panel-actions .button {
+    flex: 1 1 calc(50% - 6px);
+    height: 38px;
+    font-size: 10px;
+  }
+
+  .admin-stat-grid {
+    gap: 8px;
+  }
+
+  .admin-stat-card {
+    padding: 11px 12px;
+  }
+
+  .admin-stat-card > strong {
+    font-size: 22px;
+  }
+
+  .admin-quick-card {
+    padding: 11px;
+  }
+
+  .admin-filter-bar {
+    align-items: stretch;
+  }
+
+  .admin-search,
+  .admin-filter-select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .admin-verification-filters {
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .admin-verification-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-verification-filters button {
+    flex: 0 0 auto;
+  }
+
+  .admin-risk-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-risk-actions .button {
+    height: 30px;
+    font-size: 9px;
+  }
+
+  .admin-content-card {
+    padding: 12px;
+  }
+
+  .admin-mod-thread {
+    padding: 10px;
+  }
+
+  .admin-verification-row {
+    padding: 9px 0;
+  }
+
+  .admin-verification-actions .button {
+    width: 100%;
+    height: 36px;
   }
 }

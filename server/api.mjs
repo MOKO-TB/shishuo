@@ -418,6 +418,34 @@ export function createApiHandler({ db, config }) {
       return sendJson(res, 200, { user: publicUser(row) })
     }
 
+    // 独立管理端登录：只有 is_admin 账号能通过，失败不会替换当前浏览器会话。
+    if (pathname === '/api/auth/admin-login' && req.method === 'POST') {
+      if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+      const body = await readJson(req, SMALL_BODY_LIMIT)
+      const email = String(body.email ?? '').trim().toLowerCase()
+      const password = String(body.password ?? '')
+      if (!validEmail(email) || !password) {
+        return sendError(res, 400, '请输入有效的管理员邮箱和密码。')
+      }
+      const rateKey = checkLoginRate(req, email)
+      const row = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
+      if (!row || !verifyPassword(password, row.password_hash)) {
+        recordLoginFailure(rateKey)
+        return sendError(res, 401, '邮箱或密码不正确。')
+      }
+      if (effectiveUserStatus(row).status === 'banned') {
+        return sendError(res, 403, '账号已被封禁，请联系管理员。')
+      }
+      if (!row.is_admin) {
+        recordLoginFailure(rateKey)
+        return sendError(res, 403, '该账号不是管理员，不能进入管理台。')
+      }
+      loginAttempts.delete(rateKey)
+      const token = createSession(db, row.id)
+      res.setHeader('Set-Cookie', sessionCookie(token, { secure: config.cookieSecure }))
+      return sendJson(res, 200, { user: publicUser(row) })
+    }
+
     if (pathname === '/api/auth/email-code' && req.method === 'POST') {
       if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
       const body = await readJson(req, SMALL_BODY_LIMIT)

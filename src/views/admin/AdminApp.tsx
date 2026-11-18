@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowLeft, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../auth'
 import { BrandMark, Toast, type ToastState } from '../../components/ui'
@@ -10,6 +10,7 @@ export function AdminApp() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [attemptedLogin, setAttemptedLogin] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const notify = (message: string, tone: ToastState['tone'] = 'success') => {
@@ -17,13 +18,23 @@ export function AdminApp() {
     window.setTimeout(() => setToast(null), 4200)
   }
 
-  const submit = async (event: React.FormEvent) => {
+  useEffect(() => {
+    if (attemptedLogin && user && !user.isAdmin) {
+      setFormError(
+        `${user.name}（${user.email}）不是管理员。请换一个管理员账号登录。`,
+      )
+    }
+  }, [attemptedLogin, user])
+
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (busy) return
     setBusy(true)
     setFormError(null)
     try {
       await login(email.trim(), password)
+      setPassword('')
+      setAttemptedLogin(true)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : '登录失败，请稍后重试。')
     } finally {
@@ -44,7 +55,11 @@ export function AdminApp() {
     )
   }
 
-  if (!user) {
+  /*
+   * 关键：即使当前浏览器里已经登录了学生/教师账号，也展示管理员登录页，
+   * 而不是“需要管理员账号”的死路。登录成功后会直接换成新账号的 Cookie。
+   */
+  if (!user || !user.isAdmin) {
     return (
       <div className="admin-login-page">
         <div className="admin-login-brand">
@@ -54,12 +69,35 @@ export function AdminApp() {
             <span>服务器后台 · 账号 / 风控 / 内容 / 系统</span>
           </div>
         </div>
+
+        {user && !user.isAdmin && (
+          <div className="admin-login-current">
+            <div>
+              <strong>当前登录：{user.name}</strong>
+              <span>
+                {user.email} · {user.role === 'teacher' ? '教师' : '学生'}账号，没有管理权限
+              </span>
+            </div>
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={() => {
+                setFormError(null)
+                setAttemptedLogin(false)
+                void logout()
+              }}
+            >
+              退出当前账号
+            </button>
+          </div>
+        )}
+
         <form className="admin-login-card" onSubmit={(event) => void submit(event)}>
           <div className="admin-login-head">
             <ShieldCheck size={20} />
             <div>
               <h1>管理员登录</h1>
-              <p>管理台只对管理员开放；学生和教师请回主站登录。</p>
+              <p>管理台是独立入口，只接受管理员账号；登录后会替换当前浏览器会话。</p>
             </div>
           </div>
           {(formError || error) && (
@@ -101,26 +139,6 @@ export function AdminApp() {
         <p className="admin-login-foot">
           管理员账号由数据库 `is_admin=1` 控制；所有管理操作都会写入审计日志。
         </p>
-      </div>
-    )
-  }
-
-  if (!user.isAdmin) {
-    return (
-      <div className="app-gate admin-standalone-gate">
-        <div className="app-gate-card">
-          <BrandMark size={46} />
-          <h2>需要管理员账号</h2>
-          <p>{user.name}（{user.email}）不是管理员，不能进入管理台。</p>
-          <div className="admin-gate-actions">
-            <a className="button button-primary" href="/">
-              返回主站
-            </a>
-            <button className="button button-ghost" onClick={() => void logout()}>
-              退出登录
-            </button>
-          </div>
-        </div>
       </div>
     )
   }

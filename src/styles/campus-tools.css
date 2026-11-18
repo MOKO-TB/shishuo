@@ -526,3 +526,83 @@
     margin-left: 0;
   }
 }
+
+@media (max-width: 640px) {
+  .campus-tools {
+    padding: 12px;
+  }
+
+  .campus-tools-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .campus-tools-head strong {
+    font-size: 16px;
+  }
+
+  .campus-tool-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campus-tool-tabs button {
+    flex: none;
+    width: 100%;
+    height: 38px;
+    font-size: 10.5px;
+  }
+
+  .campus-gpa-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .campus-gpa-summary > div {
+    padding: 9px 10px;
+  }
+
+  .campus-gpa-summary strong {
+    font-size: 19px;
+  }
+
+  .campus-gpa-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .campus-gpa-head .button {
+    width: 100%;
+    height: 38px;
+  }
+
+  .campus-gpa-row {
+    gap: 5px;
+  }
+
+  .campus-gpa-row input {
+    height: 38px;
+    font-size: 12px;
+  }
+
+  .campus-gpa-result {
+    gap: 8px;
+    font-size: 9.5px;
+  }
+
+  .campus-calendar-row {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  .campus-library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-map-search {
+    height: 40px;
+  }
+
+  .campus-building-list {
+    max-height: 200px;
+  }
+}
