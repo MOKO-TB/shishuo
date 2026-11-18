@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Layout } from './components/Layout'
 import { AccountModal } from './components/AccountModal'
-import { AdminModal } from './components/AdminModal'
 import { FaqModal, type FaqModalState } from './components/FaqModal'
 import { GuideModal } from './components/GuideModal'
 import { MajorMentorDrawer } from './components/MajorMentor'
@@ -15,6 +14,7 @@ import { KnowledgeView } from './views/KnowledgeView'
 import { CampusView } from './views/CampusView'
 import { InsightsView } from './views/InsightsView'
 import { AboutView } from './views/AboutView'
+import { AdminConsoleView } from './views/admin/AdminConsoleView'
 import { useStore } from './store'
 import { groupPendingThreads } from './lib/engine'
 import { TEACHERS, allCourses, courseById, isSeededCourse } from './data/seed'
@@ -36,7 +36,6 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
-  const [adminOpen, setAdminOpen] = useState(false)
   const [backupOpen, setBackupOpen] = useState(false)
   const [accountTab, setAccountTab] = useState<
     'identity' | 'schedule' | 'scores' | 'teachers'
@@ -97,7 +96,7 @@ export default function App() {
   const navigate = useCallback((next: ViewKey) => {
     setView(next)
     if (next === 'student' || next === 'schedule') setRole('student')
-    if (next === 'teacher' || next === 'insights') setRole('teacher')
+    if (next === 'teacher' || next === 'insights' || next === 'admin') setRole('teacher')
   }, [])
 
   const switchRole = useCallback(
@@ -284,7 +283,7 @@ export default function App() {
         unreadCount={unreadCount}
         onOpenNotifications={() => setNotificationsOpen(true)}
         onOpenAccount={openAccount}
-        onOpenAdmin={() => setAdminOpen(true)}
+        onOpenAdmin={() => navigate('admin')}
         onOpenMentor={openMentor}
         onNavigate={navigate}
         onOpenGuide={openGuide}
@@ -331,6 +330,13 @@ export default function App() {
           />
         )}
         {view === 'campus' && <CampusView role={role} notify={notify} />}
+        {view === 'admin' && (
+          <AdminConsoleView
+            notify={notify}
+            onNavigate={navigate}
+            onOpenBackup={() => setBackupOpen(true)}
+          />
+        )}
         {view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}
@@ -379,12 +385,6 @@ export default function App() {
         open={accountOpen}
         initialTab={accountTab}
         onClose={() => setAccountOpen(false)}
-        notify={notify}
-      />
-
-      <AdminModal
-        open={adminOpen}
-        onClose={() => setAdminOpen(false)}
         notify={notify}
       />
 

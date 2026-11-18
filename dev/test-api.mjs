@@ -572,6 +572,18 @@ test('AI 用量统计仅管理员可读', async () => {
   assert.ok(Array.isArray(usage.json.topUsers))
 })
 
+test('管理台汇总仅管理员可读，且统计全量内容', async () => {
+  const denied = await api('/api/admin/workspace-summary', { as: 'student1' })
+  assert.equal(denied.status, 403)
+
+  const summary = await api('/api/admin/workspace-summary', { as: 'teacherDs' })
+  assert.equal(summary.status, 200)
+  assert.ok(summary.json.faqs.total >= 1)
+  assert.ok(Object.keys(summary.json.faqs.byCourse).length >= 1)
+  assert.ok(summary.json.threads.total >= 1)
+  assert.ok(Number.isInteger(summary.json.threads.pending))
+})
+
 test('实体表镜像：工作区写入同步到 workspace_entities', async () => {
   const db = openDatabase(DB_PATH)
   try {

@@ -58,6 +58,7 @@ const breadcrumbMap: Record<ViewKey, { root: string; current: string }> = {
   teacher: { root: '教师端', current: '待办台' },
   knowledge: { root: '课程空间', current: '知识库' },
   campus: { root: '校园空间', current: '校园生活' },
+  admin: { root: '管理端', current: '管理台' },
   insights: { root: '教师端', current: '答疑洞察' },
   about: { root: '关于师说', current: '方案说明' },
   schedule: { root: '学习空间', current: '我的课程表' },
@@ -103,6 +104,9 @@ export function Layout({
         { key: 'knowledge', label: '课程知识库', icon: BookOpen },
         { key: 'campus', label: '校园知识库', icon: Compass, shortLabel: '校园' },
         { key: 'insights', label: '答疑洞察', icon: BarChart3 },
+        ...(user?.isAdmin
+          ? [{ key: 'admin' as const, label: '管理台', icon: ShieldCheck }]
+          : []),
       ]
     : [
         { key: 'student', label: '我的答疑', icon: MessagesSquare },
@@ -273,7 +277,7 @@ export function Layout({
             {user?.isAdmin && (
               <button onClick={onOpenAdmin} className="side-utility-button">
                 <ShieldCheck size={14} />
-                账号与审计
+                管理台
               </button>
             )}
             <button onClick={() => void logout()} className="side-utility-button">
@@ -313,8 +317,8 @@ export function Layout({
               <button
                 className="bell-button admin-entry"
                 onClick={onOpenAdmin}
-                aria-label="账号与审计"
-                title="账号与审计"
+                aria-label="管理台"
+                title="管理台"
               >
                 <UserCog size={16} />
               </button>

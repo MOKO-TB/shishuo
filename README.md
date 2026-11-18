@@ -104,6 +104,12 @@ npm run eval:retrieval
 - 现有工作区导入：`node dev/import-campus-faqs.mjs --db <db> --apply --backup-dir <dir>`（幂等，只补缺失 ID）。
 - 重新生成数据：`node dev/import-campus-kb.mjs /path/to/yinlu-xuezhang/kb/knowledge.json`（同时生成 `src/data/campusKb.ts` 和 `server/data/campus-faqs.json`）。
 
+### 管理台（Admin Console）
+
+管理员登录后，左侧「管理台」进入全页管理端，与学生端 / 教师端并列：概览、账号管理、操作审计、AI 用量、内容运营、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
+
+开发说明、接口索引、新增面板步骤和安全检查见 [docs/admin-console.md](docs/admin-console.md)。
+
 ---
 
 ## 3. 架构

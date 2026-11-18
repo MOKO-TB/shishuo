@@ -4,6 +4,7 @@ export type ViewKey =
   | 'teacher'
   | 'knowledge'
   | 'campus'
+  | 'admin'
   | 'insights'
   | 'about'
   | 'schedule'

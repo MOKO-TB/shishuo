@@ -785,6 +785,59 @@ export function createApiHandler({ db, config }) {
         return sendError(res, 405, '不支持的账号操作。')
       }
 
+      if (pathname === '/api/admin/workspace-summary' && req.method === 'GET') {
+        requireAdmin(req)
+        const row = workspaceRow(db)
+        const data = parsedWorkspace(row)
+        const faqs = data?.faqs ?? []
+        const threads = data?.threads ?? []
+        const campusFaqs = faqs.filter((faq) => faq.courseId === 'campus')
+        const byCourse = {}
+        for (const faq of faqs) {
+          byCourse[faq.courseId] = (byCourse[faq.courseId] ?? 0) + 1
+        }
+        const campusCategories = {}
+        for (const faq of campusFaqs) {
+          const category = faq.chapter || '未分类'
+          const item = campusCategories[category] ?? { total: 0, unverified: 0 }
+          item.total += 1
+          if (String(faq.credibility ?? '').startsWith('D')) item.unverified += 1
+          campusCategories[category] = item
+        }
+        const pendingThreads = threads.filter(
+          (thread) => thread.status === 'pending' && !thread.withdrawnAt,
+        )
+        const campusThreads = threads.filter((thread) => thread.courseId === 'campus')
+        return sendJson(res, 200, {
+          revision: Number(row?.revision ?? 0),
+          updatedAt: Number(row?.updated_at ?? 0),
+          faqs: {
+            total: faqs.length,
+            byCourse,
+            campus: {
+              total: campusFaqs.length,
+              verified: campusFaqs.filter((faq) =>
+                /^[AB]/.test(String(faq.credibility ?? '')),
+              ).length,
+              unverified: campusFaqs.filter((faq) =>
+                String(faq.credibility ?? '').startsWith('D'),
+              ).length,
+              noSource: campusFaqs.filter((faq) => !faq.sourceUrl).length,
+              categories: campusCategories,
+            },
+          },
+          threads: {
+            total: threads.length,
+            pending: pendingThreads.length,
+            campusTotal: campusThreads.length,
+            campusPending: pendingThreads.filter(
+              (thread) => thread.courseId === 'campus',
+            ).length,
+          },
+          courseNotes: (data?.courseNotes ?? []).length,
+        })
+      }
+
       if (pathname === '/api/admin/audit' && req.method === 'GET') {
         requireAdmin(req)
         const limit = Number(url.searchParams.get('limit') ?? 120)
