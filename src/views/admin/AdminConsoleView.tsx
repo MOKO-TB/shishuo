@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CircleAlert,
   Compass,
+  Inbox,
   LayoutDashboard,
   RefreshCw,
   Server,
@@ -28,6 +29,7 @@ import type { ViewKey } from '../../types'
 import { ACTION_LABELS, formatNumber, roleLabel, shortTime } from './helpers'
 import { AdminUsersPanel } from './AdminUsersPanel'
 import { AdminModerationPanel } from './AdminModerationPanel'
+import { AdminCampusPanel } from './AdminCampusPanel'
 import { AdminAuditPanel } from './AdminAuditPanel'
 import { AdminUsagePanel } from './AdminUsagePanel'
 import { AdminContentPanel } from './AdminContentPanel'
@@ -44,6 +46,7 @@ const TABS: Array<{ key: AdminTab; label: string; icon: typeof LayoutDashboard }
   { key: 'overview', label: '概览', icon: LayoutDashboard },
   { key: 'users', label: '账号管理', icon: Users },
   { key: 'moderation', label: '风控审核', icon: ShieldAlert },
+  { key: 'campus', label: '学生问答', icon: Inbox },
   { key: 'audit', label: '操作审计', icon: ShieldCheck },
   { key: 'usage', label: 'AI 用量', icon: Activity },
   { key: 'content', label: '内容运营', icon: Compass },
@@ -144,6 +147,12 @@ export function AdminConsoleView({
       label: '风控审核',
       description: '敏感词、图片、禁言封禁与内容队列',
       icon: ShieldAlert,
+    },
+    {
+      tab: 'campus',
+      label: '学生问答',
+      description: '查看学生问题，校园主理人回复',
+      icon: Inbox,
     },
     {
       tab: 'audit',
@@ -339,11 +348,11 @@ export function AdminConsoleView({
                 <Sparkles size={16} />
               </div>
               <div className="admin-workspace-links">
-                <button onClick={() => onNavigate('campus')}>
-                  <Compass size={16} />
+                <button onClick={() => setTab('campus')}>
+                  <Inbox size={16} />
                   <span>
-                    <strong>校园知识库</strong>
-                    <em>{stats.campusFaqs} 条 FAQ · {stats.campusPending} 条待处理</em>
+                    <strong>学生问答</strong>
+                    <em>{stats.campusPending} 条校园待回复 · 共 {stats.campusFaqs} 条校园 FAQ</em>
                   </span>
                   <ArrowRight size={14} />
                 </button>
@@ -365,7 +374,7 @@ export function AdminConsoleView({
                 </button>
               </div>
               <p className="admin-panel-note-inline">
-                管理台不直接编辑学生问答；日常答疑仍在教师端「待办台」和校园知识库「校园待处理」里完成。
+                校园生活问题现在由管理员在「学生问答」里以校园主理人身份回复；课程问题仍由对应任课教师在教师端处理。
               </p>
             </section>
           </div>
@@ -374,10 +383,16 @@ export function AdminConsoleView({
 
       {tab === 'users' && <AdminUsersPanel notify={notify} />}
       {tab === 'moderation' && <AdminModerationPanel notify={notify} />}
+      {tab === 'campus' && <AdminCampusPanel notify={notify} />}
       {tab === 'audit' && <AdminAuditPanel />}
       {tab === 'usage' && <AdminUsagePanel notify={notify} />}
       {tab === 'content' && (
-        <AdminContentPanel onNavigate={onNavigate} onOpenBackup={onOpenBackup} />
+        <AdminContentPanel
+          onNavigate={onNavigate}
+          onOpenBackup={onOpenBackup}
+          onOpenCampusInbox={() => setTab('campus')}
+          onOpenVerification={() => setTab('verification')}
+        />
       )}
       {tab === 'verification' && <AdminVerificationPanel notify={notify} />}
       {tab === 'system' && <AdminSystemPanel notify={notify} />}

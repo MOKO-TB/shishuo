@@ -19,9 +19,10 @@
 | `admin/index.html` | 独立管理端 HTML 入口，Vite 多页构建输出 `dist/admin/index.html` |
 | `src/admin-main.tsx` | 管理端 React 入口（只挂 AuthProvider，不挂 StoreProvider） |
 | `src/views/admin/AdminApp.tsx` | 管理端登录页、管理员守卫、独立顶栏 |
-| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、8 个 tab、概览、权限守卫 |
+| `src/views/admin/AdminConsoleView.tsx` | 全页壳、页头、9 个 tab、概览、权限守卫 |
 | `src/views/admin/AdminUsersPanel.tsx` | 账号列表、创建账号、改姓名/课程、重置密码 |
 | `src/views/admin/AdminModerationPanel.tsx` | 敏感词、图片审核、用户禁言/封禁、内容队列 |
+| `src/views/admin/AdminCampusPanel.tsx` | 学生问答总览；管理员以校园主理人身份回复校园问题并沉淀 FAQ |
 | `src/views/admin/AdminVerificationPanel.tsx` | 校园 FAQ 复核计划、到期状态、标记已核实 |
 | `src/views/admin/AdminAuditPanel.tsx` | 审计日志、按账号/动作/课程/摘要筛选 |
 | `src/views/admin/AdminUsagePanel.tsx` | AI 调用量、Token、失败、Top 用户 |
@@ -52,6 +53,8 @@
 | POST | `/api/admin/moderation/threads/:id/review` | 通过 / 拒绝并撤下 / 仅撤下 |
 | GET | `/api/admin/moderation/images` | 图片审核队列 |
 | POST | `/api/admin/moderation/images/review` | 通过 / 撤下图片 |
+| GET | `/api/admin/student-threads?limit=300` | 学生问答总览（含校园域）；管理员可见学生、课程、状态和回复 |
+| POST | `/api/admin/campus/threads/:id/reply` | 以「校园主理人」回复校园问题；可选沉淀为校园 FAQ |
 | GET | `/api/admin/campus/verification` | 校园 FAQ 复核计划（状态 + 全部条目） |
 | POST | `/api/admin/campus/faqs/:id/verify` | 标记已核实并设置下次复核周期 |
 | GET | `/api/admin/audit?limit=200` | 审计日志 |
@@ -110,7 +113,6 @@
 ## 3.2 为什么需要 workspace-summary
 
 ## 3.3 内容核实与定时复核
-
 - 校园 FAQ 支持 `lastVerifiedAt / reviewIntervalDays / nextReviewAt / verifiedBy` 四个字段；旧数据没有字段时，服务端按 `collectedAt` + 可信度推导。
 - 管理台「内容核实」按状态分组：待核实（从未标记）、已过期、14 天内到期、正常。
 - 点击「标记已核实」会写入核实人、核实时间、周期和下次复核时间，并清除 `reviewNeeded`；动作写审计。
@@ -132,6 +134,15 @@
 - 接口永远只返回 `apiKeyMasked`；完整 Key 不会出现在 GET 响应、前端 bundle 或日志里。
 - **安全**：Key 目前以明文 JSON 存在 SQLite（和密码哈希、审计同库）。数据库备份等同包含 Key，务必保证 `data/` 权限、备份加密；后续可改为 KMS/密钥文件加密。
 - 每日额度是“按账号调用次数”，不是 token 上限；Token 用量在同一个页面查看。
+
+## 3.5 学生问答与校园主理人
+
+- 「学生问答」tab 通过 `/api/admin/student-threads` 读取**全部学生提问**，不受管理员本人课程分配限制；支持按全部 / 校园生活 / 课程问答、待回复 / 已回复 / 待补充和关键词筛选。
+- 校园生活问题（`courseId=campus`）可以在详情区直接回复。服务端用 `POST /api/admin/campus/threads/:id/reply` 复用 `thread-reply` 动作：校验 revision、敏感词和校园权限，写入学生通知，并触发已开启的回复邮件提醒。
+- 回复署名固定为「校园主理人」，不把“系统管理员”暴露给学生；实际操作人仍以管理员账号写入审计。
+- 回复超过 40 字时默认勾选「同时沉淀为校园 FAQ」，生成 `campus-reply-<threadId>`，可信度为 `B-教师回复`；不勾选则只回复、不入库。
+- 课程问题在管理端只读，详情区明确提示由对应任课教师在教师端处理；管理员不应代替课程老师回复。
+- 这样「校园主理人」不再依赖管理员进入主站校园页：独立管理员账号即使没有任何课程，也能在 `/admin/` 内完成查看、回复和沉淀。
 
 ## 4. 新增一个管理面板
 
@@ -159,16 +170,17 @@ npm run dev
 - 主站：`/` → 学生/教师视角
 - 管理端：**`/admin/`**（独立登录页；教师端顶部「管理台」只是跳转链接）
 
-管理台的 8 个 tab：
+管理台的 9 个 tab：
 
 1. **概览**：账号数、FAQ 总数、待处理问答、AI 状态、最近审计、工作区快捷入口。
 2. **账号管理**：创建/编辑账号、课程分配、重置密码。
 3. **风控审核**：敏感词、图片审核、用户禁言/封禁、内容队列。
-4. **操作审计**：按账号、动作、课程、摘要筛选。
-5. **AI 用量**：今日/近 7 天调用、Token、失败、Top 用户。
-6. **内容运营**：课程 FAQ 分布、校园内容健康度、导入命令。
-7. **内容核实**：校园 FAQ 复核计划与到期提醒。
-8. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
+4. **学生问答**：查看全部学生问题；校园问题由管理员以校园主理人身份回复并沉淀 FAQ。
+5. **操作审计**：按账号、动作、课程、摘要筛选。
+6. **AI 用量**：今日/近 7 天调用、Token、失败、Top 用户。
+7. **内容运营**：课程 FAQ 分布、校园内容健康度、导入命令。
+8. **内容核实**：校园 FAQ 复核计划与到期提醒。
+9. **系统与开发**：健康检查、接口索引、备份/部署命令、上线检查。
 
 ## 6. 构建与部署
 

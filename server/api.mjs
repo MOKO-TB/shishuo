@@ -184,6 +184,37 @@ function parsedWorkspace(row) {
   }
 }
 
+/** 管理台学生问答列表：只暴露运营需要的字段，不返回整份工作区。 */
+function adminStudentThreadView(thread) {
+  return {
+    id: thread.id,
+    courseId: thread.courseId,
+    student: {
+      id: thread.student?.id ?? '',
+      name: thread.student?.name ?? '',
+      anonymous: Boolean(thread.student?.anonymous),
+    },
+    question: thread.question,
+    createdAt: Number(thread.createdAt ?? 0),
+    status: thread.status,
+    kind: thread.kind ?? 'ask',
+    sources: Array.isArray(thread.sources) ? thread.sources : [],
+    escalation: thread.escalation ?? null,
+    teacherReply: thread.teacherReply ?? null,
+    studentSupplement: thread.studentSupplement ?? null,
+    feedback: thread.feedback ?? null,
+    resolvedAt: thread.resolvedAt ?? null,
+    withdrawnAt: thread.withdrawnAt ?? null,
+    attachment: thread.attachment
+      ? {
+          url: thread.attachment.url,
+          name: thread.attachment.name,
+          type: thread.attachment.type,
+        }
+      : null,
+  }
+}
+
 /** 管理台直接改工作区（撤下内容 / 删除违规图片）；仍走 revision 乐观锁 + 审计。 */
 function mutateWorkspaceAsAdmin(db, { user, action, summary, courseIds = [], mutate }) {
   const row = workspaceRow(db)
@@ -1021,6 +1052,110 @@ export function createApiHandler({ db, config }) {
             ).length,
           },
           courseNotes: (data?.courseNotes ?? []).length,
+        })
+      }
+
+      if (pathname === '/api/admin/student-threads' && req.method === 'GET') {
+        requireAdmin(req)
+        const row = workspaceRow(db)
+        const data = parsedWorkspace(row) ?? {}
+        const allThreads = Array.isArray(data.threads) ? data.threads : []
+        const campusThreads = allThreads.filter((thread) => thread.courseId === 'campus')
+        const activeThreads = allThreads.filter(
+          (thread) => !thread.withdrawnAt && thread.status !== 'rejected',
+        )
+        const pendingThreads = activeThreads.filter((thread) => thread.status === 'pending')
+        const startOfToday = new Date()
+        startOfToday.setHours(0, 0, 0, 0)
+        const requestedLimit = Number(url.searchParams.get('limit') ?? 300)
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.min(500, Math.max(1, Math.floor(requestedLimit)))
+          : 300
+        const rank = { pending: 0, 'needs-info': 1, answered: 2 }
+        const threads = [...activeThreads]
+          .sort(
+            (a, b) =>
+              (rank[a.status] ?? 3) - (rank[b.status] ?? 3) ||
+              Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0),
+          )
+          .slice(0, limit)
+          .map(adminStudentThreadView)
+        return sendJson(res, 200, {
+          revision: Number(row?.revision ?? 0),
+          updatedAt: Number(row?.updated_at ?? 0),
+          stats: {
+            total: activeThreads.length,
+            pending: pendingThreads.length,
+            campusTotal: campusThreads.filter((thread) => !thread.withdrawnAt).length,
+            campusPending: pendingThreads.filter((thread) => thread.courseId === 'campus')
+              .length,
+            answered: activeThreads.filter((thread) => thread.status === 'answered').length,
+            today: activeThreads.filter((thread) => Number(thread.createdAt ?? 0) >= startOfToday.getTime())
+              .length,
+            students: new Set(activeThreads.map((thread) => thread.student?.id).filter(Boolean)).size,
+          },
+          threads,
+        })
+      }
+
+      const adminCampusReplyMatch =
+        /^\/api\/admin\/campus\/threads\/([\w.-]+)\/reply$/.exec(pathname)
+      if (adminCampusReplyMatch && req.method === 'POST') {
+        requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const text = String(body.text ?? '').trim()
+        if (text.length < 8) return sendError(res, 400, '回复至少写 8 个字。')
+        if (text.length > 8_000) return sendError(res, 400, '回复内容不能超过 8000 字。')
+        const sediment = Boolean(body.sediment)
+        if (sediment && text.length < 40) {
+          return sendError(res, 400, '沉淀 FAQ 需要至少 40 字。')
+        }
+        const threadId = decodeURIComponent(adminCampusReplyMatch[1])
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const thread = (data.threads ?? []).find(
+          (item) => item.id === threadId && item.courseId === 'campus',
+        )
+        if (!thread) return sendError(res, 404, '校园问答不存在。')
+        if (thread.withdrawnAt) return sendError(res, 400, '这条问答已撤下，不能回复。')
+        if (thread.teacherReply) return sendError(res, 409, '这条问答已经回复过了。')
+
+        const now = Date.now()
+        const faqId = sediment ? `campus-reply-${thread.id}` : undefined
+        const faq = sediment
+          ? {
+              id: faqId,
+              courseId: 'campus',
+              question: thread.question,
+              aliases: [thread.question],
+              answer: text,
+              tags: ['校园问答'],
+              author: '校园主理人',
+              source: 'teacher',
+              createdAt: now,
+              updatedAt: now,
+              citations: 0,
+              helpful: 0,
+              unhelpful: 0,
+              chapter: '校园问答',
+              credibility: 'B-教师回复',
+              sourceChannel: '管理台 · 校园问答沉淀',
+              sourceUrl: '',
+              collectedAt: new Date(now).toISOString().slice(0, 10),
+              reviewNeeded: false,
+            }
+          : undefined
+        return await runAction(req, res, 'thread-reply', {
+          baseRevision: Number(body.baseRevision),
+          threadIds: [thread.id],
+          reply: {
+            text,
+            at: now,
+            by: '校园主理人',
+            ...(faqId ? { faqId } : {}),
+            recipientCount: 1,
+          },
+          ...(faq ? { faq } : {}),
         })
       }
 

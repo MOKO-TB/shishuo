@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
   BookOpen,
+  CalendarClock,
   CircleAlert,
-  Compass,
   Database,
+  Inbox,
   MessageCircleQuestion,
   RefreshCw,
   ShieldCheck,
@@ -19,11 +20,18 @@ import { courseLabel, formatNumber } from './helpers'
 interface AdminContentPanelProps {
   onNavigate: (view: ViewKey) => void
   onOpenBackup: () => void
+  onOpenCampusInbox: () => void
+  onOpenVerification: () => void
 }
 
 const PILOT_SET = new Set<string>(PILOT_COURSE_IDS)
 
-export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPanelProps) {
+export function AdminContentPanel({
+  onNavigate,
+  onOpenBackup,
+  onOpenCampusInbox,
+  onOpenVerification,
+}: AdminContentPanelProps) {
   const [summary, setSummary] = useState<WorkspaceSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,9 +101,9 @@ export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPane
             <Database size={14} />
             数据备份
           </button>
-          <button className="button button-primary" onClick={() => onNavigate('campus')}>
-            <Compass size={14} />
-            打开校园知识库
+          <button className="button button-primary" onClick={onOpenCampusInbox}>
+            <Inbox size={14} />
+            处理学生问答
           </button>
         </div>
       </div>
@@ -162,8 +170,8 @@ export function AdminContentPanel({ onNavigate, onOpenBackup }: AdminContentPane
             </div>
           )}
           <div className="admin-content-actions">
-            <button className="text-button" onClick={() => onNavigate('campus')}>
-              去校园知识库核实
+            <button className="text-button" onClick={onOpenVerification}>
+              去内容核实
               <ArrowRight size={13} />
             </button>
             <span>校园域负责人：管理员（校园主理人）</span>

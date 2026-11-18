@@ -176,10 +176,69 @@ export interface AiSettingsView {
   updatedBy: string
 }
 
+export interface AdminStudentThread {
+  id: string
+  courseId: string
+  student: {
+    id: string
+    name: string
+    anonymous: boolean
+  }
+  question: string
+  createdAt: number
+  status: string
+  kind: string
+  sources: string[]
+  escalation: {
+    title?: string
+    note?: string
+    urgency?: string
+    at?: number
+    auto?: boolean
+  } | null
+  teacherReply: {
+    text: string
+    at: number
+    by: string
+    faqId?: string
+    recipientCount?: number
+  } | null
+  studentSupplement: {
+    text: string
+    at: number
+  } | null
+  feedback: string | null
+  resolvedAt: number | null
+  withdrawnAt: number | null
+  attachment: {
+    url: string
+    name: string
+    type: string
+  } | null
+}
+
+export interface AdminStudentThreadStats {
+  total: number
+  pending: number
+  campusTotal: number
+  campusPending: number
+  answered: number
+  today: number
+  students: number
+}
+
+export interface AdminStudentThreadInbox {
+  revision: number
+  updatedAt: number
+  stats: AdminStudentThreadStats
+  threads: AdminStudentThread[]
+}
+
 export type AdminTab =
   | 'overview'
   | 'users'
   | 'moderation'
+  | 'campus'
   | 'audit'
   | 'usage'
   | 'content'

@@ -1069,3 +1069,79 @@ test('独立管理员：教师无管理权限，AI 配置即时生效', async ()
     assert.equal(cleared.json.settings.configured, false)
   }
 })
+
+test('管理端学生问答：管理员可查看校园提问并以校园主理人回复', async () => {
+  const denied = await api('/api/admin/student-threads', { as: 'teacherDs' })
+  assert.equal(denied.status, 403)
+
+  const student1 = session.get('student1').user
+  const created = await runAction('student1', '/api/threads', {
+    thread: {
+      id: 's1-campus-admin-thread',
+      courseId: 'campus',
+      student: { id: student1.id, name: student1.name, anonymous: false },
+      question: '校园卡丢了怎么补办？',
+      createdAt: Date.now(),
+      status: 'ai',
+      kind: 'ask',
+      sources: [],
+    },
+  })
+  assert.equal(created.status, 200)
+
+  const escalated = await runAction(
+    'student1',
+    '/api/threads/s1-campus-admin-thread/escalate',
+    {
+      escalation: {
+        title: '校园卡补办',
+        note: '知识库没有找到可靠的补办流程。',
+        anonymous: false,
+        urgency: 'week',
+        at: Date.now(),
+        auto: true,
+      },
+    },
+  )
+  assert.equal(escalated.status, 200)
+
+  const inbox = await api('/api/admin/student-threads?limit=300', { as: 'admin' })
+  assert.equal(inbox.status, 200)
+  const target = inbox.json.threads.find((thread) => thread.id === 's1-campus-admin-thread')
+  assert.ok(target, '管理员应能看到学生提交的校园问题')
+  assert.equal(target.courseId, 'campus')
+  assert.ok(inbox.json.stats.campusPending >= 1)
+
+  const replyText =
+    '先在校园卡中心挂失，避免余额被冒用；再带学生证和照片补办。补办费用与办理时间以学校当年通知为准。'
+  const replied = await runAction(
+    'admin',
+    '/api/admin/campus/threads/s1-campus-admin-thread/reply',
+    { text: replyText, sediment: true },
+  )
+  assert.equal(replied.status, 200)
+
+  const studentView = await state('student1')
+  const answered = studentView.json.data.threads.find(
+    (thread) => thread.id === 's1-campus-admin-thread',
+  )
+  assert.equal(answered.status, 'answered')
+  assert.equal(answered.teacherReply.by, '校园主理人')
+  assert.equal(answered.teacherReply.text, replyText)
+
+  const faq = studentView.json.data.faqs.find(
+    (item) => item.id === 'campus-reply-s1-campus-admin-thread',
+  )
+  assert.ok(faq, '勾选沉淀后应生成校园 FAQ')
+  assert.equal(faq.courseId, 'campus')
+  assert.equal(faq.credibility, 'B-教师回复')
+  assert.ok(
+    studentView.json.data.notifications.some(
+      (notification) =>
+        notification.threadId === 's1-campus-admin-thread' &&
+        notification.kind === 'teacher-reply' &&
+        notification.title.includes('校园主理人'),
+    ),
+    '学生应收到校园主理人的回复通知',
+  )
+})
