@@ -741,3 +741,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .campus-head {
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .campus-head-main .display-title {
+    font-size: 30px;
+    line-height: 1.15;
+  }
+
+  .campus-head-main .page-lede {
+    margin-top: 9px;
+    font-size: 11.5px;
+    line-height: 1.7;
+  }
+
+  .campus-head-card {
+    padding: 12px 13px;
+  }
+
+  .campus-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px 4px;
+    margin: 10px 0 8px;
+  }
+
+  .campus-stats strong {
+    font-size: 19px;
+  }
+
+  .campus-stats span {
+    font-size: 7.5px;
+  }
+
+  .campus-card-head {
+    font-size: 8px;
+  }
+
+  .campus-head-card .campus-card-foot {
+    padding-top: 7px;
+    font-size: 7.5px;
+  }
+
+  .campus-notice {
+    padding: 10px 11px;
+    gap: 8px;
+  }
+
+  .campus-notice-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .campus-notice-copy strong {
+    font-size: 10px;
+  }
+
+  .campus-notice-copy span {
+    font-size: 9px;
+    line-height: 1.6;
+  }
+
+  .campus-ask {
+    padding: 13px;
+  }
+
+  .campus-ask-head strong {
+    font-size: 16px;
+  }
+
+  .campus-ask-head span {
+    font-size: 9px;
+  }
+
+  .campus-ask-box input {
+    height: 42px;
+    font-size: 13px;
+  }
+
+  .campus-ask-box .button {
+    height: 42px;
+    font-size: 11px;
+  }
+}
