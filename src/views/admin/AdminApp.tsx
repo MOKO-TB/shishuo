@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { ArrowLeft, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../auth'
 import { BrandMark, Toast, type ToastState } from '../../components/ui'
@@ -10,21 +10,12 @@ export function AdminApp() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [attemptedLogin, setAttemptedLogin] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const notify = (message: string, tone: ToastState['tone'] = 'success') => {
     setToast({ id: Date.now(), message, tone })
     window.setTimeout(() => setToast(null), 4200)
   }
-
-  useEffect(() => {
-    if (attemptedLogin && user && !user.isAdmin) {
-      setFormError(
-        `${user.name}（${user.email}）不是管理员。请换一个管理员账号登录。`,
-      )
-    }
-  }, [attemptedLogin, user])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -35,7 +26,6 @@ export function AdminApp() {
       await login(email.trim(), password)
       setEmail('')
       setPassword('')
-      setAttemptedLogin(true)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : '登录失败，请稍后重试。')
     } finally {
@@ -84,7 +74,6 @@ export function AdminApp() {
               className="button button-ghost"
               onClick={() => {
                 setFormError(null)
-                setAttemptedLogin(false)
                 void logout()
               }}
             >
