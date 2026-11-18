@@ -9,7 +9,16 @@ export const PILOT_COURSES = {
 
 export const PILOT_COURSE_IDS = Object.keys(PILOT_COURSES)
 
+/** 校园生活域：复用 FAQ / 问答 / 权限模型，但不占用课程白名单。 */
+export const CAMPUS_COURSE_ID = 'campus'
+export const CAMPUS_OWNER_NAME = '陈砚'
+
+export function isCampusCourse(courseId) {
+  return courseId === CAMPUS_COURSE_ID
+}
+
 export function courseTeacherName(courseId) {
+  if (courseId === CAMPUS_COURSE_ID) return CAMPUS_OWNER_NAME
   return PILOT_COURSES[courseId]?.teacher ?? ''
 }
 
@@ -56,6 +65,7 @@ export function teacherCourses(row) {
 /** Pilot courses plus the student's own timetable courses, with their teacher names. */
 export function studentCourseTeacherMap(row) {
   const map = new Map(Object.entries(PILOT_COURSES).map(([id, item]) => [id, item.teacher]))
+  map.set(CAMPUS_COURSE_ID, CAMPUS_OWNER_NAME)
   const profile = userProfile(row)
   const custom = Array.isArray(profile.customCourses) ? profile.customCourses : []
   for (const course of custom) {
@@ -67,5 +77,8 @@ export function studentCourseTeacherMap(row) {
 }
 
 export function teacherCourseSet(row) {
-  return new Set(teacherCourses(row))
+  const courses = new Set(teacherCourses(row))
+  // 管理员兼任校园主理人；普通课程教师看不到校园问答。
+  if (row?.is_admin) courses.add(CAMPUS_COURSE_ID)
+  return courses
 }

@@ -8,7 +8,7 @@
  * 只读取源 JSON，生成 src/data/campusKb.ts；不修改源仓库。
  * 源数据：MOKO-TB/yinlu-xuezhang（MIT License, Copyright (c) 2026 MOKO-TB）。
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -118,7 +118,43 @@ export const CAMPUS_CREDIBILITY_COUNTS: Record<string, number> = ${JSON.stringif
 
 writeFileSync(resolve(root, 'src/data/campusKb.ts'), output, 'utf8')
 
+const unique = (values, limit) =>
+  Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).slice(0, limit)
+const kbTime = Date.parse(`${COLLECTED_AT}T08:00:00+08:00`)
+const faqs = cards.map((card, index) => {
+  const tags = unique([card.category, ...card.tags], 8)
+  const aliases = unique([card.title, card.category, ...card.tags], 12)
+  return {
+    id: `campus-${card.id}`,
+    courseId: 'campus',
+    question: card.title,
+    aliases,
+    answer: card.content,
+    tags,
+    author: card.sourceChannel || '引路学长知识库',
+    source: 'sediment',
+    createdAt: kbTime + index,
+    updatedAt: kbTime + index,
+    citations: 0,
+    helpful: 0,
+    unhelpful: 0,
+    chapter: card.category,
+    reviewNeeded: card.credibility.startsWith('D'),
+    credibility: card.credibility,
+    sourceUrl: card.sourceUrl,
+    sourceChannel: card.sourceChannel,
+    collectedAt: card.collectedAt,
+  }
+})
+mkdirSync(resolve(root, 'server/data'), { recursive: true })
+writeFileSync(
+  resolve(root, 'server/data/campus-faqs.json'),
+  `${JSON.stringify(faqs, null, 2)}\n`,
+  'utf8',
+)
+
 console.log(`已生成 src/data/campusKb.ts：${cards.length} 条`)
+console.log(`已生成 server/data/campus-faqs.json：${faqs.length} 条`)
 console.log('分类：', categoryCounts)
 console.log('可信度：', credibilityCounts)
 console.log(`缺少 source_url：${withoutUrl} 条`)

@@ -135,6 +135,10 @@ function sanitizeFaq(value: unknown): Faq | null {
     chapter: optionalString(value.chapter),
     reviewNeeded: Boolean(value.reviewNeeded),
     reviewNote: optionalString(value.reviewNote),
+    credibility: optionalString(value.credibility),
+    sourceUrl: optionalString(value.sourceUrl),
+    sourceChannel: optionalString(value.sourceChannel),
+    collectedAt: optionalString(value.collectedAt),
     history: sanitizeFaqHistory(value.history),
   }
 }

@@ -62,6 +62,14 @@ export interface Faq {
   chapter?: string
   reviewNeeded?: boolean
   reviewNote?: string
+  /** 校园知识卡来源可信度（引路学长 A/B/C/D），课程 FAQ 不填。 */
+  credibility?: string
+  /** 校园知识卡原文链接；课程 FAQ 不填。 */
+  sourceUrl?: string
+  /** 校园知识卡来源渠道，例如「学校官网-考研喜报」。 */
+  sourceChannel?: string
+  /** 校园知识卡采集日期，YYYY-MM-DD。 */
+  collectedAt?: string
   /** Last few snapshots before teacher edits; newest first. */
   history?: FaqVersion[]
 }

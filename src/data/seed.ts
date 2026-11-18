@@ -1,4 +1,6 @@
 import type { AppData, AppNotification, Course, DailyMetric, Faq, Thread } from '../types'
+import { CAMPUS_COURSE, CAMPUS_COURSE_ID } from './campus'
+import { createCampusFaqs } from './campusFaqs'
 import { createPilotFaqs } from './pilotFaqs'
 
 export const LATEX_FAQ_IDS = [
@@ -754,6 +756,7 @@ export function isSeededCourse(id: string) {
 }
 
 export function courseById(id: string): Course {
+  if (id === CAMPUS_COURSE_ID) return CAMPUS_COURSE
   return (
     allCourses().find((course) => course.id === id) ?? {
       id,
@@ -2256,6 +2259,7 @@ export function createSeedData(now = Date.now()): AppData {
       chapter: '第 6 章 · 应用层',
     },
     ...createPilotFaqs(now),
+    ...createCampusFaqs(),
   ]
 
   const faqById = (id: string) => faqs.find((faq) => faq.id === id)

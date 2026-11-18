@@ -1,6 +1,8 @@
 import { HttpError } from './http-error.mjs'
 import {
+  CAMPUS_COURSE_ID,
   courseTeacherName,
+  isCampusCourse,
   PILOT_COURSE_IDS,
   studentCourseTeacherMap,
   teacherCourseSet,
@@ -256,8 +258,13 @@ function assertTeacherReply(reply, courseId, teacherCourses, nextFaqMap) {
   if (!isString(reply.text, 8_000)) fail('回复内容不能为空或过长。')
   if (!isNumber(reply.at)) fail('回复时间不合法。')
   const expectedTeacher = courseTeacherName(courseId)
-  if (!expectedTeacher) fail('课程还没有配置任课教师。')
-  if (reply.by !== expectedTeacher) fail('回复人必须是该课程的任课教师身份。')
+  if (isCampusCourse(courseId)) {
+    if (!teacherCourses.has(CAMPUS_COURSE_ID)) fail('没有校园内容权限。')
+    if (!isString(reply.by, 120)) fail('回复人不能为空。')
+  } else {
+    if (!expectedTeacher) fail('课程还没有配置任课教师。')
+    if (reply.by !== expectedTeacher) fail('回复人必须是该课程的任课教师身份。')
+  }
   if (reply.recipientCount !== undefined && !isNumber(reply.recipientCount, { min: 1, max: 500 })) {
     fail('回复人数不合法。')
   }
@@ -469,6 +476,16 @@ function validateFaqShape(faq) {
     bad('FAQ 待完善说明不合法。')
   }
   if (faq.chapter !== undefined && !isString(faq.chapter, 200, true)) bad('FAQ 章节不合法。')
+  for (const [field, max] of [
+    ['credibility', 80],
+    ['sourceUrl', 2_000],
+    ['sourceChannel', 300],
+    ['collectedAt', 40],
+  ]) {
+    if (faq[field] !== undefined && !isString(faq[field], max, true)) {
+      bad('FAQ 溯源字段不合法。')
+    }
+  }
   if (faq.history !== undefined) {
     if (!Array.isArray(faq.history) || faq.history.length > 5) {
       bad('FAQ 历史版本数量不合法。')
@@ -689,25 +706,18 @@ export function projectWorkspace(data, user) {
     const threads = (data.threads ?? [])
       .filter((thread) => courses.has(thread.courseId))
       .map((thread) => (isAnonymousThread(thread) ? redactThread(thread) : thread))
-    const studentIdByThread = new Map(threads.map((thread) => [thread.id, thread.student?.id]))
     return {
       ...data,
       threads,
       faqs: (data.faqs ?? []).filter((faq) => courses.has(faq.courseId)),
       courseNotes: (data.courseNotes ?? []).filter((note) => courses.has(note.courseId)),
-      notifications: (data.notifications ?? [])
-        .filter(
-          (notification) =>
-            courses.has(notification.courseId) &&
-            (notification.audience === 'teacher' ||
-              (notification.audience === 'student' &&
-                TEACHER_REPLY_NOTIFICATION_KINDS.has(notification.kind))),
-        )
-        .map((notification) =>
-          notification.audience === 'student' && studentIdByThread.has(notification.threadId)
-            ? { ...notification, recipientId: studentIdByThread.get(notification.threadId) }
-            : notification,
-        ),
+      notifications: (data.notifications ?? []).filter(
+        (notification) =>
+          courses.has(notification.courseId) &&
+          (notification.audience === 'teacher' ||
+            (notification.audience === 'student' &&
+              TEACHER_REPLY_NOTIFICATION_KINDS.has(notification.kind))),
+      ),
     }
   }
   const courseTeacherMap = studentCourseTeacherMap(user)

@@ -6,6 +6,8 @@
  * 拉丁字母词条一律小写（检索文本会先做小写归一化）。
  */
 
+import { CAMPUS_COURSE_ID } from './campus'
+
 export const SHARED_DOMAIN_TERMS = [
   '动态规划',
   '状态转移',
@@ -300,12 +302,95 @@ export const COURSE_DOMAIN_TERMS: Record<string, string[]> = {
     '存储器',
     '逻辑函数',
   ],
+  campus: [
+    '考研',
+    '保研',
+    '推免',
+    '跨考',
+    '学硕',
+    '专硕',
+    '复试',
+    '初试',
+    '择校',
+    '上岸',
+    '奖学金',
+    '助学金',
+    '勤工俭学',
+    '综测',
+    '绩点',
+    'gpa',
+    '转专业',
+    '挂科',
+    '重修',
+    '四级',
+    '六级',
+    '教资',
+    '教师资格证',
+    '普通话',
+    '计算机二级',
+    '软考',
+    '驾照',
+    '证书',
+    '竞赛',
+    '蓝桥杯',
+    '数学建模',
+    'acm',
+    '挑战杯',
+    '组队',
+    '实习',
+    '就业',
+    '校招',
+    '秋招',
+    '社招',
+    '简历',
+    '面试',
+    '大厂',
+    '国企',
+    '考公',
+    '公务员',
+    '教师编',
+    '留学',
+    '申硕',
+    'mba',
+    'qs',
+    '社团',
+    '学生会',
+    '班委',
+    '辅导员',
+    '宿舍',
+    '室友',
+    '校园卡',
+    '宽带',
+    '水电',
+    '图书馆',
+    '知网',
+    '体测',
+    '心理',
+    '焦虑',
+    '拖延',
+    '迷茫',
+    '孤独',
+    '失恋',
+    '想家',
+    '心理咨询',
+    '入党',
+    '时间线',
+    '时间管理',
+    '自学',
+    '网课',
+    '期末',
+    '复习',
+  ],
 }
 
 const ALL_COURSE_TERMS = Object.values(COURSE_DOMAIN_TERMS).flat()
 
 /** 课程维度的领域词；未知课程退回全部词表（兼容 27 门非试点课程）。 */
 export function courseDomainTerms(courseId?: string): string[] {
+  // 校园域是独立知识域，不能被课程术语干扰。
+  if (courseId === CAMPUS_COURSE_ID) {
+    return [...(COURSE_DOMAIN_TERMS[CAMPUS_COURSE_ID] ?? [])]
+  }
   if (!courseId) return [...SHARED_DOMAIN_TERMS, ...ALL_COURSE_TERMS]
   const courseTerms = COURSE_DOMAIN_TERMS[courseId]
   if (!courseTerms) return [...SHARED_DOMAIN_TERMS, ...ALL_COURSE_TERMS]

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useStore } from '../store'
 import { allCourses, courseById, isSeededCourse, teacherByName } from '../data/seed'
+import { CAMPUS_COURSE_ID } from '../data/campus'
 import { isPilotCourse } from '../data/pilot'
 import { computeGaps } from '../lib/engine'
 import { useProfile } from '../lib/profile'
@@ -82,9 +83,10 @@ export function KnowledgeView({
   }, [allGaps, teacherCourseIds])
   const baseFaqs = useMemo(
     () =>
-      teacherCourseIds
+      (teacherCourseIds
         ? data.faqs.filter((faq) => teacherCourseIds.includes(faq.courseId))
-        : data.faqs,
+        : data.faqs
+      ).filter((faq) => faq.courseId !== CAMPUS_COURSE_ID),
     [data.faqs, teacherCourseIds],
   )
   const totalCitations = baseFaqs.reduce((sum, faq) => sum + faq.citations, 0)
