@@ -1,31 +1,117 @@
-import { useEffect, useState } from 'react'
-import { Activity, CircleAlert, RefreshCw } from 'lucide-react'
-import { apiGet } from '../../lib/api'
+import { useCallback, useEffect, useState } from 'react'
+import { Activity, CircleAlert, KeyRound, RefreshCw, Save, ShieldCheck } from 'lucide-react'
+import { apiGet, apiPost } from '../../lib/api'
 import { Badge } from '../../components/ui'
-import type { AiUsageSummary } from '../../data/adminTypes'
+import type { AiSettingsView, AiUsageSummary } from '../../data/adminTypes'
 import { formatNumber, roleLabel } from './helpers'
 
-export function AdminUsagePanel() {
+interface AdminUsagePanelProps {
+  notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
+}
+
+interface AiForm {
+  apiKey: string
+  baseUrl: string
+  model: string
+  dailyLimitStudent: string
+  dailyLimitTeacher: string
+  enabled: boolean
+}
+
+const emptyForm: AiForm = {
+  apiKey: '',
+  baseUrl: '',
+  model: '',
+  dailyLimitStudent: '120',
+  dailyLimitTeacher: '120',
+  enabled: true,
+}
+
+export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
   const [usage, setUsage] = useState<AiUsageSummary | null>(null)
+  const [settings, setSettings] = useState<AiSettingsView | null>(null)
+  const [form, setForm] = useState<AiForm>(emptyForm)
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loadUsage = async () => {
+  const fillForm = (next: AiSettingsView) => {
+    setForm((current) => ({
+      ...current,
+      apiKey: '',
+      baseUrl: next.baseUrl || '',
+      model: next.model || '',
+      dailyLimitStudent: String(next.dailyLimitStudent || 120),
+      dailyLimitTeacher: String(next.dailyLimitTeacher || 120),
+      enabled: next.enabled,
+    }))
+  }
+
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      setUsage(await apiGet<AiUsageSummary>('/api/admin/ai-usage'))
+      const [usageResult, settingsResult] = await Promise.all([
+        apiGet<AiUsageSummary>('/api/admin/ai-usage'),
+        apiGet<{ settings: AiSettingsView }>('/api/admin/ai-settings'),
+      ])
+      setUsage(usageResult)
+      setSettings(settingsResult.settings)
+      fillForm(settingsResult.settings)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'AI 用量加载失败。')
+      setError(err instanceof Error ? err.message : 'AI 配置加载失败。')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    void loadUsage()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    void load()
+  }, [load])
+
+  const save = async () => {
+    if (saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      const result = await apiPost<{ settings: AiSettingsView }>('/api/admin/ai-settings', {
+        ...(form.apiKey.trim() ? { apiKey: form.apiKey.trim() } : {}),
+        baseUrl: form.baseUrl.trim(),
+        model: form.model.trim(),
+        dailyLimitStudent: Number(form.dailyLimitStudent),
+        dailyLimitTeacher: Number(form.dailyLimitTeacher),
+        enabled: form.enabled,
+      })
+      setSettings(result.settings)
+      fillForm(result.settings)
+      await load()
+      notify('AI 配置已保存；学生端和教师端立即使用新配置。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存 AI 配置失败。')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const clearKey = async () => {
+    if (!window.confirm('清除 API Key 后，学生端和教师端会回到“低置信转人工”模式。确认清除？')) {
+      return
+    }
+    setSaving(true)
+    try {
+      const result = await apiPost<{ settings: AiSettingsView }>('/api/admin/ai-settings', {
+        clearKey: true,
+      })
+      setSettings(result.settings)
+      fillForm(result.settings)
+      await load()
+      notify('API Key 已清除。', 'info')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '清除 Key 失败。')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const maxCalls = usage ? Math.max(1, ...usage.days.map((day) => day.calls)) : 1
 
@@ -33,11 +119,11 @@ export function AdminUsagePanel() {
     <div className="admin-panel admin-panel-usage">
       <div className="admin-panel-toolbar">
         <div>
-          <strong>AI 用量</strong>
-          <span>按天统计调用、Token 与失败次数；数据来自服务端 ai_usage 表</span>
+          <strong>AI 网关与用量</strong>
+          <span>管理员在这里配置 API Key、Base URL、模型和每日额度；学生端和教师端统一使用</span>
         </div>
         <div className="admin-panel-actions">
-          <button className="button button-ghost" onClick={() => void loadUsage()} disabled={loading}>
+          <button className="button button-ghost" onClick={() => void load()} disabled={loading}>
             <RefreshCw size={14} className={loading ? 'spin-icon' : undefined} />
             刷新
           </button>
@@ -51,6 +137,114 @@ export function AdminUsagePanel() {
         </div>
       )}
 
+      <section className="admin-ai-settings">
+        <div className="admin-ai-head">
+          <div>
+            <strong>
+              <KeyRound size={16} />
+              API Key 配置
+            </strong>
+            <span>
+              Key 只保存在服务端数据库/配置中，接口只返回掩码；保存后立即生效，不需要重启服务。
+            </span>
+          </div>
+          <div className="admin-ai-badges">
+            <Badge tone={settings?.configured ? 'jade' : 'medium'}>
+              {settings?.configured ? '已配置' : '未配置'}
+            </Badge>
+            {settings?.source && <Badge tone="neutral">来源：{settings.source === 'database' ? '管理台' : settings.source === 'env' ? '环境变量' : '无'}</Badge>}
+            {settings && !settings.enabled && <Badge tone="danger">已停用</Badge>}
+          </div>
+        </div>
+
+        <div className="admin-ai-grid">
+          <label className="admin-ai-field is-wide">
+            <span>API Key</span>
+            <input
+              type="password"
+              value={form.apiKey}
+              onChange={(event) => setForm((current) => ({ ...current, apiKey: event.target.value }))}
+              placeholder={
+                settings?.apiKeyMasked
+                  ? `已配置 ${settings.apiKeyMasked}；留空保持不变`
+                  : '粘贴管理员提供的 API Key'
+              }
+              autoComplete="off"
+            />
+          </label>
+          <label className="admin-ai-field">
+            <span>Base URL</span>
+            <input
+              value={form.baseUrl}
+              onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))}
+              placeholder="https://api.deepseek.com/v1"
+            />
+          </label>
+          <label className="admin-ai-field">
+            <span>模型</span>
+            <input
+              value={form.model}
+              onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))}
+              placeholder="deepseek-chat"
+            />
+          </label>
+          <label className="admin-ai-field">
+            <span>学生每日上限</span>
+            <input
+              type="number"
+              min={1}
+              max={100000}
+              value={form.dailyLimitStudent}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, dailyLimitStudent: event.target.value }))
+              }
+            />
+          </label>
+          <label className="admin-ai-field">
+            <span>教师每日上限</span>
+            <input
+              type="number"
+              min={1}
+              max={100000}
+              value={form.dailyLimitTeacher}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, dailyLimitTeacher: event.target.value }))
+              }
+            />
+          </label>
+          <label className="admin-ai-enabled">
+            <input
+              type="checkbox"
+              checked={form.enabled}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, enabled: event.target.checked }))
+              }
+            />
+            <span>启用 AI 网关（关闭后保留 Key，但学生/教师端不会调用）</span>
+          </label>
+        </div>
+
+        <div className="admin-ai-actions">
+          <button className="button button-primary" onClick={() => void save()} disabled={saving}>
+            <Save size={14} />
+            {saving ? '保存中…' : '保存配置'}
+          </button>
+          <button
+            className="button button-danger-ghost"
+            onClick={() => void clearKey()}
+            disabled={saving || !settings?.configured}
+          >
+            清除 Key
+          </button>
+          {settings?.updatedAt && (
+            <span className="admin-ai-meta">
+              上次更新：{new Date(settings.updatedAt).toLocaleString('zh-CN')}
+              {settings.updatedBy ? ` · ${settings.updatedBy}` : ''}
+            </span>
+          )}
+        </div>
+      </section>
+
       {!usage ? (
         <p className="admin-empty">用量数据加载中…</p>
       ) : (
@@ -59,10 +253,8 @@ export function AdminUsagePanel() {
             <div className="admin-config-warning">
               <Activity size={16} />
               <div>
-                <strong>AI 网关还没有配置</strong>
-                <span>
-                  需要同时设置 `AI_API_KEY`、`AI_BASE_URL` 和 `AI_MODEL`，重启服务后这里才会产生调用。
-                </span>
+                <strong>AI 网关当前不可用</strong>
+                <span>在上方填入 Key、Base URL 和模型后保存；未配置时低置信问题会直接转交老师。</span>
               </div>
             </div>
           )}
@@ -71,7 +263,7 @@ export function AdminUsagePanel() {
             <div className="admin-usage-card">
               <span>今日调用</span>
               <strong>{usage.totals.callsToday}</strong>
-              <em>次 · 每人每日上限 {usage.dailyLimit}</em>
+              <em>次 · 学生上限 {settings?.dailyLimitStudent ?? usage.dailyLimit}</em>
             </div>
             <div className="admin-usage-card">
               <span>近 7 天调用</span>
@@ -126,10 +318,9 @@ export function AdminUsagePanel() {
           )}
 
           <div className="admin-panel-note">
-            <Activity size={14} />
+            <ShieldCheck size={14} />
             <span>
-              用量只统计服务端 AI 网关调用；学生浏览器里配置的“外部 AI”不会进入这张表。配额按角色在
-              `AI_DAILY_LIMIT_*` 环境变量中调整。
+              用量只统计服务端 AI 网关调用；配额按角色由上方配置控制。学生和教师无需、也不能在浏览器里配置 Key。
             </span>
           </div>
         </>

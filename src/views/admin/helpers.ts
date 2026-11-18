@@ -33,6 +33,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'moderation-blocked': '敏感词拦截',
   'campus-faq-verify': '核实校园 FAQ',
   'campus-review-due': '复核到期提醒',
+  'ai-settings-update': 'AI 网关配置',
   reset: '重置空间',
   restore: '恢复备份',
   'state-save': '同步状态',

@@ -111,7 +111,7 @@ export function AdminApp() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="teacher@shishuo.local"
+              placeholder="admin@shishuo.local"
               autoComplete="username"
               required
             />

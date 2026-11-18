@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { createApiHandler } from './api.mjs'
-import { demoAccountSummary, openDatabase, seedDemoAccounts, WORKSPACE_ID } from './db.mjs'
+import { demoAccountSummary, openDatabase, seedAdminAccount, seedDemoAccounts, WORKSPACE_ID } from './db.mjs'
 import { loadConfig, ROOT_DIR } from './config.mjs'
 import { recordAudit } from './audit.mjs'
 import { campusReviewSummary } from './campus-review.mjs'
@@ -14,6 +14,10 @@ const distDir = path.join(ROOT_DIR, 'dist')
 const uploadsDir = config.uploadsDir
 const db = openDatabase(config.dbPath)
 const insertedDemoAccounts = seedDemoAccounts(db, config)
+const adminSeed = seedAdminAccount(db, config)
+if (adminSeed.created) {
+  console.log(`[师说] 已创建独立管理员账号：${config.adminEmail}`)
+}
 const handleApi = createApiHandler({ db, config })
 
 /** 每日校园内容复核提醒：有未核实/过期内容时，往审计写一条系统记录。 */

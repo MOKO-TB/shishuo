@@ -21,8 +21,6 @@ import {
   answerMentorWithAI,
   errorMessage,
   fetchAIStatus,
-  isAIConfigReady,
-  loadAIConfig,
   type AIStatus,
 } from '../lib/ai'
 import type { StudentProfile } from '../lib/profile'
@@ -475,7 +473,7 @@ export function MajorMentorDrawer({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const lastSeed = useRef<number | null>(null)
   const thinkingRef = useRef<Record<string, boolean>>({})
-  const aiReady = isAIConfigReady(loadAIConfig()) && Boolean(aiStatus?.configured)
+  const aiReady = Boolean(aiStatus?.configured)
   const canRoute = isPilotCourse(mentor.courseId)
 
   const messages = threads[mentor.courseId] ?? []
@@ -512,7 +510,7 @@ export function MajorMentorDrawer({
     updateInput(mentorId, '')
     updateThinking(mentorId, true)
 
-    if (isAIConfigReady(loadAIConfig()) && aiStatus?.configured) {
+    if (aiStatus?.configured) {
       const messageId = makeId('mentor-a')
       const patchAnswer = (mentorReply: MentorAnswer) => {
         updateThread(mentorId, (current) =>

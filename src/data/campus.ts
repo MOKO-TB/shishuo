@@ -8,7 +8,7 @@ export const CAMPUS_COURSE_ID = 'campus'
  * 目前由演示管理员陈砚兼任；接入真实运营账号后，只需改这一处和
  * server/policy.mjs 里的同名字段。
  */
-export const CAMPUS_OWNER_NAME = '陈砚'
+export const CAMPUS_OWNER_NAME = '系统管理员'
 
 export const CAMPUS_COURSE: Course = {
   id: CAMPUS_COURSE_ID,

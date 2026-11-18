@@ -39,6 +39,9 @@ export function loadConfig() {
     demoAccounts,
     demoStudentPassword: process.env.DEMO_STUDENT_PASSWORD || 'student123',
     demoTeacherPassword: process.env.DEMO_TEACHER_PASSWORD || 'teacher123',
+    adminEmail: process.env.SHISHUO_ADMIN_EMAIL || 'admin@shishuo.local',
+    adminPassword: process.env.SHISHUO_ADMIN_PASSWORD || 'admin123',
+    adminName: '系统管理员',
     teacherInviteCode: process.env.TEACHER_INVITE_CODE || '',
     ai: {
       baseUrl: aiBaseUrl,

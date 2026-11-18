@@ -48,12 +48,13 @@
 - 生产环境配置 `SMTP_HOST` / `MAIL_FROM` 后走真实 SMTP；`MAIL_DEV_MODE` 在 production 下不生效。
 
 ### 管理员后台
-- `teacher@shishuo.local`（陈砚）同时是试点管理员，顶栏与侧栏都有「账号与审计」入口。
+- 独立管理端在 `/admin/`，使用独立管理员账号 `admin@shishuo.local`（首次启动由 `SHISHUO_ADMIN_EMAIL` / `SHISHUO_ADMIN_PASSWORD` 创建），不再用教师账号登录。
+- 教师账号 `teacher@shishuo.local` 只是数据结构课程教师，不再拥有管理权限。
 - 查看全部学生 / 教师账号，新建教师或学生账号，给教师分配 5 门试点课程中的任意组合。
 - 修改账号姓名与课程分配；修改课程后，该教师的数据投影和待办立即切换。
 - 重置任意账号密码；被重置账号的旧会话立即失效，需用新密码重新登录。
 - 操作审计：记录管理员建号 / 改课 / 重置密码，以及学生提问、转交、反馈、老师回复、撤回回复、FAQ 编辑、重置空间和越权拒绝等操作，显示操作人、课程、revision 与时间。
-- AI 用量看板：今日 / 近 7 天调用次数、token 与失败数、按天用量条形图、调用最多的账号排行。
+- AI 网关：管理员在 `/admin/` 的「AI 用量」页填写 API Key、Base URL、模型和每日额度；学生端/教师端统一使用，不再各自配置 Key。
 
 ### 账号与共享空间
 - 邮箱 + 密码注册 / 登录；注册需要邮箱验证码，忘记密码可凭邮箱验证码自助重置。密码用 scrypt 加盐哈希，登录态放在 HttpOnly Cookie 中，有效期 7 天。
@@ -170,7 +171,8 @@ npm run dev
 |---|---|---|---|
 | 学生 | `student@shishuo.local` | `student123` | 林晓 |
 | 学生 | `student2@shishuo.local` | `student123` | 周可 |
-| 教师 / 管理员 | `teacher@shishuo.local` | `teacher123` | 陈砚（数据结构） |
+| 管理员（/admin/） | `admin@shishuo.local` | `admin123`（生产请改） | 系统管理员 |
+| 教师 | `teacher@shishuo.local` | `teacher123` | 陈砚（数据结构） |
 | 教师 | `teacher.math@shishuo.local` | `teacher123` | 李芸 |
 | 教师 | `teacher.circuit@shishuo.local` | `teacher123` | 石岩 |
 | 教师 | `teacher.analog@shishuo.local` | `teacher123` | 陆衡 |

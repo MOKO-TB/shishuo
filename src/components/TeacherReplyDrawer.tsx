@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { useStore } from '../store'
-import { errorMessage, fetchAIStatus, isAIConfigReady, loadAIConfig, rewriteTeacherReply } from '../lib/ai'
+import { errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
 import { prepareImage, uploadThreadImage } from '../lib/image'
 import { courseById } from '../data/seed'
 import type { Faq, ThreadAttachment, ThreadGroup } from '../types'
@@ -143,7 +143,7 @@ export function TeacherReplyDrawer({
     let cancelled = false
     void fetchAIStatus()
       .then((status) => {
-        if (!cancelled) setAiReady(isAIConfigReady(loadAIConfig()) && status.configured)
+        if (!cancelled) setAiReady(status.configured)
       })
       .catch(() => {
         if (!cancelled) setAiReady(false)

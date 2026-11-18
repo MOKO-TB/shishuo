@@ -243,11 +243,6 @@ async function requestChatStream(
 }
 
 async function callChat(messages: ChatMessage[], maxTokens = 1_200) {
-  const config = loadAIConfig()
-  if (!isAIConfigReady(config)) {
-    throw new Error('AI 增强已在设置中关闭。')
-  }
-
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), 100_000)
   try {
@@ -289,11 +284,6 @@ async function callChatStream(
   maxTokens: number,
   onUpdate?: (partial: string) => void,
 ) {
-  const config = loadAIConfig()
-  if (!isAIConfigReady(config)) {
-    throw new Error('AI 增强已在设置中关闭。')
-  }
-
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), 100_000)
   try {

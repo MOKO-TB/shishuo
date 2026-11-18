@@ -36,6 +36,8 @@ const API_ROWS = [
   ['GET', '/api/admin/audit?limit=200', '操作审计'],
   ['GET', '/api/admin/workspace-summary', '全量内容统计（FAQ / 校园 / 待处理）'],
   ['GET', '/api/admin/ai-usage', 'AI 调用与 Token 用量'],
+  ['GET', '/api/admin/ai-settings', 'AI 网关配置（Key 只返回掩码）'],
+  ['POST', '/api/admin/ai-settings', '保存 Key / Base URL / 模型 / 每日额度'],
   ['GET', '/api/admin/archived-threads', '归档问答'],
   ['GET', '/api/state', '当前账号可见的工作区'],
   ['GET', '/api/state/revision', '轻量 revision 探测'],

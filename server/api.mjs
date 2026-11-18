@@ -22,6 +22,11 @@ import {
   upsertReview,
 } from './moderation.mjs'
 import { campusReviewSummary, reviewStateForFaq } from './campus-review.mjs'
+import {
+  maskApiKey,
+  resolveAiConfig,
+  saveAiSettings,
+} from './ai-settings.mjs'
 import { sendMail, sendVerificationCode } from './mail.mjs'
 import {
   checkSendRate,
@@ -142,8 +147,8 @@ function usageToday(db, userId) {
 }
 
 /** 按角色取当日额度：AI_DAILY_LIMIT_STUDENT / AI_DAILY_LIMIT_TEACHER，缺省回落 AI_DAILY_LIMIT。 */
-function aiDailyLimitFor(config, role) {
-  return role === 'teacher' ? config.ai.dailyLimitTeacher : config.ai.dailyLimitStudent
+function aiDailyLimitFor(ai, role) {
+  return role === 'teacher' ? ai.dailyLimitTeacher : ai.dailyLimitStudent
 }
 
 /** 内容审核钩子：命中词表任一项即拒绝发往上游。词表默认为空（不启用）。 */
@@ -737,10 +742,11 @@ export function createApiHandler({ db, config }) {
     try {
       if (pathname === '/api/health' && req.method === 'GET') {
         const row = workspaceRow(db)
+        const ai = resolveAiConfig(db, config.ai)
         return sendJson(res, 200, {
           ok: true,
           service: 'shishuo',
-          aiConfigured: config.ai.configured,
+          aiConfigured: ai.configured,
           // 前端据此决定是否显示演示账号；真实上线设 SHISHUO_DEMO_ACCOUNTS=0 即隐藏。
           demoAccounts: config.demoAccounts,
           // 教师自助注册是否开放（需配置 TEACHER_INVITE_CODE）。
@@ -1418,8 +1424,104 @@ export function createApiHandler({ db, config }) {
         return sendJson(res, 200, { threads: listArchivedThreads(db, limit) })
       }
 
+      if (pathname === '/api/admin/ai-settings' && req.method === 'GET') {
+        requireAdmin(req)
+        const ai = resolveAiConfig(db, config.ai)
+        return sendJson(res, 200, {
+          settings: {
+            configured: ai.configured,
+            enabled: ai.enabled,
+            baseUrl: ai.baseUrl,
+            model: ai.model,
+            apiKeyMasked: maskApiKey(ai.apiKey),
+            source: ai.source,
+            dailyLimitStudent: ai.dailyLimitStudent,
+            dailyLimitTeacher: ai.dailyLimitTeacher,
+            updatedAt: ai.stored.updatedAt,
+            updatedBy: ai.stored.updatedBy,
+          },
+        })
+      }
+
+      if (pathname === '/api/admin/ai-settings' && req.method === 'POST') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const apiKey = body.apiKey === undefined ? undefined : String(body.apiKey).trim()
+        if (apiKey !== undefined && apiKey !== '' && (apiKey.length < 8 || apiKey.length > 500)) {
+          return sendError(res, 400, 'API Key 长度不合法。')
+        }
+        const baseUrl = body.baseUrl === undefined ? undefined : String(body.baseUrl).trim()
+        if (baseUrl) {
+          let parsed
+          try {
+            parsed = new URL(baseUrl)
+          } catch {
+            return sendError(res, 400, 'Base URL 格式不正确。')
+          }
+          if (!['http:', 'https:'].includes(parsed.protocol) || baseUrl.length > 500) {
+            return sendError(res, 400, 'Base URL 必须是 http/https 地址。')
+          }
+        }
+        const model = body.model === undefined ? undefined : String(body.model).trim()
+        if (model !== undefined && model !== '' && (model.length < 1 || model.length > 120)) {
+          return sendError(res, 400, '模型名称不合法。')
+        }
+        const readLimit = (value) => {
+          if (value === undefined || value === '') return undefined
+          const number = Number(value)
+          if (!Number.isInteger(number) || number < 1 || number > 100_000) {
+            throw new HttpError(400, '每日调用额度需要是 1–100000 的整数。')
+          }
+          return number
+        }
+        let dailyLimitStudent
+        let dailyLimitTeacher
+        try {
+          dailyLimitStudent = readLimit(body.dailyLimitStudent)
+          dailyLimitTeacher = readLimit(body.dailyLimitTeacher)
+        } catch (error) {
+          return sendError(res, 400, error.message)
+        }
+        const clearKey = body.clearKey === true
+        const enabled = typeof body.enabled === 'boolean' ? body.enabled : undefined
+        saveAiSettings(db, {
+          apiKey,
+          baseUrl,
+          model,
+          dailyLimitStudent,
+          dailyLimitTeacher,
+          enabled,
+          clearKey,
+          updatedBy: admin.name,
+        })
+        recordAudit(db, {
+          user: admin,
+          action: 'ai-settings-update',
+          actions: ['ai-settings-update'],
+          summary: `更新 AI 网关配置${clearKey ? '（清除 Key）' : apiKey ? '（更新 Key）' : ''}${model ? ` · ${model}` : ''}`,
+          courseIds: [],
+        })
+        const ai = resolveAiConfig(db, config.ai)
+        return sendJson(res, 200, {
+          settings: {
+            configured: ai.configured,
+            enabled: ai.enabled,
+            baseUrl: ai.baseUrl,
+            model: ai.model,
+            apiKeyMasked: maskApiKey(ai.apiKey),
+            source: ai.source,
+            dailyLimitStudent: ai.dailyLimitStudent,
+            dailyLimitTeacher: ai.dailyLimitTeacher,
+            updatedAt: ai.stored.updatedAt,
+            updatedBy: ai.stored.updatedBy,
+          },
+        })
+      }
+
       if (pathname === '/api/admin/ai-usage' && req.method === 'GET') {
         requireAdmin(req)
+        const ai = resolveAiConfig(db, config.ai)
         const since = Date.now() - 7 * 86_400_000
         const rows = db
           .prepare(
@@ -1468,9 +1570,13 @@ export function createApiHandler({ db, config }) {
           users.set(row.user_id, entry)
         }
         return sendJson(res, 200, {
-          configured: config.ai.configured,
-          model: config.ai.model,
-          dailyLimit: config.ai.dailyLimit,
+          configured: ai.configured,
+          model: ai.model,
+          dailyLimit: ai.dailyLimitStudent,
+          dailyLimitStudent: ai.dailyLimitStudent,
+          dailyLimitTeacher: ai.dailyLimitTeacher,
+          enabled: ai.enabled,
+          source: ai.source,
           totals: { calls, tokens, errors, callsToday },
           days: Array.from(days.values()).sort((a, b) => a.date.localeCompare(b.date)),
           topUsers: Array.from(users.values())
@@ -1735,11 +1841,12 @@ export function createApiHandler({ db, config }) {
 
       if (pathname === '/api/ai/status' && req.method === 'GET') {
         const user = requireUser(req)
+        const ai = resolveAiConfig(db, config.ai)
         return sendJson(res, 200, {
-          configured: config.ai.configured,
-          model: config.ai.configured ? config.ai.model : null,
+          configured: ai.configured,
+          model: ai.configured ? ai.model : null,
           usedToday: usageToday(db, user.id),
-          dailyLimit: aiDailyLimitFor(config, user.role),
+          dailyLimit: aiDailyLimitFor(ai, user.role),
         })
       }
 
@@ -1747,6 +1854,7 @@ export function createApiHandler({ db, config }) {
         const user = requireUser(req)
         if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
         assertUserCanWrite(user, 'post')
+        const ai = resolveAiConfig(db, config.ai)
         const body = await readJson(req, CHAT_BODY_LIMIT)
         const messages = sanitizeMessages(body.messages)
         const blockedTerm = findBlockedTerm(config, messages)
@@ -1771,17 +1879,17 @@ export function createApiHandler({ db, config }) {
         if (dbBlockedTerm) {
           return sendError(res, 400, `问题包含不允许的词：${dbBlockedTerm}`)
         }
-        if (!config.ai.configured) {
-          return sendError(res, 503, '服务端 AI 网关尚未配置，请联系管理员设置 AI_API_KEY。')
+        if (!ai.configured) {
+          return sendError(res, 503, '服务端 AI 网关尚未配置，请联系管理员在管理台配置 API Key。')
         }
-        const dailyLimit = aiDailyLimitFor(config, user.role)
+        const dailyLimit = aiDailyLimitFor(ai, user.role)
         const used = usageToday(db, user.id)
         if (used >= dailyLimit) {
           return sendError(res, 429, `今日 AI 调用额度已用完（${dailyLimit} 次），请明天再试或联系老师。`)
         }
         const wantStream = body.stream === true
         const upstreamBody = {
-          model: config.ai.model,
+          model: ai.model,
           messages: redactMessages(messages),
           temperature: clamp(body.temperature, 0, 1.2, 0.2),
           max_tokens: Math.round(clamp(body.max_tokens, 64, AI_MAX_TOKENS, AI_DEFAULT_MAX_TOKENS)),
@@ -1791,14 +1899,14 @@ export function createApiHandler({ db, config }) {
         if (body.enable_thinking === false) upstreamBody.enable_thinking = false
 
         const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), config.ai.timeoutMs)
+        const timeout = setTimeout(() => controller.abort(), ai.timeoutMs)
         let upstream
         try {
-          upstream = await fetch(upstreamEndpoint(config.ai.baseUrl), {
+          upstream = await fetch(upstreamEndpoint(ai.baseUrl), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${config.ai.apiKey}`,
+              Authorization: `Bearer ${ai.apiKey}`,
             },
             body: JSON.stringify(upstreamBody),
             signal: controller.signal,
@@ -1809,7 +1917,7 @@ export function createApiHandler({ db, config }) {
           try {
             db.prepare(
               'INSERT INTO ai_usage (user_id, model, status, created_at) VALUES (?, ?, ?, ?)',
-            ).run(user.id, config.ai.model, aborted ? 504 : 502, Date.now())
+            ).run(user.id, ai.model, aborted ? 504 : 502, Date.now())
           } catch {
             // Usage logging must never mask the real failure.
           }
@@ -1825,7 +1933,7 @@ export function createApiHandler({ db, config }) {
                VALUES (?, ?, ?, ?, ?, ?)`,
             ).run(
               user.id,
-              config.ai.model,
+              ai.model,
               Number.isFinite(promptTokens) ? promptTokens : 0,
               Number.isFinite(completionTokens) ? completionTokens : 0,
               status,

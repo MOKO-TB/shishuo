@@ -163,6 +163,19 @@ export interface CampusVerificationSummary {
   ok: number
 }
 
+export interface AiSettingsView {
+  configured: boolean
+  enabled: boolean
+  baseUrl: string
+  model: string
+  apiKeyMasked: string
+  source: 'database' | 'env' | 'none'
+  dailyLimitStudent: number
+  dailyLimitTeacher: number
+  updatedAt: number | null
+  updatedBy: string
+}
+
 export type AdminTab =
   | 'overview'
   | 'users'

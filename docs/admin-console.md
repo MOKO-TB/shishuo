@@ -56,6 +56,8 @@
 | POST | `/api/admin/campus/faqs/:id/verify` | 标记已核实并设置下次复核周期 |
 | GET | `/api/admin/audit?limit=200` | 审计日志 |
 | GET | `/api/admin/ai-usage` | 近 7 天 AI 用量 |
+| GET | `/api/admin/ai-settings` | AI 网关配置（Key 只返回掩码） |
+| POST | `/api/admin/ai-settings` | 保存 Key / Base URL / 模型 / 每日额度 / 启用状态 |
 | GET | `/api/admin/archived-threads` | 归档问答 |
 | GET | `/api/admin/workspace-summary` | **管理台专用**全量内容汇总（FAQ 分课程、校园健康度、待处理问答） |
 
@@ -120,6 +122,17 @@
   有未核实/过期内容时退出码为 1，方便接告警。
 - 复核周期建议：政策/截止日期 30 天，常规校园信息 90 天，稳定流程 180 天，长期有效 365 天。
 
+## 3.4 AI 网关配置（管理端统一）
+
+- 独立管理员账号：`SHISHUO_ADMIN_EMAIL` / `SHISHUO_ADMIN_PASSWORD`，默认 `admin@shishuo.local`；首次启动由 `seedAdminAccount` 创建，角色是 teacher + `is_admin=1`、不分配课程。
+- 旧的演示教师 `teacher@shishuo.local` 会被收回管理员权限；它只负责数据结构课程。
+- 管理员在「AI 用量」页填写 API Key、Base URL、模型、学生/教师每日上限和启用状态。
+- 配置存在 `app_settings` 表（key=`ai_gateway`）；环境变量 `AI_*` 是初始兜底。保存后立即生效，不需要重启。
+- 学生端和教师端都只调用 `/api/ai/chat/completions`；浏览器不保存 Key，也没有教师端 Key 配置。
+- 接口永远只返回 `apiKeyMasked`；完整 Key 不会出现在 GET 响应、前端 bundle 或日志里。
+- **安全**：Key 目前以明文 JSON 存在 SQLite（和密码哈希、审计同库）。数据库备份等同包含 Key，务必保证 `data/` 权限、备份加密；后续可改为 KMS/密钥文件加密。
+- 每日额度是“按账号调用次数”，不是 token 上限；Token 用量在同一个页面查看。
+
 ## 4. 新增一个管理面板
 
 1. 在 `src/data/adminTypes.ts` 的 `AdminTab` 里加 key，例如 `'moderation'`。
@@ -139,7 +152,7 @@
 ```bash
 npm run dev
 # Vite: http://localhost:5173
-# 管理员演示账号：teacher@shishuo.local / teacher123
+# 管理员账号：admin@shishuo.local / admin123（生产用 SHISHUO_ADMIN_* 覆盖）
 ```
 
 登录后：

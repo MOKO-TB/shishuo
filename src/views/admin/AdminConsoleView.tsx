@@ -375,7 +375,7 @@ export function AdminConsoleView({
       {tab === 'users' && <AdminUsersPanel notify={notify} />}
       {tab === 'moderation' && <AdminModerationPanel notify={notify} />}
       {tab === 'audit' && <AdminAuditPanel />}
-      {tab === 'usage' && <AdminUsagePanel />}
+      {tab === 'usage' && <AdminUsagePanel notify={notify} />}
       {tab === 'content' && (
         <AdminContentPanel onNavigate={onNavigate} onOpenBackup={onOpenBackup} />
       )}

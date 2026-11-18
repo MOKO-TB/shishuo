@@ -150,6 +150,13 @@ export function openDatabase(dbPath) {
 
     CREATE INDEX IF NOT EXISTS idx_moderation_reviews_kind
       ON moderation_reviews(kind, status);
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      updated_by TEXT
+    );
   `)
   try {
     const columns = db.prepare('PRAGMA table_info(users)').all()
@@ -208,7 +215,6 @@ const DEMO_USERS = [
     passwordKey: 'demoTeacherPassword',
     profile: null,
     courses: ['ds'],
-    isAdmin: true,
   },
   {
     id: 'teacher-li-yun',
@@ -286,6 +292,37 @@ export function seedDemoAccounts(db, config) {
     inserted.push(account.email)
   }
   return inserted
+}
+
+export function seedAdminAccount(db, config) {
+  const email = String(config.adminEmail || '').trim().toLowerCase()
+  if (!email) return { created: false, reason: 'missing-email' }
+  const name = String(config.adminName || '系统管理员').trim() || '系统管理员'
+  const password = String(config.adminPassword || 'admin123')
+  const existing = db.prepare('SELECT id, email, is_admin FROM users WHERE email = ?').get(email)
+
+  let created = false
+  if (!existing) {
+    const idTaken = db.prepare('SELECT id, email FROM users WHERE id = ?').get('admin-system')
+    if (idTaken && String(idTaken.email).toLowerCase() !== email) {
+      return { created: false, reason: 'id-taken' }
+    }
+    db.prepare(
+      `INSERT INTO users
+         (id, email, name, role, password_hash, profile_json, courses_json, is_admin, created_at)
+       VALUES (?, ?, ?, 'teacher', ?, '{}', '[]', 1, ?)`,
+    ).run('admin-system', email, name, hashPassword(password), Date.now())
+    created = true
+  } else if (existing.id === 'admin-system' && !existing.is_admin) {
+    db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(existing.id)
+  }
+
+  // 旧版本把演示教师 teacher@shishuo.local 当成管理员；独立管理员上线后收回这个权限。
+  db.prepare(
+    "UPDATE users SET is_admin = 0 WHERE id = 'teacher-chen-yan' AND lower(email) <> ?",
+  ).run(email)
+
+  return { created, reason: existing ? 'existing' : 'created' }
 }
 
 export function demoAccountSummary(config) {

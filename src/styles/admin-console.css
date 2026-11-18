@@ -1823,3 +1823,169 @@
     height: 36px;
   }
 }
+
+/* AI 网关配置（管理端） */
+.admin-ai-settings {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(20, 108, 86, 0.05), transparent 34%),
+    var(--surface);
+}
+
+.admin-ai-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-ai-head > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-ai-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.admin-ai-head strong svg {
+  color: var(--jade);
+}
+
+.admin-ai-head span {
+  font-size: 8.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.admin-ai-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-ai-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.admin-ai-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 8.5px;
+  color: var(--muted);
+}
+
+.admin-ai-field.is-wide {
+  grid-column: span 2;
+}
+
+.admin-ai-field input {
+  width: 100%;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--ink);
+  font-size: 10px;
+  outline: none;
+}
+
+.admin-ai-field input:focus {
+  border-color: var(--jade);
+}
+
+.admin-ai-enabled {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  color: var(--ink-soft);
+}
+
+.admin-ai-enabled input {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.admin-ai-actions .button {
+  height: 32px;
+  font-size: 9px;
+}
+
+.admin-ai-meta {
+  margin-left: auto;
+  font-size: 8px;
+  color: var(--faint);
+}
+
+@media (max-width: 900px) {
+  .admin-ai-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-ai-settings {
+    padding: 12px;
+  }
+
+  .admin-ai-head {
+    flex-direction: column;
+  }
+
+  .admin-ai-badges {
+    justify-content: flex-start;
+  }
+
+  .admin-ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-ai-field.is-wide {
+    grid-column: auto;
+  }
+
+  .admin-ai-field input {
+    height: 40px;
+    font-size: 12px;
+  }
+
+  .admin-ai-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-ai-actions .button {
+    width: 100%;
+    height: 38px;
+  }
+
+  .admin-ai-meta {
+    margin-left: 0;
+  }
+}

@@ -84,7 +84,7 @@ export function AIConfigModal({ open, config, onClose, onSave, notify }: AIConfi
       <div className="ai-config-intro">
         <Server size={17} />
         <p>
-          模型 Key 只保存在服务端环境变量中，浏览器不会接触，也不会进入问答数据。
+          模型 Key 只保存在服务端配置/数据库中，浏览器不会接触，也不会进入问答数据。
           知识库没把握时，由服务端网关补充回答；图片题目识别也走同一个网关。
         </p>
       </div>
@@ -119,8 +119,8 @@ export function AIConfigModal({ open, config, onClose, onSave, notify }: AIConfi
           <Cpu size={14} />
           <span>
             {status?.configured
-              ? '网关配置由管理员维护；如需更换模型或调整额度，请修改服务端 .env 后重启。'
-              : '管理员在服务端 .env 中设置 AI_API_KEY 与 AI_MODEL 后，此处会自动就绪。'}
+              ? '网关配置由管理员在 /admin/ 管理台维护；保存后立即生效，不需要重启。'
+              : '管理员在 /admin/ 管理台配置 API Key、Base URL 和模型后，此处会自动就绪。'}
           </span>
         </div>
       </div>

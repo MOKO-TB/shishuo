@@ -11,7 +11,7 @@ export const PILOT_COURSE_IDS = Object.keys(PILOT_COURSES)
 
 /** 校园生活域：复用 FAQ / 问答 / 权限模型，但不占用课程白名单。 */
 export const CAMPUS_COURSE_ID = 'campus'
-export const CAMPUS_OWNER_NAME = '陈砚'
+export const CAMPUS_OWNER_NAME = '系统管理员'
 
 export function isCampusCourse(courseId) {
   return courseId === CAMPUS_COURSE_ID

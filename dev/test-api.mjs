@@ -264,7 +264,10 @@ test('演示账号登录并初始化工作区', async () => {
   const student1 = await login('student1', 'student@shishuo.local', 'student123')
   await login('student2', 'student2@shishuo.local', 'student123')
   const teacherDs = await login('teacherDs', 'teacher@shishuo.local', 'teacher123')
+  const admin = await login('admin', 'admin@shishuo.local', 'admin123')
   await login('teacherMath', 'teacher.math@shishuo.local', 'teacher123')
+  assert.equal(admin.isAdmin, true, '独立管理员账号应拥有管理权限')
+  assert.equal(teacherDs.isAdmin, false, '课程教师不再是管理员')
 
   const seeded = await putState('student1', seedWorkspace(student1), 0)
   assert.equal(seeded.status, 200, '首个账号应能初始化工作区')
@@ -545,7 +548,7 @@ test('学生端能看到老师回复，管理审计仅管理员可读', async ()
   const denied = await api('/api/admin/audit', { as: 'student1' })
   assert.equal(denied.status, 403)
 
-  const audit = await api('/api/admin/audit?limit=100', { as: 'teacherDs' })
+  const audit = await api('/api/admin/audit?limit=100', { as: 'admin' })
   assert.equal(audit.status, 200)
   const actions = audit.json.logs.flatMap((log) => log.actions ?? [])
   assert.ok(
@@ -565,7 +568,7 @@ test('AI 用量统计仅管理员可读', async () => {
   const denied = await api('/api/admin/ai-usage', { as: 'student1' })
   assert.equal(denied.status, 403)
 
-  const usage = await api('/api/admin/ai-usage', { as: 'teacherDs' })
+  const usage = await api('/api/admin/ai-usage', { as: 'admin' })
   assert.equal(usage.status, 200)
   assert.ok(usage.json.totals)
   assert.ok(Array.isArray(usage.json.days))
@@ -576,7 +579,7 @@ test('管理台汇总仅管理员可读，且统计全量内容', async () => {
   const denied = await api('/api/admin/workspace-summary', { as: 'student1' })
   assert.equal(denied.status, 403)
 
-  const summary = await api('/api/admin/workspace-summary', { as: 'teacherDs' })
+  const summary = await api('/api/admin/workspace-summary', { as: 'admin' })
   assert.equal(summary.status, 200)
   assert.ok(summary.json.faqs.total >= 1)
   assert.ok(Object.keys(summary.json.faqs.byCourse).length >= 1)
@@ -621,7 +624,7 @@ test('归档维护：旧问答移入归档，管理员可查学生不可查', as
   const denied = await api('/api/admin/archived-threads', { as: 'student1' })
   assert.equal(denied.status, 403)
 
-  const list = await api('/api/admin/archived-threads', { as: 'teacherDs' })
+  const list = await api('/api/admin/archived-threads', { as: 'admin' })
   assert.equal(list.status, 200)
   assert.ok(list.json.threads.some((thread) => thread.id === 's1-thread-old'))
 })
@@ -954,7 +957,7 @@ test('风控：敏感词管理仅管理员可用，命中词拒绝学生提问',
   assert.equal(deniedAdd.status, 403)
 
   const added = await api('/api/admin/moderation/terms', {
-    as: 'teacherDs',
+    as: 'admin',
     method: 'POST',
     body: { term: '测试敏感词', category: '测试' },
   })
@@ -975,7 +978,7 @@ test('风控：敏感词管理仅管理员可用，命中词拒绝学生提问',
     assert.match(JSON.stringify(blocked.json), /不允许的词/)
   } finally {
     await api(`/api/admin/moderation/terms/${added.json.term.id}`, {
-      as: 'teacherDs',
+      as: 'admin',
       method: 'DELETE',
     })
   }
@@ -985,7 +988,7 @@ test('风控：禁言学生不能提问，封禁后不能登录', async () => {
   const target = session.get('student2').user
   try {
     const muted = await api(`/api/admin/users/${target.id}/status`, {
-      as: 'teacherDs',
+      as: 'admin',
       method: 'POST',
       body: { status: 'muted', reason: '测试禁言', until: Date.now() + 60 * 60 * 1000 },
     })
@@ -1002,7 +1005,7 @@ test('风控：禁言学生不能提问，封禁后不能登录', async () => {
     assert.equal(blocked.status, 403)
 
     const banned = await api(`/api/admin/users/${target.id}/status`, {
-      as: 'teacherDs',
+      as: 'admin',
       method: 'POST',
       body: { status: 'banned', reason: '测试封禁' },
     })
@@ -1016,10 +1019,53 @@ test('风控：禁言学生不能提问，封禁后不能登录', async () => {
     assert.equal(login.status, 403)
   } finally {
     await api(`/api/admin/users/${target.id}/status`, {
-      as: 'teacherDs',
+      as: 'admin',
       method: 'POST',
       body: { status: 'active', reason: '测试结束恢复' },
     })
   }
 })
 
+
+test('独立管理员：教师无管理权限，AI 配置即时生效', async () => {
+  const deniedSettings = await api('/api/admin/ai-settings', { as: 'teacherDs' })
+  assert.equal(deniedSettings.status, 403)
+  const deniedUsage = await api('/api/admin/ai-usage', { as: 'teacherDs' })
+  assert.equal(deniedUsage.status, 403)
+
+  const saved = await api('/api/admin/ai-settings', {
+    as: 'admin',
+    method: 'POST',
+    body: {
+      apiKey: 'test-key-12345678',
+      baseUrl: 'https://example.com/v1',
+      model: 'test-model',
+      dailyLimitStudent: 7,
+      dailyLimitTeacher: 8,
+      enabled: true,
+    },
+  })
+  assert.equal(saved.status, 200)
+  assert.equal(saved.json.settings.configured, true)
+  assert.equal(saved.json.settings.apiKeyMasked.includes('test'), false, '完整 Key 不能返回')
+
+  try {
+    const status = await api('/api/ai/status', { as: 'student1' })
+    assert.equal(status.status, 200)
+    assert.equal(status.json.configured, true)
+    assert.equal(status.json.model, 'test-model')
+    assert.equal(status.json.dailyLimit, 7)
+    const teacherStatus = await api('/api/ai/status', { as: 'teacherDs' })
+    assert.equal(teacherStatus.json.dailyLimit, 8)
+    const health = await api('/api/health')
+    assert.equal(health.json.aiConfigured, true)
+  } finally {
+    const cleared = await api('/api/admin/ai-settings', {
+      as: 'admin',
+      method: 'POST',
+      body: { clearKey: true },
+    })
+    assert.equal(cleared.status, 200)
+    assert.equal(cleared.json.settings.configured, false)
+  }
+})

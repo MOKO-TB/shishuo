@@ -15,7 +15,7 @@ import './styles.css'
 applyTheme(loadTheme())
 
 function Root() {
-  const { user, loading } = useAuth()
+  const { user, loading, logout } = useAuth()
 
   if (loading) {
     return (
@@ -31,6 +31,27 @@ function Root() {
   }
 
   if (!user) return <AuthScreen />
+
+  // 独立管理员账号不进入学生/教师主站，避免它被当成没有课程的教师账号。
+  if (user.isAdmin && user.courses.length === 0) {
+    return (
+      <div className="app-gate">
+        <div className="app-gate-card">
+          <BrandMark size={46} />
+          <h2>这是独立管理员账号</h2>
+          <p>{user.name}（{user.email}）请从 /admin/ 进入管理台。</p>
+          <div className="admin-gate-actions">
+            <a className="button button-primary" href="/admin/">
+              进入管理台
+            </a>
+            <button className="button button-ghost" onClick={() => void logout()}>
+              退出登录
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <StoreProvider key={user.id}>
