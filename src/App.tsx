@@ -302,12 +302,14 @@ export default function App() {
         onRequestReset={() => setResetOpen(true)}
       >
         {accountOpen ? (
-          <AccountModal
-            open={accountOpen}
-            initialTab={accountTab}
-            onClose={() => setAccountOpen(false)}
-            notify={notify}
-          />
+          <div className="page page-sheet-page">
+            <AccountModal
+              open={accountOpen}
+              initialTab={accountTab}
+              onClose={() => setAccountOpen(false)}
+              notify={notify}
+            />
+          </div>
         ) : null}
         {!accountOpen && view === 'student' && (
           <StudentView
