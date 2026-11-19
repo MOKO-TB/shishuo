@@ -167,6 +167,7 @@ export function Layout({
             onEditMajor={() => onOpenAccount('identity')}
           />
         )}
+        {/* 本周课程固定在设置入口上方，不随上方模块滚动 */}
         {!isTeacher && (
           <section className="side-timetable" aria-label="本周课程表">
             <div className="side-timetable-head">
@@ -239,47 +240,22 @@ export function Layout({
           </section>
         )}
         <div className="sidebar-bottom">
-          <div className="side-profile" title={user?.email ?? ''}>
+          <button
+            onClick={() => onOpenAccount('identity')}
+            className="side-settings-button"
+            aria-label={profile.name ? `打开设置（${profile.name}）` : '打开设置'}
+          >
             <Avatar
               name={profile.name}
               tone={isTeacher ? teacherProfile.accent : 'jade'}
-              size="md"
+              size="sm"
             />
-            <span className="side-profile-copy">
-              <strong>{profile.name}</strong>
-              <span>{user?.email ?? profileMetaText}</span>
+            <span className="side-settings-copy">
+              <strong>设置</strong>
+              <span>{isTeacher ? '教师账号' : '学生账号'}</span>
             </span>
-            <span className="side-profile-role">{isTeacher ? '教师' : '学生'}</span>
-          </div>
-          {/* 左下角：设置 / 重置 / 管理台 三者一字排开，等高等宽；退出登录收进设置页 */}
-          <div className="sidebar-utility">
-            <button
-              onClick={() => onOpenAccount('identity')}
-              className="side-utility-button"
-              title="设置"
-            >
-              <Settings size={15} />
-              <span className="side-utility-label">设置</span>
-            </button>
-            {!user?.isAdmin && (
-              <button
-                onClick={onRequestReset}
-                className="side-utility-button"
-                title="重置演示数据"
-              >
-                <RotateCcw size={15} />
-                <span className="side-utility-label">重置</span>
-              </button>
-            )}
-            <button
-              onClick={() => onOpenAdmin()}
-              className="side-utility-button"
-              title="管理台"
-            >
-              <ShieldCheck size={15} />
-              <span className="side-utility-label">管理台</span>
-            </button>
-          </div>
+            <Settings size={15} />
+          </button>
         </div>
       </aside>
 
