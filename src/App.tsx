@@ -297,6 +297,7 @@ export default function App() {
         unreadCount={unreadCount}
         onOpenNotifications={() => setNotificationsOpen(true)}
         onOpenAccount={openAccount}
+        accountOpen={accountOpen}
         onOpenAdmin={() => window.location.assign('/admin/')}
         onOpenMentor={openMentor}
         onNavigate={navigate}
