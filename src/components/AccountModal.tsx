@@ -367,6 +367,20 @@ export function AccountModal({
 
   useEffect(() => {
     if (!open) return
+
+    // 首次进入与再次切换回来都从最顶端开始，避免用户进来先看到页面中段。
+    const toTop = () => {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      document.querySelector<HTMLElement>('.page-sheet-page')?.scrollTo?.({ top: 0 })
+    }
+    toTop()
+    // 布局与动画结束后再兜一次，防止浏览器恢复上一次的滚动位置
+    const timer = window.setTimeout(toTop, 60)
+    return () => window.clearTimeout(timer)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
     const strip = tabsRef.current
     const active = strip?.querySelector<HTMLElement>('button[aria-selected="true"]')
     if (!strip || !active) return
