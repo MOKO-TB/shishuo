@@ -5,12 +5,23 @@
  * 不遮挡页面、不锁滚动，移动端满宽。
  */
 
+/* 二级页面：外层用 .page 提供统一留白，这里只控制内容栅格 */
 .page-sheet {
   display: grid;
   gap: var(--space-4);
   max-width: 860px;
   margin: 0 auto;
+/* 外层 .page 已提供统一左右留白，这里只控制内容栅格与宽度 */
+/* 外层 .page 已提供统一左右留白，这里只控制内容栅格与宽度 */
   padding-bottom: var(--space-6);
+}
+
+@media (max-width: 720px) {
+  .page-sheet {
+    /* 手机上左右各留 16px，不贴边 */
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* 顶部：返回 + 标题 + 操作 */
@@ -100,5 +111,21 @@
   .page-sheet-foot {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* 手机上左右留白与主站一致（16px），二级页面不贴边 */
+@media (max-width: 720px) {
+  .page-sheet-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* 手机上左右留白与主站一致（16px），二级页面不贴边 */
+@media (max-width: 720px) {
+  .page-sheet-page {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
