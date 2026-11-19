@@ -5,15 +5,22 @@
  * 不遮挡页面、不锁滚动，移动端满宽。
  */
 
-/* 二级页面：外层用 .page 提供统一留白，这里只控制内容栅格 */
+/* 二级页面：外层用 .page 提供统一留白，这里只控制内容栅格与宽度 */
 .page-sheet {
   display: grid;
   gap: var(--space-4);
   max-width: 860px;
   margin: 0 auto;
-/* 外层 .page 已提供统一左右留白，这里只控制内容栅格与宽度 */
-/* 外层 .page 已提供统一左右留白，这里只控制内容栅格与宽度 */
   padding-bottom: var(--space-6);
+  /* 入场动效：与主站页面切换同一节奏（pageFade 0.32s） */
+  animation: pageFade 0.32s var(--ease);
+}
+
+/* 尊重「减少动态效果」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .page-sheet {
+    animation: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -21,6 +28,23 @@
     /* 手机上左右各留 16px，不贴边 */
     padding-left: 0;
     padding-right: 0;
+  }
+
+  /* 分块依次淡入，节奏与主站卡片一致 */
+  .page-sheet-bar {
+    animation: fadeUp 0.3s var(--ease) both;
+  }
+
+  .settings-group:nth-child(1) { animation: fadeUp 0.3s var(--ease) 0.04s both; }
+  .settings-group:nth-child(2) { animation: fadeUp 0.3s var(--ease) 0.08s both; }
+  .settings-group:nth-child(3) { animation: fadeUp 0.3s var(--ease) 0.12s both; }
+  .settings-group:nth-child(4) { animation: fadeUp 0.3s var(--ease) 0.16s both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-sheet-bar,
+    .settings-group:nth-child(n) {
+      animation: none;
+    }
   }
 }
 
@@ -114,13 +138,6 @@
   }
 }
 
-/* 手机上左右留白与主站一致（16px），二级页面不贴边 */
-@media (max-width: 720px) {
-  .page-sheet-page {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
 
 /* 手机上左右留白与主站一致（16px），二级页面不贴边 */
 @media (max-width: 720px) {
