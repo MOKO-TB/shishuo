@@ -2,6 +2,7 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
+import { createGzip, gzipSync } from 'node:zlib'
 import { createApiHandler } from './api.mjs'
 import { demoAccountSummary, openDatabase, seedAdminAccount, seedDemoAccounts, WORKSPACE_ID } from './db.mjs'
 import { loadConfig, ROOT_DIR } from './config.mjs'
@@ -70,10 +71,51 @@ const MIME_TYPES = {
   '.map': 'application/json; charset=utf-8',
 }
 
-function securityHeaders(res) {
+// 可压缩的文本类资源；图片/字体已是压缩格式，再压反而变大
+const COMPRESSIBLE_EXT = new Set(['.html', '.js', '.css', '.json', '.svg', '.map', '.txt'])
+const COMPRESS_MIN_BYTES = 1024
+
+function acceptsGzip(req) {
+  return /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))
+}
+
+function isHttps(req) {
+  return Boolean(req.socket?.encrypted) || req.headers['x-forwarded-proto'] === 'https'
+}
+
+function securityHeaders(res, req) {
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('X-Frame-Options', 'DENY')
   res.setHeader('Referrer-Policy', 'same-origin')
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(self)')
+  // 只在 HTTPS 下发 HSTS；本地 http 发了会让浏览器把明文域名永久升级
+  if (req && isHttps(req)) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  }
+}
+
+/**
+ * 统一给响应体做 gzip：包住 res.end，只处理 >1KB 的文本类响应。
+ * 静态大文件走 createGzip 流式压缩，这里处理的是 API 的 JSON 与小文件。
+ */
+function attachCompression(req, res) {
+  if (!acceptsGzip(req)) return
+  const originalEnd = res.end.bind(res)
+  res.end = (chunk, encoding, callback) => {
+    const contentType = String(res.getHeader('Content-Type') || '')
+    const compressibleType =
+      /application\/json|text\/|javascript|image\/svg\+xml/.test(contentType)
+    const size = typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk?.length ?? 0
+    if (chunk && compressibleType && size >= COMPRESS_MIN_BYTES && !res.getHeader('Content-Encoding')) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding || 'utf8')
+      const compressed = gzipSync(buffer, { level: 6 })
+      res.setHeader('Content-Encoding', 'gzip')
+      res.setHeader('Vary', 'Accept-Encoding')
+      res.removeHeader('Content-Length')
+      return originalEnd(compressed, undefined, callback)
+    }
+    return originalEnd(chunk, encoding, callback)
+  }
 }
 
 async function serveUpload(req, res, pathname) {
@@ -95,7 +137,7 @@ async function serveUpload(req, res, pathname) {
     res.statusCode = 200
     res.setHeader('Content-Type', MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream')
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
-    securityHeaders(res)
+    securityHeaders(res, req)
     if (req.method === 'HEAD') {
       res.end()
       return
@@ -149,18 +191,27 @@ async function serveStatic(req, res, pathname) {
   try {
     const info = await stat(filePath)
     if (!info.isFile()) throw new Error('not-a-file')
+    const ext = path.extname(filePath).toLowerCase()
+    const useGzip =
+      COMPRESSIBLE_EXT.has(ext) && info.size >= COMPRESS_MIN_BYTES && acceptsGzip(req)
     res.statusCode = 200
-    res.setHeader('Content-Type', MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream')
+    res.setHeader('Content-Type', MIME_TYPES[ext] ?? 'application/octet-stream')
     res.setHeader(
       'Cache-Control',
       filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable',
     )
-    securityHeaders(res)
+    if (useGzip) {
+      res.setHeader('Content-Encoding', 'gzip')
+      res.setHeader('Vary', 'Accept-Encoding')
+    }
+    securityHeaders(res, req)
     if (req.method === 'HEAD') {
       res.end()
       return
     }
-    createReadStream(filePath).pipe(res)
+    const source = createReadStream(filePath)
+    if (useGzip) source.pipe(createGzip({ level: 6 })).pipe(res)
+    else source.pipe(res)
   } catch {
     res.statusCode = 404
     res.end('Not found')
@@ -169,6 +220,7 @@ async function serveStatic(req, res, pathname) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost')
+  attachCompression(req, res)
   if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
     const handled = await handleApi(req, res)
     if (handled === false && !res.writableEnded) {

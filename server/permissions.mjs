@@ -642,7 +642,7 @@ function isAnonymousThread(thread) {
 }
 
 function redactThread(thread) {
-  return {
+  const redacted = {
     ...thread,
     student: {
       ...thread.student,
@@ -650,6 +650,12 @@ function redactThread(thread) {
       name: '匿名同学',
     },
   }
+  // 转交说明是学生写给老师的私密补充（如「作业最后一题要用」），同班同学不需要看到。
+  if (redacted.escalation && typeof redacted.escalation === 'object') {
+    const { note, ...rest } = redacted.escalation
+    redacted.escalation = rest
+  }
+  return redacted
 }
 
 function rehydrateRedactedThreads(prev, next, user) {
@@ -736,11 +742,9 @@ export function projectWorkspace(data, user) {
           (thread.student?.id === user.id && courses.has(thread.courseId)) ||
           (thread.status === 'pending' && !thread.withdrawnAt && courses.has(thread.courseId)),
       )
-      .map((thread) =>
-        thread.student?.id === user.id || !isAnonymousThread(thread)
-          ? thread
-          : redactThread(thread),
-      ),
+      // 自己的问答保持完整；同学的待答问题一律脱敏，只保留「同问」所需的信息合集。
+      // 原先只对 anonymous===true 的 thread 脱敏，导致默认实名提问会把姓名下发给同班同学。
+      .map((thread) => (thread.student?.id === user.id ? thread : redactThread(thread))),
     faqs: (data.faqs ?? []).filter((faq) => courses.has(faq.courseId)),
     courseNotes: (data.courseNotes ?? []).filter((note) => courses.has(note.courseId)),
     notifications: (data.notifications ?? []).filter(

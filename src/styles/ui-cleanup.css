@@ -3,16 +3,7 @@
  * 与 design-claude.css 分开：这里只处理布局/间距，不涉及配色。
  */
 
-/* 学生页头：移除「双通道怎么走」说明卡后改为单栏，标题限制行宽保持编辑感 */
-.student-head {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-  margin-bottom: 22px;
-}
-
-.student-head .display-title {
-  max-width: 840px;
-}
+/* 学生页头已由 student.css 统一为紧凑单栏（远端最新版），这里不再覆盖。 */
 
 /* 教师页头：移除重复的待办票据后，右侧只留身份切换与操作，顶对齐更整齐 */
 .teacher-head {

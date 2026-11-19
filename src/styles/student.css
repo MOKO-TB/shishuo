@@ -2,20 +2,34 @@
   position: relative;
 }
 
+/* 学生端头部：从「海报式两行大标题 + 右侧说明卡」改为紧凑单行，
+   把首屏纵向空间让给提问框——首页最重要的动作。 */
 .student-head {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.68fr);
-  gap: 46px;
-  align-items: end;
-  margin-bottom: 28px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: start;
+  margin-bottom: 16px;
 }
 
 .student-head-main .display-title {
-  margin: 13px 0 0;
+  margin: 7px 0 0;
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: 0;
 }
 
 .student-head-main .page-lede {
-  margin-top: 16px;
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 62em;
+}
+
+/* 三步说明是一次性信息，不再常驻首屏；保留 DOM 供以后做「?」浮层调用 */
+.head-flow {
+  display: none;
 }
 
 .head-flow {
@@ -2476,4 +2490,38 @@
   font-size: 9px;
   line-height: 1.6;
   color: var(--muted);
+}
+
+/* 移动端：首屏只保留「上午好，XX」，把说明与口号收起，让提问框进入首屏 */
+@media (max-width: 720px) {
+  .student-head {
+    margin-bottom: 10px;
+  }
+  .student-head-main .display-title {
+    font-size: 20px;
+    line-height: 1.5;
+  }
+  .student-head-main .display-title span {
+    display: none;
+  }
+  .student-head-main .page-lede {
+    display: none;
+  }
+}
+
+/* 移动端：首屏只保留「上午好，XX」，把说明与口号收起，让提问框进入首屏 */
+@media (max-width: 720px) {
+  .student-head {
+    margin-bottom: 10px;
+  }
+  .student-head-main .display-title {
+    font-size: 20px;
+    line-height: 1.5;
+  }
+  .student-head-main .display-title span {
+    display: none;
+  }
+  .student-head-main .page-lede {
+    display: none;
+  }
 }

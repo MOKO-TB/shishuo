@@ -186,58 +186,78 @@ export function AdminConsoleView({
     },
   ]
 
+  const activeTabLabel = TABS.find((item) => item.key === tab)?.label ?? '概览'
+
   return (
     <div className="page admin-page">
-      <header className="admin-console-head">
-        <div className="admin-console-head-main">
-          <div className="eyebrow">
-            <span className="eyebrow-mark jade" />
-            管理端
-            <span className="eyebrow-sep">/</span>
-            运营与安全
+      {tab === 'overview' ? (
+        <header className="admin-console-head">
+          <div className="admin-console-head-main">
+            <div className="eyebrow">
+              <span className="eyebrow-mark jade" />
+              管理端
+              <span className="eyebrow-sep">/</span>
+              运营与安全
+            </div>
+            <h1 className="display-title">
+              把账号、内容与系统，
+              <br />
+              <span>放在一个地方。</span>
+            </h1>
+            <p className="page-lede">
+              管理台只对管理员开放：账号与课程分配、操作审计、AI 用量、内容运营和系统信息都在这里。
+              学生端和教师端保持独立，管理端不改变它们的日常流程。
+            </p>
           </div>
-          <h1 className="display-title">
-            把账号、内容与系统，
-            <br />
-            <span>放在一个地方。</span>
-          </h1>
-          <p className="page-lede">
-            管理台只对管理员开放：账号与课程分配、操作审计、AI 用量、内容运营和系统信息都在这里。
-            学生端和教师端保持独立，管理端不改变它们的日常流程。
-          </p>
-        </div>
 
-        <aside className="admin-console-head-card card">
-          <div className="admin-console-user">
-            <span className="admin-console-avatar">{user.name.slice(0, 1)}</span>
-            <div>
-              <strong>{user.name}</strong>
-              <span>{user.email}</span>
+          <aside className="admin-console-head-card card">
+            <div className="admin-console-user">
+              <span className="admin-console-avatar">{user.name.slice(0, 1)}</span>
+              <div>
+                <strong>{user.name}</strong>
+                <span>{user.email}</span>
+              </div>
+              <Badge tone="gold">管理员</Badge>
             </div>
-            <Badge tone="gold">管理员</Badge>
+            <div className="admin-console-health">
+              <div>
+                <span>服务</span>
+                <strong>{health?.ok ? '正常' : '加载中'}</strong>
+              </div>
+              <div>
+                <span>revision</span>
+                <strong>{health?.workspaceRevision ?? '—'}</strong>
+              </div>
+              <div>
+                <span>AI</span>
+                <strong className={health?.aiConfigured ? '' : 'is-warn'}>
+                  {health?.aiConfigured ? '已配置' : '未配置'}
+                </strong>
+              </div>
+            </div>
+            <button className="button button-ghost admin-refresh" onClick={() => void loadOverview()} disabled={loading}>
+              <RefreshCw size={14} className={loading ? 'spin-icon' : undefined} />
+              刷新概览
+            </button>
+          </aside>
+        </header>
+      ) : (
+        /* 功能页用 56px 紧凑页头：海报只属于概览页，其余页面把纵向空间还给列表 */
+        <header className="admin-compact-head">
+          <div className="admin-compact-title">
+            <span className="admin-compact-crumb">管理端 /</span>
+            <h2>{activeTabLabel}</h2>
           </div>
-          <div className="admin-console-health">
-            <div>
-              <span>服务</span>
-              <strong>{health?.ok ? '正常' : '加载中'}</strong>
-            </div>
-            <div>
-              <span>revision</span>
-              <strong>{health?.workspaceRevision ?? '—'}</strong>
-            </div>
-            <div>
-              <span>AI</span>
-              <strong className={health?.aiConfigured ? '' : 'is-warn'}>
-                {health?.aiConfigured ? '已配置' : '未配置'}
-              </strong>
-            </div>
+          <div className="admin-compact-meta">
+            <span className="admin-compact-stat">revision {health?.workspaceRevision ?? '—'}</span>
+            <span className="admin-compact-stat">{stats.users} 个账号</span>
+            <button className="button button-ghost admin-refresh" onClick={() => void loadOverview()} disabled={loading}>
+              <RefreshCw size={14} className={loading ? 'spin-icon' : undefined} />
+              刷新
+            </button>
           </div>
-          <button className="button button-ghost admin-refresh" onClick={() => void loadOverview()} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'spin-icon' : undefined} />
-            刷新概览
-          </button>
-        </aside>
-      </header>
+        </header>
+      )}
 
       <nav className="admin-tabs admin-console-tabs" role="tablist" aria-label="管理台">
         {TABS.map((item) => {
