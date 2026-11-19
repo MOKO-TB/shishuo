@@ -796,12 +796,10 @@ export function StudentView({
             {course.code ? ` · ${course.code}` : ''}
           </div>
           <h1 className="display-title">
-            {greeting()}，{profile.name}。
-            <br />
-            <span>卡住的地方，先丢过来。</span>
+            {greeting()}，{profile.name}。 <span>卡住的地方，先丢过来。</span>
           </h1>
           <p className="page-lede">
-            AI 先查{course.teacher}老师的课程知识库；能答就带着出处直接答，没把握时可由服务端 AI 补充，也可以转交老师。
+            AI 先查{course.teacher}老师的知识库，能答就带出处直接答，没把握再转交老师。
           </p>
         </div>
 
