@@ -224,21 +224,37 @@
 }
 
 /* 底部工具按钮：等宽平分、一字排开，不做两端顶开的三角排布 */
+/* 三格等分：按钮数量和容器宽度都对得上，不做两端顶开 */
+/* 三格等分：按钮数量和容器宽度都对得上，不做两端顶开 */
+/* 三格等分：用 flex 1 1 0 保证每格一样宽，不做两端顶开 */
 .sidebar-utility {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  display: flex;
   align-items: stretch;
   gap: 6px;
   padding: 0 3px;
 }
 
 .sidebar-utility > button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.sidebar-utility > button {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  min-height: 32px;
-  padding: 0 8px;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 4px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 三格排开时文字要够小才放得下，但不低于 11px */
+.side-utility-label {
+  font-size: var(--text-meta);
   overflow: hidden;
   text-overflow: ellipsis;
 }
