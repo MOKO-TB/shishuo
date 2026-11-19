@@ -928,6 +928,9 @@ export function createApiHandler({ db, config }) {
       if (pathname === '/api/chaoxing/sync') {
         return sendChaoxingJson(res, 200, await chaoxing.sync(user.id))
       }
+      if (pathname === '/api/chaoxing/sync/messages') {
+        return sendChaoxingJson(res, 200, await chaoxing.syncMessagesOnly(user.id))
+      }
       if (pathname === '/api/chaoxing/logout') {
         return sendChaoxingJson(res, 200, await chaoxing.logout(user.id))
       }

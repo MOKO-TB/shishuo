@@ -2705,3 +2705,406 @@
     height: 38px;
   }
 }
+
+/* 学习通页面：分组 / 章节 / 移动端 */
+.cx-page {
+  min-width: 0;
+  overflow-x: clip;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.cx-page-head > div:first-child,
+.cx-page-head-side,
+.cx-page-toolbar,
+.cx-page-list,
+.cx-course-groups,
+.cx-chapter-section {
+  min-width: 0;
+}
+
+.cx-page-head .display-title {
+  font-size: clamp(30px, 7vw, 52px);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.cx-page-hint {
+  margin: -2px 0 2px;
+  color: var(--faint);
+  font-size: 10px;
+}
+
+.cx-back-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--jade-deep);
+  font-size: 10px;
+}
+
+.cx-group-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.cx-group-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.cx-group-head strong {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.cx-group-head span {
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.cx-course-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.cx-course-group {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  text-align: left;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.cx-course-group:hover {
+  border-color: rgba(20, 108, 86, 0.26);
+  background: var(--jade-mist);
+}
+
+.cx-course-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.1;
+  text-align: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.cx-course-avatar.is-material {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.cx-course-group-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cx-course-group-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cx-course-group-top strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-course-group-latest {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-course-group-meta {
+  color: var(--faint);
+  font-size: 8.5px;
+}
+
+.cx-course-group-arrow {
+  color: var(--faint);
+  flex: 0 0 auto;
+}
+
+.cx-chapter-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.cx-chapter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cx-chapter-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.cx-chapter-head strong {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.cx-chapter-head span {
+  color: var(--faint);
+  font-size: 9px;
+}
+
+.cx-chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cx-chapter-card {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-2);
+  text-align: left;
+}
+
+.cx-chapter-card:hover {
+  border-color: rgba(20, 108, 86, 0.28);
+  background: var(--jade-mist);
+}
+
+.cx-chapter-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cx-chapter-card-top strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 10.5px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-chapter-progress {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 36, 30, 0.08);
+}
+
+.cx-chapter-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jade), #61a98f);
+}
+
+.cx-chapter-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--faint);
+  font-size: 8.5px;
+}
+
+.cx-page-empty-line {
+  padding: 16px 10px;
+  color: var(--faint);
+  font-size: 10.5px;
+  text-align: center;
+}
+
+.cx-chapter-modal .modal-body {
+  max-height: min(68vh, 620px);
+  overflow-y: auto;
+}
+
+.cx-chapter-detail {
+  display: grid;
+  gap: 14px;
+}
+
+.cx-chapter-detail section {
+  display: grid;
+  gap: 4px;
+}
+
+.cx-chapter-detail h3 {
+  display: flex;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.cx-chapter-detail h3 span {
+  color: var(--jade-deep);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.cx-chapter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  text-align: left;
+}
+
+.cx-chapter-row:hover {
+  border-color: rgba(20, 108, 86, 0.26);
+  background: var(--jade-mist);
+}
+
+.cx-chapter-row > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cx-chapter-row strong {
+  color: var(--ink-soft);
+  font-size: 10.5px;
+}
+
+.cx-chapter-row em {
+  color: var(--faint);
+  font-size: 8.5px;
+  font-style: normal;
+}
+
+.cx-chapter-row > svg {
+  color: var(--faint);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 700px) {
+  .cx-page {
+    gap: 14px;
+  }
+
+  .cx-page-head .display-title {
+    font-size: 30px;
+  }
+
+  .cx-page-head-side {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .cx-page-head-side .button {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 9.5px;
+  }
+
+  .cx-page-stats {
+    gap: 6px;
+  }
+
+  .cx-page-stat {
+    padding: 10px;
+  }
+
+  .cx-page-stat-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .cx-page-stat strong {
+    font-size: 17px;
+  }
+
+  .cx-page-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cx-page-tabs {
+    overflow-x: auto;
+  }
+
+  .cx-page-tabs button {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+  }
+
+  .cx-course-filter {
+    width: 100%;
+    max-width: none;
+    height: 38px;
+  }
+
+  .cx-page-list {
+    grid-template-columns: 1fr;
+  }
+
+  .cx-page-item {
+    padding: 11px;
+  }
+
+  .cx-page-item-meta {
+    flex-wrap: wrap;
+  }
+
+  .cx-chapter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cx-chapter-section {
+    padding: 12px;
+  }
+
+  .cx-chapter-head {
+    align-items: flex-start;
+  }
+
+  .cx-chapter-head .text-button {
+    white-space: nowrap;
+  }
+
+  .cx-chapter-modal .modal-body {
+    max-height: 70vh;
+  }
+}

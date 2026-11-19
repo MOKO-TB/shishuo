@@ -28,7 +28,15 @@ const loginPage = `<!doctype html><html><head><meta charset="utf-8"><title>登�
 </body></html>`
 
 const courseHome = `<!doctype html><html><head><meta charset="utf-8"><title>课程主页</title></head>
-<body><h1>数据结构</h1><a href="/messages?courseId=course-1">课程消息</a></body></html>`
+<body><h1>数据结构</h1><a href="/messages?courseId=course-1">课程消息</a>
+<div class="timeline"><div class="units">
+  <h2 class="levelfirst"><span class="chapterNumber">第1章</span><span class="fontCon">绪论</span></h2>
+  <div class="leveltwo"><span class="chapterNumber">1.1</span><h3><span class="fontCon">数据结构基本概念</span></h3><input class="knowledgeJobCount" value="1" /></div>
+</div></div>
+</body></html>`
+
+const workAllPage = `<!doctype html><html><head><meta charset="utf-8"></head>
+<body><ul><li data="/work/1"><p>第一次作业：线性表</p><span class="status">未提交</span><span>《数据结构》</span><span class="fr">剩余10小时30分钟</span></li></ul></body></html>`
 
 const middlePage = `<!doctype html><html><head><meta charset="utf-8"></head>
 <body><input id="workEnc" value="work-enc" /></body></html>`
@@ -120,6 +128,7 @@ function startMock() {
     }
     if (url.pathname === '/middle') return send(middlePage)
     if (url.pathname === '/work') return send(workPage)
+    if (url.pathname === '/work-all') return send(workAllPage)
     if (url.pathname === '/materials') return send(materialsPage)
     if (url.pathname === '/messages') return send(messagesPage)
     if (url.pathname.startsWith('/download/')) return send('file')
@@ -150,6 +159,7 @@ const cx = createChaoxingService(db, {
   courseHome: `${base}/course-home`,
   middleUrl: `${base}/middle`,
   workUrl: `${base}/work`,
+  workAllUrl: `${base}/work-all`,
   materialsUrl: `${base}/materials`,
   noticesUrl: `${base}/notices`,
 })
@@ -165,6 +175,7 @@ try {
   assert.equal(result.assignments, 1)
   assert.equal(result.materials, 1)
   assert.equal(result.messages, 1)
+  assert.equal(result.chapters, 1)
 
   const overview = cx.overview('test-student')
   assert.equal(overview.connected, true)
@@ -172,6 +183,8 @@ try {
   assert.equal(overview.counts.assignment, 1)
   assert.equal(overview.counts.material, 1)
   assert.equal(overview.counts.message, 1)
+  assert.equal(overview.chapters.length, 1)
+  assert.equal(overview.chapters[0].unfinished, 1)
   assert.ok(overview.items.some((item) => item.title.includes('线性表')))
   assert.ok(overview.items.some((item) => item.title.includes('课件1')))
   assert.ok(overview.items.some((item) => item.title.includes('课程调整')))

@@ -29,6 +29,25 @@ export interface ChaoxingItem {
   course_name: string
 }
 
+export interface ChaoxingChapter {
+  id: string
+  chapterNo: string
+  chapterTitle: string
+  sectionNo: string
+  sectionTitle: string
+  taskCount: number
+  done: boolean
+  url: string
+}
+
+export interface ChaoxingCourseChapters {
+  course_id: string
+  course_name: string
+  total: number
+  unfinished: number
+  items: ChaoxingChapter[]
+}
+
 export interface ChaoxingOverview {
   connected: boolean
   lastSyncAt: number | null
@@ -36,6 +55,9 @@ export interface ChaoxingOverview {
   courses: ChaoxingCourse[]
   counts: Record<ChaoxingKind, number>
   unread: number
+  chapterUnfinished: number
+  chapterTotal: number
+  chapters: ChaoxingCourseChapters[]
   items: ChaoxingItem[]
 }
 
@@ -78,6 +100,7 @@ export function syncChaoxing() {
     assignments: number
     materials: number
     messages: number
+    chapters?: number
     errors: Array<{ course: string; kind: string; message: string }>
   }>('/api/chaoxing/sync', {})
 }

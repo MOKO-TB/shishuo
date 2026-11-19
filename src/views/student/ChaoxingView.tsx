@@ -1,23 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  ArrowLeft,
   BookOpen,
+  ChevronRight,
   CircleAlert,
   ClipboardList,
   ExternalLink,
   FolderOpen,
-  Link2,
   Loader2,
   LogOut,
   MessageCircle,
   QrCode,
   RefreshCw,
 } from 'lucide-react'
-import { Badge } from '../../components/ui'
+import { Badge, Modal } from '../../components/ui'
 import {
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
   syncChaoxing,
+  type ChaoxingChapter,
+  type ChaoxingCourseChapters,
   type ChaoxingItem,
   type ChaoxingKind,
   type ChaoxingOverview,
@@ -28,9 +31,9 @@ const KIND_META: Record<
   ChaoxingKind,
   { label: string; icon: typeof MessageCircle; hint: string }
 > = {
-  message: { label: '课程消息', icon: MessageCircle, hint: '老师发布的课程通知与消息' },
-  assignment: { label: '作业', icon: ClipboardList, hint: '待完成与已完成的作业' },
-  material: { label: '资料', icon: FolderOpen, hint: '课程课件与参考资料' },
+  message: { label: '课程消息', icon: MessageCircle, hint: '老师发布的课程通知、作业和签到消息' },
+  assignment: { label: '作业', icon: ClipboardList, hint: '未完成优先，再按发布时间排序' },
+  material: { label: '资料', icon: FolderOpen, hint: '按课程查看老师上传的课件和资料' },
 }
 
 function fmt(ts: number | null | undefined) {
@@ -48,6 +51,47 @@ function dayLabel(ts: number | null | undefined) {
   return new Date(ts).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 }
 
+function assignmentPriority(item: ChaoxingItem) {
+  const body = item.body || ''
+  if (/未提交|未交|待交/.test(body)) return 0
+  if (/待批阅|批阅中/.test(body)) return 1
+  if (/已完成|已交/.test(body)) return 2
+  return 0
+}
+
+interface CourseGroup {
+  course_id: string
+  course_name: string
+  items: ChaoxingItem[]
+  unread: number
+  latestAt: number
+}
+
+function groupByCourse(items: ChaoxingItem[]): CourseGroup[] {
+  const map = new Map<string, CourseGroup>()
+  for (const item of items) {
+    const key = item.course_id || item.course_name
+    let group = map.get(key)
+    if (!group) {
+      group = {
+        course_id: item.course_id,
+        course_name: item.course_name || '未命名课程',
+        items: [],
+        unread: 0,
+        latestAt: 0,
+      }
+      map.set(key, group)
+    }
+    group.items.push(item)
+    if (!item.read_at) group.unread += 1
+    group.latestAt = Math.max(
+      group.latestAt,
+      Number(item.published_at || item.created_at || 0),
+    )
+  }
+  return [...map.values()].sort((a, b) => b.latestAt - a.latestAt || a.course_name.localeCompare(b.course_name))
+}
+
 export function ChaoxingView() {
   const [overview, setOverview] = useState<ChaoxingOverview | null>(null)
   const [loading, setLoading] = useState(true)
@@ -57,6 +101,9 @@ export function ChaoxingView() {
   const [tab, setTab] = useState<ChaoxingKind>('message')
   const [courseFilter, setCourseFilter] = useState('')
   const [bindOpen, setBindOpen] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState('')
+  const [chapterCourse, setChapterCourse] = useState<ChaoxingCourseChapters | null>(null)
+  const [showAllChapters, setShowAllChapters] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -82,7 +129,7 @@ export function ChaoxingView() {
       const result = await syncChaoxing()
       const failed = result.errors?.length ?? 0
       setNotice(
-        `同步完成：消息 ${result.messages}、作业 ${result.assignments}、资料 ${result.materials}${
+        `同步完成：消息 ${result.messages}、作业 ${result.assignments}、资料 ${result.materials}、未完成章节 ${result.chapters ?? 0}${
           failed ? `；${failed} 项未读到` : ''
         }`,
       )
@@ -98,6 +145,8 @@ export function ChaoxingView() {
     try {
       await logoutChaoxing()
       setOverview((current) => (current ? { ...current, connected: false } : current))
+      setSelectedCourse('')
+      setChapterCourse(null)
       setNotice('已退出学习通。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '退出学习通失败。')
@@ -115,14 +164,49 @@ export function ChaoxingView() {
     if (item.url) window.open(item.url, '_blank', 'noopener,noreferrer')
   }
 
-  const items = useMemo(() => {
-    return (overview?.items ?? []).filter(
-      (item) =>
-        item.kind === tab && (!courseFilter || item.course_id === courseFilter),
+  const assignments = useMemo(() => {
+    return (overview?.items ?? [])
+      .filter(
+        (item) =>
+          item.kind === 'assignment' &&
+          (!courseFilter || item.course_id === courseFilter),
+      )
+      .sort(
+        (a, b) =>
+          assignmentPriority(a) - assignmentPriority(b) ||
+          Number(b.published_at || b.created_at || 0) -
+            Number(a.published_at || a.created_at || 0),
+      )
+  }, [overview?.items, courseFilter])
+
+  const messageGroups = useMemo(
+    () => groupByCourse((overview?.items ?? []).filter((item) => item.kind === 'message')),
+    [overview?.items],
+  )
+  const materialGroups = useMemo(
+    () => groupByCourse((overview?.items ?? []).filter((item) => item.kind === 'material')),
+    [overview?.items],
+  )
+  const activeGroup = useMemo(() => {
+    if (!selectedCourse) return null
+    const source = tab === 'message' ? messageGroups : materialGroups
+    return source.find((group) => group.course_id === selectedCourse) ?? null
+  }, [materialGroups, messageGroups, selectedCourse, tab])
+
+  const chapterGroups = useMemo(() => {
+    const list = [...(overview?.chapters ?? [])].sort(
+      (a, b) => b.unfinished - a.unfinished || a.course_name.localeCompare(b.course_name),
     )
-  }, [overview?.items, tab, courseFilter])
+    return showAllChapters ? list : list.slice(0, 6)
+  }, [overview?.chapters, showAllChapters])
 
   const connected = Boolean(overview?.connected)
+  const currentHint =
+    tab === 'message' && selectedCourse
+      ? '返回全部课程'
+      : tab === 'material' && selectedCourse
+        ? '返回全部课程'
+        : KIND_META[tab].hint
 
   return (
     <div className="page cx-page">
@@ -135,7 +219,7 @@ export function ChaoxingView() {
             <span>从一个地方看。</span>
           </h1>
           <p className="page-lede">
-            绑定学习通后，师说只读同步老师发布的课程消息、作业和资料。不保存学习通密码，不代交作业，也不会影响你在学习通里的原始内容。
+            绑定学习通后，师说只读同步老师发布的课程消息、作业、资料和章节进度。不保存学习通密码，不代交作业。
           </p>
         </div>
         <div className="cx-page-head-side">
@@ -148,7 +232,6 @@ export function ChaoxingView() {
                 {syncing ? '同步中…' : '同步全部'}
               </button>
               <button className="button button-ghost" onClick={() => setBindOpen(true)}>
-                <Link2 size={14} />
                 课程与绑定
               </button>
               <button className="button button-ghost" onClick={() => void logout()}>
@@ -190,18 +273,16 @@ export function ChaoxingView() {
           </span>
           <h2>绑定你的学习通</h2>
           <p>
-            用学习通 App 扫码确认后，师说会同步你的课程消息、作业和资料。密码不经过师说，登录态按学生账号隔离。
+            用学习通 App 扫码确认后，师说会同步你的课程消息、作业、资料和章节进度。密码不经过师说，登录态按学生账号隔离。
           </p>
           <div className="cx-page-bind-actions">
             <button className="button button-primary" onClick={() => setBindOpen(true)}>
               <QrCode size={14} />
               生成登录二维码
             </button>
-            {(overview?.items.length ?? 0) > 0 && (
-              <button className="button button-ghost" onClick={() => void load()}>
-                查看已同步内容
-              </button>
-            )}
+            <button className="button button-ghost" onClick={() => setBindOpen(true)}>
+              用账号密码登录
+            </button>
           </div>
           <p className="cx-hint">
             当前站点是 HTTP 演示环境；正式使用前建议启用 HTTPS。学习通接口可能随平台改版失效。
@@ -216,7 +297,10 @@ export function ChaoxingView() {
                 <button
                   key={kind}
                   className={`cx-page-stat ${tab === kind ? 'is-active' : ''}`}
-                  onClick={() => setTab(kind)}
+                  onClick={() => {
+                    setTab(kind)
+                    setSelectedCourse('')
+                  }}
                 >
                   <span className="cx-page-stat-icon">
                     <Icon size={16} />
@@ -228,15 +312,21 @@ export function ChaoxingView() {
                 </button>
               )
             })}
-            <div className="cx-page-stat is-static">
+            <button
+              className="cx-page-stat"
+              onClick={() => {
+                setShowAllChapters(true)
+                document.querySelector('.cx-chapter-section')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+            >
               <span className="cx-page-stat-icon">
                 <BookOpen size={16} />
               </span>
               <span>
-                <strong>{overview?.unread ?? 0}</strong>
-                <em>未读</em>
+                <strong>{overview?.chapterUnfinished ?? 0}</strong>
+                <em>未完成章节</em>
               </span>
-            </div>
+            </button>
           </div>
 
           <div className="cx-page-toolbar">
@@ -247,75 +337,323 @@ export function ChaoxingView() {
                   role="tab"
                   aria-selected={tab === kind}
                   className={tab === kind ? 'is-active' : ''}
-                  onClick={() => setTab(kind)}
+                  onClick={() => {
+                    setTab(kind)
+                    setSelectedCourse('')
+                  }}
                 >
                   {KIND_META[kind].label}
                   <span>{overview?.counts[kind] ?? 0}</span>
                 </button>
               ))}
             </div>
-            <select
-              className="cx-course-filter"
-              value={courseFilter}
-              onChange={(event) => setCourseFilter(event.target.value)}
-              aria-label="按课程筛选"
-            >
-              <option value="">全部课程</option>
-              {(overview?.courses ?? []).map((course) => (
-                <option key={course.id} value={course.course_id}>
-                  {course.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="cx-page-list">
-            {items.length === 0 ? (
-              <div className="cx-page-empty">
-                <span className="cx-big-icon">
-                  {tab === 'message' ? <MessageCircle size={24} /> : tab === 'assignment' ? <ClipboardList size={24} /> : <FolderOpen size={24} />}
-                </span>
-                <strong>还没有{KIND_META[tab].label}</strong>
-                <p>{KIND_META[tab].hint}。点「同步全部」拉取最新内容。</p>
-                <button className="button button-primary" onClick={() => void syncNow()} disabled={syncing}>
-                  {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
-                  同步全部
-                </button>
-              </div>
-            ) : (
-              items.map((item) => {
-                const Icon = KIND_META[item.kind].icon
-                return (
-                  <button
-                    key={item.id}
-                    className={`cx-page-item ${item.read_at ? '' : 'is-unread'}`}
-                    onClick={() => void openItem(item)}
-                  >
-                    <span className="cx-page-item-icon">
-                      <Icon size={17} />
-                    </span>
-                    <span className="cx-page-item-body">
-                      <span className="cx-page-item-top">
-                        <strong>{item.title}</strong>
-                        {!item.read_at && <i className="cx-unread-dot" />}
-                      </span>
-                      <span className="cx-page-item-meta">
-                        <em>{item.course_name}</em>
-                        {item.due_at ? <span>截止 {fmt(item.due_at)}</span> : null}
-                        {item.published_at ? <span>{dayLabel(item.published_at)}</span> : null}
-                      </span>
-                      {item.body && <span className="cx-page-item-text">{item.body}</span>}
-                    </span>
-                    {item.url && <ExternalLink size={15} className="cx-page-item-link" />}
-                  </button>
-                )
-              })
+            {tab === 'assignment' && (
+              <select
+                className="cx-course-filter"
+                value={courseFilter}
+                onChange={(event) => setCourseFilter(event.target.value)}
+                aria-label="按课程筛选"
+              >
+                <option value="">全部课程</option>
+                {(overview?.courses ?? []).map((course) => (
+                  <option key={course.id} value={course.course_id}>
+                    {course.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {tab !== 'assignment' && selectedCourse && (
+              <button className="text-button cx-back-inline" onClick={() => setSelectedCourse('')}>
+                <ArrowLeft size={13} />
+                全部课程
+              </button>
             )}
           </div>
+
+          <p className="cx-page-hint">{currentHint}</p>
+
+          {tab === 'assignment' ? (
+            <div className="cx-page-list">
+              {assignments.length === 0 ? (
+                <EmptyBlock
+                  kind="assignment"
+                  syncing={syncing}
+                  onSync={() => void syncNow()}
+                />
+              ) : (
+                assignments.map((item) => (
+                  <ItemCard key={item.id} item={item} onOpen={() => void openItem(item)} />
+                ))
+              )}
+            </div>
+          ) : activeGroup ? (
+            <div className="cx-page-list">
+              <div className="cx-group-head">
+                <div>
+                  <strong>{activeGroup.course_name}</strong>
+                  <span>{activeGroup.items.length} 条{KIND_META[tab].label}</span>
+                </div>
+                <button className="text-button" onClick={() => setSelectedCourse('')}>
+                  <ArrowLeft size={13} />
+                  全部课程
+                </button>
+              </div>
+              {activeGroup.items.map((item) => (
+                <ItemCard key={item.id} item={item} onOpen={() => void openItem(item)} />
+              ))}
+            </div>
+          ) : (
+            <CourseGroupGrid
+              groups={tab === 'message' ? messageGroups : materialGroups}
+              kind={tab}
+              onOpen={(courseId) => setSelectedCourse(courseId)}
+              onSync={() => void syncNow()}
+              syncing={syncing}
+            />
+          )}
+
+          <section className="cx-chapter-section">
+            <div className="cx-chapter-head">
+              <div>
+                <strong>课程章节进度</strong>
+                <span>
+                  共 {overview?.chapterTotal ?? 0} 个章节任务，未完成 {overview?.chapterUnfinished ?? 0} 个
+                </span>
+              </div>
+              {(overview?.chapters.length ?? 0) > 6 && (
+                <button className="text-button" onClick={() => setShowAllChapters((value) => !value)}>
+                  {showAllChapters ? '收起' : `查看全部 ${overview?.chapters.length} 门`}
+                </button>
+              )}
+            </div>
+            {chapterGroups.length === 0 ? (
+              <p className="cx-page-empty-line">
+                还没有章节进度；点「同步全部」拉取学习通章节任务。
+              </p>
+            ) : (
+              <div className="cx-chapter-grid">
+                {chapterGroups.map((course) => (
+                  <button
+                    key={course.course_id}
+                    className="cx-chapter-card"
+                    onClick={() => setChapterCourse(course)}
+                  >
+                    <span className="cx-chapter-card-top">
+                      <strong>{course.course_name}</strong>
+                      <Badge tone={course.unfinished > 0 ? 'gold' : 'jade'}>
+                        {course.unfinished > 0 ? `未完成 ${course.unfinished}` : '已完成'}
+                      </Badge>
+                    </span>
+                    <span className="cx-chapter-progress">
+                      <i
+                        style={{
+                          width: `${course.total ? Math.max(4, ((course.total - course.unfinished) / course.total) * 100) : 0}%`,
+                        }}
+                      />
+                    </span>
+                    <span className="cx-chapter-card-foot">
+                      {course.unfinished > 0
+                        ? `还有 ${course.unfinished} 个任务点没完成`
+                        : `共 ${course.total} 个任务点`}
+                      <ChevronRight size={13} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
 
       <ChaoxingModal open={bindOpen} onClose={() => setBindOpen(false)} onChanged={load} />
+      <ChapterModal course={chapterCourse} onClose={() => setChapterCourse(null)} />
     </div>
+  )
+}
+
+function ItemCard({ item, onOpen }: { item: ChaoxingItem; onOpen: () => void }) {
+  const Icon = KIND_META[item.kind].icon
+  return (
+    <button className={`cx-page-item ${item.read_at ? '' : 'is-unread'}`} onClick={onOpen}>
+      <span className="cx-page-item-icon">
+        <Icon size={17} />
+      </span>
+      <span className="cx-page-item-body">
+        <span className="cx-page-item-top">
+          <strong>{item.title}</strong>
+          {!item.read_at && <i className="cx-unread-dot" />}
+        </span>
+        <span className="cx-page-item-meta">
+          <em>{item.course_name}</em>
+          {item.due_at ? <span>截止 {fmt(item.due_at)}</span> : null}
+          {item.kind !== 'assignment' && item.published_at ? (
+            <span>{dayLabel(item.published_at)}</span>
+          ) : null}
+        </span>
+        {item.body && <span className="cx-page-item-text">{item.body}</span>}
+      </span>
+      {item.url && <ExternalLink size={15} className="cx-page-item-link" />}
+    </button>
+  )
+}
+
+function CourseGroupGrid({
+  groups,
+  kind,
+  onOpen,
+  onSync,
+  syncing,
+}: {
+  groups: CourseGroup[]
+  kind: ChaoxingKind
+  onOpen: (courseId: string) => void
+  onSync: () => void
+  syncing: boolean
+}) {
+  if (groups.length === 0) {
+    return (
+      <div className="cx-page-list">
+        <EmptyBlock kind={kind} syncing={syncing} onSync={onSync} />
+      </div>
+    )
+  }
+  return (
+    <div className="cx-course-groups">
+      {groups.map((group) => {
+        const latest = group.items[0]
+        return (
+          <button
+            key={group.course_id || group.course_name}
+            className="cx-course-group"
+            onClick={() => onOpen(group.course_id)}
+          >
+            <span className={`cx-course-avatar is-${kind}`}>
+              {group.course_name.slice(0, 2)}
+            </span>
+            <span className="cx-course-group-body">
+              <span className="cx-course-group-top">
+                <strong>{group.course_name}</strong>
+                {group.unread > 0 && <Badge tone="gold">{group.unread}</Badge>}
+              </span>
+              <span className="cx-course-group-latest">
+                {latest?.title || KIND_META[kind].hint}
+              </span>
+              <span className="cx-course-group-meta">
+                {group.items.length} 条{KIND_META[kind].label}
+                {group.latestAt ? ` · ${dayLabel(group.latestAt)}` : ''}
+              </span>
+            </span>
+            <ChevronRight size={15} className="cx-course-group-arrow" />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function EmptyBlock({
+  kind,
+  syncing,
+  onSync,
+}: {
+  kind: ChaoxingKind
+  syncing: boolean
+  onSync: () => void
+}) {
+  const Icon = KIND_META[kind].icon
+  return (
+    <div className="cx-page-empty">
+      <span className="cx-big-icon">
+        <Icon size={24} />
+      </span>
+      <strong>还没有{KIND_META[kind].label}</strong>
+      <p>{KIND_META[kind].hint}。点「同步全部」拉取最新内容。</p>
+      <button className="button button-primary" onClick={onSync} disabled={syncing}>
+        {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
+        同步全部
+      </button>
+    </div>
+  )
+}
+
+function ChapterModal({
+  course,
+  onClose,
+}: {
+  course: ChaoxingCourseChapters | null
+  onClose: () => void
+}) {
+  const unfinished = useMemo(
+    () => (course?.items ?? []).filter((item) => !item.done),
+    [course],
+  )
+  const groups = useMemo(() => {
+    const map = new Map<string, { title: string; no: string; items: ChaoxingChapter[] }>()
+    for (const item of unfinished) {
+      const key = item.chapterNo || item.chapterTitle
+      let group = map.get(key)
+      if (!group) {
+        group = { title: item.chapterTitle, no: item.chapterNo, items: [] }
+        map.set(key, group)
+      }
+      group.items.push(item)
+    }
+    return [...map.values()]
+  }, [unfinished])
+
+  return (
+    <Modal
+      open={Boolean(course)}
+      onClose={onClose}
+      eyebrow="学习通 · 章节任务"
+      title={course ? `${course.course_name} · 未完成章节` : '未完成章节'}
+      size="md"
+      className="cx-chapter-modal"
+      footer={
+        <div className="modal-actions modal-actions-split">
+          <span className="cx-modal-foot-note">
+            只显示未完成任务点；点击章节可跳回学习通原页面。
+          </span>
+          <button className="button button-ghost" onClick={onClose}>
+            关闭
+          </button>
+        </div>
+      }
+    >
+      {groups.length === 0 ? (
+        <div className="cx-page-empty">
+          <BookOpen size={24} />
+          <strong>这门课没有未完成章节</strong>
+          <p>已完成的任务点不会出现在这里。</p>
+        </div>
+      ) : (
+        <div className="cx-chapter-detail">
+          {groups.map((group) => (
+            <section key={`${group.no}-${group.title}`}>
+              <h3>
+                {group.no && <span>{group.no}</span>}
+                {group.title}
+              </h3>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  className="cx-chapter-row"
+                  onClick={() => item.url && window.open(item.url, '_blank', 'noopener,noreferrer')}
+                >
+                  <span>
+                    <strong>{item.sectionTitle}</strong>
+                    <em>
+                      {item.sectionNo}
+                      {item.taskCount > 0 ? ` · ${item.taskCount} 个任务点未完成` : ''}
+                    </em>
+                  </span>
+                  <ExternalLink size={14} />
+                </button>
+              ))}
+            </section>
+          ))}
+        </div>
+      )}
+    </Modal>
   )
 }

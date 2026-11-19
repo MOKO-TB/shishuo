@@ -153,6 +153,7 @@ export function createChaoxingService(db, options = {}) {
       options.middleUrl ??
       'https://mooc1-2.chaoxing.com/mooc-ans/visit/stucoursemiddle',
     work: options.workUrl ?? 'https://mooc1.chaoxing.com/mooc2/work/list',
+    workAll: options.workAllUrl ?? 'https://mooc1-api.chaoxing.com/work/stu-work',
     notices: options.noticesUrl ?? 'https://notice.chaoxing.com/pc/notice/getNoticeList',
     materials:
       options.materialsUrl ??
@@ -274,12 +275,63 @@ export function createChaoxingService(db, options = {}) {
     restoreSession(userId)
     const account = accountRow(userId)
     const courses = listCourses(userId)
-    const items = listItems(userId, { limit: 300 })
+    const items = listItems(userId, { limit: 1000 })
     const counts = { assignment: 0, material: 0, message: 0 }
     let unread = 0
-    for (const item of items) {
-      counts[item.kind] = (counts[item.kind] ?? 0) + 1
-      if (!item.read_at) unread += 1
+    const rows = db
+      .prepare(
+        `SELECT kind, COUNT(*) AS n,
+                SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) AS unread
+           FROM chaoxing_items
+          WHERE user_id = ?
+          GROUP BY kind`,
+      )
+      .all(userId)
+    for (const row of rows) {
+      counts[row.kind] = Number(row.n)
+      unread += Number(row.unread)
+    }
+    const chapterRows = db
+      .prepare(
+        `SELECT ch.id, ch.course_pk, ch.chapter_no, ch.chapter_title, ch.section_no, ch.section_title,
+                ch.task_count, ch.done, ch.url,
+                c.course_id, c.name AS course_name
+           FROM chaoxing_chapters ch
+           JOIN chaoxing_courses c ON c.id = ch.course_pk
+          WHERE ch.user_id = ?
+          ORDER BY c.name ASC, ch.chapter_no ASC, ch.section_no ASC`,
+      )
+      .all(userId)
+    const byCourse = new Map()
+    let chapterUnfinished = 0
+    for (const row of chapterRows) {
+      const key = row.course_pk
+      let group = byCourse.get(key)
+      if (!group) {
+        group = {
+          course_id: row.course_pk,
+          course_name: row.course_name,
+          total: 0,
+          unfinished: 0,
+          items: [],
+        }
+        byCourse.set(key, group)
+      }
+      group.total += 1
+      if (!row.done) {
+        group.unfinished += 1
+        chapterUnfinished += 1
+      }
+      group.items.push({
+        id: row.id,
+        chapterNo: row.chapter_no,
+        chapterTitle: row.chapter_title,
+        sectionNo: row.section_no,
+        sectionTitle: row.section_title,
+        taskCount: row.task_count,
+        done: Boolean(row.done),
+        url: row.url,
+      })
     }
     return {
       connected: Boolean(account?.connected) && sessions.has(userId),
@@ -288,6 +340,9 @@ export function createChaoxingService(db, options = {}) {
       courses,
       counts,
       unread,
+      chapterUnfinished,
+      chapterTotal: chapterRows.length,
+      chapters: [...byCourse.values()],
       items,
     }
   }
@@ -411,7 +466,8 @@ export function createChaoxingService(db, options = {}) {
   async function captureQr(page) {
     const qr = page.locator('#quickCode')
     await qr.waitFor({ state: 'visible', timeout: 8_000 })
-    // 先停掉登录页自己的二维码轮询，避免截图和 uuid 在读取过程中被页面刷新。
+    // 截图期间暂停登录页自己的二维码轮询，避免 uuid 在读取过程中被刷新；
+    // 截图结束后恢复，扫码确认后的跳转由官方 loopStatus 完成。
     await page
       .evaluate(() => {
         try {
@@ -424,36 +480,50 @@ export function createChaoxingService(db, options = {}) {
       })
       .catch(() => undefined)
     await page.waitForTimeout(150)
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const uuidBefore = await page.locator('#uuid').inputValue().catch(() => '')
-      const encBefore = await page.locator('#enc').inputValue().catch(() => '')
-      const src = await qr.getAttribute('src').catch(() => '')
-      const buffer = await qr.screenshot()
-      await page.waitForTimeout(120)
-      const uuidAfter = await page.locator('#uuid').inputValue().catch(() => '')
-      const encAfter = await page.locator('#enc').inputValue().catch(() => '')
-      let srcUuid = ''
-      try {
-        srcUuid = new URL(src || '', page.url()).searchParams.get('uuid') || ''
-      } catch {
-        // ignore malformed src
-      }
-      const stable =
-        uuidBefore &&
-        uuidBefore === uuidAfter &&
-        encBefore &&
-        encBefore === encAfter &&
-        (!srcUuid || srcUuid === uuidBefore)
-      if (stable) {
-        return {
-          uuid: uuidBefore,
-          enc: encBefore,
-          qr: `data:image/png;base64,${buffer.toString('base64')}`,
+    try {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const uuidBefore = await page.locator('#uuid').inputValue().catch(() => '')
+        const encBefore = await page.locator('#enc').inputValue().catch(() => '')
+        const src = await qr.getAttribute('src').catch(() => '')
+        const buffer = await qr.screenshot()
+        await page.waitForTimeout(120)
+        const uuidAfter = await page.locator('#uuid').inputValue().catch(() => '')
+        const encAfter = await page.locator('#enc').inputValue().catch(() => '')
+        let srcUuid = ''
+        try {
+          srcUuid = new URL(src || '', page.url()).searchParams.get('uuid') || ''
+        } catch {
+          // ignore malformed src
         }
+        const stable =
+          uuidBefore &&
+          uuidBefore === uuidAfter &&
+          encBefore &&
+          encBefore === encAfter &&
+          (!srcUuid || srcUuid === uuidBefore)
+        if (stable) {
+          return {
+            uuid: uuidBefore,
+            enc: encBefore,
+            qr: `data:image/png;base64,${buffer.toString('base64')}`,
+          }
+        }
+        await page.waitForTimeout(250)
       }
-      await page.waitForTimeout(250)
+      throw new ChaoxingError('学习通二维码刷新过于频繁，请点「换一张二维码」重试。', 502)
+    } finally {
+      await page
+        .evaluate(() => {
+          try {
+            if (typeof loopStatus === 'function') {
+              qrInterValObj = window.setInterval(loopStatus, 3000)
+            }
+          } catch {
+            // ignore
+          }
+        })
+        .catch(() => undefined)
     }
-    throw new ChaoxingError('学习通二维码刷新过于频繁，请点「换一张二维码」重试。', 502)
   }
 
   async function startLogin(userId) {
@@ -572,6 +642,20 @@ export function createChaoxingService(db, options = {}) {
       await closePending(loginId)
       throw new ChaoxingError('二维码已过期，请重新获取。', 410)
     }
+    // 登录页自己的 loopStatus 会刷新二维码，这里跟随页面上的最新 uuid/enc，
+    // 避免继续轮询旧码导致手机确认后仍无反应。
+    if (await isLoginPage(item.page).catch(() => false)) {
+      const current = await item.page
+        .evaluate(() => ({
+          uuid: document.querySelector('#uuid')?.value || '',
+          enc: document.querySelector('#enc')?.value || '',
+        }))
+        .catch(() => null)
+      if (current?.uuid) {
+        item.uuid = current.uuid
+        item.enc = current.enc
+      }
+    }
     let data = {}
     try {
       const pageUrl = item.page.url()
@@ -582,8 +666,8 @@ export function createChaoxingService(db, options = {}) {
             const body = new URLSearchParams({
               enc,
               uuid,
-              doubleFactorLogin: '',
-              forbidotherlogin: '',
+              doubleFactorLogin: '0',
+              forbidotherlogin: '0',
             })
             const response = await fetch('/getauthstatus/v2', {
               method: 'POST',
@@ -611,8 +695,8 @@ export function createChaoxingService(db, options = {}) {
           form: {
             enc: item.enc,
             uuid: item.uuid,
-            doubleFactorLogin: '',
-            forbidotherlogin: '',
+            doubleFactorLogin: '0',
+            forbidotherlogin: '0',
           },
           headers: {
             Referer: LOGIN_URL,
@@ -625,25 +709,49 @@ export function createChaoxingService(db, options = {}) {
         return { status: 'expired' }
       }
     }
+    // 官方 loopStatus 收到 status:true 后会跳转；以页面离开登录页为准。
+    if (!data.status && !(await isLoginPage(item.page).catch(() => true))) {
+      data = { status: true }
+    }
     const signature = `${data.status === true}|${data.type ?? ''}`
     if (item.lastPoll !== signature) {
       item.lastPoll = signature
       console.log('[chaoxing poll]', userId, signature, clean(data.nickname, 80))
     }
     if (!data.status && data.type === 2) {
-      // 二维码失效：重新加载登录页拿一张新码，并把新码回给前端，避免用户扫到旧码一直无反应。
+      // 二维码失效：官方轮询可能刚换过码，先看页面上的 uuid 是否已变化；
+      // 没变化再主动 reload 拿新码，避免和页面轮询重复刷新。
       try {
-        await item.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 })
-        await item.page.waitForTimeout(700)
+        await item.page.waitForTimeout(900)
         if (!(await isLoginPage(item.page))) {
           data = { status: true }
         } else {
-          const fresh = await captureQr(item.page)
-          item.uuid = fresh.uuid
-          item.enc = fresh.enc
-          item.createdAt = Date.now()
-          item.lastPoll = ''
-          return { status: 'refreshed', qr: fresh.qr }
+          const current = await item.page.evaluate(
+            () => ({
+              uuid: document.querySelector('#uuid')?.value || '',
+              enc: document.querySelector('#enc')?.value || '',
+            }),
+          )
+          if (current.uuid && current.uuid !== item.uuid) {
+            const fresh = await captureQr(item.page)
+            item.uuid = fresh.uuid
+            item.enc = fresh.enc
+            item.createdAt = Date.now()
+            item.lastPoll = ''
+            return { status: 'refreshed', qr: fresh.qr }
+          }
+          await item.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 })
+          await item.page.waitForTimeout(700)
+          if (!(await isLoginPage(item.page))) {
+            data = { status: true }
+          } else {
+            const fresh = await captureQr(item.page)
+            item.uuid = fresh.uuid
+            item.enc = fresh.enc
+            item.createdAt = Date.now()
+            item.lastPoll = ''
+            return { status: 'refreshed', qr: fresh.qr }
+          }
         }
       } catch {
         return { status: 'expired' }
@@ -846,6 +954,71 @@ export function createChaoxingService(db, options = {}) {
     return items
   }
 
+  function findCourseByName(courses, rawName) {
+    const name = String(rawName || '')
+      .replace(/[《》]/g, '')
+      .replace(/\.{2,}|…+/g, '')
+      .replace(/\s+/g, '')
+      .trim()
+    if (!name) return undefined
+    return (
+      courses.find((course) => course.name.replace(/\s+/g, '') === name) ||
+      courses.find((course) => {
+        const full = course.name.replace(/\s+/g, '')
+        return full.startsWith(name) || name.startsWith(full) || full.includes(name)
+      })
+    )
+  }
+
+  async function syncAllHomework(page, courses) {
+    await gotoPage(page, urls.workAll)
+    await page
+      .waitForSelector('li[data]', { timeout: 5_000 })
+      .catch(() => undefined)
+    const rows = await page.evaluate(() =>
+      [...document.querySelectorAll('li[data]')].map((li, index) => {
+        const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim()
+        const p = li.querySelector('p')
+        const spans = [...li.querySelectorAll('span')]
+        const status =
+          clean(li.querySelector('span.status')?.textContent) ||
+          clean(spans.find((span) => /未提交|未交|待批阅|已完成|已交|已过期/.test(span.textContent || ''))?.textContent)
+        const courseName =
+          clean(spans.find((span) => /《.+》/.test(span.textContent || ''))?.textContent)
+        const remaining = clean(li.querySelector('span.fr')?.textContent)
+        return {
+          index,
+          title: clean(p?.textContent),
+          status,
+          courseName,
+          remaining,
+          href: li.getAttribute('data') || '',
+        }
+      }),
+    )
+    const now = Date.now()
+    const result = []
+    for (const row of rows) {
+      const course = findCourseByName(courses, row.courseName)
+      if (!course || !row.title) continue
+      let dueAt = null
+      const remain = /剩余(\d+)小时(\d+)分钟/.exec(row.remaining)
+      if (remain) dueAt = now + Number(remain[1]) * 3_600_000 + Number(remain[2]) * 60_000
+      result.push({
+        course,
+        item: {
+          sourceId: row.href || `${course.course_id}|${row.title}`,
+          title: row.title,
+          body: [row.status, row.remaining].filter(Boolean).join(' · '),
+          url: row.href || course.url,
+          dueAt,
+          publishedAt: now - row.index * 1000,
+        },
+      })
+    }
+    return result
+  }
+
   async function syncHomework(page, course) {
     const middleUrl = `${urls.middle}?courseid=${encodeURIComponent(
       course.course_id,
@@ -1027,6 +1200,130 @@ export function createChaoxingService(db, options = {}) {
     }))
   }
 
+  async function syncChapters(page, course, userId) {
+    await gotoPage(page, course.url)
+    await page
+      .waitForSelector('.timeline .units, .content1 .units', { timeout: 5_000 })
+      .catch(() => undefined)
+    const units = await page.evaluate(() => {
+      const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim()
+      const roots = [
+        ...document.querySelectorAll('.timeline .units, .content1 .units'),
+      ]
+      return roots.map((unit) => {
+        const chapterNo =
+          clean(unit.querySelector('.levelfirst .chapterNumber, h2 .chapterNumber')?.textContent) ||
+          ''
+        const chapterTitle =
+          clean(unit.querySelector('.levelfirst .fontCon, h2 .fontCon')?.textContent) ||
+          clean(unit.querySelector('h2')?.textContent) ||
+          chapterNo
+        const sections = [...unit.querySelectorAll('.leveltwo')].map((section) => {
+          // 旧版页面用 input.knowledgeJobCount 标记未完成任务数；新版课程首页
+          // 已移除该节点，任务数可能渲染在其它 class 上，做兼容读取。
+          const countEl = section.querySelector(
+            'input.knowledgeJobCount, .knowledgeJobCount, .jobUnfinishCount, .unfinishCount, .taskCount',
+          )
+          const raw = countEl?.value ?? countEl?.textContent ?? ''
+          const count = Number(String(raw).replace(/\D+/g, ''))
+          const flags = [
+            section.className,
+            ...[...section.querySelectorAll('em, i, span, .icon')].map((el) => el.className),
+          ].join(' ')
+          const done = /finish|finished|complete|completed|done|pass/.test(flags)
+          return {
+            no: clean(section.querySelector('.chapterNumber')?.textContent),
+            title:
+              clean(section.querySelector('h3 .fontCon, h3')?.textContent) ||
+              clean(section.querySelector('h3')?.textContent),
+            count: Number.isFinite(count) ? count : null,
+            done,
+            href: section.querySelector('a[href]')?.href || '',
+          }
+        })
+        return { chapterNo, chapterTitle, sections }
+      })
+    })
+    // 课程首页的“待完成任务点”列表只列未完成章节：有任务数时按数判断，
+    // 拿不到任务数时视为未完成，而不是反过来全部判成已完成。
+    const hasCounts = units.some((unit) =>
+      unit.sections.some((section) => typeof section.count === 'number'),
+    )
+    const rows = []
+    for (const unit of units) {
+      for (const section of unit.sections) {
+        if (!section.title) continue
+        rows.push({
+          chapterNo: unit.chapterNo,
+          chapterTitle: unit.chapterTitle,
+          sectionNo: section.no,
+          sectionTitle: section.title,
+          taskCount: hasCounts ? section.count || 0 : 1,
+          done: hasCounts ? (section.count || 0) <= 0 : section.done,
+          url: section.href || course.url,
+        })
+      }
+    }
+    const now = Date.now()
+    db.prepare('DELETE FROM chaoxing_chapters WHERE user_id = ? AND course_pk = ?').run(
+      userId,
+      course.id,
+    )
+    for (const row of rows) {
+      const id = `cxch-${sha1(`${course.id}|${row.sectionNo}|${row.sectionTitle}`).slice(0, 32)}`
+      db.prepare(
+        `INSERT OR REPLACE INTO chaoxing_chapters
+           (id, user_id, course_pk, chapter_no, chapter_title, section_no, section_title,
+            task_count, done, url, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        id,
+        userId,
+        course.id,
+        row.chapterNo,
+        row.chapterTitle,
+        row.sectionNo,
+        row.sectionTitle,
+        row.taskCount,
+        row.done ? 1 : 0,
+        row.url,
+        now,
+      )
+    }
+    return rows.filter((row) => !row.done).length
+  }
+
+  async function syncMessagesOnly(userId) {
+    restoreSession(userId)
+    const session = sessions.get(userId)
+    if (!session) throw new ChaoxingError('还没有绑定学习通，请先扫码或账号密码登录。', 401)
+    const browser = await getBrowser()
+    const context = await browser.newContext({
+      userAgent: session.ua || DEFAULT_UA,
+      viewport: { width: 1440, height: 1000 },
+      locale: 'zh-CN',
+    })
+    await context.addCookies(session.cookies).catch(() => undefined)
+    try {
+      const remote = await fetchCourses(context)
+      saveCourses(userId, remote)
+      const courses = listCourses(userId).filter((course) => course.selected)
+      const notices = await syncAllMessages(context, courses)
+      for (const notice of notices) upsertItems(userId, notice.course, 'message', [notice.item])
+      session.cookies = await context.cookies().catch(() => session.cookies)
+      saveAccountSession(userId, session.cookies, session.ua)
+      touchAccount(userId, { connected: true, lastSyncAt: Date.now(), lastError: null })
+      return { courses: remote.length, messages: notices.length }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '同步消息失败'
+      touchAccount(userId, { lastError: message })
+      if (error instanceof ChaoxingError) throw error
+      throw new ChaoxingError(message, 502)
+    } finally {
+      await context.close().catch(() => undefined)
+    }
+  }
+
   async function sync(userId) {
     restoreSession(userId)
     const session = sessions.get(userId)
@@ -1056,7 +1353,7 @@ export function createChaoxingService(db, options = {}) {
       }
       saveCourses(userId, remote)
       const courses = listCourses(userId).filter((course) => course.selected)
-      const result = { courses: remote.length, assignments: 0, materials: 0, messages: 0, errors: [] }
+      const result = { courses: remote.length, assignments: 0, materials: 0, messages: 0, chapters: 0, errors: [] }
       let messagesFromEndpoint = false
       try {
         const notices = await syncAllMessages(context, courses)
@@ -1073,9 +1370,37 @@ export function createChaoxingService(db, options = {}) {
           message: error instanceof Error ? error.message : '课程消息接口暂时不可用',
         })
       }
+      let homeworkFromEndpoint = false
+      try {
+        const homework = await syncAllHomework(page, courses)
+        for (const entry of homework) {
+          upsertItems(userId, entry.course, 'assignment', [entry.item])
+        }
+        result.assignments = homework.length
+        homeworkFromEndpoint = true
+      } catch (error) {
+        if (error instanceof ChaoxingError && error.status === 401) throw error
+        result.errors.push({
+          course: '全部课程',
+          kind: 'assignment',
+          message: error instanceof Error ? error.message : '作业接口暂时不可用',
+        })
+      }
       for (const course of courses) {
+        try {
+          result.chapters += await syncChapters(page, course, userId)
+        } catch (error) {
+          if (error instanceof ChaoxingError && error.status === 401) throw error
+          result.errors.push({
+            course: course.name,
+            kind: 'chapter',
+            message: error instanceof Error ? error.message : '章节同步失败',
+          })
+        }
         for (const [kind, fn, key] of [
-          ['assignment', syncHomework, 'assignments'],
+          ...(homeworkFromEndpoint
+            ? []
+            : [['assignment', syncHomework, 'assignments']]),
           ['material', syncMaterials, 'materials'],
           ...(messagesFromEndpoint
             ? []
@@ -1130,6 +1455,7 @@ export function createChaoxingService(db, options = {}) {
     status,
     logout,
     sync,
+    syncMessagesOnly,
     overview,
     markRead,
     setCourseSelected,

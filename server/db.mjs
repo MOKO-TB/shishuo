@@ -202,6 +202,24 @@ export function openDatabase(dbPath) {
 
     CREATE INDEX IF NOT EXISTS idx_chaoxing_items_user
       ON chaoxing_items(user_id, kind, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS chaoxing_chapters (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_pk TEXT NOT NULL,
+      chapter_no TEXT NOT NULL DEFAULT '',
+      chapter_title TEXT NOT NULL DEFAULT '',
+      section_no TEXT NOT NULL DEFAULT '',
+      section_title TEXT NOT NULL,
+      task_count INTEGER NOT NULL DEFAULT 0,
+      done INTEGER NOT NULL DEFAULT 0,
+      url TEXT NOT NULL DEFAULT '',
+      updated_at INTEGER NOT NULL,
+      UNIQUE(user_id, course_pk, section_no, section_title)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chaoxing_chapters_user
+      ON chaoxing_chapters(user_id, course_pk, done);
   `)
   try {
     const columns = db.prepare('PRAGMA table_info(users)').all()
