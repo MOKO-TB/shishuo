@@ -42,6 +42,8 @@ interface LayoutProps {
   pendingCount: number
   unreadCount: number
   onOpenNotifications: () => void
+  /** 设置页是否打开；打开时底栏「账号」高亮，其余导航不高亮 */
+  accountOpen?: boolean
   onOpenAccount: (tab?: 'identity' | 'schedule' | 'scores' | 'teachers') => void
   onOpenAdmin: () => void
   onOpenMentor: (prompt?: string) => void
@@ -67,6 +69,7 @@ export function Layout({
   pendingCount,
   unreadCount,
   onOpenNotifications,
+  accountOpen = false,
   onOpenAccount,
   onOpenAdmin,
   onOpenMentor,
@@ -129,7 +132,8 @@ export function Layout({
           <span className="nav-section-label">{isTeacher ? '教学空间' : '学习空间'}</span>
           {navItems.map((item) => {
             const Icon = item.icon
-            const active = view === item.key
+            // 设置页打开时归到「账号/设置」，其余导航项不高亮
+            const active = !accountOpen && view === item.key
             return (
               <button
                 key={item.key}
@@ -348,7 +352,7 @@ export function Layout({
           return (
             <button
               key={item.key}
-              className={cn(view === item.key && 'is-active')}
+              className={cn(!accountOpen && view === item.key && 'is-active')}
               onClick={() => onNavigate(item.key)}
             >
               <Icon size={20} />
@@ -356,7 +360,11 @@ export function Layout({
             </button>
           )
         })}
-        <button onClick={() => onOpenAccount('identity')}>
+        <button
+          className={cn(accountOpen && 'is-active')}
+          aria-current={accountOpen ? 'page' : undefined}
+          onClick={() => onOpenAccount('identity')}
+        >
           <Settings size={20} />
           <span>账号</span>
         </button>
