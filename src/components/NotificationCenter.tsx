@@ -35,6 +35,9 @@ const kindMeta: Record<
   'teacher-needs-info': { icon: CircleAlert, tone: 'blue', label: '请你补充' },
   'teacher-supplement': { icon: CornerDownRight, tone: 'jade', label: '学生补充' },
   'same-question-joined': { icon: Users, tone: 'gold', label: '同问' },
+  'account-banned': { icon: CircleAlert, tone: 'clay', label: '账号封禁' },
+  'account-muted': { icon: CircleAlert, tone: 'gold', label: '账号禁言' },
+  'account-restored': { icon: CircleCheck, tone: 'jade', label: '账号恢复' },
 }
 
 export function NotificationCenter({
