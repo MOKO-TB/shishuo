@@ -206,19 +206,18 @@ export function ChaoxingView() {
     <div className="page cx-page">
       <header className="cx-page-head">
         <div>
+          <div className="eyebrow">学生端 / 学习通</div>
           <h1 className="display-title">
             课程消息、作业与资料，
-            <br className="cx-title-break" />
+            <br />
             <span>从一个地方看。</span>
           </h1>
         </div>
         <div className="cx-page-head-side">
           {connected ? (
             <>
-              <span className="cx-connection">
-                <i />
-                {overview?.lastSyncAt ? `已同步 · ${fmt(overview.lastSyncAt)}` : '已绑定学习通'}
-              </span>
+              <Badge tone="jade">已绑定</Badge>
+              <span>{overview?.lastSyncAt ? `上次同步 ${fmt(overview.lastSyncAt)}` : '还没有同步'}</span>
               <button className="button button-primary" onClick={() => void syncNow()} disabled={syncing}>
                 {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
                 {syncing ? '同步中…' : '同步全部'}
@@ -406,10 +405,7 @@ export function ChaoxingView() {
                       <span className="cx-chapter-progress">
                         <i
                           style={{
-                            width:
-                              course.total && course.total > course.unfinished
-                                ? `${Math.max(4, ((course.total - course.unfinished) / course.total) * 100)}%`
-                                : '0%',
+                            width: `${course.total ? Math.max(4, ((course.total - course.unfinished) / course.total) * 100) : 0}%`,
                           }}
                         />
                       </span>
