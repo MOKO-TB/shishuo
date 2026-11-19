@@ -30,6 +30,7 @@ import {
 } from './ai-settings.mjs'
 import { sendMail, sendVerificationCode } from './mail.mjs'
 import { createJwService, JwError } from './jw.mjs'
+import { ChaoxingError, createChaoxingService } from './chaoxing.mjs'
 import {
   checkSendRate,
   deleteEmailCode,
@@ -65,6 +66,11 @@ function sendError(res, status, message) {
 
 function sendJwJson(res, status, payload) {
   res.setHeader('x-shishuo-jw-proxy', '1')
+  sendJson(res, status, payload)
+}
+
+function sendChaoxingJson(res, status, payload) {
+  res.setHeader('x-shishuo-chaoxing', '1')
   sendJson(res, status, payload)
 }
 
@@ -399,6 +405,7 @@ function pickUpstreamMessage(status, raw) {
 export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
   const jw = createJwService()
+  const chaoxing = createChaoxingService(db)
   /**
    * 工作区响应缓存：连「投影 + 序列化 + gzip」一起缓存，命中时只写 socket。
    * revision 每次成功写入都会递增，因此数据不变时缓存必然安全；
@@ -880,6 +887,75 @@ export function createApiHandler({ db, config }) {
     }
   }
 
+  async function handleChaoxing(req, res, pathname, url) {
+    try {
+      const user = requireUser(req)
+      if (pathname === '/api/chaoxing/overview' && req.method === 'GET') {
+        const data = chaoxing.overview(user.id)
+        const kind = url.searchParams.get('kind') || ''
+        const courseId = url.searchParams.get('courseId') || ''
+        if (kind || courseId) {
+          data.items = data.items.filter(
+            (item) =>
+              (!kind || item.kind === kind) && (!courseId || item.course_id === courseId),
+          )
+        }
+        return sendChaoxingJson(res, 200, data)
+      }
+      if (req.method !== 'POST') {
+        return sendChaoxingJson(res, 405, { error: '学习通接口只支持 POST 请求。' })
+      }
+      if (!sameOrigin(req)) {
+        return sendChaoxingJson(res, 403, { error: '请求来源不合法。' })
+      }
+      const body = await readJson(req, SMALL_BODY_LIMIT)
+      if (pathname === '/api/chaoxing/login/start') {
+        return sendChaoxingJson(res, 200, await chaoxing.startLogin(user.id))
+      }
+      if (pathname === '/api/chaoxing/login/poll') {
+        return sendChaoxingJson(
+          res,
+          200,
+          await chaoxing.pollLogin(user.id, String(body.loginId ?? '')),
+        )
+      }
+      if (pathname === '/api/chaoxing/status') {
+        return sendChaoxingJson(res, 200, chaoxing.status(user.id))
+      }
+      if (pathname === '/api/chaoxing/sync') {
+        return sendChaoxingJson(res, 200, await chaoxing.sync(user.id))
+      }
+      if (pathname === '/api/chaoxing/logout') {
+        return sendChaoxingJson(res, 200, await chaoxing.logout(user.id))
+      }
+      const readMatch = /^\/api\/chaoxing\/items\/([\w.-]+)\/read$/.exec(pathname)
+      if (readMatch && req.method === 'POST') {
+        chaoxing.markRead(user.id, decodeURIComponent(readMatch[1]))
+        return sendChaoxingJson(res, 200, chaoxing.overview(user.id))
+      }
+      const selectMatch = /^\/api\/chaoxing\/courses\/([\w.-]+)\/select$/.exec(pathname)
+      if (selectMatch && req.method === 'POST') {
+        chaoxing.setCourseSelected(
+          user.id,
+          decodeURIComponent(selectMatch[1]),
+          Boolean(body.selected),
+        )
+        return sendChaoxingJson(res, 200, chaoxing.overview(user.id))
+      }
+      return sendChaoxingJson(res, 404, { error: '没有这个学习通接口。' })
+    } catch (error) {
+      const status =
+        error instanceof ChaoxingError
+          ? error.status
+          : error instanceof HttpError
+            ? error.status
+            : 502
+      return sendChaoxingJson(res, status, {
+        error: error instanceof Error ? error.message : '学习通服务暂时不可用。',
+      })
+    }
+  }
+
   return async function handleApi(req, res) {
     const url = new URL(req.url || '/', 'http://localhost')
     const pathname = url.pathname
@@ -906,6 +982,10 @@ export function createApiHandler({ db, config }) {
 
       if (pathname.startsWith('/api/jw/')) {
         return await handleJw(req, res, pathname)
+      }
+
+      if (pathname.startsWith('/api/chaoxing/')) {
+        return await handleChaoxing(req, res, pathname, url)
       }
 
       if (pathname === '/api/admin/users' && req.method === 'GET') {

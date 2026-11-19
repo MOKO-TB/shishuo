@@ -65,6 +65,7 @@
 - 学生资料（姓名、学院、专业、学号、课表、成绩、老师显示设置）按账号保存在服务端。
 - 题目图片先压缩，再上传到 `data/uploads`；工作区只保存 `/uploads/...` URL，不把 base64 大图塞进状态文档。
 - 教务账号/密码只在登录请求中短暂提交给服务器，用于换取教务 Cookie；密码不写入数据库，登录态按学生账号隔离，服务重启后需要重新登录。
+- 学习通：学生端右栏「学习通」用学习通 App 扫码绑定，只读同步课程消息、作业、资料；不保存学习通密码，不代交作业。同步结果写 `chaoxing_*` 表并按学生隔离；课程消息为页面结构解析，平台改版时可能暂时为空。相关代码在 `server/chaoxing.mjs`、`src/views/student/ChaoxingPanel.tsx`。
 
 ---
 
@@ -148,7 +149,7 @@ Node HTTP server (server/index.mjs)
         └─ AI provider（OpenAI 兼容 /chat/completions）
 ```
 
-- **开发模式**：`npm run dev` 同时启动 Node API（默认 8787）和 Vite（默认 5173）。Vite 代理 `/api/auth`、`/api/state`、`/api/profile`、`/api/ai`、`/api/jw`、`/api/health`；教务读取统一走服务端 `server/jw.mjs`，不再依赖 Vite 插件。
+- **开发模式**：`npm run dev` 同时启动 Node API（默认 8787）和 Vite（默认 5173）。Vite 代理 `/api/auth`、`/api/state`、`/api/profile`、`/api/ai`、`/api/jw`、`/api/chaoxing`、`/api/health`；教务读取统一走服务端 `server/jw.mjs`，学习通同步走 `server/chaoxing.mjs`，不再依赖 Vite 插件。
 - **生产模式**：`npm run build && npm start`，由 Node 服务在 8787 同时托管 `dist/` 与 API，SPA 路由回退到 `index.html`。
 - **教务浏览器**：课表/成绩代登录需要 Chromium。服务器首次部署执行 `PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright node node_modules/playwright-core/cli.js install --only-shell chromium`（国内镜像）；已有系统 Chrome/Edge 时会优先使用系统浏览器。
 - **数据库**：默认 `data/shishuo.db`，启用 WAL。工作区目前以一个 JSON 文档整体保存，适合试点规模，便于快速迭代。
@@ -422,6 +423,7 @@ server/
   jw.mjs           服务端教务会话（验证码、登录、按用户隔离的课表/成绩读取）
   jw-parse.mjs     强智课表/成绩表格解析
   jw-scripts.mjs   成绩查询页内脚本
+  chaoxing.mjs     学习通二维码登录与课程消息/作业/资料只读同步
   policy.mjs       试点课程与教师课程分配
   auth.mjs         密码哈希、会话、Cookie
   mail.mjs         SMTP / 开发邮件发送

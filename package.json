@@ -13,6 +13,7 @@
     "review:campus": "node dev/check-campus-review.mjs",
     "test:api": "node dev/test-api.mjs",
     "test:jw": "node dev/test-jw-mock.mjs",
+    "test:chaoxing": "node dev/test-chaoxing-mock.mjs",
     "maintain:archive": "node dev/archive-threads.mjs",
     "start": "node server/index.mjs",
     "preview": "node server/index.mjs"

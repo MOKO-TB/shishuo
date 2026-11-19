@@ -1159,3 +1159,22 @@ test('教务接口：必须登录，状态接口返回未连接', async () => {
   assert.equal(status.json.connected, false)
   assert.equal(status.json.loginOpen, false)
 })
+
+test('学习通接口：必须登录，未绑定时返回空概览', async () => {
+  const denied = await api('/api/chaoxing/status', { method: 'POST', body: {} })
+  assert.equal(denied.status, 401)
+
+  const status = await api('/api/chaoxing/status', {
+    as: 'student1',
+    method: 'POST',
+    body: {},
+  })
+  assert.equal(status.status, 200)
+  assert.equal(status.json.connected, false)
+  assert.equal(status.json.courseCount, 0)
+
+  const overview = await api('/api/chaoxing/overview', { as: 'student1' })
+  assert.equal(overview.status, 200)
+  assert.equal(overview.json.connected, false)
+  assert.equal(overview.json.items.length, 0)
+})

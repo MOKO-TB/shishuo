@@ -7,6 +7,7 @@ import { sectionLabel, weekdayLabel } from '../../lib/profile'
 import { courseById } from '../../data/seed'
 import { Avatar, Badge } from '../../components/ui'
 import { Donut } from '../../components/charts'
+import { ChaoxingRailCard } from './ChaoxingPanel'
 
 export interface StudentRailProps {
   todayAi: number
@@ -77,6 +78,8 @@ export function StudentRail({
           </span>
         </div>
       </div>
+
+      <ChaoxingRailCard />
 
       {todaysClasses.length > 0 && (
         <div className="rail-card class-card">

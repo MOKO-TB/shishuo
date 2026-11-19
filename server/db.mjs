@@ -157,6 +157,49 @@ export function openDatabase(dbPath) {
       updated_at INTEGER NOT NULL,
       updated_by TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS chaoxing_accounts (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      connected INTEGER NOT NULL DEFAULT 0,
+      last_sync_at INTEGER,
+      last_error TEXT,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS chaoxing_courses (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT NOT NULL,
+      class_id TEXT NOT NULL,
+      cpi TEXT NOT NULL,
+      name TEXT NOT NULL,
+      teacher TEXT NOT NULL DEFAULT '',
+      url TEXT NOT NULL DEFAULT '',
+      selected INTEGER NOT NULL DEFAULT 1,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chaoxing_courses_user
+      ON chaoxing_courses(user_id, selected);
+
+    CREATE TABLE IF NOT EXISTS chaoxing_items (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_pk TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('assignment', 'material', 'message')),
+      source_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      url TEXT NOT NULL DEFAULT '',
+      due_at INTEGER,
+      published_at INTEGER,
+      read_at INTEGER,
+      created_at INTEGER NOT NULL,
+      UNIQUE(user_id, kind, source_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chaoxing_items_user
+      ON chaoxing_items(user_id, kind, created_at DESC);
   `)
   try {
     const columns = db.prepare('PRAGMA table_info(users)').all()
