@@ -2459,3 +2459,107 @@
     height: 38px;
   }
 }
+
+/* ---------- 管理端：与主站对齐（设置类左右布局 / 表单类上下布局） ---------- */
+
+/* 1) 表单字段：标签在上、输入在下，并保证手机端字号 ≥ 16px 不触发 iOS 缩放 */
+.admin-ai-field {
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--fg-soft);
+}
+
+.admin-ai-field input,
+.admin-ai-field select {
+  height: var(--touch);
+  padding: 0 12px;
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--fg);
+  font-size: var(--text-base);
+}
+
+.admin-ai-field input::placeholder {
+  color: var(--fg-faint);
+}
+
+.admin-ai-field input:focus-visible,
+.admin-ai-field select:focus-visible {
+  border-color: var(--accent);
+}
+
+/* 2) 设置类条目：名称左、控件右，每项一行 */
+.admin-settings-list {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.admin-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-settings-row + .admin-settings-row {
+  border-top: 1px solid var(--border);
+}
+
+.admin-settings-row-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-settings-row-copy strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-settings-row-copy small {
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* 3) 面板：去掉重复的外层描边，让分组留白来分段 */
+.admin-console-tabs + .admin-panel,
+.admin-page .admin-panel {
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.admin-page .admin-content-card,
+.admin-page .admin-table-card {
+  border-radius: var(--radius-lg);
+}
+
+/* 4) 移动端：表单字段一列到底，触控目标 44px */
+@media (max-width: 720px) {
+  .admin-ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-ai-field.is-wide {
+    grid-column: auto;
+  }
+
+  .admin-ai-field input,
+  .admin-ai-field select {
+    height: var(--touch);
+    font-size: var(--text-base);
+  }
+
+  .admin-settings-row {
+    padding: var(--space-3);
+  }
+}
