@@ -2361,28 +2361,31 @@
 .cx-page-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .cx-page-stat {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px;
+  gap: 11px;
+  padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 13px;
   background: var(--surface);
   text-align: left;
-  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
 }
 
 .cx-page-stat:hover {
   border-color: rgba(20, 108, 86, 0.26);
+  box-shadow: 0 6px 16px rgba(23, 36, 30, 0.04);
 }
 
 .cx-page-stat.is-active {
   border-color: rgba(20, 108, 86, 0.32);
-  background: var(--jade-mist);
+  background: linear-gradient(135deg, rgba(20, 108, 86, 0.08), var(--surface));
+  box-shadow: inset 0 0 0 1px rgba(20, 108, 86, 0.08);
 }
 
 .cx-page-stat.is-static {
@@ -2391,30 +2394,42 @@
 
 .cx-page-stat-icon {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 11px;
   background: var(--jade-mist);
   color: var(--jade-deep);
   flex: 0 0 auto;
 }
 
+.cx-page-stat:nth-child(2) .cx-page-stat-icon {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.cx-page-stat:nth-child(3) .cx-page-stat-icon {
+  background: rgba(184, 97, 62, 0.12);
+  color: var(--clay);
+}
+
 .cx-page-stat > span:last-child {
   display: grid;
-  gap: 1px;
+  gap: 2px;
 }
 
 .cx-page-stat strong {
-  font-family: var(--mono);
-  font-size: 20px;
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
   color: var(--ink);
 }
 
 .cx-page-stat em {
   color: var(--faint);
-  font-size: 9px;
+  font-size: 9.5px;
   font-style: normal;
+  letter-spacing: 0.02em;
 }
 
 .cx-page-toolbar {
@@ -2427,20 +2442,21 @@
 
 .cx-page-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   padding: 4px;
-  border-radius: 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: var(--surface-2);
 }
 
 .cx-page-tabs button {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   padding: 8px 13px;
-  border-radius: 8px;
+  border-radius: 9px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
 .cx-page-tabs button span {
@@ -2451,7 +2467,7 @@
 .cx-page-tabs button.is-active {
   background: var(--surface);
   color: var(--jade-deep);
-  box-shadow: 0 1px 3px rgba(23, 36, 30, 0.08);
+  box-shadow: 0 2px 8px rgba(23, 36, 30, 0.07);
 }
 
 .cx-page-list {
@@ -2713,6 +2729,10 @@
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
+.cx-page-head {
+  align-items: center;
+}
+
 .cx-page-head > div:first-child,
 .cx-page-head-side,
 .cx-page-toolbar,
@@ -2723,9 +2743,42 @@
 }
 
 .cx-page-head .display-title {
-  font-size: clamp(30px, 7vw, 52px);
-  line-height: 1.12;
+  max-width: 900px;
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.16;
+  letter-spacing: -0.005em;
   overflow-wrap: anywhere;
+}
+
+.cx-page-head-side {
+  margin-left: auto;
+  padding-bottom: 0;
+}
+
+.cx-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+.cx-connection i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--jade);
+  box-shadow: 0 0 0 3px rgba(20, 108, 86, 0.1);
+}
+
+.cx-title-break {
+  display: none;
 }
 
 .cx-page-hint {
@@ -2769,36 +2822,39 @@
 
 .cx-course-groups {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .cx-course-group {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   width: 100%;
-  padding: 12px;
+  padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 14px;
   background: var(--surface);
   text-align: left;
-  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease),
+    box-shadow 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .cx-course-group:hover {
   border-color: rgba(20, 108, 86, 0.26);
   background: var(--jade-mist);
+  box-shadow: 0 8px 20px rgba(23, 36, 30, 0.05);
+  transform: translateY(-1px);
 }
 
 .cx-course-avatar {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 11px;
   background: var(--jade-soft);
   color: var(--jade-deep);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 650;
   line-height: 1.1;
   text-align: center;
@@ -2813,7 +2869,7 @@
 
 .cx-course-group-body {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
   flex: 1;
 }
@@ -2828,7 +2884,7 @@
 .cx-course-group-top strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 12px;
+  font-size: 13.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2836,14 +2892,14 @@
 .cx-course-group-latest {
   overflow: hidden;
   color: var(--muted);
-  font-size: 10.5px;
+  font-size: 11.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cx-course-group-meta {
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: 9.5px;
 }
 
 .cx-course-group-arrow {
@@ -2880,27 +2936,27 @@
 
 .cx-chapter-head strong {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 18px;
   color: var(--ink);
 }
 
 .cx-chapter-head span {
   color: var(--faint);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .cx-chapter-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 9px;
 }
 
 .cx-chapter-card {
   display: grid;
-  gap: 7px;
-  padding: 10px;
+  gap: 8px;
+  padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface-2);
   text-align: left;
 }
@@ -2920,7 +2976,7 @@
 .cx-chapter-card-top strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2946,7 +3002,7 @@
   justify-content: space-between;
   gap: 4px;
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: 9.5px;
 }
 
 .cx-page-empty-line {
@@ -3031,7 +3087,16 @@
   }
 
   .cx-page-head .display-title {
-    font-size: 30px;
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .cx-title-break {
+    display: inline;
+  }
+
+  .cx-connection {
+    display: none;
   }
 
   .cx-page-head-side {
