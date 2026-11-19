@@ -41,6 +41,7 @@ import {
   bindScheduleCourses,
   courseToneMap,
   dateInputValue,
+  getProfile,
   mondayOf,
   monthDayOf,
   parseDateInput,
@@ -477,8 +478,9 @@ export function AccountModal({
       setConnected(true)
       setJwPassword('')
       setJwCaptcha('')
-      notify('教务已连接。之后读取课表和成绩都在后台完成。')
+      notify('教务已连接，正在同步课表和成绩…', 'info')
       await readSchedule()
+      await readScores()
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -573,10 +575,16 @@ export function AccountModal({
       setDiagnostics(result.diagnostics)
       setTried(result.tried)
       setTableSample(result.tableSample)
-      setScorePreview(result.rows.map((row) => ({ ...row, id: row.id || makeId('score') })))
+      const rows = result.rows.map((row) => ({ ...row, id: row.id || makeId('score') }))
+      setScorePreview(rows)
       setAutoQuery(result.autoQuery ?? null)
       setSemester('all')
-      if (result.rows.length === 0) {
+      if (rows.length > 0) {
+        // 读取成功后直接保存到账号，校园工具 GPA 页会立即同步。
+        persist({ ...getProfile(), scores: rows, scoresSyncedAt: Date.now() })
+        setScorePreview(null)
+        notify(`已同步 ${rows.length} 条成绩，GPA 已更新`)
+      } else {
         const tableCount = result.diagnostics.reduce((sum, item) => sum + item.tables, 0)
         setError(
           tableCount > 0

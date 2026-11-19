@@ -255,6 +255,11 @@ export function setProfile(next: StudentProfile) {
   return normalized
 }
 
+/** Latest in-memory profile; use when merging an async result into the current settings. */
+export function getProfile() {
+  return currentProfile
+}
+
 export function resetProfile() {
   const next: StudentProfile = {
     ...DEFAULT_PROFILE,

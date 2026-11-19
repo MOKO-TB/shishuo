@@ -88,19 +88,36 @@ const MENU_LINKS = `(() => {
 
 const SCORE_MENU_SCRIPT = `(() => {
   const clean = (value) => (value || '').replace(/\\s+/g, ' ').trim()
-  const candidates = [...document.querySelectorAll('a,button,li,span')]
+  const isSubmission = /成绩提交|成绩替换|成绩认定|成绩复核|成绩免修|成绩置换|交流成绩|成绩管理|成绩申请/
+  // 只匹配成绩查询类入口，排除成绩提交/替换等操作类菜单。
+  const scoreLink = [...document.querySelectorAll('a')]
     .filter((el) => {
       const text = clean(el.textContent)
-      return text.length <= 30 && /成绩查询|学生成绩|考试成绩|成绩/.test(text)
+      return text.length <= 30 && /我的成绩|成绩查询|课程成绩|学生成绩|考试成绩/.test(text) && !isSubmission.test(text)
     })
-  const target = candidates.find((el) => el.tagName === 'A' || el.tagName === 'BUTTON') || candidates[0]
-  if (!target) return { clicked: false }
-  const anchor = target.closest('a')
-  if (anchor && anchor.href && !/^javascript:/i.test(anchor.href)) {
-    location.href = anchor.href
-    return { clicked: true, href: anchor.href }
+    .sort((a, b) => {
+      const ta = clean(a.textContent)
+      const tb = clean(b.textContent)
+      const exactA = /^我的成绩$/.test(ta) ? 0 : 1
+      const exactB = /^我的成绩$/.test(tb) ? 0 : 1
+      if (exactA !== exactB) return exactA - exactB
+      return ta.length - tb.length
+    })[0]
+  if (!scoreLink) return { clicked: false }
+  // 成绩入口在二级菜单里，默认隐藏；先展开所属分类（带 showMenuErji 的 li）再点击。
+  if (scoreLink.offsetParent === null) {
+    let li = scoreLink.closest('li')
+    while (li) {
+      const onclick = li.getAttribute('onclick') || ''
+      if (/showMenuErji/.test(onclick)) {
+        if (typeof window.showMenuErji === 'function') window.showMenuErji(li)
+        else li.click()
+        break
+      }
+      li = li.parentElement ? li.parentElement.closest('li') : null
+    }
   }
-  target.click()
+  scoreLink.click()
   return { clicked: true }
 })()`
 
@@ -255,26 +272,32 @@ function targetUrl(session, kind) {
 function readCandidates(session, kind) {
   const list = []
   const primary = targetUrl(session, kind)
-  if (primary) list.push(primary)
   try {
     const origin = new URL(
       session.base || primary || session.timetableUrl || session.scoresUrl,
     ).origin
-    const known =
-      kind === 'schedule'
-        ? ['/gzasc_jsxsd/xskb/xskb_list.do']
-        : [
-            '/gzasc_jsxsd/cjcx/cjkb_cjb1.do',
-            '/gzasc_jsxsd/kscj/cjcx_list.do',
-            '/gzasc_jsxsd/cjcx/cjcx_list.do',
-          ]
-    for (const path of known) list.push(`${origin}${path}`)
-    list.push(`${origin}/gzasc_jsxsd/framework/xsMain.jsp`)
+    if (kind === 'scores') {
+      // 强智成绩入口是「我的成绩 → 课程成绩查询」，实际地址 /kscj/cjcx_frm，
+      // 内含 cjcx_query 查询表单；直接访问旧 cjcx/cjkb 会返回「非法访问」。
+      list.push(`${origin}/gzasc_jsxsd/kscj/cjcx_frm`)
+      list.push(`${origin}/gzasc_jsxsd/framework/xsMain.jsp`)
+      if (primary && primary !== session.base) list.push(primary)
+      for (const path of [
+        '/gzasc_jsxsd/kscj/cjcx_list.do',
+        '/gzasc_jsxsd/cjcx/cjkb_cjb1.do',
+        '/gzasc_jsxsd/cjcx/cjcx_list.do',
+      ]) {
+        list.push(`${origin}${path}`)
+      }
+    } else {
+      if (primary) list.push(primary)
+      list.push(`${origin}/gzasc_jsxsd/xskb/xskb_list.do`)
+    }
+    list.push(session.base || `${origin}/gzasc/`)
   } catch {
     // No usable origin.
   }
-  if (session.base) list.push(session.base)
-  return [...new Set(list.filter(Boolean))].slice(0, 5)
+  return [...new Set(list.filter(Boolean))].slice(0, 6)
 }
 
 async function discoverState(page, base) {
@@ -285,7 +308,7 @@ async function discoverState(page, base) {
   }
   const origin = new URL(base).origin
   state.timetableUrl = `${origin}/gzasc_jsxsd/xskb/xskb_list.do`
-  state.scoresUrl = `${origin}/gzasc_jsxsd/cjcx/cjkb_cjb1.do`
+  // 成绩页不能直接访问（返回「非法访问」），不预设默认直链；由读取流程从主页菜单进入。
   const pageUrl = page.url()
   if (/xskb|kb\.do|kcb/i.test(pageUrl)) state.timetableUrl = pageUrl
   if (/cjcx|kscj|cjb/i.test(pageUrl)) state.scoresUrl = pageUrl
@@ -319,11 +342,14 @@ async function discoverState(page, base) {
 }
 
 function isExpiredSnapshot(snapshot) {
-  return snapshot.frames.some(
-    (frame) =>
+  return snapshot.frames.some((frame) => {
+    // 「提示：非法访问！」是成绩页直链被拒，不是登录过期，不能当成会话失效。
+    if (/非法访问/.test(frame.text)) return false
+    return (
       /错误提示/.test(frame.title) ||
-      /请重新登录|登录超时|会话已过期|尚未登录|Session.*(?:timeout|expired)/i.test(frame.text),
-  )
+      /请重新登录|登录超时|会话已过期|尚未登录|Session.*(?:timeout|expired)/i.test(frame.text)
+    )
+  })
 }
 
 function tableSampleOf(snapshot) {
