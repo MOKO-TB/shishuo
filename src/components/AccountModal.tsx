@@ -35,6 +35,7 @@ import {
   startJwLogin,
   type JwAutoQuery,
   type JwDiagnostic,
+  type JwLoginStart,
 } from '../lib/jw'
 import {
   bindScheduleCourses,
@@ -213,6 +214,86 @@ function WeekBoard({
   )
 }
 
+function JwLoginFields({
+  session,
+  account,
+  password,
+  captcha,
+  busy,
+  onAccount,
+  onPassword,
+  onCaptcha,
+  onRefresh,
+}: {
+  session: JwLoginStart
+  account: string
+  password: string
+  captcha: string
+  busy: boolean
+  onAccount: (value: string) => void
+  onPassword: (value: string) => void
+  onCaptcha: (value: string) => void
+  onRefresh: () => void
+}) {
+  return (
+    <div className="account-jw-login">
+      <div className="account-jw-login-head">
+        <strong>服务器代登录</strong>
+        <span>账号密码只用于本次登录，服务端不保存；登录态按学生账号隔离。</span>
+      </div>
+      <div className="account-jw-login-grid">
+        <label className="field">
+          <span className="field-label">教务账号</span>
+          <input
+            className="input"
+            value={account}
+            onChange={(event) => onAccount(event.target.value)}
+            placeholder="学号"
+            autoComplete="username"
+          />
+        </label>
+        <label className="field">
+          <span className="field-label">密码</span>
+          <input
+            className="input"
+            type="password"
+            value={password}
+            onChange={(event) => onPassword(event.target.value)}
+            placeholder="教务密码"
+            autoComplete="current-password"
+          />
+        </label>
+        <label className="field account-jw-captcha">
+          <span className="field-label">验证码</span>
+          <div>
+            <input
+              className="input"
+              value={captcha}
+              onChange={(event) => onCaptcha(event.target.value)}
+              placeholder="验证码"
+              maxLength={8}
+              autoComplete="off"
+            />
+            {session.captcha ? (
+              <img src={session.captcha} alt="教务验证码" />
+            ) : (
+              <span className="account-jw-captcha-empty">验证码加载失败</span>
+            )}
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={onRefresh}
+              disabled={busy}
+            >
+              换一张
+            </button>
+          </div>
+        </label>
+      </div>
+    </div>
+  )
+}
+
 export function AccountModal({
   open,
   initialTab = 'identity',
@@ -229,6 +310,10 @@ export function AccountModal({
   const [baseUrl, setBaseUrl] = useState(DEFAULT_JW_BASE)
   const [connected, setConnected] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [loginSession, setLoginSession] = useState<JwLoginStart | null>(null)
+  const [jwAccount, setJwAccount] = useState('')
+  const [jwPassword, setJwPassword] = useState('')
+  const [jwCaptcha, setJwCaptcha] = useState('')
   const [busy, setBusy] = useState<'open' | 'schedule' | 'scores' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<ScheduleEntry[] | null>(null)
@@ -262,10 +347,13 @@ export function AccountModal({
     setTab(initialTab)
     setTeacherQuery('')
     setError(null)
+    setLoginOpen(false)
+    setLoginSession(null)
+    setJwPassword('')
+    setJwCaptcha('')
     void jwStatus()
       .then((status) => {
         setConnected(status.connected)
-        setLoginOpen(status.loginOpen)
         if (status.base) setBaseUrl(status.base)
       })
       .catch(() => undefined)
@@ -352,9 +440,13 @@ export function AccountModal({
     setBusy('open')
     setError(null)
     try {
-      await startJwLogin(baseUrl)
+      const session = await startJwLogin(baseUrl)
+      setLoginSession(session)
+      if (session.base) setBaseUrl(session.base)
+      setJwPassword('')
+      setJwCaptcha('')
       setLoginOpen(true)
-      notify('登录窗口已打开。完成登录并进入课表/成绩页后，点「完成登录」', 'info')
+      notify('请输入教务账号、密码和验证码；账号密码只用于本次登录，不保存。', 'info')
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -363,13 +455,29 @@ export function AccountModal({
   }
 
   const completeLogin = async () => {
+    if (!loginSession) {
+      setError('验证码已失效，请重新登录教务。')
+      return
+    }
+    if (!jwAccount.trim() || !jwPassword || !jwCaptcha.trim()) {
+      setError('请填写教务账号、密码和验证码。')
+      return
+    }
     setBusy('open')
     setError(null)
     try {
-      await finishJwLogin()
+      await finishJwLogin({
+        loginId: loginSession.loginId,
+        account: jwAccount.trim(),
+        password: jwPassword,
+        captcha: jwCaptcha.trim(),
+      })
       setLoginOpen(false)
+      setLoginSession(null)
       setConnected(true)
-      notify('教务已连接。之后读取课表和成绩都不再弹窗')
+      setJwPassword('')
+      setJwCaptcha('')
+      notify('教务已连接。之后读取课表和成绩都在后台完成。')
       await readSchedule()
     } catch (err) {
       setError(errorMessage(err))
@@ -382,12 +490,10 @@ export function AccountModal({
     await logoutJw()
     setConnected(false)
     setLoginOpen(false)
-    notify('已退出教务，本机登录状态已清除', 'info')
-  }
-
-  const compatibleRead = () => {
-    if (tab === 'scores') void readScores(true)
-    else void readSchedule(true)
+    setLoginSession(null)
+    setJwPassword('')
+    setJwCaptcha('')
+    notify('已退出教务，服务器端登录状态已清除', 'info')
   }
 
   const readSchedule = async (visible = false) => {
@@ -605,7 +711,7 @@ export function AccountModal({
       footer={
         <div className="modal-actions modal-actions-split">
           <span className="modal-foot-note">
-            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在弹出的浏览器窗口里由你本人输入。
+            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
           </span>
           <div className="modal-actions-right">
             <button
@@ -784,7 +890,7 @@ export function AccountModal({
               {loginOpen && (
                 <button className="button button-primary" onClick={completeLogin} disabled={busy !== null}>
                   {busy === 'open' ? <Loader2 size={15} className="spin-icon" /> : <GraduationCap size={15} />}
-                  完成登录（之后不弹窗）
+                  登录
                 </button>
               )}
               {loginOpen && (
@@ -805,11 +911,24 @@ export function AccountModal({
             </div>
             <p className="account-bind-hint">
               {connected
-                ? `已连接教务（${baseUrl}）：读取课表在后台完成，不会再弹出浏览器窗口。`
+                ? `已连接教务（${baseUrl}）：读取课表在后台完成。`
                 : loginOpen
-                  ? '在刚打开的窗口里登录，并进入「学期课表」页；完成后回来点「完成登录」。'
+                  ? '输入教务账号、密码和验证码，点「登录」；账号密码只用于本次登录。'
                   : JW_BROWSER_HELP}
             </p>
+            {loginOpen && loginSession && (
+              <JwLoginFields
+                session={loginSession}
+                account={jwAccount}
+                password={jwPassword}
+                captcha={jwCaptcha}
+                busy={busy !== null}
+                onAccount={setJwAccount}
+                onPassword={setJwPassword}
+                onCaptcha={setJwCaptcha}
+                onRefresh={startLogin}
+              />
+            )}
             {isLocalMock && (
               <div className="inline-note warning">
                 <CircleAlert size={14} />
@@ -856,7 +975,7 @@ export function AccountModal({
                 <CalendarDays size={15} />
                 导出日历 .ics
               </button>
-              {!connected && <span className="account-bind-hint">先登录一次，登录状态会保存在本机</span>}
+              {!connected && <span className="account-bind-hint">登录状态保存在服务器，并按学生账号隔离</span>}
               {form.schedule.length > 0 && !form.termStart && (
                 <span className="account-bind-hint">填好「第一周周一」后可导出日历</span>
               )}
@@ -1023,11 +1142,6 @@ export function AccountModal({
           )}
 
           {error && <div className="inline-note danger">{error}</div>}
-          {error && connected && (
-            <button className="text-button" onClick={compatibleRead} disabled={busy !== null}>
-              用可见窗口读取一次（会短暂弹窗，兼容模式）
-            </button>
-          )}
           {diagnostics.length > 0 && (
             <details className="account-diagnostics">
               <summary>查看读取诊断（{diagnostics.length} 个帧）</summary>
@@ -1111,7 +1225,7 @@ export function AccountModal({
             <EmptyState
               icon={<CalendarDays size={20} />}
               title="还没有课程表"
-              description="打开教务窗口自己登录，进入「学期课表」后点读取；也可以手动添加。"
+              description="登录教务后读取「学期课表」；也可以手动添加。"
             />
           )}
         </div>
@@ -1136,7 +1250,7 @@ export function AccountModal({
                 <>
                   <button className="button button-primary" onClick={completeLogin} disabled={busy !== null}>
                     {busy === 'open' ? <Loader2 size={15} className="spin-icon" /> : <GraduationCap size={15} />}
-                    完成登录（之后不弹窗）
+                    登录
                   </button>
                   <button className="button button-ghost" onClick={logout}>
                     取消登录
@@ -1151,11 +1265,24 @@ export function AccountModal({
             </div>
             <p className="account-bind-hint">
               {connected
-                ? `已连接教务（${baseUrl}）：读取成绩在后台完成，不会再弹出浏览器窗口；成绩页会自动选择「全部学期」并点击查询。`
+                ? `已连接教务（${baseUrl}）：读取成绩在后台完成；成绩页会自动选择「全部学期」并点击查询。`
                 : loginOpen
-                  ? '在窗口里完成登录即可，师说会自动选择「全部学期」并点「查询」，然后点「完成登录」。'
-                  : '首次使用需要登录一次（会弹出窗口），之后读取成绩不再弹窗。'}
+                  ? '输入教务账号、密码和验证码，点「登录」；账号密码只用于本次登录。'
+                  : '首次使用需要登录一次，之后读取成绩不再输入密码。'}
             </p>
+            {loginOpen && loginSession && (
+              <JwLoginFields
+                session={loginSession}
+                account={jwAccount}
+                password={jwPassword}
+                captcha={jwCaptcha}
+                busy={busy !== null}
+                onAccount={setJwAccount}
+                onPassword={setJwPassword}
+                onCaptcha={setJwCaptcha}
+                onRefresh={startLogin}
+              />
+            )}
             {isLocalMock && (
               <div className="inline-note warning">
                 <CircleAlert size={14} />
@@ -1257,11 +1384,6 @@ export function AccountModal({
           )}
 
           {error && <div className="inline-note danger">{error}</div>}
-          {error && connected && (
-            <button className="text-button" onClick={compatibleRead} disabled={busy !== null}>
-              用可见窗口读取一次（会短暂弹窗，兼容模式）
-            </button>
-          )}
           {diagnostics.length > 0 && (
             <details className="account-diagnostics">
               <summary>查看读取诊断（{diagnostics.length} 个帧）</summary>
@@ -1324,7 +1446,7 @@ export function AccountModal({
             <EmptyState
               icon={<GraduationCap size={20} />}
               title="还没有成绩"
-              description="打开教务窗口自己登录，师说会自动选择「全部学期」并点查询，再回来读取。"
+              description="登录教务后，师说会自动选择「全部学期」并点查询，再读取成绩。"
             />
           )}
         </div>

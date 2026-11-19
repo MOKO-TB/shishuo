@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const api = spawn(process.execPath, [path.join(root, 'server', 'index.mjs'), '--api'], {
   cwd: root,
-  env: { ...process.env, PORT: process.env.PORT || '8787' },
+  env: { ...process.env, PORT: process.env.PORT || '8787', JW_ALLOW_LOCAL: '1' },
   stdio: 'inherit',
 })
 const vite = spawn(process.execPath, [path.join(root, 'node_modules', 'vite', 'bin', 'vite.js')], {

@@ -806,6 +806,92 @@
   height: 42px;
 }
 
+.account-jw-login {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.account-jw-login-head {
+  display: grid;
+  gap: 2px;
+}
+
+.account-jw-login-head strong {
+  color: var(--ink);
+  font-size: 11.5px;
+}
+
+.account-jw-login-head span {
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.6;
+}
+
+.account-jw-login-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.account-jw-captcha {
+  grid-column: 1 / -1;
+}
+
+.account-jw-captcha > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.account-jw-captcha .input {
+  width: 130px;
+  flex: 0 0 auto;
+}
+
+.account-jw-captcha img {
+  width: 80px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.account-jw-captcha-empty {
+  color: var(--danger);
+  font-size: 9px;
+}
+
+.account-jw-captcha .button {
+  height: 40px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+@media (max-width: 640px) {
+  .account-jw-login-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-jw-captcha {
+    grid-column: auto;
+  }
+
+  .account-jw-captcha .input {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .account-jw-captcha .button {
+    height: 38px;
+  }
+}
+
 .account-week {
   display: grid;
   gap: 10px;

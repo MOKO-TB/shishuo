@@ -1145,3 +1145,17 @@ test('管理端学生问答：管理员可查看校园提问并以校园主理�
     '学生应收到校园主理人的回复通知',
   )
 })
+
+test('教务接口：必须登录，状态接口返回未连接', async () => {
+  const denied = await api('/api/jw/status', { method: 'POST', body: {} })
+  assert.equal(denied.status, 401)
+
+  const status = await api('/api/jw/status', {
+    as: 'student1',
+    method: 'POST',
+    body: {},
+  })
+  assert.equal(status.status, 200)
+  assert.equal(status.json.connected, false)
+  assert.equal(status.json.loginOpen, false)
+})

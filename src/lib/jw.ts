@@ -19,6 +19,8 @@ interface JwReply {
   error?: string
   connected?: boolean
   loginOpen?: boolean
+  loginId?: string
+  captcha?: string
   base?: string
   timetableUrl?: string
   scoresUrl?: string
@@ -39,30 +41,52 @@ interface JwReply {
   tableSample?: string
 }
 
+export interface JwLoginStart {
+  loginId: string
+  captcha: string
+  base: string
+}
+
+export interface JwLoginCredentials {
+  loginId: string
+  account: string
+  password: string
+  captcha: string
+}
+
 async function callJw(route: string, payload: Record<string, unknown> = {}) {
   const response = await fetch(`/api/jw/${route}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   }).catch(() => {
-    throw new Error('无法连接本机教务代理。请通过 npm run dev 或 npm run preview 启动师说。')
+    throw new Error('无法连接教务服务，请确认师说服务端正在运行。')
   })
   if (!response.headers.get('x-shishuo-jw-proxy')) {
-    throw new Error('本机教务代理未启用。请通过 npm run dev 或 npm run preview 启动师说，不要直接打开静态文件。')
+    throw new Error('教务服务未启用，请确认服务器已部署最新版本并重启师说。')
   }
   const data = (await response.json().catch(() => ({}))) as JwReply
   if (!response.ok) throw new Error(data.error ?? '教务读取失败。')
   return data
 }
 
-export async function startJwLogin(baseUrl: string) {
-  const data = await callJw('login', { baseUrl })
-  return { url: data.url ?? '' }
+export async function startJwLogin(baseUrl: string): Promise<JwLoginStart> {
+  const data = await callJw('login/start', { baseUrl })
+  return {
+    loginId: data.loginId ?? '',
+    captcha: data.captcha ?? '',
+    base: data.base ?? '',
+  }
 }
 
-export async function finishJwLogin() {
-  const data = await callJw('finish')
-  return { url: data.url ?? '', connected: Boolean(data.connected) }
+export async function finishJwLogin(input: JwLoginCredentials) {
+  const data = await callJw('login/finish', { ...input })
+  return {
+    connected: Boolean(data.connected),
+    base: data.base ?? '',
+    timetableUrl: data.timetableUrl ?? '',
+    scoresUrl: data.scoresUrl ?? '',
+  }
 }
 
 export async function jwStatus() {
@@ -111,4 +135,4 @@ export async function readJwScores(visible = false) {
 }
 
 export const JW_BROWSER_HELP =
-  '首次使用点「登录教务」会弹出一次浏览器窗口：请在里面自己登录，并打开「学期课表」或「成绩查询」页。之后点「完成登录」，师说会记住登录状态，以后读取课表/成绩都在后台完成，不再弹窗。账号密码和验证码不经过师说。'
+  '首次使用请输入教务账号、密码和验证码：验证码由教务系统生成，师说服务器代为登录并只保存登录态，不保存账号密码。登录成功后，读取课表/成绩都在后台完成。当前为演示环境，建议使用演示账号，不要在公共网络使用真实密码。'

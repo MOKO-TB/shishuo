@@ -28,6 +28,7 @@ import {
   saveAiSettings,
 } from './ai-settings.mjs'
 import { sendMail, sendVerificationCode } from './mail.mjs'
+import { createJwService, JwError } from './jw.mjs'
 import {
   checkSendRate,
   deleteEmailCode,
@@ -59,6 +60,11 @@ function sendJson(res, status, payload) {
 
 function sendError(res, status, message) {
   sendJson(res, status, { error: { message } })
+}
+
+function sendJwJson(res, status, payload) {
+  res.setHeader('x-shishuo-jw-proxy', '1')
+  sendJson(res, status, payload)
 }
 
 function readJson(req, limit) {
@@ -368,6 +374,7 @@ function pickUpstreamMessage(status, raw) {
 
 export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
+  const jw = createJwService()
 
   function requireUser(req) {
     const row = userForRequest(db, req)
@@ -767,6 +774,45 @@ export function createApiHandler({ db, config }) {
     })
   }
 
+  async function handleJw(req, res, pathname) {
+    try {
+      const user = requireUser(req)
+      if (req.method !== 'POST') {
+        return sendJwJson(res, 405, { error: '教务接口只支持 POST 请求。' })
+      }
+      if (!sameOrigin(req)) return sendJwJson(res, 403, { error: '请求来源不合法。' })
+      const body = await readJson(req, SMALL_BODY_LIMIT)
+      if (pathname === '/api/jw/login/start') {
+        return sendJwJson(res, 200, await jw.startLogin(user.id, body.baseUrl))
+      }
+      if (pathname === '/api/jw/login/finish') {
+        return sendJwJson(res, 200, await jw.finishLogin(user.id, body))
+      }
+      if (pathname === '/api/jw/status') {
+        return sendJwJson(res, 200, jw.status(user.id))
+      }
+      if (pathname === '/api/jw/read') {
+        const kind = body.kind === 'scores' ? 'scores' : 'schedule'
+        const zc = typeof body.zc === 'string' && body.zc ? body.zc : undefined
+        return sendJwJson(res, 200, await jw.read(user.id, kind, zc))
+      }
+      if (pathname === '/api/jw/logout') {
+        return sendJwJson(res, 200, await jw.logout(user.id))
+      }
+      return sendJwJson(res, 404, { error: '没有这个教务接口。' })
+    } catch (error) {
+      const status =
+        error instanceof JwError
+          ? error.status
+          : error instanceof HttpError
+            ? error.status
+            : 502
+      return sendJwJson(res, status, {
+        error: error instanceof Error ? error.message : '教务服务暂时不可用。',
+      })
+    }
+  }
+
   return async function handleApi(req, res) {
     const url = new URL(req.url || '/', 'http://localhost')
     const pathname = url.pathname
@@ -789,6 +835,10 @@ export function createApiHandler({ db, config }) {
       if (pathname.startsWith('/api/auth/')) {
         const result = await handleAuth(req, res, pathname)
         if (result !== false) return result
+      }
+
+      if (pathname.startsWith('/api/jw/')) {
+        return await handleJw(req, res, pathname)
       }
 
       if (pathname === '/api/admin/users' && req.method === 'GET') {

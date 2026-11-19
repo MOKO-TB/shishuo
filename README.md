@@ -64,7 +64,7 @@
 - 状态轮询间隔约 3.5 秒，先探轻量的 `/api/state/revision`，revision 没变就不拉全量工作区；保存采用 600ms 防抖和 revision 乐观锁。
 - 学生资料（姓名、学院、专业、学号、课表、成绩、老师显示设置）按账号保存在服务端。
 - 题目图片先压缩，再上传到 `data/uploads`；工作区只保存 `/uploads/...` URL，不把 base64 大图塞进状态文档。
-- 教务系统登录态仍然只留在本机，不进入师说服务端。
+- 教务账号/密码只在登录请求中短暂提交给服务器，用于换取教务 Cookie；密码不写入数据库，登录态按学生账号隔离，服务重启后需要重新登录。
 
 ---
 
@@ -148,8 +148,9 @@ Node HTTP server (server/index.mjs)
         └─ AI provider（OpenAI 兼容 /chat/completions）
 ```
 
-- **开发模式**：`npm run dev` 同时启动 Node API（默认 8787）和 Vite（默认 5173）。Vite 只代理 `/api/auth`、`/api/state`、`/api/profile`、`/api/ai`、`/api/health`；教务代理 `/api/jw/*` 仍走本机 Playwright 插件。
+- **开发模式**：`npm run dev` 同时启动 Node API（默认 8787）和 Vite（默认 5173）。Vite 代理 `/api/auth`、`/api/state`、`/api/profile`、`/api/ai`、`/api/jw`、`/api/health`；教务读取统一走服务端 `server/jw.mjs`，不再依赖 Vite 插件。
 - **生产模式**：`npm run build && npm start`，由 Node 服务在 8787 同时托管 `dist/` 与 API，SPA 路由回退到 `index.html`。
+- **教务浏览器**：课表/成绩代登录需要 Chromium。服务器首次部署执行 `PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright node node_modules/playwright-core/cli.js install --only-shell chromium`（国内镜像）；已有系统 Chrome/Edge 时会优先使用系统浏览器。
 - **数据库**：默认 `data/shishuo.db`，启用 WAL。工作区目前以一个 JSON 文档整体保存，适合试点规模，便于快速迭代。
 - **AI 网关**：前端不再需要 API Key；服务端从环境变量读取，统一注入上游请求，并记录模型、token 用量、状态码与调用时间。
 
@@ -370,7 +371,7 @@ PORT=8787
 - **动作 API**：与整包同步共享同一套 `authorizeAndMerge` 校验和 revision 乐观锁，越权动作同样写审计并返回 403。
 - **演示数据**：课程、教师、学生与统计均为虚构演示数据；不冒充真实授课老师，不宣称完整观看过公开课。
 - **原始素材**：B 站原始字幕、临时抓取脚本和浏览器登录态均不入库；`.env`、`data/`、`.tmp-gh/`、`.jw-profile/` 已忽略。
-- **教务**：课表 / 成绩的登录态仍只在本机浏览器配置中，不经师说服务端；教务读取依赖本机 Edge/Chrome。
+- **教务**：服务器用 Chromium 代登录并读取课表/成绩；账号密码只在登录时短暂使用，不落库；每个学生账号独立会话。生产需安装 Chromium，且只允许 `JW_ALLOWED_HOSTS` 白名单内的教务域名。**安全提醒**：当前演示站点是 HTTP，服务器代登录会让教务密码经过明文链路；只建议使用演示账号，真实学生使用前必须切到 HTTPS。
 - **当前未做**：真实 SMTP 服务商 / 校内邮件网关回归、S3 / OSS 等外部对象存储、多节点部署、真实 AI 供应商回归测试。
 
 ---
@@ -418,6 +419,9 @@ server/
   redact.mjs       AI 提示词敏感信息脱敏
   storage.mjs      题目图片对象存储（本地磁盘 / S3 兼容驱动 + SigV4 签名）
   audit.mjs        操作摘要与审计日志
+  jw.mjs           服务端教务会话（验证码、登录、按用户隔离的课表/成绩读取）
+  jw-parse.mjs     强智课表/成绩表格解析
+  jw-scripts.mjs   成绩查询页内脚本
   policy.mjs       试点课程与教师课程分配
   auth.mjs         密码哈希、会话、Cookie
   mail.mjs         SMTP / 开发邮件发送
@@ -456,7 +460,7 @@ src/
   lib/speech.ts    语音输入（Web Speech API）
   lib/theme.ts     深浅色主题
   styles/          设计 tokens 与页面样式
-dev/jw-proxy.ts       本机教务 Playwright 代理（仅开发 / 预览）
+dev/jw-proxy.ts       旧本机教务 Playwright 代理（已由 server/jw.mjs 取代，保留参考）
 dev/eval-retrieval.mjs 5 门课检索评测脚本
 dev/test-api.mjs      权限回归测试（node:test 打本地 API，独立临时库）
 dev/archive-threads.mjs 归档维护脚本（配合 npm run maintain:archive）

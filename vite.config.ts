@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { jwProxyPlugin } from './dev/jw-proxy.ts'
 
 const API_TARGET = `http://127.0.0.1:${process.env.API_PORT || 8787}`
 
@@ -9,6 +8,7 @@ const apiProxy = {
   '/api/state': { target: API_TARGET },
   '/api/profile': { target: API_TARGET },
   '/api/ai': { target: API_TARGET },
+  '/api/jw': { target: API_TARGET },
   '/api/admin': { target: API_TARGET },
   '/api/uploads': { target: API_TARGET },
   '/api/health': { target: API_TARGET },
@@ -16,7 +16,7 @@ const apiProxy = {
 }
 
 export default defineConfig({
-  plugins: [react(), jwProxyPlugin()],
+  plugins: [react()],
   build: {
     rolldownOptions: {
       input: {
