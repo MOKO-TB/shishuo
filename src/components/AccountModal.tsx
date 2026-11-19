@@ -1415,7 +1415,7 @@ export function AccountModal({
                   : form.scoresSyncedAt
                     ? `读取于 ${new Date(form.scoresSyncedAt).toLocaleDateString('zh-CN')}`
                     : ''
-                : '还没有成绩'}
+                : ''}
             </span>
           </div>
 

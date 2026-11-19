@@ -154,6 +154,18 @@
   color: var(--fg);
 }
 
+/* 退出按钮：与行内文字基线对齐，不参与文字挤压 */
+.settings-row > .button {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+/* 退出按钮：与行内文字基线对齐，不参与文字挤压 */
+.settings-row > .button {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
 .settings-row-copy small {
   font-size: var(--text-xs);
   line-height: 1.55;
