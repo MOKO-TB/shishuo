@@ -153,6 +153,7 @@ export function createChaoxingService(db, options = {}) {
       options.middleUrl ??
       'https://mooc1-2.chaoxing.com/mooc-ans/visit/stucoursemiddle',
     work: options.workUrl ?? 'https://mooc1.chaoxing.com/mooc2/work/list',
+    notices: options.noticesUrl ?? 'https://notice.chaoxing.com/pc/notice/getNoticeList',
     materials:
       options.materialsUrl ??
       'https://mooc2-ans.chaoxing.com/mooc2-ans/coursedata/stu-datalist',
@@ -177,6 +178,33 @@ export function createChaoxingService(db, options = {}) {
     return db
       .prepare('SELECT * FROM chaoxing_accounts WHERE user_id = ?')
       .get(userId)
+  }
+
+  function saveAccountSession(userId, cookies, ua) {
+    if (!accountRow(userId)) touchAccount(userId, { connected: true, lastError: null })
+    db.prepare(
+      `UPDATE chaoxing_accounts
+          SET connected = 1, cookies_json = ?, ua = ?, updated_at = ?
+        WHERE user_id = ?`,
+    ).run(JSON.stringify(cookies || []), ua || DEFAULT_UA, Date.now(), userId)
+  }
+
+  function restoreSession(userId) {
+    if (sessions.has(userId)) return
+    const row = accountRow(userId)
+    if (!row?.connected || !row.cookies_json) return
+    try {
+      const cookies = JSON.parse(row.cookies_json)
+      if (Array.isArray(cookies) && cookies.length > 0) {
+        sessions.set(userId, {
+          cookies,
+          ua: row.ua || DEFAULT_UA,
+          connectedAt: Number(row.updated_at || Date.now()),
+        })
+      }
+    } catch {
+      // 旧数据/损坏的 Cookie 不恢复，用户重新登录即可。
+    }
   }
 
   function touchAccount(userId, patch) {
@@ -243,6 +271,7 @@ export function createChaoxingService(db, options = {}) {
   }
 
   function overview(userId) {
+    restoreSession(userId)
     const account = accountRow(userId)
     const courses = listCourses(userId)
     const items = listItems(userId, { limit: 300 })
@@ -523,6 +552,7 @@ export function createChaoxingService(db, options = {}) {
         ua: ua || DEFAULT_UA,
         connectedAt: Date.now(),
       })
+      saveAccountSession(userId, cookies, ua || DEFAULT_UA)
       touchAccount(userId, { connected: true, lastError: null })
       return { connected: true, courses: courses.length }
     } catch (error) {
@@ -636,6 +666,7 @@ export function createChaoxingService(db, options = {}) {
         ua: ua || DEFAULT_UA,
         connectedAt: Date.now(),
       })
+      saveAccountSession(userId, cookies, ua || DEFAULT_UA)
       touchAccount(userId, { connected: true, lastError: null })
       await closePending(loginId)
       return { status: 'connected', courses: courses.length }
@@ -647,6 +678,7 @@ export function createChaoxingService(db, options = {}) {
   }
 
   function status(userId) {
+    restoreSession(userId)
     const account = accountRow(userId)
     return {
       connected: Boolean(account?.connected) && sessions.has(userId),
@@ -660,6 +692,9 @@ export function createChaoxingService(db, options = {}) {
   async function logout(userId) {
     await closeUserPending(userId)
     sessions.delete(userId)
+    db.prepare(
+      'UPDATE chaoxing_accounts SET connected = 0, cookies_json = NULL, ua = NULL, updated_at = ? WHERE user_id = ?',
+    ).run(Date.now(), userId)
     touchAccount(userId, { connected: false, lastError: null })
     return { ok: true }
   }
@@ -729,6 +764,86 @@ export function createChaoxingService(db, options = {}) {
     if (await isLoginPage(page)) {
       throw new ChaoxingError('学习通登录已过期，请重新扫码。', 401)
     }
+  }
+
+  async function syncAllMessages(context, courses) {
+    const response = await context.request.get(urls.notices, {
+      headers: {
+        Referer: 'https://i.chaoxing.com/',
+        'User-Agent': DEFAULT_UA,
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+      },
+    })
+    if (response.url().includes('passport2.chaoxing.com/login')) {
+      throw new ChaoxingError('学习通登录已过期，请重新扫码。', 401)
+    }
+    const payload = await response.json().catch(() => null)
+    if (!payload) return []
+    const list =
+      payload?.notices?.list ??
+      payload?.notices?.data ??
+      payload?.data ??
+      (Array.isArray(payload) ? payload : [])
+    if (!Array.isArray(list)) return []
+    const byId = new Map(courses.map((course) => [String(course.course_id), course]))
+    const byName = new Map(courses.map((course) => [course.name, course]))
+    const items = []
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue
+      const id = String(item.uuid || item.idCode || item.id || '')
+      if (!id) continue
+      const rawContent = String(item.content || '')
+      let content = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      let courseId = ''
+      let detailUrl = ''
+      let attachments = item.attachment
+      if (typeof attachments === 'string') {
+        try {
+          attachments = JSON.parse(attachments)
+        } catch {
+          attachments = []
+        }
+      }
+      if (attachments && !Array.isArray(attachments)) attachments = [attachments]
+      for (const attachment of Array.isArray(attachments) ? attachments : []) {
+        if (!attachment || typeof attachment !== 'object') continue
+        let raw = attachment.att_web ?? attachment
+        if (typeof raw === 'string') {
+          try {
+            raw = JSON.parse(raw)
+          } catch {
+            raw = {}
+          }
+        }
+        if (raw && typeof raw === 'object') {
+          courseId = String(raw.courseId || raw.courseid || courseId || '')
+          detailUrl = String(raw.url || detailUrl || '')
+        }
+      }
+      const nameMatch = /课程名称[：:]\s*([^\n<]+)/.exec(rawContent)
+      const courseName = nameMatch?.[1]?.replace(/\s+/g, ' ').trim() || ''
+      const course = byId.get(courseId) || byName.get(courseName)
+      if (!course) continue
+      const title = clean(item.title || content.split(/[。\n]/)[0] || course.name, 300)
+      if (!title) continue
+      let url = detailUrl
+      try {
+        url = new URL(detailUrl || course.url, course.url).href
+      } catch {
+        url = course.url
+      }
+      items.push({
+        course,
+        item: {
+          sourceId: `notice:${id}`,
+          title,
+          body: content.slice(0, 1200),
+          url,
+          publishedAt: parseDeadline(item.sendTime || item.insertTime),
+        },
+      })
+    }
+    return items
   }
 
   async function syncHomework(page, course) {
@@ -913,6 +1028,7 @@ export function createChaoxingService(db, options = {}) {
   }
 
   async function sync(userId) {
+    restoreSession(userId)
     const session = sessions.get(userId)
     if (!session) {
       throw new ChaoxingError('还没有绑定学习通，请先扫码登录。', 401)
@@ -941,11 +1057,29 @@ export function createChaoxingService(db, options = {}) {
       saveCourses(userId, remote)
       const courses = listCourses(userId).filter((course) => course.selected)
       const result = { courses: remote.length, assignments: 0, materials: 0, messages: 0, errors: [] }
+      let messagesFromEndpoint = false
+      try {
+        const notices = await syncAllMessages(context, courses)
+        for (const notice of notices) {
+          upsertItems(userId, notice.course, 'message', [notice.item])
+        }
+        result.messages = notices.length
+        messagesFromEndpoint = true
+      } catch (error) {
+        if (error instanceof ChaoxingError && error.status === 401) throw error
+        result.errors.push({
+          course: '全部课程',
+          kind: 'message',
+          message: error instanceof Error ? error.message : '课程消息接口暂时不可用',
+        })
+      }
       for (const course of courses) {
         for (const [kind, fn, key] of [
           ['assignment', syncHomework, 'assignments'],
           ['material', syncMaterials, 'materials'],
-          ['message', syncMessages, 'messages'],
+          ...(messagesFromEndpoint
+            ? []
+            : [['message', syncMessages, 'messages']]),
         ]) {
           try {
             const items = await fn(page, course)
@@ -962,6 +1096,7 @@ export function createChaoxingService(db, options = {}) {
         }
       }
       session.cookies = await context.cookies().catch(() => session.cookies)
+      saveAccountSession(userId, session.cookies, session.ua)
       touchAccount(userId, {
         connected: true,
         lastSyncAt: Date.now(),

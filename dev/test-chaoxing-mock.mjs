@@ -100,6 +100,24 @@ function startMock() {
       )
     }
     if (url.pathname === '/course-home') return send(courseHome)
+    if (url.pathname === '/notices') {
+      return send(
+        JSON.stringify({
+          notices: {
+            list: [
+              {
+                uuid: 'notice-1',
+                title: '课程调整通知',
+                content: `课程名称：数据结构
+本周五改到 A302。`,
+                sendTime: '2026-11-20 10:00',
+              },
+            ],
+          },
+        }),
+        'application/json',
+      )
+    }
     if (url.pathname === '/middle') return send(middlePage)
     if (url.pathname === '/work') return send(workPage)
     if (url.pathname === '/materials') return send(materialsPage)
@@ -133,6 +151,7 @@ const cx = createChaoxingService(db, {
   middleUrl: `${base}/middle`,
   workUrl: `${base}/work`,
   materialsUrl: `${base}/materials`,
+  noticesUrl: `${base}/notices`,
 })
 try {
   const start = await cx.startLogin('test-student')

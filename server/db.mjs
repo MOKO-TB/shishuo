@@ -163,6 +163,8 @@ export function openDatabase(dbPath) {
       connected INTEGER NOT NULL DEFAULT 0,
       last_sync_at INTEGER,
       last_error TEXT,
+      cookies_json TEXT,
+      ua TEXT,
       updated_at INTEGER NOT NULL
     );
 
@@ -220,6 +222,13 @@ export function openDatabase(dbPath) {
     }
     if (!columns.some((column) => column.name === 'status_updated_at')) {
       db.exec('ALTER TABLE users ADD COLUMN status_updated_at INTEGER')
+    }
+    const cxColumns = db.prepare('PRAGMA table_info(chaoxing_accounts)').all()
+    if (!cxColumns.some((column) => column.name === 'cookies_json')) {
+      db.exec('ALTER TABLE chaoxing_accounts ADD COLUMN cookies_json TEXT')
+    }
+    if (!cxColumns.some((column) => column.name === 'ua')) {
+      db.exec('ALTER TABLE chaoxing_accounts ADD COLUMN ua TEXT')
     }
   } catch {
     // Very old SQLite builds may reject PRAGMA via prepare; the fresh schema still works.
