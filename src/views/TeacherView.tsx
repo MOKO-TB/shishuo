@@ -333,17 +333,12 @@ export function TeacherView({
           <div className="eyebrow">
             <span className="eyebrow-mark clay" />
             教师工作台 · {teacherName}
-            <span className="eyebrow-sep">/</span>
-            {profile.schedule.length > 0 ? '演示数据 + 课表课程' : '演示数据'}
           </div>
           <h1 className="display-title">
             把重复问题，
             <br />
             <span>一次处理完。</span>
           </h1>
-          <p className="page-lede">
-            AI 已经把同题合并、检索依据和回复草稿放好。你只需要判断、定调，然后让它变成知识。
-          </p>
         </div>
 
         <div className="teacher-head-side">
@@ -380,24 +375,6 @@ export function TeacherView({
               </button>
             )}
           </div>
-          <div className="queue-ticket">
-            <div className="queue-ticket-top">
-              <span>待我确认</span>
-              <span className="queue-ticket-dot" />
-            </div>
-            <div className="queue-ticket-number">
-              <strong>{groupsAll.length}</strong>
-              <span>组</span>
-            </div>
-            <p>
-              共 {pendingQuestions} 个问题 · 已自动合并{' '}
-              {pendingQuestions - groupsAll.length} 次
-            </p>
-            <div className="queue-ticket-foot">
-              <AiMark size={14} />
-              AI 已完成预整理
-            </div>
-          </div>
           <button className="button button-ghost teacher-guide-button" onClick={onOpenGuide}>
             <Compass size={16} />
             看演示指引
@@ -427,7 +404,7 @@ export function TeacherView({
               {groupsAll.length}
               <em>组</em>
             </strong>
-            <p>{pendingQuestions} 个问题，同题已合并</p>
+            <p>{pendingQuestions} 个问题</p>
           </div>
         </div>
         <div className="stat-card">
@@ -440,7 +417,7 @@ export function TeacherView({
               {todayAi}
               <em>个</em>
             </strong>
-            <p>今日全域演示数据</p>
+            
           </div>
         </div>
         <div className="stat-card">
@@ -453,7 +430,7 @@ export function TeacherView({
               {percent(rate7)}
               <em></em>
             </strong>
-            <p>近 7 天全域 · 转人工 {human7}</p>
+            <p>近 7 天</p>
           </div>
         </div>
         <div className="stat-card">
@@ -466,7 +443,7 @@ export function TeacherView({
               {gapsAll.length}
               <em>个</em>
             </strong>
-            <p>处理后会从队列消失</p>
+            
           </div>
         </div>
       </section>

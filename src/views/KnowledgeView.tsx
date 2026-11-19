@@ -201,16 +201,11 @@ export function KnowledgeView({
             <br />
             <span>成为 AI 的第一反应。</span>
           </h1>
-          <p className="page-lede">
-            每一条问答都带着作者、出处和被引用记录。老师回复并沉淀后，AI
-            下一次会直接命中，而不是重新麻烦老师。
-          </p>
         </div>
 
         <aside className="knowledge-head-card">
           <div className="knowledge-card-head">
             <span>知识库健康度</span>
-            <span className="demo-tag">演示</span>
           </div>
           <div className="knowledge-health-main">
             <Donut value={helpfulRate} label="有帮助" size={84} stroke={8} />
@@ -224,10 +219,6 @@ export function KnowledgeView({
               </em>
             </div>
           </div>
-          <div className="knowledge-card-foot">
-            <Sparkles size={14} />
-            被引用越多，越接近学生的真实卡点。
-          </div>
         </aside>
       </header>
 
@@ -239,7 +230,7 @@ export function KnowledgeView({
           <div className="gap-banner-content">
             <div className="gap-banner-copy">
               <strong>AI 在你的课程里发现了 {scopedGaps.length} 个知识缺口</strong>
-              <span>补完 FAQ 后缺口会自动消失；学生的问题仍需在待办台回复。</span>
+              
             </div>
             <div className="gap-draft-list">
               {bannerGaps.map((gap) => (
@@ -286,9 +277,6 @@ export function KnowledgeView({
               )
             })}
           </div>
-          <p className="chapter-coverage-note">
-            颜色越深表示该章节 FAQ 越多；“未标章节”建议补上章节，方便后续按章复习和查漏。
-          </p>
         </details>
       )}
 
@@ -451,8 +439,7 @@ export function KnowledgeView({
                 <div className="faq-card-foot">
                   <span className="faq-author">
                     <span className="author-avatar">{faq.author.slice(0, 1)}</span>
-                    {faq.author}维护
-                  </span>
+                                      </span>
                   <span className="faq-stat">
                     <em>{faq.citations}</em> 次引用
                     <span>·</span>

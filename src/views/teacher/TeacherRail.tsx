@@ -69,7 +69,6 @@ export function TeacherRail({
         ))}
       </div>
     )}
-    <p className="rail-footnote">来源：低置信问题与负反馈。处理并沉淀后，缺口会自动消失。</p>
   </div>
 
   <div className="rail-card saving-card">
@@ -84,7 +83,6 @@ export function TeacherRail({
       <strong>{savedHours.toFixed(1)}</strong>
       <span>小时</span>
     </div>
-    <p className="saving-caption">按每个问题平均 4 分钟人工回复估算</p>
     <div className="saving-bar">
       <span className="saving-ai" style={{ width: `${rate7 * 100}%` }} />
       <span className="saving-human" style={{ width: `${(1 - rate7) * 100}%` }} />
@@ -97,7 +95,6 @@ export function TeacherRail({
         <i className="dot-human" /> 转人工 {human7}
       </span>
     </div>
-    <div className="demo-note">试点全域 · 演示数据</div>
   </div>
 
   <div className="rail-card knowledge-health">
@@ -129,7 +126,6 @@ export function TeacherRail({
         <ArrowRight size={14} />
       </button>
     )}
-    <p className="rail-footnote">每条沉淀的回复，都是下一次 AI 的第一反应。</p>
   </div>    </>
   )
 }

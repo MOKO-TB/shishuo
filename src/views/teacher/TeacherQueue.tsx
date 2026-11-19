@@ -23,7 +23,6 @@ import {
   excerpt,
   formatRelative,
   urgencyLabel,
-  waitDuration,
   truncate,
 } from '../../lib/utils'
 import { courseById } from '../../data/seed'
@@ -71,7 +70,7 @@ export function TeacherQueue({
     followUpParentIds,
   } = queue
   return (
-    <>
+    <section className="workbench-main">
   <div className="workbench-controls">
   <div className="workbench-toolbar">
     <div className="work-tabs" role="tablist" aria-label="工作台列表">
@@ -219,9 +218,7 @@ export function TeacherQueue({
           const isFollowUp = group.primary.kind === 'follow-up'
           const hasSame = group.threads.some((thread) => thread.kind === 'same')
           const hasAttachment = group.threads.some((thread) => thread.attachment)
-          const hasExternal = group.threads.some((thread) => thread.externalAnswer)
           const score = group.primary.confidenceScore ?? 0
-          const overdue = Date.now() - group.oldestAt >= 24 * 3_600_000
           return (
             <button
               className={`case-card ${group.urgency === 'today' ? 'is-urgent' : ''}`}
@@ -240,7 +237,6 @@ export function TeacherQueue({
                   {isFollowUp && <Badge tone="blue">追问</Badge>}
                   {hasSame && <Badge tone="gold">含同问</Badge>}
                   {hasAttachment && <Badge tone="outline">含图片</Badge>}
-                  {hasExternal && <Badge tone="blue">AI补充</Badge>}
                   {group.count > 1 && (
                     <Badge tone="gold">
                       <Users size={12} />
@@ -255,9 +251,6 @@ export function TeacherQueue({
                 </div>
                 <span className="case-time">{formatRelative(group.latestAt)}</span>
               </div>
-              <span className={`case-age ${overdue ? 'is-overdue' : ''}`}>
-                最早已等 {waitDuration(group.oldestAt)}
-              </span>
 
               <h3 className="case-title">{group.title}</h3>
               <p className="case-question">{truncate(group.primary.question, 96)}</p>
@@ -450,6 +443,6 @@ export function TeacherQueue({
       })}
     </div>
   )}
-    </>
+    </section>
   )
 }

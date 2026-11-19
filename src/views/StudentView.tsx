@@ -799,44 +799,8 @@ export function StudentView({
             <br />
             <span>卡住的地方，先丢过来。</span>
           </h1>
-          <p className="page-lede">
-            AI 先查{course.teacher}老师的课程知识库；能答就带着出处直接答，没把握时可由服务端 AI 补充，也可以转交老师。
-          </p>
         </div>
 
-        <aside className="head-flow" aria-label="双通道答疑流程">
-          <div className="head-flow-head">
-            <span>双通道怎么走</span>
-            <span className="head-flow-tag">AI + 教师</span>
-          </div>
-          <div className="head-flow-step">
-            <span className="head-flow-icon jade">
-              <Sparkles size={14} />
-            </span>
-            <div>
-              <strong>AI 先接住</strong>
-              <p>检索课程知识库，带出处作答</p>
-            </div>
-          </div>
-          <div className="head-flow-step">
-            <span className="head-flow-icon clay">
-              <Send size={14} />
-            </span>
-            <div>
-              <strong>没把握再转交</strong>
-              <p>附上摘要、依据和同题记录</p>
-            </div>
-          </div>
-          <div className="head-flow-step">
-            <span className="head-flow-icon gold">
-              <BookOpen size={14} />
-            </span>
-            <div>
-              <strong>回复后沉淀</strong>
-              <p>答案进入 FAQ，下次 AI 直接答</p>
-            </div>
-          </div>
-        </aside>
       </header>
 
       <div className="course-switch-row">
@@ -874,9 +838,6 @@ export function StudentView({
               </button>
             )}
           </div>
-          {course.chapter && (
-            <span className="course-switch-note">当前章节 · {course.chapter}</span>
-          )}
         </div>
       </div>
 
@@ -897,12 +858,8 @@ export function StudentView({
                 <AiMark size={18} />
                 <div>
                   <strong>问 AI 助教</strong>
-                  <span>先查知识库，再决定要不要麻烦老师</span>
                 </div>
               </div>
-              <Badge tone={courseFaqCount > 0 ? 'jade' : 'neutral'} dot>
-                本课知识库 {courseFaqCount} 条
-              </Badge>
             </div>
 
             <textarea
@@ -1006,7 +963,6 @@ export function StudentView({
             )}
 
             <div className="ask-suggestions">
-              <span className="ask-suggestions-label">没想好怎么问？</span>
               {suggestionsForCourse.map((suggestion) => (
                 <button
                   key={suggestion}
@@ -1074,7 +1030,6 @@ export function StudentView({
                 </button>
               </div>
               <div className="ask-foot-right">
-                <span className="ask-shortcut">Ctrl ↵</span>
                 <button
                   className="button button-primary ask-submit"
                   onClick={ask}
@@ -1144,9 +1099,7 @@ export function StudentView({
                 <h2>我的提问</h2>
               </div>
               <div className="recent-head-actions">
-                <span className="section-head-note">
-                  共 {myThreads.length} 条 · 显示最近 {recentThreads.length} 条
-                </span>
+
                 {myThreads.length > 0 && (
                   <button
                     className="text-button recent-all-link"

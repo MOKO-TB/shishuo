@@ -1,12 +1,8 @@
-import { ArrowRight, BookOpen, CalendarDays, Quote, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, CalendarDays } from "lucide-react"
 import type { Course, CourseNote, ThreadGroup } from '../../types'
 import type { TeacherProfile } from '../../data/seed'
 import type { ScheduleEntry } from '../../lib/profile'
-import {
-  formatRelative,
-  percent,
-  truncate,
-} from '../../lib/utils'
+import { formatRelative, truncate } from "../../lib/utils"
 import { sectionLabel, weekdayLabel } from '../../lib/profile'
 import { courseById } from '../../data/seed'
 import { Avatar, Badge } from '../../components/ui'
@@ -62,7 +58,6 @@ export function StudentRail({
             <div className="eyebrow">今日答疑</div>
             <h3>AI 先接住了多少</h3>
           </div>
-          <span className="demo-tag">演示</span>
         </div>
         <div className="daily-main">
           <div className="daily-number">
@@ -80,9 +75,6 @@ export function StudentRail({
             老师首响 {firstResponse.value}
             {firstResponse.unit}
           </span>
-        </div>
-        <div className="daily-note">
-          <strong>{percent(todayRate)}</strong> 的问题没有占用老师的时间。
         </div>
       </div>
 
@@ -123,7 +115,6 @@ export function StudentRail({
               )
             })}
           </div>
-          <p className="rail-footnote">课表来自你绑定的课程表；提问时默认帮你选中今天的课。</p>
           <button className="text-button class-card-link" onClick={() => onOpenAccount?.('schedule')}>
             查看整周课程表
             <ArrowRight size={13} />
@@ -187,9 +178,6 @@ export function StudentRail({
             })}
           </div>
         )}
-        <p className="rail-footnote">
-          同问不会给老师重复排一条待办；老师一次回复会同步到「我的提问」。
-        </p>
       </div>
 
       <div className="rail-card hot-card">
@@ -244,22 +232,10 @@ export function StudentRail({
             <p>{courseNote.announcement}</p>
           </div>
         )}
-        <div className="teacher-quote">
-          <Quote size={15} />
-          <p>AI 先接住重复问题，老师把时间留给真正卡住的人。</p>
-        </div>
         <button className="rail-link" onClick={() => onNavigate('knowledge')}>
           看看{course.teacher}老师写下的答案
           <ArrowRight size={14} />
         </button>
-      </div>
-
-      <div className="rail-card rail-mini-card">
-        <Users size={17} />
-        <div>
-          <strong>同题会自动合并</strong>
-          <p>老师一次回复，所有等同一类答案的同学都会收到。</p>
-        </div>
       </div>
     </aside>
   )

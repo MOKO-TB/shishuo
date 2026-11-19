@@ -280,7 +280,6 @@ export function Layout({
               <LogOut size={14} />
               退出登录
             </button>
-            <span className="side-version">师说 · 多用户试点 v0.2</span>
           </div>
         </div>
       </aside>
@@ -300,10 +299,12 @@ export function Layout({
           </div>
 
           <div className="topbar-right">
-            <span className={cn('demo-pill', syncState === 'error' && 'is-error')} title={syncLabel}>
-              <i />
-              {syncLabel}
-            </span>
+            {syncState === 'error' && (
+              <span className="demo-pill is-error" title={syncLabel}>
+                <i />
+                {syncLabel}
+              </span>
+            )}
             <span className="topbar-account" title={user?.email ?? ''}>
               {isTeacher ? <Presentation size={15} /> : <GraduationCap size={15} />}
               <span>{user?.name ?? profile.name}</span>
@@ -363,10 +364,6 @@ export function Layout({
             </button>
           )
         })}
-        <button className={cn(view === 'about' && 'is-active')} onClick={() => onNavigate('about')}>
-          <Compass size={20} />
-          <span>方案</span>
-        </button>
         <button
           onClick={() => {
             if (isTeacher) {

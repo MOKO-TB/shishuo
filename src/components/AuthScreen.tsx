@@ -227,20 +227,6 @@ export function AuthScreen() {
             ))}
           </div>
 
-          <ul className="auth-points">
-            <li>
-              <Database size={16} />
-              共享工作区保存在服务端 SQLite，换设备登录后接着用
-            </li>
-            <li>
-              <ShieldCheck size={16} />
-              模型 Key 只留在服务端环境变量，浏览器接触不到
-            </li>
-            <li>
-              <GraduationCap size={16} />
-              学生只看学习空间，教师进待办台处理真实问题
-            </li>
-          </ul>
         </div>
 
         <p className="auth-story-foot">演示数据均为虚构教师与学生，不冒充任何真实授课老师。</p>
@@ -525,20 +511,9 @@ export function AuthScreen() {
                   </span>
                 </button>
               </div>
-              <p className="auth-demo-note">
-                其余试点教师：teacher.math / teacher.circuit / teacher.analog / teacher.digital
-                @shishuo.local，密码同为 teacher123。
-              </p>
             </div>
           )}
 
-          <p className="auth-foot-note">
-            {teacherOpen
-              ? '注册需要邮箱验证码；教师注册需要管理员发放的邀请码。'
-              : '学生注册需要邮箱验证码；教师账号由管理员分配。'}
-            密码在服务端用 scrypt 加盐保存，登录态放在
-            HttpOnly Cookie 中。
-          </p>
         </div>
       </section>
     </div>

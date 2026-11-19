@@ -1,0 +1,60 @@
+/*
+ * 界面清理层：去掉冗余说明区块后的结构校正。
+ * 与 design-claude.css 分开：这里只处理布局/间距，不涉及配色。
+ */
+
+/* 学生页头：移除「双通道怎么走」说明卡后改为单栏，标题限制行宽保持编辑感 */
+.student-head {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-bottom: 22px;
+}
+
+.student-head .display-title {
+  max-width: 840px;
+}
+
+/* 教师页头：移除重复的待办票据后，右侧只留身份切换与操作，顶对齐更整齐 */
+.teacher-head {
+  align-items: start;
+}
+
+.teacher-head .display-title {
+  max-width: 840px;
+}
+
+/* 学生侧栏精简后，卡片之间统一节奏 */
+.student-rail {
+  gap: 12px;
+}
+
+/* 问答列表：去掉逐行重复的维护人后，元信息保持单行不换行 */
+.knowledge-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+/* 教师统计卡：去掉说明副文案后，数字与标签之间更紧凑 */
+.teacher-stats .stat-copy p:empty {
+  display: none;
+}
+
+/* 手机端：示例问题单行横滑，避免三行堆叠占满首屏 */
+@media (max-width: 560px) {
+  .ask-suggestions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .ask-suggestions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .suggestion-chip {
+    flex: 0 0 auto;
+  }
+}

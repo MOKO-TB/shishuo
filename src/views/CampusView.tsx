@@ -511,10 +511,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <br />
             <span>课下的事问学长。</span>
           </h1>
-          <p className="page-lede">
-            {total} 条校园经验卡，覆盖考研、就业、竞赛、证书、学业规划、心理与校园生活。
-            每条都标注来源与可信度；标为「待核实」的内容仅供参考。
-          </p>
         </div>
 
         <aside className="campus-head-card card">

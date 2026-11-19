@@ -138,10 +138,6 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
             <br />
             <span>都在把老师的时间还回去。</span>
           </h1>
-          <p className="page-lede">
-            从“重复刷屏”到“合并、拒答、沉淀”。这张页面只回答三件事：AI
-            接住了多少、老师省下了什么、知识库还缺什么。
-          </p>
         </div>
 
         <aside className="insights-head-card">
@@ -239,13 +235,6 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
           </div>
         </div>
         <StackedBars data={weekly} />
-        <div className="chart-foot">
-          <span>
-            <CircleAlert size={14} />
-            数据口径：内置演示种子 + 本次页面操作
-          </span>
-          <span>近 7 天滚动窗口</span>
-        </div>
       </section>
 
       <div className="insights-grid">
@@ -280,7 +269,6 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
               )
             })}
           </div>
-          <p className="insights-card-note">按课程知识被 AI 引用的次数排序。</p>
         </section>
 
         <section className="insights-card gap-insights">
@@ -383,9 +371,6 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
               <span>次明确拒答，不编答案</span>
             </div>
           </div>
-          <p className="insights-card-note">
-            置信度门控把“答不准”变成“先转交”，是 AI 能进教学场景的前提。
-          </p>
         </section>
 
         <section className="insights-card course-card">
@@ -423,7 +408,6 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
               </div>
             ))}
           </div>
-          <p className="insights-card-note">标有小圆点的课程有答案待完善，处理后会直接提升 AI 覆盖。</p>
         </section>
       </div>
 
@@ -473,20 +457,10 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
             })}
           </div>
         )}
-        <div className="chart-foot">
-          <span>
-            <CircleAlert size={14} />
-            “卡住”包括低置信、转人工、负反馈或仍在等待的问题。
-          </span>
-          <span>待完善指该章节有 FAQ 被负反馈标记</span>
-        </div>
       </section>
 
       <div className="insights-footnote">
-        <MiniBars values={weekly.map((entry) => entry.ai)} tone="jade" />
-        <p>
-          口径说明：这是可交互原型，内置模拟课程与问题数据；AI 首响、时间节省为固定口径估算，不宣称真实教学成效。重置演示数据后所有数字回到初始值。
-        </p>
+        <p>演示数据，仅用于验证产品逻辑；AI 首响与时间节省为估算值。</p>
       </div>
     </div>
   )
