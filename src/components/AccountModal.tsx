@@ -777,96 +777,126 @@ export function AccountModal({
       </div>
 
       {tab === 'identity' ? (
-        <div className="account-fields">
-          <label className="field">
-            <span className="field-label">姓名（老师看到的提问人）</span>
-            <input
-              className="input"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              placeholder="例如：林晓"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">学院 / 年级</span>
-            <input
-              className="input"
-              value={form.college}
-              onChange={(event) => setForm({ ...form, college: event.target.value })}
-              placeholder="例如：计算机学院 · 2024 级"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">专业（学习背景）</span>
-            <input
-              className="input"
-              list="major-options"
-              value={form.major}
-              onChange={(event) => setForm({ ...form, major: event.target.value })}
-              placeholder="例如：计算机科学与技术"
-            />
-            <datalist id="major-options">
-              {majorOptions().map((major) => (
-                <option key={major} value={major} />
-              ))}
-            </datalist>
-            <span className="field-hint">
-              手动填写或从建议里选；没有演示资料的专业会用通用模式，不编课程地图。
-            </span>
-          </label>
-          <div className="account-field-row">
-            <label className="field">
-              <span className="field-label">学号（可选，仅自己可见）</span>
-              <input
-                className="input"
-                value={form.studentNo}
-                onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
-                inputMode="numeric"
-              />
-            </label>
-            <label className="field">
-              <span className="field-label">默认课程</span>
-              <select
-                className="input"
-                value={form.defaultCourseId}
-                onChange={(event) => setForm({ ...form, defaultCourseId: event.target.value })}
-              >
-                {allCourses()
-                  .filter((course) =>
-                    studentCourses(form).some((item) => item.id === course.id),
-                  )
-                  .map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.name} · {course.teacher}
-                    </option>
+        <div className="settings-sheet">
+          <section className="settings-group" aria-labelledby="settings-identity">
+            <h3 className="settings-group-title" id="settings-identity">
+              身份信息
+            </h3>
+            <p className="settings-group-lede">老师看到的是这里填的姓名与专业，其余信息只给自己看。</p>
+            <div className="account-fields">
+              <label className="field">
+                <span className="field-label">姓名（老师看到的提问人）</span>
+                <input
+                  className="input"
+                  value={form.name}
+                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  placeholder="例如：林晓"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">学院 / 年级</span>
+                <input
+                  className="input"
+                  value={form.college}
+                  onChange={(event) => setForm({ ...form, college: event.target.value })}
+                  placeholder="例如：计算机学院 · 2024 级"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">专业（学习背景）</span>
+                <input
+                  className="input"
+                  list="major-options"
+                  value={form.major}
+                  onChange={(event) => setForm({ ...form, major: event.target.value })}
+                  placeholder="例如：计算机科学与技术"
+                />
+                <datalist id="major-options">
+                  {majorOptions().map((major) => (
+                    <option key={major} value={major} />
                   ))}
-              </select>
-            </label>
-          </div>
-          <label className="account-email-toggle">
-            <input
-              type="checkbox"
-              checked={form.emailOnTeacherReply}
-              onChange={(event) =>
-                setForm({ ...form, emailOnTeacherReply: event.target.checked })
-              }
-            />
-            <span className="account-email-toggle-copy">
-              <strong>老师回复时邮件提醒我</strong>
-              <small>需要服务端配置 SMTP 才会真正发信；站内铃铛通知不受影响。</small>
-            </span>
-          </label>
-          <div className="inline-note">
-            <CircleAlert size={14} />
-            <span>历史提问仍属于这个身份；改名不会让「我的提问」变空。匿名提问时老师看到的仍然是「匿名同学」。</span>
-          </div>
+                </datalist>
+                <span className="field-hint">
+                  手动填写或从建议里选；没有演示资料的专业会用通用模式，不编课程地图。
+                </span>
+              </label>
+              <div className="account-field-row">
+                <label className="field">
+                  <span className="field-label">学号（可选，仅自己可见）</span>
+                  <input
+                    className="input"
+                    value={form.studentNo}
+                    onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">默认课程</span>
+                  <select
+                    className="input"
+                    value={form.defaultCourseId}
+                    onChange={(event) => setForm({ ...form, defaultCourseId: event.target.value })}
+                  >
+                    {allCourses()
+                      .filter((course) =>
+                        studentCourses(form).some((item) => item.id === course.id),
+                      )
+                      .map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.name} · {course.teacher}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+          </section>
 
-          <div className="inline-note">
-            <CircleAlert size={14} />
-            <span>
-              共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
-            </span>
-          </div>
+          <section className="settings-group" aria-labelledby="settings-notify">
+            <h3 className="settings-group-title" id="settings-notify">
+              通知
+            </h3>
+            <div className="settings-row-list">
+              <label className="settings-row">
+                <span className="settings-row-copy">
+                  <strong>老师回复时邮件提醒我</strong>
+                  <small>需要服务端配置 SMTP 才会真正发信；站内铃铛通知不受影响。</small>
+                </span>
+                <input
+                  className="settings-switch"
+                  type="checkbox"
+                  checked={form.emailOnTeacherReply}
+                  onChange={(event) =>
+                    setForm({ ...form, emailOnTeacherReply: event.target.checked })
+                  }
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="settings-group" aria-labelledby="settings-notes">
+            <h3 className="settings-group-title" id="settings-notes">
+              说明
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>改名不影响历史提问</strong>
+                  <small>
+                    历史提问仍属于这个身份，「我的提问」不会变空；匿名提问时老师看到的仍然是「匿名同学」。
+                  </small>
+                </span>
+              </div>
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>数据归属</strong>
+                  <small>
+                    共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
+                  </small>
+                </span>
+              </div>
+            </div>
+          </section>
         </div>
       ) : tab === 'schedule' ? (
         <div className="account-schedule">
