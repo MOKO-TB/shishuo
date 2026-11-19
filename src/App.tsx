@@ -9,6 +9,7 @@ import { WorkspaceBackupModal } from './components/WorkspaceBackupModal'
 import { Modal, Toast, type ToastState } from './components/ui'
 import { StudentView } from './views/StudentView'
 import { ScheduleView } from './views/student/StudentScheduleView'
+import { ChaoxingView } from './views/student/ChaoxingView'
 import { TeacherView } from './views/TeacherView'
 import { KnowledgeView } from './views/KnowledgeView'
 import { CampusView } from './views/CampusView'
@@ -102,7 +103,7 @@ export default function App() {
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get('view')
-    const allowed: ViewKey[] = ['student', 'teacher', 'knowledge', 'campus', 'insights', 'about', 'schedule']
+    const allowed: ViewKey[] = ['student', 'teacher', 'knowledge', 'chaoxing', 'campus', 'insights', 'about', 'schedule']
     if (requested && (allowed as string[]).includes(requested)) {
       navigate(requested as ViewKey)
     }
@@ -329,6 +330,7 @@ export default function App() {
           />
         )}
         {view === 'schedule' && <ScheduleView onOpenAccount={openAccount} />}
+        {view === 'chaoxing' && <ChaoxingView />}
         {view === 'knowledge' && (
           <KnowledgeView
             role={role}

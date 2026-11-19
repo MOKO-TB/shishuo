@@ -12,6 +12,7 @@ import {
   MessagesSquare,
   Moon,
   Presentation,
+  QrCode,
   RotateCcw,
   Settings,
   ShieldCheck,
@@ -57,6 +58,7 @@ const breadcrumbMap: Record<ViewKey, { root: string; current: string }> = {
   student: { root: '学生端', current: '我的答疑' },
   teacher: { root: '教师端', current: '待办台' },
   knowledge: { root: '课程空间', current: '知识库' },
+  chaoxing: { root: '学习空间', current: '学习通' },
   campus: { root: '校园空间', current: '校园生活' },
   insights: { root: '教师端', current: '答疑洞察' },
   about: { root: '关于师说', current: '方案说明' },
@@ -107,7 +109,7 @@ export function Layout({
     : [
         { key: 'student', label: '我的答疑', icon: MessagesSquare },
         { key: 'schedule', label: '课程表', icon: CalendarDays, shortLabel: '课表' },
-        { key: 'knowledge', label: '课程知识库', icon: BookOpen, shortLabel: '知识库' },
+        { key: 'chaoxing', label: '学习通', icon: QrCode, shortLabel: '学习通' },
         { key: 'campus', label: '校园生活', icon: Compass, shortLabel: '校园' },
       ]
   const teacherProfile = teacherByName(teacherName)

@@ -3,6 +3,7 @@ export type ViewKey =
   | 'student'
   | 'teacher'
   | 'knowledge'
+  | 'chaoxing'
   | 'campus'
   | 'insights'
   | 'about'
@@ -116,6 +117,9 @@ export type NotificationKind =
   | 'teacher-question-withdrawn'
   | 'teacher-needs-info'
   | 'teacher-supplement'
+  | 'account-banned'
+  | 'account-muted'
+  | 'account-restored'
 
 export interface AppNotification {
   id: string

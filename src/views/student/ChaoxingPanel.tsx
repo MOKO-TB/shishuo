@@ -136,7 +136,7 @@ export function ChaoxingRailCard() {
   )
 }
 
-function ChaoxingModal({
+export function ChaoxingModal({
   open,
   onClose,
   onChanged,
