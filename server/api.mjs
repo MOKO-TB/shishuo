@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib'
 import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId } from './auth.mjs'
 import { WORKSPACE_ID } from './db.mjs'
 import { HttpError } from './http-error.mjs'
@@ -59,6 +60,28 @@ function sendJson(res, status, payload) {
 
 function sendError(res, status, message) {
   sendJson(res, status, { error: { message } })
+}
+
+/**
+ * 判断 Base URL 是否指向本机 / 内网 / 云元数据地址。
+ * 允许管理员把 AI 网关指向任意公网服务商，但不能指向内网，否则等于开放 SSRF 读内网。
+ * 本地联调可用 AI_ALLOW_PRIVATE_BASE_URL=1 放行。
+ */
+function isPrivateHost(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '')
+  if (!host) return true
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '0.0.0.0') return true
+  if (host === '::1' || host === '::' || /^(fc|fd|fe80)/.test(host)) return true
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (v4) {
+    const [a, b] = v4.slice(1).map(Number)
+    if (a === 0 || a === 10 || a === 127) return true          // 本机 / 私有 A 段
+    if (a === 169 && b === 254) return true                     // 云元数据 169.254.169.254
+    if (a === 172 && b >= 16 && b <= 31) return true            // 私有 B 段
+    if (a === 192 && b === 168) return true                     // 私有 C 段
+    if (a === 100 && b >= 64 && b <= 127) return true            // 运营商级 NAT
+  }
+  return false
 }
 
 function readJson(req, limit) {
@@ -368,6 +391,49 @@ function pickUpstreamMessage(status, raw) {
 
 export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
+  /**
+   * 工作区响应缓存：连「投影 + 序列化 + gzip」一起缓存，命中时只写 socket。
+   * revision 每次成功写入都会递增，因此数据不变时缓存必然安全；
+   * 账号的课程分配或管理员身份变化会改变 key，也不会读到旧投影。
+   */
+  const stateResponseCache = new Map()
+  const STATE_CACHE_MAX_ENTRIES = 64
+  const STATE_CACHE_TTL_MS = 30_000
+
+  function buildStateResponse(row, user) {
+    const revision = Number(row?.revision ?? 0)
+    const scope = `${user.id}:${(user.courses ?? []).join(',')}:${user.is_admin ? 1 : 0}`
+    const key = `${revision}|${scope}`
+    const hit = stateResponseCache.get(key)
+    if (hit && Date.now() - hit.at < STATE_CACHE_TTL_MS) return hit
+    const payload = {
+      data: projectWorkspace(parsedWorkspace(row), user),
+      revision,
+      updatedAt: Number(row?.updated_at ?? 0),
+      updatedBy: row?.updated_by ?? null,
+      currentUserId: user.id,
+    }
+    const body = JSON.stringify(payload)
+    const entry = { body, gzip: null, at: Date.now() }
+    if (stateResponseCache.size >= STATE_CACHE_MAX_ENTRIES) stateResponseCache.clear()
+    stateResponseCache.set(key, entry)
+    return entry
+  }
+
+  /** 直接输出已序列化的响应体；gzip 结果也缓存，避免每次请求重复压缩 154KB。 */
+  function sendStateResponse(req, res, entry) {
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-store')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    if (/\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))) {
+      if (!entry.gzip) entry.gzip = gzipSync(Buffer.from(entry.body, 'utf8'), { level: 6 })
+      res.setHeader('Content-Encoding', 'gzip')
+      res.setHeader('Vary', 'Accept-Encoding')
+      return res.end(entry.gzip)
+    }
+    return res.end(entry.body)
+  }
 
   function requireUser(req) {
     const row = userForRequest(db, req)
@@ -1597,6 +1663,13 @@ export function createApiHandler({ db, config }) {
           if (!['http:', 'https:'].includes(parsed.protocol) || baseUrl.length > 500) {
             return sendError(res, 400, 'Base URL 必须是 http/https 地址。')
           }
+          // 拦截内网 / 云元数据地址，避免把 API Key 打到内网服务或读走实例凭证
+          if (
+            process.env.AI_ALLOW_PRIVATE_BASE_URL !== '1' &&
+            isPrivateHost(parsed.hostname)
+          ) {
+            return sendError(res, 400, 'Base URL 不能指向本机或内网地址。')
+          }
         }
         const model = body.model === undefined ? undefined : String(body.model).trim()
         if (model !== undefined && model !== '' && (model.length < 1 || model.length > 120)) {
@@ -1723,13 +1796,7 @@ export function createApiHandler({ db, config }) {
       if (pathname === '/api/state' && req.method === 'GET') {
         const user = requireUser(req)
         const row = workspaceRow(db)
-        return sendJson(res, 200, {
-          data: projectWorkspace(parsedWorkspace(row), user),
-          revision: Number(row?.revision ?? 0),
-          updatedAt: Number(row?.updated_at ?? 0),
-          updatedBy: row?.updated_by ?? null,
-          currentUserId: user.id,
-        })
+        return sendStateResponse(req, res, buildStateResponse(row, user))
       }
 
       if (pathname === '/api/state/revision' && req.method === 'GET') {

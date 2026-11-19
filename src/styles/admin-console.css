@@ -1,5 +1,60 @@
 /* 全页管理台：与 teacher/student 页面并列，不依赖弹窗层。 */
 
+/* 功能页紧凑页头：海报式 Hero 只属于概览页，其余页面把纵向空间还给列表。 */
+.admin-compact-head {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  margin: 0 0 14px;
+  padding: 0 2px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-compact-title {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+
+.admin-compact-crumb {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.admin-compact-title h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.admin-compact-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.admin-compact-stat {
+  font-size: 11px;
+  color: var(--muted);
+  padding-right: 10px;
+  border-right: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .admin-console-head {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.6fr);
@@ -182,7 +237,7 @@
 }
 
 .admin-stat-card > span {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--muted);
 }
@@ -1369,14 +1424,17 @@
   max-width: 420px;
   margin: 0;
   text-align: center;
-  font-size: 8.5px;
-  line-height: 1.7;
-  color: var(--faint);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--muted);
 }
 
 .admin-standalone {
   min-height: 100vh;
-  background: var(--cream);
+  /* 原为 var(--cream)：该令牌在暗色主题里仍是浅米色 #f2ede1，
+     导致暗色下外层是浅底、文字却是近白色 --ink，对比度只有 1.04:1。
+     页面底色应跟随 --paper，才能与文字令牌同步翻转。 */
+  background: var(--paper);
 }
 
 .admin-standalone-bar {
@@ -1390,7 +1448,7 @@
   height: 58px;
   padding: 0 22px;
   border-bottom: 1px solid var(--line);
-  background: rgba(251, 249, 243, 0.9);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
   backdrop-filter: blur(14px);
 }
 
@@ -1413,7 +1471,7 @@
 }
 
 .admin-standalone-brand em {
-  font-size: 8px;
+  font-size: 10px;
   font-style: normal;
   color: var(--muted);
 }
@@ -1431,13 +1489,13 @@
 }
 
 .admin-standalone-user > em {
-  font-size: 8.5px;
+  font-size: 11px;
   font-style: normal;
   color: var(--muted);
 }
 
 .admin-standalone-home {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--jade-deep);
 }
 

@@ -185,7 +185,8 @@ export function StudentView({
     return courses[0]?.id ?? 'ds'
   })
   const [question, setQuestion] = useState('')
-  const [anonymous, setAnonymous] = useState(false)
+  // 默认匿名：同班同学只看到「一位同学」，实名需要学生主动选择。
+  const [anonymous, setAnonymous] = useState(true)
   const [thinking, setThinking] = useState<{
     question: string
     step: number
