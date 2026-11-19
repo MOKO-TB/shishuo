@@ -1083,6 +1083,21 @@ export function createChaoxingService(db, options = {}) {
   }
 
   async function syncMaterials(page, course) {
+    if (!course.materialsUrl) {
+      // 章节同步失败或课程页没有章节时，再单独取一次「资料」入口。
+      await gotoPage(page, course.url).catch(() => undefined)
+      course.materialsUrl = await page
+        .evaluate(() => {
+          const links = [...document.querySelectorAll('a[href]')]
+          const isMaterials = (a) => /coursedata|pageHeader=3/i.test(a.href)
+          const hit =
+            links.find(
+              (a) => (a.textContent || '').replace(/\s+/g, ' ').trim() === '资料' && isMaterials(a),
+            ) || links.find((a) => (a.textContent || '').includes('资料') && isMaterials(a))
+          return hit?.href || ''
+        })
+        .catch(() => '')
+    }
     const url = `${urls.materials}?courseid=${encodeURIComponent(
       course.course_id,
     )}&clazzid=${encodeURIComponent(course.class_id)}&cpi=${encodeURIComponent(
@@ -1138,7 +1153,8 @@ export function createChaoxingService(db, options = {}) {
             sourceId: row.id || `${course.course_id}|${row.name}`,
             title: row.name,
             body: [row.size, row.type].filter(Boolean).join(' · '),
-            url: download || course.url,
+            // 点击资料进入该课程的学习通资料库，而不是打开会过期的文件直链。
+            url: course.materialsUrl || download || course.url,
           }
         }),
       )
@@ -1202,6 +1218,22 @@ export function createChaoxingService(db, options = {}) {
 
   async function syncChapters(page, course, userId) {
     await gotoPage(page, course.url)
+    // 课程页左侧「资料」入口带有当前会话的 enc/openc，用它作为资料库地址，
+    // 避免直接打开会过期的 cldisk 下载链接（会 403）。
+    const materialsEntry = await page
+      .evaluate(() => {
+        const links = [...document.querySelectorAll('a[href]')]
+        const isMaterials = (a) => /coursedata|pageHeader=3/i.test(a.href)
+        const exact = links.find(
+          (a) => (a.textContent || '').replace(/\s+/g, ' ').trim() === '资料' && isMaterials(a),
+        )
+        const fuzzy = links.find(
+          (a) => (a.textContent || '').includes('资料') && isMaterials(a),
+        )
+        return (exact || fuzzy)?.href || ''
+      })
+      .catch(() => '')
+    if (materialsEntry) course.materialsUrl = materialsEntry
     await page
       .waitForSelector('.timeline .units, .content1 .units', { timeout: 5_000 })
       .catch(() => undefined)

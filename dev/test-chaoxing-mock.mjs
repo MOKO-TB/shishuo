@@ -28,7 +28,7 @@ const loginPage = `<!doctype html><html><head><meta charset="utf-8"><title>登�
 </body></html>`
 
 const courseHome = `<!doctype html><html><head><meta charset="utf-8"><title>课程主页</title></head>
-<body><h1>数据结构</h1><a href="/messages?courseId=course-1">课程消息</a>
+<body><h1>数据结构</h1><a href="/messages?courseId=course-1">课程消息</a><a href="/coursedata?courseId=course-1">资料</a>
 <div class="timeline"><div class="units">
   <h2 class="levelfirst"><span class="chapterNumber">第1章</span><span class="fontCon">绪论</span></h2>
   <div class="leveltwo"><span class="chapterNumber">1.1</span><h3><span class="fontCon">数据结构基本概念</span></h3><input class="knowledgeJobCount" value="1" /></div>
@@ -188,6 +188,10 @@ try {
   assert.ok(overview.items.some((item) => item.title.includes('线性表')))
   assert.ok(overview.items.some((item) => item.title.includes('课件1')))
   assert.ok(overview.items.some((item) => item.title.includes('课程调整')))
+  assert.ok(
+    overview.items.find((item) => item.kind === 'material')?.url.includes('/coursedata?'),
+    '资料应打开课程资料库入口，而不是文件直链',
+  )
 
   cx.markRead('test-student', overview.items[0].id)
   const afterRead = cx.overview('test-student')

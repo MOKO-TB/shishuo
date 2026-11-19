@@ -2860,6 +2860,12 @@
   background: var(--surface);
 }
 
+.cx-chapter-section.is-tab {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .cx-chapter-head {
   display: flex;
   align-items: flex-start;

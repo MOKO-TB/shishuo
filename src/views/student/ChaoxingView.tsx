@@ -36,6 +36,8 @@ const KIND_META: Record<
   material: { label: '资料', icon: FolderOpen, hint: '按课程查看老师上传的课件和资料' },
 }
 
+type ChaoxingTab = ChaoxingKind | 'chapter'
+
 function fmt(ts: number | null | undefined) {
   if (!ts) return ''
   return new Date(ts).toLocaleString('zh-CN', {
@@ -98,12 +100,11 @@ export function ChaoxingView() {
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [tab, setTab] = useState<ChaoxingKind>('message')
+  const [tab, setTab] = useState<ChaoxingTab>('message')
   const [courseFilter, setCourseFilter] = useState('')
   const [bindOpen, setBindOpen] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState('')
   const [chapterCourse, setChapterCourse] = useState<ChaoxingCourseChapters | null>(null)
-  const [showAllChapters, setShowAllChapters] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -194,19 +195,20 @@ export function ChaoxingView() {
   }, [materialGroups, messageGroups, selectedCourse, tab])
 
   const chapterGroups = useMemo(() => {
-    const list = [...(overview?.chapters ?? [])].sort(
+    return [...(overview?.chapters ?? [])].sort(
       (a, b) => b.unfinished - a.unfinished || a.course_name.localeCompare(b.course_name),
     )
-    return showAllChapters ? list : list.slice(0, 6)
-  }, [overview?.chapters, showAllChapters])
+  }, [overview?.chapters])
 
   const connected = Boolean(overview?.connected)
   const currentHint =
-    tab === 'message' && selectedCourse
-      ? '返回全部课程'
-      : tab === 'material' && selectedCourse
+    tab === 'chapter'
+      ? '按课程查看未完成章节，点击课程查看明细'
+      : tab === 'message' && selectedCourse
         ? '返回全部课程'
-        : KIND_META[tab].hint
+        : tab === 'material' && selectedCourse
+          ? '返回全部课程'
+          : KIND_META[tab].hint
 
   return (
     <div className="page cx-page">
@@ -313,10 +315,10 @@ export function ChaoxingView() {
               )
             })}
             <button
-              className="cx-page-stat"
+              className={`cx-page-stat ${tab === 'chapter' ? 'is-active' : ''}`}
               onClick={() => {
-                setShowAllChapters(true)
-                document.querySelector('.cx-chapter-section')?.scrollIntoView({ behavior: 'smooth' })
+                setTab('chapter')
+                setSelectedCourse('')
               }}
             >
               <span className="cx-page-stat-icon">
@@ -346,6 +348,18 @@ export function ChaoxingView() {
                   <span>{overview?.counts[kind] ?? 0}</span>
                 </button>
               ))}
+              <button
+                role="tab"
+                aria-selected={tab === 'chapter'}
+                className={tab === 'chapter' ? 'is-active' : ''}
+                onClick={() => {
+                  setTab('chapter')
+                  setSelectedCourse('')
+                }}
+              >
+                章节进度
+                <span>{overview?.chapterUnfinished ?? 0}</span>
+              </button>
             </div>
             {tab === 'assignment' && (
               <select
@@ -372,7 +386,54 @@ export function ChaoxingView() {
 
           <p className="cx-page-hint">{currentHint}</p>
 
-          {tab === 'assignment' ? (
+          {tab === 'chapter' ? (
+            <section className="cx-chapter-section is-tab">
+              <div className="cx-chapter-head">
+                <div>
+                  <strong>课程章节进度</strong>
+                  <span>
+                    共 {overview?.chapterTotal ?? 0} 个章节任务，未完成{' '}
+                    {overview?.chapterUnfinished ?? 0} 个
+                  </span>
+                </div>
+              </div>
+              {chapterGroups.length === 0 ? (
+                <p className="cx-page-empty-line">
+                  还没有章节进度；点「同步全部」拉取学习通章节任务。
+                </p>
+              ) : (
+                <div className="cx-chapter-grid">
+                  {chapterGroups.map((course) => (
+                    <button
+                      key={course.course_id}
+                      className="cx-chapter-card"
+                      onClick={() => setChapterCourse(course)}
+                    >
+                      <span className="cx-chapter-card-top">
+                        <strong>{course.course_name}</strong>
+                        <Badge tone={course.unfinished > 0 ? 'gold' : 'jade'}>
+                          {course.unfinished > 0 ? `未完成 ${course.unfinished}` : '已完成'}
+                        </Badge>
+                      </span>
+                      <span className="cx-chapter-progress">
+                        <i
+                          style={{
+                            width: `${course.total ? Math.max(4, ((course.total - course.unfinished) / course.total) * 100) : 0}%`,
+                          }}
+                        />
+                      </span>
+                      <span className="cx-chapter-card-foot">
+                        {course.unfinished > 0
+                          ? `还有 ${course.unfinished} 个任务点没完成`
+                          : `共 ${course.total} 个任务点`}
+                        <ChevronRight size={13} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : tab === 'assignment' ? (
             <div className="cx-page-list">
               {assignments.length === 0 ? (
                 <EmptyBlock
@@ -411,57 +472,6 @@ export function ChaoxingView() {
               syncing={syncing}
             />
           )}
-
-          <section className="cx-chapter-section">
-            <div className="cx-chapter-head">
-              <div>
-                <strong>课程章节进度</strong>
-                <span>
-                  共 {overview?.chapterTotal ?? 0} 个章节任务，未完成 {overview?.chapterUnfinished ?? 0} 个
-                </span>
-              </div>
-              {(overview?.chapters.length ?? 0) > 6 && (
-                <button className="text-button" onClick={() => setShowAllChapters((value) => !value)}>
-                  {showAllChapters ? '收起' : `查看全部 ${overview?.chapters.length} 门`}
-                </button>
-              )}
-            </div>
-            {chapterGroups.length === 0 ? (
-              <p className="cx-page-empty-line">
-                还没有章节进度；点「同步全部」拉取学习通章节任务。
-              </p>
-            ) : (
-              <div className="cx-chapter-grid">
-                {chapterGroups.map((course) => (
-                  <button
-                    key={course.course_id}
-                    className="cx-chapter-card"
-                    onClick={() => setChapterCourse(course)}
-                  >
-                    <span className="cx-chapter-card-top">
-                      <strong>{course.course_name}</strong>
-                      <Badge tone={course.unfinished > 0 ? 'gold' : 'jade'}>
-                        {course.unfinished > 0 ? `未完成 ${course.unfinished}` : '已完成'}
-                      </Badge>
-                    </span>
-                    <span className="cx-chapter-progress">
-                      <i
-                        style={{
-                          width: `${course.total ? Math.max(4, ((course.total - course.unfinished) / course.total) * 100) : 0}%`,
-                        }}
-                      />
-                    </span>
-                    <span className="cx-chapter-card-foot">
-                      {course.unfinished > 0
-                        ? `还有 ${course.unfinished} 个任务点没完成`
-                        : `共 ${course.total} 个任务点`}
-                      <ChevronRight size={13} />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
         </>
       )}
 
