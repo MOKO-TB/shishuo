@@ -605,9 +605,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
             引路学长知识库
           </div>
           <h1 className="display-title">
-            课上的问题问老师，
+            课上的问题问老师
             <br />
-            <span>课下的事问学长。</span>
+            <span>课下的事问学长</span>
           </h1>
         </div>
 
@@ -648,7 +648,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
         <div className="campus-notice-copy">
           <strong>先看可信度，再看结论。</strong>
           <span>
-            「官方来源」和「教师回复」可直接引用；「待核实」是学长经验整理，涉及政策、金额、截止日期时，
+            「官方来源」和「教师回复」可直接引用；「待核实」是学长经验整理，涉及政策、金额、截止日期时
             请以学校官方通知为准。
           </span>
         </div>
@@ -786,7 +786,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
             >
               转交校园主理人
             </button>
-            <span>会附上你的问题和检索到的依据。</span>
+            <span>会附上你的问题和检索到的依据</span>
           </div>
         </section>
       )}

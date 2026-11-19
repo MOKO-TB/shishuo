@@ -134,9 +134,9 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
             近 7 天 · 全域试点
           </div>
           <h1 className="display-title">
-            每一个被接住的问题，
+            每一个被接住的问题
             <br />
-            <span>都在把老师的时间还回去。</span>
+            <span>都在把老师的时间还回去</span>
           </h1>
         </div>
 

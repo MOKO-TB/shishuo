@@ -64,9 +64,9 @@ export function ScheduleView({
             我的课程表
           </div>
           <h1 className="display-title">
-            什么时候上什么课，
+            什么时候上什么课
             <br />
-            <span>这里看得清清楚楚。</span>
+            <span>这里看得清清楚楚</span>
           </h1>
         </header>
         <div className="card">
@@ -98,9 +98,9 @@ export function ScheduleView({
           {currentWeek != null && <> · 现在是第 {currentWeek} 周</>}
         </div>
         <h1 className="display-title">
-          什么时候上什么课，
+          什么时候上什么课
           <br />
-          <span>打开就能看。</span>
+          <span>打开就能看</span>
         </h1>
       </header>
 

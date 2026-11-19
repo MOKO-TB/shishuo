@@ -40,10 +40,6 @@
   text-wrap: balance;
 }
 
-.about-title-dot {
-  color: var(--clay);
-}
-
 .about-title span {
   display: inline-block;
   margin-top: 6px;

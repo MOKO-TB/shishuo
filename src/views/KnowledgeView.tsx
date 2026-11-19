@@ -197,9 +197,9 @@ export function KnowledgeView({
             {baseFaqs.length} 条答案 · {courseCount} 门课
           </div>
           <h1 className="display-title">
-            老师写下的答案，
+            老师写下的答案
             <br />
-            <span>成为 AI 的第一反应。</span>
+            <span>成为 AI 的第一反应</span>
           </h1>
         </div>
 

@@ -254,9 +254,9 @@ export function ChaoxingView() {
         <div>
           <div className="eyebrow">学生端 / 学习通</div>
           <h1 className="display-title">
-            课程消息、作业与资料，
+            课程消息、作业与资料
             <br />
-            <span>从一个地方看。</span>
+            <span>从一个地方看</span>
           </h1>
         </div>
         <div className="cx-page-head-side">

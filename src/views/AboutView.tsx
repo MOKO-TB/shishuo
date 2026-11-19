@@ -149,9 +149,9 @@ export function AboutView({ onEnterStudent, onEnterTeacher }: AboutViewProps) {
             AI 原生校园工具
           </div>
           <h1 className="about-title">
-            师说<span className="about-title-dot">。</span>
+            师说
             <br />
-            <span>让每个课后问题都有回响。</span>
+            <span>让每个课后问题都有回响</span>
           </h1>
           <p className="about-lead">AI 先答，老师精答，答案留下来。</p>
           <p className="about-desc">

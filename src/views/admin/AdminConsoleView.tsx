@@ -200,9 +200,9 @@ export function AdminConsoleView({
               运营与安全
             </div>
             <h1 className="display-title">
-              把账号、内容与系统，
+              把账号、内容与系统
               <br />
-              <span>放在一个地方。</span>
+              <span>放在一个地方</span>
             </h1>
             <p className="page-lede">
               管理台只对管理员开放：账号与课程分配、操作审计、AI 用量、内容运营和系统信息都在这里。

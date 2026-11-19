@@ -335,9 +335,9 @@ export function TeacherView({
             教师工作台 · {teacherName}
           </div>
           <h1 className="display-title">
-            把重复问题，
+            把重复问题
             <br />
-            <span>一次处理完。</span>
+            <span>一次处理完</span>
           </h1>
         </div>
 

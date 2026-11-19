@@ -797,7 +797,7 @@ export function StudentView({
             {course.code ? ` · ${course.code}` : ''}
           </div>
           <h1 className="display-title">
-            {greeting()}，{profile.name}。 <span>卡住的地方，先丢过来。</span>
+            {greeting()}，{profile.name} <span>卡住的地方，先丢过来</span>
           </h1>
         </div>
 
