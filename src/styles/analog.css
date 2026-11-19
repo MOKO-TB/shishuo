@@ -9,7 +9,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   cursor: pointer;
 }
@@ -22,7 +22,7 @@
   margin-top: 10px;
   padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--jade);
 }
@@ -46,7 +46,7 @@
   gap: 3px;
   padding: 8px 9px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink-soft);
   font: inherit;
@@ -60,7 +60,7 @@
 }
 
 .analog-feedback-button span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--muted);
 }

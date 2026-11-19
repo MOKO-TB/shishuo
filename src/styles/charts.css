@@ -40,7 +40,7 @@
 }
 
 .donut-center span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   letter-spacing: 0.05em;
   color: var(--muted);
 }
@@ -53,7 +53,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -103,7 +103,7 @@
 .stacked-total {
   height: 13px;
   font-family: var(--serif);
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
   transition: color 0.2s var(--ease);
 }
@@ -135,7 +135,7 @@
 }
 
 .stacked-label {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
   white-space: nowrap;
 }

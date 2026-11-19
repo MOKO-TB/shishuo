@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--faint);
 }
@@ -30,7 +30,7 @@
 
 .escalate-question {
   padding-left: 2px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -42,7 +42,7 @@
   margin: 13px 0;
   padding: 11px 13px;
   border: 1px solid rgba(173, 127, 29, 0.15);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--gold-soft);
 }
 
@@ -53,7 +53,7 @@
 
 .duplicate-hint strong {
   display: block;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   font-weight: 650;
   color: var(--gold-deep);
@@ -61,7 +61,7 @@
 
 .duplicate-hint p {
   margin-top: 2px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: #7f6a3f;
 }
@@ -88,7 +88,7 @@
   gap: 2px;
   padding: 8px 9px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface);
   text-align: left;
   transition:
@@ -102,14 +102,14 @@
 }
 
 .urgency-option span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 600;
   line-height: 1.4;
   color: var(--ink-soft);
 }
 
 .urgency-option em {
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -136,7 +136,7 @@
   margin-top: 13px;
   padding: 10px 11px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   text-align: left;
   transition:
@@ -158,7 +158,7 @@
   height: 29px;
   display: grid;
   place-items: center;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   background: var(--surface-2);
   color: var(--muted);
   flex: 0 0 auto;
@@ -177,13 +177,13 @@
 }
 
 .anonymous-toggle strong {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink);
 }
 
 .anonymous-toggle em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   line-height: 1.5;
   color: var(--muted);
@@ -193,7 +193,7 @@
   margin-top: 13px;
   padding: 11px 12px;
   border: 1px dashed var(--line-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -202,7 +202,7 @@
   align-items: center;
   gap: 5px;
   margin-bottom: 6px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink-soft);
 }
@@ -221,7 +221,7 @@
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: var(--muted);
 }
@@ -261,7 +261,7 @@
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
@@ -287,19 +287,19 @@
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 4px;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .thread-bubble-head strong {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink);
 }
 
 .thread-bubble-head .badge {
   height: 18px;
-  font-size: 8px;
+  font-size: var(--text-meta);
   padding: 0 6px;
 }
 
@@ -329,7 +329,7 @@
   max-height: 320px;
   object-fit: contain;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
   transition: border-color 0.15s var(--ease);
 }
@@ -362,7 +362,7 @@
   border-radius: 5px;
   background: var(--gold-soft);
   color: var(--gold-deep);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
 }
 
@@ -372,7 +372,7 @@
 }
 
 .thread-ai-empty {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   color: var(--muted);
 }
@@ -393,9 +393,9 @@
   max-width: 100%;
   padding: 3px 7px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -427,9 +427,9 @@
   margin-left: 35px;
   padding: 4px 8px;
   border: 1px dashed var(--line-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(251, 249, 243, 0.6);
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--muted);
 }
@@ -453,12 +453,12 @@
   margin-top: 7px;
   padding-top: 6px;
   border-top: 1px dashed rgba(173, 127, 29, 0.22);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .teacher-reply-foot .text-button {
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .thread-pending-note {
@@ -468,7 +468,7 @@
   margin-left: 35px;
   padding: 9px 10px;
   border: 1px dashed var(--line-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -484,14 +484,14 @@
 
 .thread-pending-note strong {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink);
 }
 
 .thread-pending-note p {
   margin-top: 2px;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -519,8 +519,8 @@
   width: 100%;
   align-items: flex-start;
   padding: 7px 9px;
-  border-radius: 9px;
-  font-size: 8.5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-meta);
   line-height: 1.65;
 }
 
@@ -578,7 +578,7 @@
   margin-left: 35px;
   padding: 12px;
   border: 1px solid rgba(77, 110, 138, 0.24);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -600,13 +600,13 @@
 }
 
 .thread-supplement-head strong {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink);
 }
 
 .thread-supplement-head span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: var(--muted);
 }
@@ -618,7 +618,7 @@
 
 .thread-supplement-actions .button {
   height: 31px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 @media (max-width: 560px) {

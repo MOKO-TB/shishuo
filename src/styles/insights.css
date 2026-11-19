@@ -19,7 +19,7 @@
   position: relative;
   padding: 17px 18px 13px;
   border: 1px solid var(--ink);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 100% 0%, rgba(127, 196, 168, 0.16), transparent 40%),
     linear-gradient(150deg, #192a22, #12201a);
@@ -33,7 +33,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   letter-spacing: 0.05em;
   color: rgba(247, 241, 227, 0.58);
 }
@@ -83,14 +83,14 @@
 
 .insights-head-main-row strong em {
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-style: normal;
   font-weight: 400;
   color: rgba(247, 241, 227, 0.45);
 }
 
 .insights-head-main-row span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: rgba(247, 241, 227, 0.55);
 }
@@ -101,7 +101,7 @@
   gap: 5px;
   padding-top: 9px;
   border-top: 1px solid rgba(247, 241, 227, 0.1);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.5);
 }
 
@@ -132,7 +132,7 @@
   height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   flex: 0 0 auto;
 }
 
@@ -163,7 +163,7 @@
 }
 
 .metric-label {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.4;
   letter-spacing: 0.02em;
   color: var(--muted);
@@ -182,14 +182,14 @@
 .metric-card strong em {
   margin-left: 3px;
   font-family: var(--sans);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   font-weight: 400;
   color: var(--muted);
 }
 
 .metric-card p {
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--muted);
 }
@@ -198,7 +198,7 @@
   padding: 20px 22px 13px;
   margin-bottom: 18px;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -220,7 +220,7 @@
 }
 
 .chart-insight {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
   text-align: right;
   line-height: 1.6;
@@ -235,10 +235,10 @@
 .chart-insight span {
   margin-left: 7px;
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade-soft);
   color: var(--jade-deep);
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .chart-foot {
@@ -250,7 +250,7 @@
   border-top: 1px solid var(--line);
   margin-top: 10px;
   padding-top: 9px;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -274,7 +274,7 @@
 .insights-card {
   padding: 18px 19px 14px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -322,7 +322,7 @@
   width: 18px;
   flex: 0 0 auto;
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -334,7 +334,7 @@
 }
 
 .rank-question {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   font-weight: 600;
   color: var(--ink);
@@ -347,7 +347,7 @@
 .rank-bar {
   display: block;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
   background: var(--paper-2);
 }
@@ -355,7 +355,7 @@
 .rank-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade);
 }
 
@@ -387,7 +387,7 @@
 }
 
 .rank-meta span {
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
   overflow: hidden;
@@ -399,7 +399,7 @@
   margin-top: 9px;
   padding-top: 8px;
   border-top: 1px dashed var(--line);
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
 }
@@ -436,7 +436,7 @@
 }
 
 .insight-gap-row strong {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   font-weight: 650;
   color: var(--ink);
@@ -446,7 +446,7 @@
 }
 
 .insight-gap-row em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   font-style: normal;
   color: var(--muted);
@@ -463,9 +463,9 @@
   margin-top: 11px;
   padding: 9px 10px;
   border: 1px dashed var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-2);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -489,14 +489,14 @@
 }
 
 .quality-row > span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
   white-space: nowrap;
 }
 
 .quality-track {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   overflow: hidden;
 }
@@ -504,7 +504,7 @@
 .quality-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade);
 }
 
@@ -536,7 +536,7 @@
   display: grid;
   gap: 2px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -549,7 +549,7 @@
 }
 
 .quality-summary span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--muted);
 }
@@ -569,7 +569,7 @@
 .course-table-head {
   padding: 0 4px 6px;
   border-bottom: 1px solid var(--line);
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
   letter-spacing: 0.03em;
 }
@@ -581,7 +581,7 @@
 .course-table-row {
   padding: 7px 4px;
   border-bottom: 1px dashed var(--line);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -592,7 +592,7 @@
 .course-table-row > span:not(:first-child) {
   text-align: right;
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
 }
 
@@ -611,7 +611,7 @@
 
 .course-cell strong {
   font-family: var(--sans);
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
@@ -621,7 +621,7 @@
 
 .course-cell em {
   font-family: var(--mono);
-  font-size: 6.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -649,7 +649,7 @@
   margin-top: 16px;
   padding: 12px 14px;
   border: 1px dashed var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: rgba(251, 249, 243, 0.45);
 }
 
@@ -661,7 +661,7 @@
 
 .insights-footnote p {
   flex: 1;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--faint);
 }
@@ -763,7 +763,7 @@
 }
 
 .chapter-heat-label span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -772,7 +772,7 @@
 
 .chapter-heat-track {
   height: 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   overflow: hidden;
 }
@@ -780,7 +780,7 @@
 .chapter-heat-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade);
   transition: width 0.4s var(--ease);
 }
@@ -790,7 +790,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -805,7 +805,7 @@
 .chapter-heat-meta i {
   font-style: normal;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--clay-soft);
   color: var(--clay-deep);
 }

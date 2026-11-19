@@ -19,7 +19,7 @@
   margin: 16px 0 18px;
   padding: 12px;
   border: 1px solid rgba(247, 241, 227, 0.11);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background:
     radial-gradient(circle at 50% 0%, rgba(216, 165, 42, 0.12), transparent 60%),
     rgba(247, 241, 227, 0.045);
@@ -53,7 +53,7 @@
 }
 
 .side-mentor-eyebrow {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   letter-spacing: 0.08em;
   color: rgba(247, 241, 227, 0.42);
 }
@@ -71,8 +71,8 @@
   flex: 0 0 auto;
   padding: 2px 6px;
   border: 1px solid rgba(216, 165, 42, 0.28);
-  border-radius: 999px;
-  font-size: 8.5px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
   color: #e6c574;
 }
 
@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.45);
 }
 
@@ -112,10 +112,10 @@
   height: 27px;
   padding: 0 8px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   background: var(--surface);
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: var(--text-meta);
   text-align: left;
 }
 
@@ -141,7 +141,7 @@
   overscroll-behavior: contain;
   padding: 5px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: 0 10px 24px rgba(20, 33, 28, 0.14);
 }
@@ -159,10 +159,10 @@
   gap: 8px;
   padding: 7px 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: var(--ink-soft);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   text-align: left;
 }
 
@@ -172,7 +172,7 @@
 }
 
 .mentor-switcher-menu button small {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -207,7 +207,7 @@
   align-items: center;
   justify-content: center;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   font-size: 11px;
   font-weight: 600;
   text-align: center;
@@ -239,7 +239,7 @@
 
 .side-mentor-edit {
   justify-self: start;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.38);
 }
 
@@ -269,7 +269,7 @@
   min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 8% 0%, rgba(173, 127, 29, 0.12), transparent 42%),
     linear-gradient(135deg, rgba(244, 236, 211, 0.55), rgba(251, 249, 243, 0.96) 55%, rgba(226, 239, 233, 0.55));
@@ -329,11 +329,11 @@
 
 .mentor-strip-title .mentor-switcher-trigger {
   height: 25px;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .mentor-strip-copy p {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: var(--muted);
   overflow-wrap: anywhere;
@@ -353,7 +353,7 @@
 }
 
 .mentor-edit {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -404,7 +404,7 @@
   padding: 8px 22px;
   border-bottom: 1px dashed var(--line);
   background: var(--surface);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -426,10 +426,10 @@
   margin-left: auto;
   padding: 4px 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-3);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -455,7 +455,7 @@
 }
 
 .mentor-manager-intro p {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 
@@ -494,7 +494,7 @@
   gap: 10px;
   padding: 10px 11px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
@@ -508,7 +508,7 @@
   height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--jade);
   flex: 0 0 auto;
@@ -541,13 +541,13 @@
 
 .mentor-manager-copy em {
   color: var(--muted);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   font-style: normal;
 }
 
 .mentor-manager-copy p {
   color: var(--faint);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   overflow-wrap: anywhere;
 }
@@ -555,8 +555,8 @@
 .mentor-manager-scope,
 .mentor-manager-added {
   padding: 1px 5px;
-  border-radius: 999px;
-  font-size: 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
   font-weight: 500;
 }
 
@@ -578,9 +578,9 @@
   margin-top: 2px;
   padding: 5px 8px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -620,16 +620,16 @@
   border-radius: 0 8px 8px 0;
   background: var(--gold-soft);
   color: var(--gold-deep);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
 }
 
 .mentor-teacher-chip {
   padding: 4px 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
 }
 
@@ -690,7 +690,7 @@
   gap: 10px;
   padding: 12px 13px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -722,9 +722,9 @@
 .mentor-quick-chip {
   padding: 6px 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   transition:
     border-color 0.2s var(--ease),
@@ -760,7 +760,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -776,9 +776,9 @@
   gap: 6px;
   padding: 5px 8px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface);
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   text-align: left;
 }
@@ -791,13 +791,13 @@
 
 .mentor-course-chip em {
   font-style: normal;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
 .mentor-course-style {
   margin: 0;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
 }
@@ -806,9 +806,9 @@
   margin-top: 10px;
   padding: 9px 10px;
   border: 1px dashed var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: var(--muted);
 }
@@ -822,7 +822,7 @@
 }
 
 .mentor-source-stats-head strong {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--jade);
 }
 
@@ -862,7 +862,7 @@
 .mentor-source-terms em {
   font-style: normal;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -888,7 +888,7 @@
 .mentor-msg.is-user > p {
   max-width: 84%;
   padding: 9px 12px;
-  border-radius: 14px 14px 4px 14px;
+  border-radius: var(--radius-md) 14px 4px 14px;
   background: var(--jade-deep);
   color: var(--cream);
   font-size: 12px;
@@ -906,7 +906,7 @@
   min-width: 0;
   padding: 11px 12px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -941,7 +941,7 @@
 }
 
 .mentor-source-row .badge {
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .mentor-msg-text {
@@ -967,7 +967,7 @@
   padding: 7px 9px;
   border-left: 2px solid var(--danger);
   background: var(--danger-soft);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--danger);
   overflow-wrap: anywhere;
@@ -975,7 +975,7 @@
 
 .mentor-ai-source {
   margin-top: 6px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -999,7 +999,7 @@
   margin-top: 10px;
   padding: 10px 11px;
   border: 1px solid rgba(20, 108, 86, 0.18);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--jade-mist);
 }
 
@@ -1014,7 +1014,7 @@
 }
 
 .mentor-route p {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -1038,7 +1038,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -1055,7 +1055,7 @@
 }
 
 .mentor-map-stage > p {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
 }
@@ -1072,9 +1072,9 @@
   gap: 3px;
   padding: 4px 7px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   background: var(--surface-2);
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
 }
 
@@ -1089,7 +1089,7 @@
 }
 
 .mentor-map-note {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -1113,7 +1113,7 @@
   resize: none;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface-3);
   font-size: 12px;
   line-height: 1.65;
@@ -1133,12 +1133,12 @@
   height: 40px;
   padding: 0;
   flex: 0 0 auto;
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
 }
 
 .mentor-footnote {
   margin-top: 7px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--faint);
 }
@@ -1177,5 +1177,36 @@
 
   .mentor-msg.is-user > p {
     max-width: 90%;
+  }
+}
+
+/* 移动端：导师条压缩为单行 CTA，避免把提问框挤出首屏 */
+@media (max-width: 700px) {
+  .mentor-strip {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .mentor-strip-copy p {
+    display: none;
+  }
+
+  .mentor-strip-actions {
+    gap: 6px;
+  }
+
+  .mentor-strip-actions .button {
+    height: 32px;
+    padding: 0 10px;
+    font-size: var(--text-xs);
+  }
+
+  /* 不再重复展示「高等数学」这类副标题，把宽度让给按钮 */
+  .mentor-strip-title > span {
+    display: none;
+  }
+
+  .mentor-strip-actions .mentor-edit {
+    display: none;
   }
 }

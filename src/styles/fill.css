@@ -1,0 +1,88 @@
+/**
+ * fill.css —— 填充原语
+ *
+ * 用法：容器上加 data-fill，不再各自写 background / border / radius / shadow。
+ *   data-fill="card"    主容器（默认卡）
+ *   data-fill="inset"   卡片内嵌区（次级）
+ *   data-fill="plain"   无底色，仅描边
+ *   data-fill="accent"  强调底（jade soft）
+ *   data-fill="hero"    首屏/重点卡（渐变 A）
+ *   data-fill="panel"   面板/促销卡（渐变 B）
+ *   data-fill="strong"  深色反白块
+ *
+ * 需要更紧凑的圆角时加 data-radius="sm|md|lg|xl|pill"，不写 px。
+ */
+
+[data-fill] {
+  border: 1px solid transparent;
+}
+
+[data-fill='card'] {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+[data-fill='inset'] {
+  background: var(--bg-inset);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+
+[data-fill='plain'] {
+  background: transparent;
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+
+[data-fill='accent'] {
+  background: var(--bg-accent);
+  border-color: transparent;
+  border-radius: var(--radius-md);
+}
+
+[data-fill='hero'] {
+  background: var(--fill-hero);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+}
+
+[data-fill='panel'] {
+  background: var(--fill-panel);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+}
+
+[data-fill='strong'] {
+  background: var(--fill-strong);
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  color: var(--fg-on-strong);
+}
+
+[data-radius='xs'] { border-radius: var(--radius-xs); }
+[data-radius='sm'] { border-radius: var(--radius-sm); }
+[data-radius='md'] { border-radius: var(--radius-md); }
+[data-radius='lg'] { border-radius: var(--radius-lg); }
+[data-radius='xl'] { border-radius: var(--radius-xl); }
+[data-radius='pill'] { border-radius: var(--radius-pill); }
+
+/* 键盘焦点：全局唯一来源 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* 触控目标：移动端按钮/图标按钮不小于 44px */
+@media (max-width: 720px) {
+  .icon-button,
+  .button {
+    min-height: var(--touch);
+  }
+
+  .icon-button {
+    min-width: var(--touch);
+  }
+}

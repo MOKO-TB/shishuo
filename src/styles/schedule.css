@@ -37,7 +37,7 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
   color: var(--ink-soft);
   flex: 0 0 auto;
@@ -68,13 +68,13 @@
 }
 
 .schedule-weeklabel span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .schedule-weeknav .text-button {
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .schedule-days {
@@ -105,7 +105,7 @@
 
 .schedule-day em {
   font-style: normal;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -172,7 +172,7 @@
 }
 
 .schedule-time span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -204,10 +204,10 @@
   justify-self: start;
   margin-top: 2px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   color: var(--muted);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .schedule-foot {
@@ -240,11 +240,11 @@
   }
 
   .schedule-day span {
-    font-size: 10px;
+    font-size: var(--text-meta);
   }
 
   .schedule-day em {
-    font-size: 8.5px;
+    font-size: var(--text-meta);
   }
 
   .schedule-body h3 {

@@ -16,7 +16,8 @@
     "test:chaoxing": "node dev/test-chaoxing-mock.mjs",
     "maintain:archive": "node dev/archive-threads.mjs",
     "start": "node server/index.mjs",
-    "preview": "node server/index.mjs"
+    "preview": "node server/index.mjs",
+    "check:ui": "node dev/check-ui.mjs"
   },
   "dependencies": {
     "@fontsource/noto-serif-sc": "^5.3.1",
