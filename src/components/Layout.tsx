@@ -276,7 +276,7 @@ export function Layout({
                 管理台
               </button>
             )}
-            <button onClick={() => void logout()} className="side-utility-button">
+            <button onClick={() => void logout()} className="side-logout-button">
               <LogOut size={14} />
               退出登录
             </button>

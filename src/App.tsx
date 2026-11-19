@@ -20,9 +20,11 @@ import { TEACHERS, allCourses, courseById, isSeededCourse } from './data/seed'
 import { isPilotCourse } from './data/pilot'
 import { studentCourses, useProfile, visibleTeachers } from './lib/profile'
 import { useAuth } from './auth'
+import { usePlaceholderTab } from './lib/placeholderTab'
 import type { FaqPrefill, Role, ViewKey } from './types'
 
 export default function App() {
+  usePlaceholderTab()
   const { data, dispatch, resetDemo, markGuideSeen } = useStore()
   const { user } = useAuth()
   const profile = useProfile()

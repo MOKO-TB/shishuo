@@ -491,7 +491,8 @@ export function StudentView({
 
     if (!text) return
 
-    if (!questionCheck.ok && !selfCheckBypass.current) {
+    // AI 就绪时跳过自检，让低置信问题直接走服务端 AI 补充，而不是被自检弹窗拦住。
+    if (!questionCheck.ok && !selfCheckBypass.current && !aiReady) {
       setSelfCheckOpen(true)
       return
     }

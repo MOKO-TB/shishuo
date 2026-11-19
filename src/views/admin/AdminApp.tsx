@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../auth'
+import { usePlaceholderTab } from '../../lib/placeholderTab'
 import { BrandMark, Toast, type ToastState } from '../../components/ui'
 import { AdminConsoleView } from './AdminConsoleView'
 
 export function AdminApp() {
+  usePlaceholderTab()
   const { user, loading, error, login, logout } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

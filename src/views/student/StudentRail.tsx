@@ -106,10 +106,10 @@ export function StudentRail({
                   </span>
                   <span className="class-row-side">
                     {active
-                      ? <Badge tone="jade">正在问这门</Badge>
+                      ? <span className="class-row-active-dot" aria-label="当前课程" />
                       : entry.matchedCourseId
-                        ? <span className="class-row-hint">切到这门课</span>
-                        : <Badge tone="neutral">未对齐课程库</Badge>}
+                        ? <span className="class-row-hint">切换</span>
+                        : <Badge tone="neutral">未对齐</Badge>}
                   </span>
                 </button>
               )
