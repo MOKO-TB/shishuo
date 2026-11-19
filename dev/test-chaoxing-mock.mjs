@@ -80,6 +80,10 @@ function startMock() {
       return send(JSON.stringify({ status: true, uid: 'mock-user' }), 'application/json')
     }
     if (url.pathname === '/course-api') {
+      if (!String(req.headers.cookie || '').includes('mock-session')) {
+        res.statusCode = 401
+        return res.end('login required')
+      }
       return send(
         JSON.stringify({
           channelList: [

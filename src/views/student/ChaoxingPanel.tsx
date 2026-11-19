@@ -26,6 +26,7 @@ import {
   type ChaoxingKind,
   type ChaoxingLoginStart,
   type ChaoxingOverview,
+  loginChaoxingPassword,
 } from '../../lib/chaoxing'
 
 const KIND_META: Record<
@@ -152,6 +153,10 @@ export function ChaoxingModal({
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [login, setLogin] = useState<ChaoxingLoginStart | null>(null)
+  const [pollState, setPollState] = useState<'waiting' | 'scanned' | 'syncing'>('waiting')
+  const [cxAccount, setCxAccount] = useState('')
+  const [cxPassword, setCxPassword] = useState('')
+  const [passwordBusy, setPasswordBusy] = useState(false)
   const [tab, setTab] = useState<ChaoxingKind>('message')
   const [courseFilter, setCourseFilter] = useState('')
 
@@ -208,6 +213,7 @@ export function ChaoxingModal({
         if (cancelled) return
         if (result.status === 'connected') {
           window.clearInterval(timer)
+          setPollState('syncing')
           setLogin(null)
           setNotice('学习通绑定成功，正在同步课程内容…')
           await syncNow()
@@ -216,7 +222,14 @@ export function ChaoxingModal({
           setLogin(null)
           setError('二维码已过期，请重新生成。')
         } else if (result.status === 'scanned') {
+          setPollState('scanned')
           setNotice(`已扫码${result.nickname ? `：${result.nickname}` : ''}，请在手机上点确认。`)
+        } else if (result.status === 'refreshed' && result.qr) {
+          setLogin((current) => (current ? { ...current, qr: result.qr! } : current))
+          setPollState('waiting')
+          setNotice('二维码已自动刷新，请重新扫码。')
+        } else {
+          setPollState('waiting')
         }
       } catch (err) {
         if (cancelled) return
@@ -237,10 +250,33 @@ export function ChaoxingModal({
     setNotice('')
     try {
       setLogin(await startChaoxingLogin())
+      setPollState('waiting')
     } catch (err) {
       setError(err instanceof Error ? err.message : '二维码生成失败。')
     } finally {
       setStarting(false)
+    }
+  }
+
+  const submitPassword = async () => {
+    if (!cxAccount.trim() || !cxPassword) {
+      setError('请填写学习通账号和密码。')
+      return
+    }
+    setPasswordBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      await loginChaoxingPassword(cxAccount.trim(), cxPassword)
+      setCxAccount('')
+      setCxPassword('')
+      setLogin(null)
+      setNotice('学习通绑定成功，正在同步课程内容…')
+      await syncNow()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '账号密码登录失败。')
+    } finally {
+      setPasswordBusy(false)
     }
   }
 
@@ -346,6 +382,13 @@ export function ChaoxingModal({
                 <div>
                   <strong>用学习通 App 扫码</strong>
                   <p>打开学习通 → 右上角「扫一扫」→ 扫描二维码 → 在手机上点「确认登录」。</p>
+                  <p className={`cx-scan-status is-${pollState}`}>
+                    {pollState === 'scanned'
+                      ? '已扫码，请在手机上点「确认登录」…'
+                      : pollState === 'syncing'
+                        ? '已确认，正在同步课程内容…'
+                        : '等待扫码…'}
+                  </p>
                   <p className="cx-hint">二维码约 5 分钟失效；绑定成功后会自动同步课程内容。</p>
                 </div>
               </div>
@@ -382,6 +425,37 @@ export function ChaoxingModal({
               </p>
             </div>
           )}
+          <details className="cx-password-box">
+            <summary>扫码不方便？用账号密码登录（备用）</summary>
+            <p className="cx-hint">
+              密码只用于本次登录换取学习通 Cookie，不保存；当前 HTTP 演示环境不建议使用真实密码。
+            </p>
+            <div className="cx-password-grid">
+              <input
+                className="input"
+                value={cxAccount}
+                onChange={(event) => setCxAccount(event.target.value)}
+                placeholder="手机号 / 超星号"
+                autoComplete="username"
+              />
+              <input
+                className="input"
+                type="password"
+                value={cxPassword}
+                onChange={(event) => setCxPassword(event.target.value)}
+                placeholder="学习通密码"
+                autoComplete="current-password"
+              />
+              <button
+                className="button button-secondary"
+                onClick={() => void submitPassword()}
+                disabled={passwordBusy}
+              >
+                {passwordBusy ? <Loader2 size={14} className="spin-icon" /> : <LogOut size={14} />}
+                {passwordBusy ? '登录中…' : '账号密码登录'}
+              </button>
+            </div>
+          </details>
         </div>
       ) : (
         <>

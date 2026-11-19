@@ -58,7 +58,7 @@ export function startChaoxingLogin() {
 }
 
 export function pollChaoxingLogin(loginId: string) {
-  return apiPost<{ status: 'waiting' | 'scanned' | 'connected' | 'expired'; courses?: number; nickname?: string }>(
+  return apiPost<{ status: 'waiting' | 'scanned' | 'connected' | 'expired' | 'refreshed'; courses?: number; nickname?: string; qr?: string }>(
     '/api/chaoxing/login/poll',
     { loginId },
   )
@@ -93,5 +93,12 @@ export function markChaoxingRead(id: string) {
 export function selectChaoxingCourse(id: string, selected: boolean) {
   return apiPost<ChaoxingOverview>(`/api/chaoxing/courses/${encodeURIComponent(id)}/select`, {
     selected,
+  })
+}
+
+export function loginChaoxingPassword(account: string, password: string) {
+  return apiPost<{ connected: boolean; courses: number }>('/api/chaoxing/login/password', {
+    account,
+    password,
   })
 }

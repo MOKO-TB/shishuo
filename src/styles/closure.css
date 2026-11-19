@@ -2624,3 +2624,84 @@
     padding: 32px 16px;
   }
 }
+
+.cx-scan-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.cx-scan-status.is-scanned {
+  background: var(--jade-mist);
+  color: var(--jade-deep);
+}
+
+.cx-scan-status.is-syncing {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.cx-scan-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.cx-scan-status.is-scanned::before {
+  background: var(--jade);
+}
+
+.cx-scan-status.is-syncing::before {
+  background: var(--gold);
+}
+
+.cx-password-box {
+  margin-top: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.cx-password-box summary {
+  color: var(--muted);
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.cx-password-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.cx-password-grid .input {
+  height: 34px;
+  font-size: 10px;
+}
+
+.cx-password-grid .button {
+  height: 34px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .cx-password-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cx-password-grid .input,
+  .cx-password-grid .button {
+    height: 38px;
+  }
+}

@@ -379,6 +379,54 @@ export function createChaoxingService(db, options = {}) {
     await Promise.all(ids.map((id) => closePending(id)))
   }
 
+  async function captureQr(page) {
+    const qr = page.locator('#quickCode')
+    await qr.waitFor({ state: 'visible', timeout: 8_000 })
+    // 先停掉登录页自己的二维码轮询，避免截图和 uuid 在读取过程中被页面刷新。
+    await page
+      .evaluate(() => {
+        try {
+          if (typeof qrInterValObj !== 'undefined' && qrInterValObj) {
+            clearInterval(qrInterValObj)
+          }
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => undefined)
+    await page.waitForTimeout(150)
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const uuidBefore = await page.locator('#uuid').inputValue().catch(() => '')
+      const encBefore = await page.locator('#enc').inputValue().catch(() => '')
+      const src = await qr.getAttribute('src').catch(() => '')
+      const buffer = await qr.screenshot()
+      await page.waitForTimeout(120)
+      const uuidAfter = await page.locator('#uuid').inputValue().catch(() => '')
+      const encAfter = await page.locator('#enc').inputValue().catch(() => '')
+      let srcUuid = ''
+      try {
+        srcUuid = new URL(src || '', page.url()).searchParams.get('uuid') || ''
+      } catch {
+        // ignore malformed src
+      }
+      const stable =
+        uuidBefore &&
+        uuidBefore === uuidAfter &&
+        encBefore &&
+        encBefore === encAfter &&
+        (!srcUuid || srcUuid === uuidBefore)
+      if (stable) {
+        return {
+          uuid: uuidBefore,
+          enc: encBefore,
+          qr: `data:image/png;base64,${buffer.toString('base64')}`,
+        }
+      }
+      await page.waitForTimeout(250)
+    }
+    throw new ChaoxingError('学习通二维码刷新过于频繁，请点「换一张二维码」重试。', 502)
+  }
+
   async function startLogin(userId) {
     await closeUserPending(userId)
     const browser = await getBrowser()
@@ -394,14 +442,7 @@ export function createChaoxingService(db, options = {}) {
       if (!(await isLoginPage(page))) {
         throw new ChaoxingError('学习通登录页没有正常打开，请稍后重试。', 502)
       }
-      const qr = page.locator('#quickCode')
-      await qr.waitFor({ state: 'visible', timeout: 8_000 })
-      const buffer = await qr.screenshot()
-      const uuid = await page.locator('#uuid').inputValue().catch(() => '')
-      const enc = await page.locator('#enc').inputValue().catch(() => '')
-      if (!uuid || !enc) {
-        throw new ChaoxingError('学习通二维码参数读取失败，请重新获取。', 502)
-      }
+      const { uuid, enc, qr } = await captureQr(page)
       const loginId = sha1(`${userId}|${Date.now()}|${uuid}`).slice(0, 32)
       pending.set(loginId, {
         userId,
@@ -410,16 +451,85 @@ export function createChaoxingService(db, options = {}) {
         uuid,
         enc,
         createdAt: Date.now(),
+        lastPoll: '',
       })
       return {
         loginId,
-        qr: `data:image/png;base64,${buffer.toString('base64')}`,
+        qr,
         expiresAt: Date.now() + 5 * 60_000,
       }
     } catch (error) {
       await context.close().catch(() => undefined)
       if (error instanceof ChaoxingError) throw error
       throw new ChaoxingError(`无法打开学习通登录页：${error.message || '未知错误'}`, 502)
+    }
+  }
+
+  async function loginWithPassword(userId, input) {
+    const account = String(input?.account ?? '').trim()
+    const password = String(input?.password ?? '')
+    if (!account || account.length > 80) throw new ChaoxingError('请输入学习通手机号/账号。')
+    if (!password || password.length > 200) throw new ChaoxingError('请输入学习通密码。')
+    const browser = await getBrowser()
+    const context = await browser.newContext({
+      userAgent: DEFAULT_UA,
+      viewport: { width: 1440, height: 1000 },
+      locale: 'zh-CN',
+    })
+    const page = await context.newPage()
+    try {
+      await page.goto(urls.login, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+      await page.waitForTimeout(900)
+      if (!(await isLoginPage(page))) {
+        throw new ChaoxingError('学习通登录页没有正常打开，请稍后重试。', 502)
+      }
+      await page.locator('#phone').fill(account)
+      await page.locator('#pwd').fill(password)
+      await page
+        .evaluate(() => {
+          if (typeof loginByPhoneAndPwd === 'function') loginByPhoneAndPwd()
+        })
+        .catch(() => undefined)
+      await Promise.race([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => null),
+        page.waitForTimeout(7_000),
+      ])
+      await page.waitForTimeout(1_200)
+      if (await isLoginPage(page)) {
+        const messages = await page
+          .locator('#err-txt, .err-txt, #phoneMsg, #pwdMsg')
+          .allInnerTexts()
+          .catch(() => [])
+        throw new ChaoxingError(
+          messages.map((item) => item.trim()).filter(Boolean).join(' ') ||
+            '账号密码登录失败；可能需要短信/滑块验证，请改用扫码登录。',
+          401,
+        )
+      }
+      const cookies = await context.cookies()
+      if (cookies.length === 0) {
+        throw new ChaoxingError('学习通没有返回登录态，请重试。', 502)
+      }
+      const ua = await page.evaluate(() => navigator.userAgent).catch(() => DEFAULT_UA)
+      let courses = []
+      try {
+        courses = await fetchCourses(context)
+      } catch {
+        // 课程列表稍后同步
+      }
+      saveCourses(userId, courses)
+      sessions.set(userId, {
+        cookies,
+        ua: ua || DEFAULT_UA,
+        connectedAt: Date.now(),
+      })
+      touchAccount(userId, { connected: true, lastError: null })
+      return { connected: true, courses: courses.length }
+    } catch (error) {
+      if (error instanceof ChaoxingError) throw error
+      throw new ChaoxingError(error.message || '账号密码登录失败。', 502)
+    } finally {
+      await context.close().catch(() => undefined)
     }
   }
 
@@ -432,22 +542,83 @@ export function createChaoxingService(db, options = {}) {
       await closePending(loginId)
       throw new ChaoxingError('二维码已过期，请重新获取。', 410)
     }
-    const response = await item.context.request.post(
-      urls.loginStatus,
-      {
-        form: {
-          enc: item.enc,
-          uuid: item.uuid,
-          doubleFactorLogin: '',
-          forbidotherlogin: '',
-        },
-        headers: {
-          Referer: LOGIN_URL,
-          'User-Agent': DEFAULT_UA,
-        },
-      },
-    )
-    const data = (await response.json().catch(() => ({}))) || {}
+    let data = {}
+    try {
+      const pageUrl = item.page.url()
+      if (pageUrl.includes('passport2.chaoxing.com')) {
+        // 在登录页上下文里发请求，确保和二维码使用同一份会话/Referer。
+        data = await item.page.evaluate(
+          async ({ enc, uuid }) => {
+            const body = new URLSearchParams({
+              enc,
+              uuid,
+              doubleFactorLogin: '',
+              forbidotherlogin: '',
+            })
+            const response = await fetch('/getauthstatus/v2', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+              body: body.toString(),
+            })
+            return await response.json().catch(() => ({}))
+          },
+          { enc: item.enc, uuid: item.uuid },
+        )
+      } else if (!(await isLoginPage(item.page))) {
+        // 登录页已经被扫码流程跳走，说明已登录。
+        data = { status: true }
+      }
+    } catch {
+      // fall through to context request
+    }
+    if (!data || (!data.status && data.type !== 4 && data.type !== 3)) {
+      try {
+        const response = await item.context.request.post(urls.loginStatus, {
+          form: {
+            enc: item.enc,
+            uuid: item.uuid,
+            doubleFactorLogin: '',
+            forbidotherlogin: '',
+          },
+          headers: {
+            Referer: LOGIN_URL,
+            'User-Agent': DEFAULT_UA,
+          },
+        })
+        data = (await response.json().catch(() => ({}))) || {}
+      } catch {
+        // 登录页/上下文已被新二维码替换或关闭，按过期处理，避免把底层异常抛给用户。
+        return { status: 'expired' }
+      }
+    }
+    const signature = `${data.status === true}|${data.type ?? ''}`
+    if (item.lastPoll !== signature) {
+      item.lastPoll = signature
+      console.log('[chaoxing poll]', userId, signature, clean(data.nickname, 80))
+    }
+    if (!data.status && data.type === 2) {
+      // 二维码失效：重新加载登录页拿一张新码，并把新码回给前端，避免用户扫到旧码一直无反应。
+      try {
+        await item.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 })
+        await item.page.waitForTimeout(700)
+        if (!(await isLoginPage(item.page))) {
+          data = { status: true }
+        } else {
+          const fresh = await captureQr(item.page)
+          item.uuid = fresh.uuid
+          item.enc = fresh.enc
+          item.createdAt = Date.now()
+          item.lastPoll = ''
+          return { status: 'refreshed', qr: fresh.qr }
+        }
+      } catch {
+        return { status: 'expired' }
+      }
+    }
     if (data.status) {
       const cookies = await item.context.cookies()
       const ua = await item.page
@@ -469,7 +640,7 @@ export function createChaoxingService(db, options = {}) {
       await closePending(loginId)
       return { status: 'connected', courses: courses.length }
     }
-    if (data.type === 4) {
+    if (data.type === 4 || data.type === 3) {
       return { status: 'scanned', nickname: clean(data.nickname, 80) }
     }
     return { status: 'waiting' }
@@ -819,6 +990,7 @@ export function createChaoxingService(db, options = {}) {
 
   return {
     startLogin,
+    loginWithPassword,
     pollLogin,
     status,
     logout,

@@ -919,6 +919,9 @@ export function createApiHandler({ db, config }) {
           await chaoxing.pollLogin(user.id, String(body.loginId ?? '')),
         )
       }
+      if (pathname === '/api/chaoxing/login/password') {
+        return sendChaoxingJson(res, 200, await chaoxing.loginWithPassword(user.id, body))
+      }
       if (pathname === '/api/chaoxing/status') {
         return sendChaoxingJson(res, 200, chaoxing.status(user.id))
       }
