@@ -432,15 +432,26 @@ export function CampusView({ role, notify }: CampusViewProps) {
     setAiAnswer(null)
     setAiPreview('')
 
-    // 本地知识库有可靠答案：直接展示，学生可自行决定是否转交。
-    if (result.confidence !== 'low' && result.top) {
+    // 只有高置信才直接把知识库原文当答案；中置信只说明“相近”，交给 AI 按问题重新整理。
+    if (result.confidence === 'high' && result.top) {
       setAskResult(result)
       return
     }
 
-    // 本地没有答案：AI 给参考答复，同时自动转交校园主理人核实。
+    // 本地没有非常相关的答案：AI 给参考答复，同时自动转交校园主理人核实。
     if (!aiReady) {
-      setAskResult(result)
+      setAskResult(
+        result.confidence === 'high'
+          ? result
+          : {
+              ...result,
+              confidence: 'low',
+              top: undefined,
+              answer: undefined,
+              sourceIds: [],
+              reason: '知识库没有非常相关的内容，AI 暂时不可用；建议转交校园主理人确认。',
+            },
+      )
       return
     }
 
@@ -496,7 +507,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
       question,
       createdAt: Date.now(),
       status: 'ai',
-      sources: result?.sourceIds ?? [],
+      sources: externalAnswer ? [] : (result?.sourceIds ?? []),
       externalAnswer: externalAnswer ?? undefined,
     }
     dispatch({
