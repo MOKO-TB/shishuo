@@ -6,6 +6,86 @@
  * 3) 表单：不用左右布局，名称在上、输入在下，保证输入区宽度与错误提示空间。
  */
 
+/* ---------- 0. 账号头卡：头像与身份从侧栏收进设置页 ---------- */
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-account-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.settings-account-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.settings-account-copy strong {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-account-copy span {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 0. 账号头卡：头像与身份从侧栏收进设置页 ---------- */
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-account-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.settings-account-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.settings-account-copy strong {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-account-copy span {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- 1. 设置页骨架：无外层卡片，用组间留白分段 ---------- */
 .settings-sheet {
   display: grid;

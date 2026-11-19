@@ -72,7 +72,7 @@ import {
   scheduleExportReady,
 } from '../lib/export'
 import { makeId } from '../lib/utils'
-import { Badge, EmptyState, Modal } from './ui'
+import { Avatar, Badge, EmptyState, Modal } from './ui'
 import { PageSheet } from './PageSheet'
 
 interface AccountModalProps {
@@ -306,7 +306,7 @@ export function AccountModal({
   notify,
 }: AccountModalProps) {
   const profile = useProfile()
-  const { logout: logoutAccount } = useAuth()
+  const { user, logout: logoutAccount } = useAuth()
   const { data } = useStore()
   const [tab, setTab] = useState<TabKey>('identity')
   const [teacherQuery, setTeacherQuery] = useState('')
@@ -796,6 +796,18 @@ export function AccountModal({
 
       {tab === 'identity' ? (
         <div className="settings-sheet">
+          {/* 账号头卡：头像与身份从侧栏收进来 */}
+          <section className="settings-account" aria-label="当前账号">
+            <span className="settings-account-avatar">
+              <Avatar name={form.name || profile.name} tone="jade" size="lg" />
+            </span>
+            <div className="settings-account-copy">
+              <strong>{form.name || profile.name}</strong>
+              <span>{user?.email ?? '未登录'}</span>
+            </div>
+            <Badge tone="neutral">{user?.role === 'teacher' ? '教师账号' : '学生账号'}</Badge>
+          </section>
+
           <section className="settings-group" aria-labelledby="settings-identity">
             <h3 className="settings-group-title" id="settings-identity">
               身份信息

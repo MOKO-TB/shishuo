@@ -18,7 +18,18 @@
   --bg-accent: #e2efe9;
   --bg-accent-mist: #f0f6f2;
   --bg-strong: #14211b;
+  /* 深色侧栏上的描边与悬停（与 --fg-on-strong 同色系） */
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
   --bg-strong-soft: #1d3028;
+
+  /* 深色侧栏上的描边与悬停（与 --fg-on-strong 同色系） */
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
 
   /* ---- 文字 ---- */
   --fg: #17241e;
@@ -94,7 +105,15 @@
   --bg-accent: #1e352d;
   --bg-accent-mist: #1a2a24;
   --bg-strong: #070d0a;
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
   --bg-strong-soft: #0f1a15;
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
 
   --fg: #ecf3ee;
   --fg-soft: #c0cdc6;
