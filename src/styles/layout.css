@@ -223,12 +223,24 @@
   flex: 0 0 auto;
 }
 
+/* 底部工具按钮：等宽平分、一字排开，不做两端顶开的三角排布 */
 .sidebar-utility {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 6px;
   padding: 0 3px;
+}
+
+.sidebar-utility > button {
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .side-utility-button {
@@ -601,14 +613,17 @@
   }
 
   .sidebar-utility {
+    grid-auto-flow: column;
+    grid-auto-columns: var(--touch);
     justify-content: center;
+    gap: 6px;
     padding: 0;
   }
 
   .sidebar-utility .side-utility-button {
     display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: var(--touch);
+    height: var(--touch);
     justify-content: center;
     gap: 0;
     padding: 0;
@@ -625,8 +640,8 @@
 
   .sidebar-utility .side-logout-button {
     display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: var(--touch);
+    height: var(--touch);
     justify-content: center;
     gap: 0;
     padding: 0;
