@@ -2165,3 +2165,33 @@
   gap: 8px;
   margin-top: 3px;
 }
+
+/* ---------- 教师端：与主站一致的卡片/字段规范 ---------- */
+
+.workbench-controls,
+.rail-card {
+  border-color: var(--border);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+}
+
+.rail-card {
+  padding: var(--space-4);
+}
+
+.workbench-toolbar button {
+  min-height: var(--touch);
+}
+
+@media (max-width: 980px) {
+  /* 手机上待办队列在前、右栏信息在后，靠 DOM 顺序自然堆叠 */
+  .workbench-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .workbench-controls {
+    padding: var(--space-3);
+  }
+}
