@@ -24,7 +24,7 @@
 }
 
 .campus-tools-head span {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -35,7 +35,7 @@
   flex-wrap: wrap;
   padding: 4px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface-2);
   margin-bottom: 12px;
 }
@@ -47,8 +47,8 @@
   justify-content: center;
   gap: 6px;
   height: 34px;
-  border-radius: 9px;
-  font-size: 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -74,12 +74,12 @@
   gap: 2px;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
 }
 
 .campus-gpa-summary span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -91,7 +91,7 @@
 }
 
 .campus-gpa-summary em {
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -114,13 +114,13 @@
 }
 
 .campus-gpa-head span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .campus-gpa-head .button {
   height: 30px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .campus-gpa-table {
@@ -136,7 +136,7 @@
 }
 
 .campus-gpa-row.is-head {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -145,10 +145,10 @@
   min-width: 0;
   padding: 0 9px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--text-meta);
   outline: none;
 }
 
@@ -167,8 +167,8 @@
   flex-wrap: wrap;
   padding: 9px 11px;
   border: 1px dashed var(--line);
-  border-radius: 10px;
-  font-size: 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -180,7 +180,7 @@
 
 .campus-gpa-result em {
   margin-left: auto;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -216,7 +216,7 @@
 }
 
 .campus-calendar-date span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--clay-deep);
 }
 
@@ -234,7 +234,7 @@
 }
 
 .campus-calendar-top em {
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -246,7 +246,7 @@
 
 .campus-calendar-main p {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--muted);
 }
@@ -255,7 +255,7 @@
   margin: 0;
   padding-top: 8px;
   border-top: 1px dashed var(--line);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--faint);
 }
@@ -264,7 +264,7 @@
   margin: 0;
   padding: 14px;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -281,7 +281,7 @@
   min-width: 0;
   padding: 12px 13px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
 }
 
@@ -293,7 +293,7 @@
 }
 
 .campus-library-top span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -305,7 +305,7 @@
 
 .campus-library-card p {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--muted);
 }
@@ -321,7 +321,7 @@
   gap: 8px;
   padding-top: 7px;
   border-top: 1px dashed var(--line);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -340,7 +340,7 @@
   height: 36px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--muted);
 }
@@ -352,11 +352,11 @@
   outline: none;
   background: transparent;
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .campus-map-search span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -372,7 +372,7 @@
   position: relative;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -410,7 +410,7 @@
   gap: 4px;
   padding: 11px 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
 }
 
@@ -424,13 +424,13 @@
 
 .campus-map-info p {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
 
 .campus-map-nearby {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -450,7 +450,7 @@
   min-width: 0;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   text-align: left;
 }
 
@@ -462,12 +462,12 @@
 
 .campus-building-list span {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
 .campus-building-list strong {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -475,7 +475,7 @@
 }
 
 .campus-building-list em {
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--muted);
   white-space: nowrap;
@@ -550,7 +550,7 @@
     flex: none;
     width: 100%;
     height: 38px;
-    font-size: 10.5px;
+    font-size: var(--text-meta);
   }
 
   .campus-gpa-summary {
@@ -587,7 +587,7 @@
 
   .campus-gpa-result {
     gap: 8px;
-    font-size: 9.5px;
+    font-size: var(--text-meta);
   }
 
   .campus-calendar-row {

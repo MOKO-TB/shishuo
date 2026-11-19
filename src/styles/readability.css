@@ -88,7 +88,7 @@ select {
 /* Shell, navigation and top bar */
 
 .brand-text span {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .sidebar-role-note {
@@ -96,7 +96,7 @@ select {
 }
 
 .nav-section-label {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .nav-item {
@@ -115,11 +115,11 @@ select {
 }
 
 .side-profile-copy span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .side-profile-role {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .side-utility-button {
@@ -127,7 +127,7 @@ select {
 }
 
 .side-version {
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .breadcrumb {
@@ -152,7 +152,7 @@ select {
 .bell-badge {
   min-width: 18px;
   height: 18px;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .mobile-nav button {
@@ -166,7 +166,7 @@ select {
 }
 
 .head-flow-tag {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .head-flow-step strong {
@@ -215,7 +215,7 @@ select {
 }
 
 .ask-shortcut {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .ask-submit {
@@ -315,7 +315,7 @@ select {
 }
 
 .ai-no-answer-eyebrow {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .closest-caption {
@@ -353,7 +353,7 @@ select {
 }
 
 .recent-kind {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 /* Right rail */
@@ -389,7 +389,7 @@ select {
 }
 
 .waiting-live {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .waiting-copy strong {
@@ -434,7 +434,7 @@ select {
 }
 
 .demo-tag {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 /* Personal AI settings */
@@ -632,7 +632,7 @@ select {
 }
 
 .work-tabs button span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .course-filters button {
@@ -876,7 +876,7 @@ select {
 }
 
 .filter-pill > span:last-child {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .knowledge-result {
@@ -1010,7 +1010,7 @@ select {
 }
 
 .guide-step-head span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .guide-step-copy p {
@@ -1055,7 +1055,7 @@ select {
 }
 
 .insights-head-main-row span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .insights-head-foot {
@@ -1067,7 +1067,7 @@ select {
 }
 
 .metric-card strong em {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .metric-card p {
@@ -1095,7 +1095,7 @@ select {
 }
 
 .rank-meta span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .insights-card-note {
@@ -1123,7 +1123,7 @@ select {
 }
 
 .course-table-head {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .course-table-row {
@@ -1139,7 +1139,7 @@ select {
 }
 
 .course-cell em {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .insights-footnote p {
@@ -1149,7 +1149,7 @@ select {
 /* About */
 
 .about-tags span {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .visual-question-card p {
@@ -1193,11 +1193,11 @@ select {
 }
 
 .about-section-note {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .about-metric-note {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .about-metric-grid strong em {
@@ -1215,26 +1215,26 @@ select {
 .about-visual-caption,
 .visual-card-meta,
 .visual-footnote {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .visual-card-meta > span:last-child,
 .visual-teacher-head em,
 .visual-ai-foot {
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .visual-ai-head strong,
 .visual-teacher-head strong {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .visual-ai-card p {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .visual-connector em {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 @media (max-width: 700px) {

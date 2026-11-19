@@ -113,6 +113,15 @@ npm run eval:retrieval
 
 校园工具/评测/复核的详细维护说明见 [docs/campus-tools-and-eval.md](docs/campus-tools-and-eval.md)。
 
+### UI 规范（三端共用）
+
+学生端 / 教师端 / 管理端共用一套语义 token 与填充原语，完整规则见 [docs/UI-GUIDELINES.md](docs/UI-GUIDELINES.md)：
+
+- 填充只允许 `data-fill="card|inset|plain|accent|hero|panel|strong"` 七种角色，渐变只保留 `--fill-hero` / `--fill-panel` 两个变量；
+- 圆角只有 `--radius-xs..xl` 五档加 `--radius-pill`；字号下限 11px（元信息）/ 13px（正文）；
+- 断点收敛为 3 档、`min-width` 递进（手机优先）；三端顶栏统一 `--header-h`；
+- `npm run check:ui` 会拦住新增的字面色值、圆角字面量与过小字号，基线在 `dev/ui-baseline.json`，只允许往下调。
+
 ### 管理台（Admin Console）
 
 管理台是**独立页面 `/admin/`**，有自己的登录页和管理台顶栏，不占用教师端导航；教师端顶部「管理台」只是跳转链接。9 个 tab：概览、账号管理、风控审核、学生问答、操作审计、AI 用量、内容运营、内容核实、系统与开发。前端代码集中在 `src/views/admin/`，服务端接口在 `server/api.mjs` 的 `/api/admin/*`；全量内容统计走 `/api/admin/workspace-summary`，不依赖管理员本人的课程投影。
@@ -480,7 +489,8 @@ npm run dev:api    # 只启动 API
 npm run dev:web    # 只启动 Vite（需另开 API）
 npm run build          # 类型检查 + 生产构建
 npm run eval:retrieval # 5 门课检索评测（157 个问题）
-npm run test:api       # 权限回归测试（33 项，起临时数据库）
+npm run test:api       # 权限回归测试（39 项，起临时数据库）
+npm run check:ui       # UI 规范卡口（字面色值 / 圆角字面量 / 字号下限）
 npm run maintain:archive  # 归档 N 天前已结束的问答（ARCHIVE_DAYS，默认 90）
 npm start              # 托管 dist + API，默认 8787
 ```

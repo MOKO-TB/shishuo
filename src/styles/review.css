@@ -8,14 +8,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .review-progress-track {
   flex: 1;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   overflow: hidden;
 }
@@ -23,7 +23,7 @@
 .review-progress-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade);
   transition: width 0.35s var(--ease);
 }
@@ -46,7 +46,7 @@
 
 .review-date {
   margin-left: auto;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -86,7 +86,7 @@
 }
 
 .review-answer-source {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   font-weight: 650;
   letter-spacing: 0.04em;
   color: var(--jade-deep);

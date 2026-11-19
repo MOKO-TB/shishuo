@@ -5,7 +5,7 @@
   margin-top: 14px;
   padding: 10px 12px;
   border: 1px dashed var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: linear-gradient(135deg, rgba(244, 236, 211, 0.45), rgba(251, 249, 243, 0.9));
 }
 
@@ -34,7 +34,7 @@
 }
 
 .teach-entry-copy span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--muted);
 }
@@ -56,7 +56,7 @@
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -68,7 +68,7 @@
 }
 
 .teach-eyebrow {
-  font-size: 9px;
+  font-size: var(--text-meta);
   letter-spacing: 0.1em;
   color: var(--jade-deep);
 }
@@ -122,7 +122,7 @@
   gap: 5px;
   padding: 11px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -154,7 +154,7 @@
   gap: 8px;
   padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--surface-2);
 }
 
@@ -181,7 +181,7 @@
 }
 
 .teach-check-answer > span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   letter-spacing: 0.08em;
   color: var(--jade-deep);
 }
@@ -194,7 +194,7 @@
 }
 
 .teach-check-answer em {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
   font-style: normal;
@@ -206,9 +206,9 @@
   gap: 7px;
   padding: 9px 11px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   text-align: left;
 }
@@ -227,7 +227,7 @@
 }
 
 .teach-footnote {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
 }
@@ -237,7 +237,7 @@
   gap: 8px;
   padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: linear-gradient(145deg, rgba(231, 241, 236, 0.6), var(--surface));
 }
 
@@ -262,9 +262,9 @@
   min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
   color: var(--ink-soft);
   text-align: left;
@@ -281,7 +281,7 @@
 }
 
 .teach-diagnose-note {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--jade-deep);
 }
@@ -292,7 +292,7 @@
   gap: 7px;
   padding-top: 7px;
   border-top: 1px dashed var(--line);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -301,10 +301,10 @@
   flex: 0 0 auto;
   margin-top: 1px;
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--gold-soft);
   color: var(--gold-deep);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .teach-prereq p {
@@ -314,17 +314,17 @@
 .teach-transfer-note {
   margin-left: auto;
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--gold-soft);
   color: var(--gold-deep);
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 500;
 }
 
 .teach-attribution {
   display: grid;
   gap: 3px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
 }

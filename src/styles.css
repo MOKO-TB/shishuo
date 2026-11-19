@@ -1,3 +1,7 @@
+/* 顺序即优先级：语义层最先，原语与覆盖层最后。
+   tokens.css 只放变量；fill.css 只放 data-fill 原语与全局焦点样式。
+   新增页面样式请插在 ui-cleanup.css 之前，不要再往末尾追加补丁文件。 */
+@import "./styles/tokens.css";
 @import "./styles/base.css";
 @import "./styles/auth.css";
 @import "./styles/layout.css";
@@ -24,3 +28,4 @@
 @import "./styles/review.css";
 @import "./styles/schedule.css";
 @import "./styles/ui-cleanup.css";
+@import "./styles/fill.css";

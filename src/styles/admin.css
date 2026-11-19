@@ -3,7 +3,7 @@
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--paper-2);
 }
 
@@ -14,7 +14,7 @@
   justify-content: center;
   gap: 6px;
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
@@ -23,10 +23,10 @@
 .admin-tabs button span {
   min-width: 17px;
   padding: 1px 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(23, 36, 30, 0.06);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 500;
 }
 
@@ -51,7 +51,7 @@
 .admin-user-editor {
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -65,7 +65,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--muted);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-list-head strong {
@@ -78,7 +78,7 @@
   margin-top: 11px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -87,7 +87,7 @@
 }
 
 .admin-create .field-label {
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-create-actions {
@@ -99,7 +99,7 @@
 .admin-create-actions .button {
   height: 30px;
   padding: 0 10px;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-course-picker {
@@ -120,10 +120,10 @@
   gap: 4px;
   padding: 6px 9px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
   color: var(--muted);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-course-picker button:hover:not(:disabled) {
@@ -156,7 +156,7 @@
   width: 100%;
   padding: 9px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   text-align: left;
 }
 
@@ -174,7 +174,7 @@
   height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--muted);
   flex: 0 0 auto;
@@ -204,7 +204,7 @@
 .admin-user-info em {
   overflow: hidden;
   color: var(--faint);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -221,7 +221,7 @@
   max-width: 100px;
   overflow: hidden;
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -248,7 +248,7 @@
 .admin-editor-head p {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-editor-actions {
@@ -261,7 +261,7 @@
 
 .admin-editor-actions .button {
   height: 32px;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-password-block {
@@ -285,7 +285,7 @@
 
 .admin-password-head p {
   margin-top: 3px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
 }
 
@@ -303,14 +303,14 @@
 .admin-password-row .button {
   height: 34px;
   padding: 0 11px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
 .admin-password-warn {
   margin-top: 7px;
   color: var(--danger);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-empty {
@@ -331,7 +331,7 @@
 .admin-audit-row {
   padding: 11px 13px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
@@ -341,7 +341,7 @@
   align-items: center;
   gap: 6px;
   color: var(--faint);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-audit-top strong {
@@ -351,7 +351,7 @@
 
 .admin-audit-top em {
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
 }
 
@@ -371,10 +371,10 @@
 
 .admin-audit-tags span {
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
   color: var(--muted);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-audit-tags span.is-course {
@@ -404,7 +404,7 @@
 }
 
 .admin-usage-card span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -416,7 +416,7 @@
 
 .admin-usage-card em {
   font-style: normal;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -426,7 +426,7 @@
 }
 
 .admin-usage-users-head {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 650;
   color: var(--ink);
 }
@@ -440,13 +440,13 @@
 
 .admin-usage-day-date {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .admin-usage-bar {
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   overflow: hidden;
 }
@@ -454,14 +454,14 @@
 .admin-usage-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--jade);
 }
 
 .admin-usage-day em,
 .admin-usage-user em {
   font-style: normal;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -494,5 +494,37 @@
 
   .admin-user-editor {
     padding: 14px;
+  }
+}
+
+/* 移动端：9 个 tab 横滑，右侧渐隐提示还有内容 */
+@media (max-width: 720px) {
+  .admin-tabs {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, black 0, black calc(100% - 18px), transparent 100%);
+  }
+
+  .admin-tabs button {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+}
+
+/* 移动端：9 个 tab 横滑，右侧渐隐提示还有内容 */
+@media (max-width: 720px) {
+  .admin-tabs {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, black 0, black calc(100% - 18px), transparent 100%);
+  }
+
+  .admin-tabs button {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
   }
 }

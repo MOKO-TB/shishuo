@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import katex from 'katex'
 import {
@@ -415,6 +415,56 @@ function useOverlay(onClose: () => void, open: boolean) {
   }, [onClose, open])
 }
 
+/**
+ * 焦点圈定 + 归还：
+ * 1) 打开时记住触发元素，关闭后把焦点还回去；
+ * 2) Tab / Shift+Tab 在面板内循环，不跑到背景页面。
+ */
+function useFocusTrap(open: boolean, panelRef: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open) return
+    const previous = document.activeElement as HTMLElement | null
+    const focusables = () => {
+      const root = panelRef.current
+      if (!root) return [] as HTMLElement[]
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null || el === root)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return
+      const items = focusables()
+      if (items.length === 0) {
+        event.preventDefault()
+        panelRef.current?.focus()
+        return
+      }
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement as HTMLElement | null
+      if (!active || !panelRef.current?.contains(active)) {
+        event.preventDefault()
+        first.focus()
+        return
+      }
+      if (event.shiftKey && active === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      previous?.focus?.({ preventScroll: true })
+    }
+  }, [open, panelRef])
+}
+
 interface ModalProps {
   open: boolean
   onClose: () => void
@@ -438,6 +488,7 @@ export function Modal({
 }: ModalProps) {
   useOverlay(onClose, open)
   const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(open, panelRef)
 
   useEffect(() => {
     if (!open) return
@@ -491,11 +542,20 @@ export function Drawer({
   ariaLabel: string
 }) {
   useOverlay(onClose, open)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(open, panelRef)
   if (!open) return null
   return createPortal(
     <div className="drawer-layer">
       <div className="drawer-backdrop" onMouseDown={onClose} />
-      <aside className="drawer-panel" role="dialog" aria-modal="true" aria-label={ariaLabel}>
+      <aside
+        ref={panelRef}
+        className="drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        tabIndex={-1}
+      >
         {children}
       </aside>
     </div>,
