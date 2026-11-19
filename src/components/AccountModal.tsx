@@ -717,13 +717,10 @@ export function AccountModal({
       title="账号与课表绑定"
       size="lg"
       footer={
-        <div className="modal-actions modal-actions-split">
-          <span className="modal-foot-note">
-            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
-          </span>
+        <div className="modal-actions modal-actions-split account-modal-footer">
           <div className="modal-actions-right">
             <button
-              className="text-button danger"
+              className="text-button danger account-logout-button"
               onClick={() => {
                 onClose()
                 void logoutAccount()
@@ -1271,13 +1268,6 @@ export function AccountModal({
                 </button>
               )}
             </div>
-            <p className="account-bind-hint">
-              {connected
-                ? `已连接教务（${baseUrl}）：读取成绩在后台完成；成绩页会自动选择「全部学期」并点击查询。`
-                : loginOpen
-                  ? '输入教务账号、密码和验证码，点「登录」；账号密码只用于本次登录。'
-                  : '首次使用需要登录一次，之后读取成绩不再输入密码。'}
-            </p>
             {loginOpen && loginSession && (
               <JwLoginFields
                 session={loginSession}
@@ -1366,10 +1356,6 @@ export function AccountModal({
 
           {rowsForScores.length > 0 && (
             <>
-              <p className="account-score-note">
-                口径：GPA 按学分加权，4.0 制 =（分数−50）/10 且 90 以上封顶、60 以下计 0；5.0 制 = 分数/10−5；等级成绩按
-                优95 / 良85 / 中75 / 及格65 折算{stats.skipped > 0 ? `；${stats.skipped} 行没有学分或不是数字，未计入` : ''}。评奖评优、保研以学校教务处文件为准。
-              </p>
               <div className="account-preview account-score-table">
                 <div className="account-preview-row account-score-row is-head">
                   <span>学期</span>

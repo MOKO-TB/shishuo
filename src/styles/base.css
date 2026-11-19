@@ -1254,6 +1254,31 @@ select.input {
   line-height: 1.6;
 }
 
+.account-modal-footer {
+  justify-content: flex-end;
+}
+
+.account-logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(184, 97, 62, 0.32);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--clay);
+  font-size: 10.5px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.account-logout-button:hover {
+  border-color: rgba(184, 97, 62, 0.5);
+  background: rgba(184, 97, 62, 0.08);
+}
+
 .drawer-panel {
   position: fixed;
   top: 0;
