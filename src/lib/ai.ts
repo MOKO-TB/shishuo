@@ -394,6 +394,41 @@ export async function answerWithExternalAI({
   return { text: result.content.slice(0, 4_000), model: result.model }
 }
 
+export async function answerCampusWithAI({
+  question,
+  localContext,
+  onUpdate,
+}: {
+  question: string
+  localContext?: string
+  onUpdate?: (partial: string) => void
+}) {
+  const contextBlock = localContext?.trim()
+    ? `校园知识库里最接近的内容（可能不足以回答，不能直接当作官方结论）：\n${localContext.slice(0, 2_400)}`
+    : '校园知识库没有检索到可用内容。'
+  const result = await callChatStream(
+    [
+      {
+        role: 'system',
+        content: `你是高校“校园生活”答疑助手。校园知识库没有能直接回答的内容，请用中文给出参考答复：
+1. 先给简短结论或可执行的下一步；
+2. 再补充办理地点、常见材料、时间节点等通用经验；
+3. 明确这是 AI 参考答复，不是学校官方通知；涉及政策、金额、截止日期时必须提示以学校官方通知为准；
+4. 不编造具体文件号、网址、电话、办理窗口或“学校规定”；
+5. 控制在 400 字以内，不使用 Markdown 表格；
+6. 最后单独一行以“需要校园主理人确认：”开头，列出仍需核实的信息。`,
+      },
+      {
+        role: 'user',
+        content: `学生的问题：${question}\n\n${contextBlock}`,
+      },
+    ],
+    900,
+    onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
+  )
+  return { text: result.content.slice(0, 4_000), model: result.model }
+}
+
 export async function answerMentorWithAI({
   question,
   mentorPrompt,

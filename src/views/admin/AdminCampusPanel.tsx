@@ -6,6 +6,7 @@ import {
   RefreshCw,
   Send,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react'
 import { ApiError, apiGet, apiPost } from '../../lib/api'
 import { Badge } from '../../components/ui'
@@ -321,6 +322,19 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
                 <div className="admin-thread-quote">
                   <strong>学生补充</strong>
                   <p>{selected.studentSupplement.text}</p>
+                </div>
+              )}
+
+              {selected.externalAnswer && (
+                <div className="admin-thread-quote admin-thread-ai">
+                  <strong>
+                    <Sparkles size={12} />
+                    AI 参考答复 · {selected.externalAnswer.model}
+                  </strong>
+                  <p>{selected.externalAnswer.text}</p>
+                  <span className="admin-thread-ai-note">
+                    已发送给学生，仅供参考；请核实后以校园主理人身份回复。
+                  </span>
                 </div>
               )}
 

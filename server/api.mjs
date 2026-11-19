@@ -229,6 +229,7 @@ function adminStudentThreadView(thread) {
     kind: thread.kind ?? 'ask',
     sources: Array.isArray(thread.sources) ? thread.sources : [],
     escalation: thread.escalation ?? null,
+    externalAnswer: thread.externalAnswer ?? null,
     teacherReply: thread.teacherReply ?? null,
     studentSupplement: thread.studentSupplement ?? null,
     feedback: thread.feedback ?? null,

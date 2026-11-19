@@ -2244,6 +2244,26 @@
   white-space: pre-wrap;
 }
 
+.admin-thread-ai {
+  border-style: solid;
+  border-color: rgba(77, 110, 138, 0.2);
+  background: var(--blue-soft);
+}
+
+.admin-thread-ai strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3d5a72;
+}
+
+.admin-thread-ai-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 9px;
+  color: var(--faint);
+}
+
 .admin-thread-reply {
   margin-top: 14px;
   padding: 12px 13px;

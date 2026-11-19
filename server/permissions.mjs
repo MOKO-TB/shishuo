@@ -796,7 +796,18 @@ function mergeStudent(prev, next, user) {
     const prevThread = prevThreadMap.get(thread.id)
     if (!prevThread) continue
     if (!prevThread.student || prevThread.student.id !== user.id) {
-      if (!sameValue(prevThread, thread)) fail('不能修改其他同学的问答。')
+      // 同班同学的待办会脱敏后随投影下发给学生；写回时只接受三种只读形态：
+      // 原样（动作 API）、脱敏快照（投影）、匿名线程挂回真实身份（rehydrate 后）。
+      // 合并时始终以服务端 prev 为准，防止学生改写其他同学的问答。
+      const redacted = redactThread(prevThread)
+      const rehydrated = { ...redacted, student: prevThread.student }
+      if (
+        !sameValue(prevThread, thread) &&
+        !sameValue(redacted, thread) &&
+        !sameValue(rehydrated, thread)
+      ) {
+        fail('不能修改其他同学的问答。')
+      }
       continue
     }
     if (!allowedCourses.has(prevThread.courseId)) {

@@ -196,6 +196,11 @@ export interface AdminStudentThread {
     at?: number
     auto?: boolean
   } | null
+  externalAnswer: {
+    text: string
+    model: string
+    at: number
+  } | null
   teacherReply: {
     text: string
     at: number

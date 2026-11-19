@@ -439,6 +439,44 @@
   color: var(--muted);
 }
 
+.campus-answer.is-ai {
+  border-color: rgba(77, 110, 138, 0.24);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(77, 110, 138, 0.09), transparent 38%),
+    var(--surface);
+}
+
+.campus-answer-ai-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+.campus-answer-ai-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--blue);
+}
+
+.campus-thread-ai-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 9px;
+  color: var(--faint);
+}
+
+.campus-thread-ai-note svg {
+  color: var(--blue);
+}
+
 .campus-my-threads,
 .campus-queue,
 .campus-review {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowUpRight,
   BookOpen,
@@ -7,10 +7,17 @@ import {
   Search,
   Send,
   ShieldCheck,
+  Sparkles,
   X,
 } from 'lucide-react'
 import { useStore } from '../store'
 import { useAuth } from '../auth'
+import {
+  answerCampusWithAI,
+  errorMessage,
+  fetchAIStatus,
+  type AIStatus,
+} from '../lib/ai'
 import {
   CAMPUS_CARDS,
   CAMPUS_CATEGORIES,
@@ -21,13 +28,14 @@ import { CAMPUS_COURSE_ID, CAMPUS_OWNER_NAME } from '../data/campus'
 import { retrieve } from '../lib/engine'
 import {
   confidenceLabel,
+  excerpt,
   formatRelative,
   makeEscalationTitle,
   makeId,
   statusLabel,
 } from '../lib/utils'
 import { Badge, EmptyState, Modal, RichText, type BadgeTone } from '../components/ui'
-import type { AnswerResult, Faq, Role, Thread } from '../types'
+import type { AnswerResult, ExternalAnswer, Faq, Role, Thread } from '../types'
 import { CampusTools } from './campus/CampusTools'
 
 type CredFilter = 'all' | 'verified' | 'unverified' | 'no-source'
@@ -194,6 +202,10 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const [askText, setAskText] = useState('')
   const [askResult, setAskResult] = useState<AnswerResult | null>(null)
   const [askThread, setAskThread] = useState<Thread | null>(null)
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
+  const [aiAnswer, setAiAnswer] = useState<ExternalAnswer | null>(null)
+  const [aiPreview, setAiPreview] = useState('')
+  const [askBusy, setAskBusy] = useState(false)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const [editingFaq, setEditingFaq] = useState<Faq | null>(null)
   const [faqDraft, setFaqDraft] = useState<FaqDraft>({
@@ -208,6 +220,21 @@ export function CampusView({ role, notify }: CampusViewProps) {
   })
 
   const isCampusOps = role === 'teacher' && Boolean(user?.isAdmin)
+  const aiReady = Boolean(aiStatus?.configured)
+
+  useEffect(() => {
+    let alive = true
+    fetchAIStatus()
+      .then((status) => {
+        if (alive) setAiStatus(status)
+      })
+      .catch(() => {
+        if (alive) setAiStatus(null)
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
   const campusFaqs = useMemo(
     () => data.faqs.filter((faq) => faq.courseId === CAMPUS_COURSE_ID),
     [data.faqs],
@@ -395,21 +422,73 @@ export function CampusView({ role, notify }: CampusViewProps) {
     notify('校园 FAQ 已保存。')
   }
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
+    if (askBusy) return
     const question = askText.trim()
     if (!question) return
-    if (campusFaqs.length === 0) {
-      notify('校园 FAQ 还没有导入，请先让管理员执行导入脚本。', 'info')
+
+    const result = retrieve(campusFaqs, question, CAMPUS_COURSE_ID)
+    setAskThread(null)
+    setAiAnswer(null)
+    setAiPreview('')
+
+    // 本地知识库有可靠答案：直接展示，学生可自行决定是否转交。
+    if (result.confidence !== 'low' && result.top) {
+      setAskResult(result)
       return
     }
-    setAskResult(retrieve(campusFaqs, question, CAMPUS_COURSE_ID))
-    setAskThread(null)
+
+    // 本地没有答案：AI 给参考答复，同时自动转交校园主理人核实。
+    if (!aiReady) {
+      setAskResult(result)
+      return
+    }
+
+    setAskResult(null)
+    setAskBusy(true)
+    try {
+      const external = await answerCampusWithAI({
+        question,
+        localContext: result.matches
+          .slice(0, 3)
+          .map(
+            (match) =>
+              `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`,
+          )
+          .join('\n\n'),
+        onUpdate: (partial) => setAiPreview(partial),
+      })
+      const answer: ExternalAnswer = {
+        text: external.text,
+        model: external.model || aiStatus?.model || '服务端 AI',
+        at: Date.now(),
+      }
+      setAiAnswer(answer)
+      escalate({ question, result, externalAnswer: answer, silent: true })
+      notify('知识库没有现成答案：AI 已给出参考答复，并转交校园主理人核实。', 'info')
+    } catch (error) {
+      escalate({ question, result, silent: true })
+      notify(
+        `AI 参考答复生成失败（${errorMessage(error)}），已转交校园主理人。`,
+        'danger',
+      )
+    } finally {
+      setAskBusy(false)
+      setAiPreview('')
+    }
   }
 
-  const escalate = () => {
+  const escalate = (options?: {
+    question?: string
+    result?: AnswerResult | null
+    externalAnswer?: ExternalAnswer | null
+    silent?: boolean
+  }) => {
     if (!user) return
-    const question = askText.trim()
+    const question = (options?.question ?? askText).trim()
     if (!question) return
+    const result = options?.result ?? askResult
+    const externalAnswer = options?.externalAnswer ?? null
     const thread: Thread = {
       id: makeId('t'),
       courseId: CAMPUS_COURSE_ID,
@@ -417,12 +496,13 @@ export function CampusView({ role, notify }: CampusViewProps) {
       question,
       createdAt: Date.now(),
       status: 'ai',
-      sources: askResult?.sourceIds ?? [],
+      sources: result?.sourceIds ?? [],
+      externalAnswer: externalAnswer ?? undefined,
     }
     dispatch({
       type: 'thread-created',
       thread,
-      aiSolved: false,
+      aiSolved: Boolean(externalAnswer),
       citedFaqIds: thread.sources ?? [],
     })
     dispatch({
@@ -430,7 +510,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
       threadId: thread.id,
       escalation: {
         title: makeEscalationTitle(question),
-        note: '校园知识库没有足够可靠的答案，转交校园主理人。',
+        note: externalAnswer
+          ? '校园知识库没有可靠答案，AI 已给出参考答复；请校园主理人核实后回复。'
+          : '校园知识库没有足够可靠的答案，转交校园主理人。',
         anonymous: false,
         urgency: 'week',
         at: Date.now(),
@@ -441,7 +523,12 @@ export function CampusView({ role, notify }: CampusViewProps) {
     })
     setAskThread(thread)
     setAskResult(null)
-    notify('已转交校园主理人，回复后会通知你。')
+    if (!externalAnswer) {
+      setAiAnswer(null)
+    }
+    if (!options?.silent) {
+      notify('已转交校园主理人，回复后会通知你。')
+    }
   }
 
   const replyThread = (thread: Thread) => {
@@ -565,7 +652,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 问一句校园的事
               </strong>
               <span>
-                先查校园知识库；没有可靠答案时，可以转交校园主理人。
+                先查校园知识库；没有可靠答案时，AI 会给参考答复并自动转交校园主理人。
               </span>
             </div>
             <Badge tone="gold">引路学长</Badge>
@@ -579,15 +666,56 @@ export function CampusView({ role, notify }: CampusViewProps) {
               }}
               placeholder="例如：奖学金怎么申请？转专业什么时候能报？"
               aria-label="问校园问题"
+              disabled={askBusy}
             />
             <button
               className="button button-primary"
               onClick={handleAsk}
-              disabled={!askText.trim()}
+              disabled={!askText.trim() || askBusy}
             >
-              <Send size={15} />
-              查一查
+              {askBusy ? <Sparkles size={15} /> : <Send size={15} />}
+              {askBusy ? 'AI 正在回答…' : '查一查'}
             </button>
+          </div>
+        </section>
+      )}
+
+      {askBusy && (
+        <section className="campus-answer card is-ai">
+          <div className="campus-answer-head">
+            <Badge tone="blue" dot>
+              AI 参考答复
+            </Badge>
+            <span>知识库没有现成答案，正在生成参考答复并准备转交校园主理人…</span>
+          </div>
+          {aiPreview ? (
+            <div className="campus-answer-body">
+              <RichText text={aiPreview} />
+            </div>
+          ) : (
+            <p className="campus-answer-empty">正在整理答案…</p>
+          )}
+        </section>
+      )}
+
+      {!askBusy && aiAnswer && (
+        <section className="campus-answer card is-ai">
+          <div className="campus-answer-head">
+            <Badge tone="blue" dot>
+              AI 参考答复
+            </Badge>
+            <span>
+              {aiAnswer.model} · 非知识库原文 · 已转交校园主理人核实
+            </span>
+          </div>
+          <div className="campus-answer-body">
+            <RichText text={aiAnswer.text} />
+          </div>
+          <div className="campus-answer-ai-note">
+            <Sparkles size={13} />
+            <span>
+              AI 生成，仅供参考；涉及政策、金额和截止日期时，请以学校官方通知为准。
+            </span>
           </div>
         </section>
       )}
@@ -641,7 +769,10 @@ export function CampusView({ role, notify }: CampusViewProps) {
             </p>
           )}
           <div className="campus-answer-actions">
-            <button className="button button-primary" onClick={escalate}>
+            <button
+              className="button button-primary"
+              onClick={() => escalate()}
+            >
               转交校园主理人
             </button>
             <span>会附上你的问题和检索到的依据。</span>
@@ -655,7 +786,11 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <Badge tone="pending" dot>
               已转交
             </Badge>
-            <span>校园主理人回复后会通知你。</span>
+            <span>
+              {askThread.externalAnswer
+                ? 'AI 参考答复仅供参考，校园主理人核实后会回复你。'
+                : '校园主理人回复后会通知你。'}
+            </span>
           </div>
           <h3>{askThread.question}</h3>
         </section>
@@ -683,6 +818,14 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 <strong>{thread.question}</strong>
                 {thread.teacherReply ? (
                   <p>{thread.teacherReply.text}</p>
+                ) : thread.externalAnswer ? (
+                  <>
+                    <p>{excerpt(thread.externalAnswer.text, 160)}</p>
+                    <span className="campus-thread-ai-note">
+                      <Sparkles size={11} />
+                      AI 参考答复 · 等校园主理人核实
+                    </span>
+                  </>
                 ) : (
                   <p className="campus-thread-waiting">等校园主理人回复…</p>
                 )}
