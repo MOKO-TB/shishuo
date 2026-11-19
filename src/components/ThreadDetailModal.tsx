@@ -73,6 +73,7 @@ export function ThreadDetailModal({
   if (!thread) return null
 
   const course = courseById(thread.courseId)
+  const replyRole = thread.courseId === 'campus' ? '校园主理人' : '老师'
   const hasAiAttempt = (thread.kind ?? 'ask') === 'ask'
   const canFeedback =
     viewer === 'student' && Boolean(onFeedback) && Boolean(thread.aiAnswer || thread.teacherReply)
@@ -428,7 +429,7 @@ export function ThreadDetailModal({
             <Avatar name={thread.teacherReply.by} tone="gold" size="sm" />
             <div className="thread-bubble teacher-bubble">
               <div className="thread-bubble-head">
-                <strong>{thread.teacherReply.by}老师</strong>
+                <strong>{thread.teacherReply.by}{replyRole}</strong>
                 <span>{formatRelative(thread.teacherReply.at)}</span>
                 {thread.teacherReply.faqId && <Seal className="seal-tiny">已沉淀</Seal>}
               </div>
@@ -451,7 +452,7 @@ export function ThreadDetailModal({
               <div className="teacher-reply-foot">
                 {thread.teacherReply.recipientCount && thread.teacherReply.recipientCount > 1
                   ? `已同步给 ${thread.teacherReply.recipientCount} 位同题同学`
-                  : '老师已回复'}
+                  : `${replyRole}已回复`}
                 {sedimentFaq && (
                   <button className="text-button" onClick={() => onOpenFaq(sedimentFaq.id)}>
                     查看更新后的 FAQ
@@ -465,13 +466,13 @@ export function ThreadDetailModal({
           <div className="thread-pending-note">
             <span className="pending-pulse" />
             <div>
-              <strong>{course.teacher}老师还没有回复</strong>
+              <strong>{course.teacher}{replyRole}还没有回复</strong>
               <p>
                 {thread.kind === 'same'
-                  ? '已经并入同题组，老师一次回复会同步给你。'
+                  ? `已经并入同题组，${replyRole}一次回复会同步给你。`
                   : thread.kind === 'follow-up'
-                    ? '追问已带上一次的老师回复，老师会接着上一段讲。'
-                    : 'AI 已附上问题摘要和检索依据。同类问题会合并在一起，老师回复后会同步给你。'}
+                    ? `追问已带上一次的${replyRole}回复，${replyRole}会接着上一段讲。`
+                    : `AI 已附上问题摘要和检索依据。同类问题会合并在一起，${replyRole}回复后会同步给你。`}
               </p>
             </div>
           </div>
@@ -480,12 +481,12 @@ export function ThreadDetailModal({
             <CircleAlert size={15} />
             <div>
               <strong>
-                {viewer === 'teacher' ? '已请学生补充信息' : '老师正在等你补充信息'}
+                {viewer === 'teacher' ? '已请学生补充信息' : `${replyRole}正在等你补充信息`}
               </strong>
               <p>
                 {viewer === 'teacher'
                   ? '学生补充后，这条问题会自动回到待办。'
-                  : '补充后问题会自动回到待办，老师会继续处理。'}
+                  : `补充后问题会自动回到待办，${replyRole}会继续处理。`}
               </p>
             </div>
           </div>

@@ -615,7 +615,10 @@ function reducer(state: AppData, action: Action): AppData {
         courseId: thread.courseId,
         threadId: thread.id,
         kind: 'teacher-reply',
-        title: `${action.reply.by}老师回复了你的问题`,
+        title:
+          thread.courseId === 'campus'
+            ? `${action.reply.by}（校园主理人）回复了你的问题`
+            : `${action.reply.by}老师回复了你的问题`,
         body: replyBody,
         createdAt: action.reply.at,
         read: false,

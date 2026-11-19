@@ -8,6 +8,8 @@ import {
   Inbox,
   MessageCircle,
   Send,
+  ShieldAlert,
+  ShieldCheck,
   Undo2,
   Users,
 } from 'lucide-react'
@@ -35,6 +37,9 @@ const kindMeta: Record<
   'teacher-needs-info': { icon: CircleAlert, tone: 'blue', label: '请你补充' },
   'teacher-supplement': { icon: CornerDownRight, tone: 'jade', label: '学生补充' },
   'same-question-joined': { icon: Users, tone: 'gold', label: '同问' },
+  'account-banned': { icon: ShieldAlert, tone: 'danger', label: '账号封禁' },
+  'account-muted': { icon: ShieldAlert, tone: 'clay', label: '账号禁言' },
+  'account-restored': { icon: ShieldCheck, tone: 'jade', label: '账号恢复' },
 }
 
 export function NotificationCenter({
@@ -137,6 +142,10 @@ export function NotificationCenter({
             const meta = kindMeta[notification.kind]
             const Icon = meta.icon
             const course = courseById(notification.courseId)
+            const label =
+              notification.kind === 'teacher-reply' && notification.courseId === 'campus'
+                ? '校园主理人回复'
+                : meta.label
             return (
               <button
                 className={`notif-item ${notification.read ? '' : 'is-unread'}`}
@@ -153,7 +162,7 @@ export function NotificationCenter({
                   </span>
                   <span className="notif-body">{notification.body}</span>
                   <span className="notif-meta">
-                    {meta.label} · {course.shortName}
+                    {label} · {course.shortName}
                   </span>
                 </span>
                 {!notification.read && <i className="notif-dot" />}

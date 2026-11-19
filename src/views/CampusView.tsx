@@ -811,7 +811,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
                   <Badge tone={thread.status === 'answered' ? 'answered' : 'pending'}>
                     {thread.status === 'pending'
                       ? '待校园主理人回复'
-                      : statusLabel(thread)}
+                      : thread.status === 'answered'
+                        ? '校园主理人已回复'
+                        : statusLabel(thread)}
                   </Badge>
                   <span>{formatRelative(thread.createdAt)}</span>
                 </div>
