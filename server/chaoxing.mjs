@@ -121,17 +121,23 @@ async function isLoginPage(page) {
 }
 
 async function pageLinks(page) {
-  return page
-    .evaluate(() =>
-      [...document.querySelectorAll('a[href]')]
-        .map((anchor) => ({
-          href: anchor.href,
-          text: String(anchor.textContent || '').replace(/\s+/g, ' ').trim(),
-        }))
-        .filter((link) => link.href && !/^javascript:/i.test(link.href))
-        .slice(0, 300),
-    )
-    .catch(() => [])
+  const frames = page.frames()
+  const results = await Promise.all(
+    frames.map((frame) =>
+      frame
+        .evaluate(() =>
+          [...document.querySelectorAll('a[href]')]
+            .map((anchor) => ({
+              href: anchor.href,
+              text: String(anchor.textContent || '').replace(/\s+/g, ' ').trim(),
+            }))
+            .filter((link) => link.href && !/^javascript:/i.test(link.href))
+            .slice(0, 300),
+        )
+        .catch(() => []),
+    ),
+  )
+  return results.flat().slice(0, 500)
 }
 
 export function createChaoxingService(db, options = {}) {
@@ -688,9 +694,12 @@ export function createChaoxingService(db, options = {}) {
     if (!entry) return []
     await gotoPage(page, entry.href)
     await page.waitForTimeout(700)
-    const rows = await page.evaluate(() => {
-        const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim()
-        const candidates = [
+    const frameResults = await Promise.all(
+      page.frames().map((frame) =>
+        frame
+          .evaluate(() => {
+            const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim()
+            const candidates = [
           ...document.querySelectorAll(
             '.message-list li, .notice-list li, .messageList li, .noticeList li, .list li, .item, .messageItem, .noticeItem',
           ),
@@ -718,17 +727,18 @@ export function createChaoxingService(db, options = {}) {
             return true
           })
           .slice(0, 50)
-      })
-      .then((rows) =>
-        rows.map((row) => ({
-          sourceId: row.href || `${course.course_id}|${row.title}|${row.time}`,
-          title: row.title,
-          body: row.text.slice(0, 1200),
-          url: row.href || entry.href,
-          publishedAt: parseDeadline(row.time),
-        })),
-      )
-    return rows
+          })
+          .catch(() => []),
+      ),
+    )
+    const rows = frameResults.flat()
+    return rows.map((row) => ({
+      sourceId: row.href || `${course.course_id}|${row.title}|${row.time}`,
+      title: row.title,
+      body: row.text.slice(0, 1200),
+      url: row.href || entry.href,
+      publishedAt: parseDeadline(row.time),
+    }))
   }
 
   async function sync(userId) {
