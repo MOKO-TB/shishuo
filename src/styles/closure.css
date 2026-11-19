@@ -2706,58 +2706,6 @@
   }
 }
 
-/* ---------- 侧栏收成图标栏时的「本周课程」 ----------
-   问题：900–1024px 侧栏只有 84px，但卡片仍按标题 + 网格 + 脚注三行排版，
-   「本周课程」与「查看 / 添加」挤成 66px 高、文字溢出格子。
-   处理：窄侧栏只保留一个 44px 的圆形入口，点开走账号里的课程表。 */
-
-@media (max-width: 1080px) {
-  .side-timetable {
-    display: flex;
-    justify-content: center;
-    margin: 12px 0 0;
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-
-  .side-timetable-head {
-    margin: 0;
-    gap: 0;
-  }
-
-  /* 标题在图标栏里没有信息价值，隐藏 */
-  .side-timetable-head > span {
-    display: none;
-  }
-
-  .side-timetable-link {
-    width: var(--touch);
-    height: var(--touch);
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--border-translucent);
-    border-radius: var(--radius-md);
-    background: var(--bg-strong-soft);
-    color: var(--fg-on-strong);
-    font-size: 0;
-  }
-
-  /* 图标栏里塞不下说明文字，用「+」表示去添加 */
-  .side-timetable-link::before {
-    content: '+';
-    font-size: 18px;
-    line-height: 1;
-    color: var(--accent);
-  }
-
-  .side-timetable .side-week,
-  .side-timetable-foot,
-  .side-timetable-empty {
-    display: none;
-  }
-}
-
 /* 更窄时侧栏整体消失，无需处理 */
 @media (max-width: 820px) {
   .side-timetable {

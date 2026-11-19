@@ -334,58 +334,6 @@ function answerMentor(question: string, mentor: CourseMentor): MentorAnswer {
   }
 }
 
-export function MajorMentorSidebarCard({
-  onOpen,
-}: {
-  onOpen: (prompt?: string) => void
-  onEditMajor: () => void
-}) {
-  const { data } = useStore()
-  const { mentor, selectMentor, options } = useMentorSelection()
-
-  return (
-    <section className="side-mentor" aria-label={`${mentor.title} AI 导师`}>
-      <div className="side-mentor-head">
-        <span className="side-mentor-mark">
-          <AiMark size={16} />
-        </span>
-        <div className="side-mentor-copy">
-          <span className="side-mentor-eyebrow">{mentor.name} · AI</span>
-          <strong>{mentor.title}</strong>
-        </div>
-        <span className="side-mentor-tag">AI</span>
-      </div>
-      <p className="side-mentor-summary">{mentorSummary(data, mentor)}</p>
-      <div className="side-mentor-switch">
-        <span>AI 老师</span>
-        <MentorSwitcher
-          mentor={mentor}
-          options={options}
-          onSelect={selectMentor}
-          variant="dark"
-        />
-      </div>
-      <div className="side-mentor-actions">
-        <button
-          className="side-mentor-primary"
-          onClick={() => onOpen(mentor.quickPrompts[0])}
-        >
-          先诊断
-        </button>
-        <button className="side-mentor-ghost" onClick={() => onOpen()}>
-          问导师
-        </button>
-      </div>
-      <button
-        className="side-mentor-edit"
-        onClick={() => onOpen('课程怎么排？')}
-      >
-        看课程地图
-      </button>
-    </section>
-  )
-}
-
 export function MajorMentorStrip({
   data,
   onOpen,
