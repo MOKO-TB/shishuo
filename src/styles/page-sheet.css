@@ -108,6 +108,15 @@
   outline: none;
 }
 
+/* 底部说明文字：等宽正文，过长时可换行 */
+.page-sheet-fineprint {
+  flex: 1 1 320px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
 .page-sheet-foot {
   display: flex;
   align-items: center;

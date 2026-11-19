@@ -77,7 +77,7 @@
   gap: 12px;
   padding: 16px 18px;
   border: 1px solid var(--line);
-  border-radius: 17px;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 100% 0%, rgba(20, 108, 86, 0.07), transparent 38%),
     var(--surface);

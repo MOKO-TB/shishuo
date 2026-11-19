@@ -382,7 +382,7 @@
   position: relative;
   padding: 19px 19px 17px;
   border: 1px solid var(--line);
-  border-radius: 17px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
   overflow: hidden;
@@ -527,7 +527,7 @@
 .ai-cap-card {
   padding: 17px;
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -661,7 +661,7 @@
   padding: 18px;
   border: 1px solid var(--line);
   border-top: 2px solid var(--jade);
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -714,7 +714,7 @@
   padding: 18px;
   border: 1px solid var(--line);
   border-top: 2px solid var(--jade);
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }

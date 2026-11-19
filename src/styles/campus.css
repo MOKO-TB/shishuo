@@ -18,7 +18,7 @@
 .campus-head-card {
   padding: 16px 18px;
   border: 1px solid var(--line);
-  border-radius: 17px;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 100% 0%, rgba(173, 127, 29, 0.1), transparent 38%),
     var(--surface);

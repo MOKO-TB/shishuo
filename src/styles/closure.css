@@ -2731,7 +2731,7 @@
 .cx-page-hint {
   margin: -2px 0 2px;
   color: var(--faint);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .cx-back-inline {
@@ -2739,7 +2739,7 @@
   align-items: center;
   gap: 4px;
   color: var(--jade-deep);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .cx-group-head {
@@ -2764,7 +2764,7 @@
 
 .cx-group-head span {
   color: var(--faint);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .cx-course-groups {
@@ -2779,7 +2779,7 @@
   width: 100%;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   text-align: left;
   transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
@@ -2795,7 +2795,7 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--jade-soft);
   color: var(--jade-deep);
   font-size: 11px;
@@ -2836,14 +2836,14 @@
 .cx-course-group-latest {
   overflow: hidden;
   color: var(--muted);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cx-course-group-meta {
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .cx-course-group-arrow {
@@ -2856,7 +2856,7 @@
   gap: 10px;
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -2886,7 +2886,7 @@
 
 .cx-chapter-head span {
   color: var(--faint);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .cx-chapter-grid {
@@ -2900,7 +2900,7 @@
   gap: 7px;
   padding: 10px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   text-align: left;
 }
@@ -2920,7 +2920,7 @@
 .cx-chapter-card-top strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2946,13 +2946,13 @@
   justify-content: space-between;
   gap: 4px;
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .cx-page-empty-line {
   padding: 16px 10px;
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   text-align: center;
 }
 
@@ -2982,7 +2982,7 @@
 .cx-chapter-detail h3 span {
   color: var(--jade-deep);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .cx-chapter-row {
@@ -2993,7 +2993,7 @@
   width: 100%;
   padding: 8px 9px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   text-align: left;
 }
@@ -3011,12 +3011,12 @@
 
 .cx-chapter-row strong {
   color: var(--ink-soft);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .cx-chapter-row em {
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
 }
 
@@ -3042,7 +3042,7 @@
   .cx-page-head-side .button {
     height: 36px;
     padding: 0 10px;
-    font-size: 9.5px;
+    font-size: var(--text-meta);
   }
 
   .cx-page-stats {
