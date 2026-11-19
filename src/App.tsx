@@ -301,7 +301,15 @@ export default function App() {
         onOpenGuide={openGuide}
         onRequestReset={() => setResetOpen(true)}
       >
-        {view === 'student' && (
+        {accountOpen ? (
+          <AccountModal
+            open={accountOpen}
+            initialTab={accountTab}
+            onClose={() => setAccountOpen(false)}
+            notify={notify}
+          />
+        ) : null}
+        {!accountOpen && view === 'student' && (
           <StudentView
             notify={notify}
             openFaq={openFaq}
@@ -314,7 +322,7 @@ export default function App() {
             onFocusHandled={focusHandled}
           />
         )}
-        {view === 'teacher' && (
+        {!accountOpen && view === 'teacher' && (
           <TeacherView
             key={selectedTeacher.name}
             teacherName={selectedTeacher.name}
@@ -329,9 +337,9 @@ export default function App() {
             onFocusHandled={focusHandled}
           />
         )}
-        {view === 'schedule' && <ScheduleView onOpenAccount={openAccount} />}
-        {view === 'chaoxing' && <ChaoxingView />}
-        {view === 'knowledge' && (
+        {!accountOpen && view === 'schedule' && <ScheduleView onOpenAccount={openAccount} />}
+        {!accountOpen && view === 'chaoxing' && <ChaoxingView />}
+        {!accountOpen && view === 'knowledge' && (
           <KnowledgeView
             role={role}
             teacherName={selectedTeacher.name}
@@ -342,11 +350,11 @@ export default function App() {
             onGoTeacher={() => navigate('teacher')}
           />
         )}
-        {view === 'campus' && <CampusView role={role} notify={notify} />}
-        {view === 'insights' && (
+        {!accountOpen && view === 'campus' && <CampusView role={role} notify={notify} />}
+        {!accountOpen && view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}
-        {view === 'about' && (
+        {!accountOpen && view === 'about' && (
           <AboutView
             onEnterStudent={() => switchRole('student')}
             onEnterTeacher={() => switchRole('teacher')}
@@ -385,13 +393,6 @@ export default function App() {
           setGuideOpen(false)
           setResetOpen(true)
         }}
-      />
-
-      <AccountModal
-        open={accountOpen}
-        initialTab={accountTab}
-        onClose={() => setAccountOpen(false)}
-        notify={notify}
       />
 
       <WorkspaceBackupModal

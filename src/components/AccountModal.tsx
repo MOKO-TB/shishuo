@@ -72,12 +72,15 @@ import {
 } from '../lib/export'
 import { makeId } from '../lib/utils'
 import { Badge, EmptyState, Modal } from './ui'
+import { PageSheet } from './PageSheet'
 
 interface AccountModalProps {
   open: boolean
   initialTab?: TabKey
   onClose: () => void
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
+  /** page：作为二级页面展示（默认，设置场景）；dialog：保留弹窗形态 */
+  variant?: 'page' | 'dialog'
 }
 
 type TabKey = 'identity' | 'schedule' | 'scores' | 'teachers'
@@ -297,6 +300,7 @@ function JwLoginFields({
 export function AccountModal({
   open,
   initialTab = 'identity',
+  variant = 'page',
   onClose,
   notify,
 }: AccountModalProps) {
@@ -701,37 +705,43 @@ export function AccountModal({
       : '课程表'
   const staleSchedule = displayEntries.length > 0 && displayEntries.every((entry) => !entry.startTime && !entry.weeks)
 
+  const shellProps =
+    variant === 'page'
+      ? {
+          open,
+          onClose,
+          eyebrow: '学生账号 · 服务端同步',
+          title: '设置',
+        }
+      : {
+          open,
+          onClose,
+          eyebrow: '学生账号 · 服务端同步',
+          title: '账号与课表绑定',
+          size: 'lg' as const,
+        }
+  const Shell = variant === 'page' ? PageSheet : Modal
+
   return (
-    <Modal
+    <Shell
       open={open}
       onClose={onClose}
-      eyebrow="学生账号 · 服务端同步"
-      title="账号与课表绑定"
-      size="lg"
+      eyebrow={shellProps.eyebrow}
+      title={shellProps.title}
       footer={
-        <div className="modal-actions modal-actions-split">
-          <span className="modal-foot-note">
+        <>
+          <span className="page-sheet-fineprint">
             姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
           </span>
           <div className="modal-actions-right">
-            <button
-              className="text-button danger"
-              onClick={() => {
-                onClose()
-                void logoutAccount()
-              }}
-            >
-              <LogOut size={14} />
-              退出登录
-            </button>
             <button className="button button-ghost" onClick={onClose}>
-              关闭
+              取消
             </button>
             <button className="button button-primary" onClick={saveProfile}>
-              保存账号设置
+              保存设置
             </button>
           </div>
-        </div>
+        </>
       }
     >
       <div className="account-tabs" role="tablist" aria-label="账号设置" ref={tabsRef}>
@@ -894,6 +904,31 @@ export function AccountModal({
                     共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
                   </small>
                 </span>
+              </div>
+            </div>
+          </section>
+
+          {/* 危险操作单独成组：退出登录收进设置，不再占用侧栏按钮 */}
+          <section className="settings-group is-danger" aria-labelledby="settings-danger">
+            <h3 className="settings-group-title" id="settings-danger">
+              账号操作
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>退出登录</strong>
+                  <small>退出后需要重新输入邮箱和密码；未保存的修改会丢失。</small>
+                </span>
+                <button
+                  className="button button-danger-ghost"
+                  onClick={() => {
+                    onClose()
+                    void logoutAccount()
+                  }}
+                >
+                  <LogOut size={14} />
+                  退出
+                </button>
               </div>
             </div>
           </section>
@@ -1577,6 +1612,6 @@ export function AccountModal({
           )}
         </div>
       )}
-    </Modal>
+    </Shell>
   )
 }

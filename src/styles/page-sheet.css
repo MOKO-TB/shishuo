@@ -1,0 +1,104 @@
+/**
+ * page-sheet.css —— 二级设置页面
+ *
+ * 用于「设置」这类需要承载较多分组的界面：占据内容区、左侧返回，
+ * 不遮挡页面、不锁滚动，移动端满宽。
+ */
+
+.page-sheet {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 860px;
+  margin: 0 auto;
+  padding-bottom: var(--space-6);
+}
+
+/* 顶部：返回 + 标题 + 操作 */
+.page-sheet-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-sheet-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px 0 6px;
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.page-sheet-back:hover {
+  background: var(--bg-card-alt);
+  color: var(--fg);
+}
+
+.page-sheet-heading {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.page-sheet-eyebrow {
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+}
+
+.page-sheet-heading strong {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.page-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-sheet-body {
+  min-width: 0;
+}
+
+.page-sheet-body:focus {
+  outline: none;
+}
+
+.page-sheet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+  .page-sheet {
+    gap: var(--space-3);
+  }
+
+  .page-sheet-bar {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .page-sheet-heading strong {
+    font-size: var(--text-base);
+  }
+
+  .page-sheet-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

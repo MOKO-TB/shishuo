@@ -8,7 +8,6 @@ import {
   Compass,
   GraduationCap,
   Inbox,
-  LogOut,
   MessagesSquare,
   Moon,
   Presentation,
@@ -28,7 +27,6 @@ import { cn } from '../lib/utils'
 import { loadTheme, toggleTheme, type Theme } from '../lib/theme'
 import { MajorMentorSidebarCard } from './MajorMentor'
 import { Avatar, BrandMark } from './ui'
-
 interface NavItem {
   key: ViewKey
   label: string
@@ -37,7 +35,6 @@ interface NavItem {
   /** 手机底栏使用的短标签（默认按 label 去掉「课程」二字）。 */
   shortLabel?: string
 }
-
 interface LayoutProps {
   role: Role
   view: ViewKey
@@ -53,7 +50,6 @@ interface LayoutProps {
   onRequestReset: () => void
   children: ReactNode
 }
-
 const breadcrumbMap: Record<ViewKey, { root: string; current: string }> = {
   student: { root: '学生端', current: '我的答疑' },
   teacher: { root: '教师端', current: '待办台' },
@@ -64,7 +60,6 @@ const breadcrumbMap: Record<ViewKey, { root: string; current: string }> = {
   about: { root: '关于师说', current: '方案说明' },
   schedule: { root: '学习空间', current: '我的课程表' },
 }
-
 export function Layout({
   role,
   view,
@@ -116,7 +111,6 @@ export function Layout({
   const profile = isTeacher ? teacherProfile : studentProfile
   const profileMetaText = isTeacher ? teacherProfile.meta : profileMeta(studentProfile)
   const crumb = breadcrumbMap[view]
-
   return (
     <div className="app-shell">
       <aside className={cn('sidebar', !isTeacher && view !== 'campus' && 'has-mentor')}>
@@ -127,12 +121,10 @@ export function Layout({
             <span>AI 双通道答疑</span>
           </span>
         </button>
-
         <div className="sidebar-role-note">
           <span className="sidebar-live-dot" />
           {isTeacher ? `教师视角 · ${teacherProfile.name}` : `学生视角 · ${studentProfile.name}`}
         </div>
-
         <nav className="side-nav" aria-label="主导航">
           <span className="nav-section-label">{isTeacher ? '教学空间' : '学习空间'}</span>
           {navItems.map((item) => {
@@ -153,7 +145,6 @@ export function Layout({
               </button>
             )
           })}
-
           <span className="nav-section-label nav-section-secondary">了解更多</span>
           <button
             className={cn('nav-item', view === 'about' && 'is-active')}
@@ -166,14 +157,12 @@ export function Layout({
             <span className="nav-label">方案说明</span>
           </button>
         </nav>
-
         {!isTeacher && view !== 'campus' && (
           <MajorMentorSidebarCard
             onOpen={onOpenMentor}
             onEditMajor={() => onOpenAccount('identity')}
           />
         )}
-
         {!isTeacher && (
           <section className="side-timetable" aria-label="本周课程表">
             <div className="side-timetable-head">
@@ -245,7 +234,6 @@ export function Layout({
             )}
           </section>
         )}
-
         <div className="sidebar-bottom">
           <div className="side-profile" title={user?.email ?? ''}>
             <Avatar
@@ -259,28 +247,33 @@ export function Layout({
             </span>
             <span className="side-profile-role">{isTeacher ? '教师' : '学生'}</span>
           </div>
+          {/* 左下角：设置 / 重置 / 管理台 三者一字排开，等高等宽；退出登录收进设置页 */}
           <div className="sidebar-utility">
-            {!isTeacher && (
-              <button onClick={() => onOpenAccount('identity')} className="side-utility-button">
-                <Settings size={14} />
-                账号与课表
+            <button
+              onClick={() => onOpenAccount('identity')}
+              className="side-utility-button"
+              title="设置"
+            >
+              <Settings size={15} />
+              <span className="side-utility-label">设置</span>
+            </button>
+            {!user?.isAdmin && (
+              <button
+                onClick={onRequestReset}
+                className="side-utility-button"
+                title="重置演示数据"
+              >
+                <RotateCcw size={15} />
+                <span className="side-utility-label">重置</span>
               </button>
             )}
-            {isTeacher && (
-              <button onClick={onRequestReset} className="side-utility-button">
-                <RotateCcw size={14} />
-                重置演示数据
-              </button>
-            )}
-            {user?.isAdmin && (
-              <button onClick={onOpenAdmin} className="side-utility-button">
-                <ShieldCheck size={14} />
-                管理台
-              </button>
-            )}
-            <button onClick={() => void logout()} className="side-logout-button">
-              <LogOut size={14} />
-              退出登录
+            <button
+              onClick={() => onOpenAdmin()}
+              className="side-utility-button"
+              title="管理台"
+            >
+              <ShieldCheck size={15} />
+              <span className="side-utility-label">管理台</span>
             </button>
           </div>
         </div>
@@ -299,7 +292,6 @@ export function Layout({
               <strong>{crumb.current}</strong>
             </div>
           </div>
-
           <div className="topbar-right">
             {syncState === 'error' && (
               <span className="demo-pill is-error" title={syncLabel}>
@@ -346,12 +338,10 @@ export function Layout({
             </button>
           </div>
         </header>
-
         <main className="page-wrap" key={view}>
           {children}
         </main>
       </div>
-
       <nav className="mobile-nav" aria-label="移动端导航">
         {navItems.slice(0, 4).map((item) => {
           const Icon = item.icon
@@ -366,17 +356,9 @@ export function Layout({
             </button>
           )
         })}
-        <button
-          onClick={() => {
-            if (isTeacher) {
-              void logout()
-            } else {
-              onOpenAccount('identity')
-            }
-          }}
-        >
-          {isTeacher ? <LogOut size={20} /> : <Settings size={20} />}
-          <span>{isTeacher ? '退出' : '账号'}</span>
+        <button onClick={() => onOpenAccount('identity')}>
+          <Settings size={20} />
+          <span>账号</span>
         </button>
       </nav>
     </div>

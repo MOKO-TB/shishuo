@@ -1346,10 +1346,10 @@
 /* Sidebar utility row: two actions + version, never overlapping */
 
 .sidebar-utility {
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: space-between;
-  align-items: center;
+  /* 交由 layout.css 统一控制：一行等分排开 */
+  display: flex;
+  align-items: stretch;
+  column-gap: 6px;
   row-gap: 6px;
 }
 
