@@ -96,6 +96,8 @@ export default function App() {
   }, [data.guideSeen, markGuideSeen])
 
   const navigate = useCallback((next: ViewKey) => {
+    // 导航即离开设置页：否则 accountOpen 仍为 true，内容区继续被设置页独占
+    setAccountOpen(false)
     setView(next)
     if (next === 'student' || next === 'schedule') setRole('student')
     if (next === 'teacher' || next === 'insights') setRole('teacher')
