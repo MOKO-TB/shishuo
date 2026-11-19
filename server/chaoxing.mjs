@@ -1325,7 +1325,7 @@ export function createChaoxingService(db, options = {}) {
     return rows.filter((row) => !row.done).length
   }
 
-  async function syncMessagesOnly(userId) {
+  async function syncMessagesOnlyUnlocked(userId) {
     restoreSession(userId)
     const session = sessions.get(userId)
     if (!session) throw new ChaoxingError('还没有绑定学习通，请先扫码或账号密码登录。', 401)
@@ -1356,7 +1356,114 @@ export function createChaoxingService(db, options = {}) {
     }
   }
 
+  const syncLocks = new Map()
+
+  function withSyncLock(userId, task) {
+    if (syncLocks.has(userId)) {
+      throw new ChaoxingError('正在同步学习通数据，请稍后再试。', 409)
+    }
+    const promise = task()
+    syncLocks.set(userId, promise)
+    return promise.finally(() => syncLocks.delete(userId))
+  }
+
+  async function syncMessagesOnly(userId) {
+    return withSyncLock(userId, () => syncMessagesOnlyUnlocked(userId))
+  }
+
+  async function quickSyncUnlocked(userId) {
+    restoreSession(userId)
+    const session = sessions.get(userId)
+    if (!session) throw new ChaoxingError('还没有绑定学习通，请先扫码或账号密码登录。', 401)
+    const browser = await getBrowser()
+    const context = await browser.newContext({
+      userAgent: session.ua || DEFAULT_UA,
+      viewport: { width: 1440, height: 1000 },
+      locale: 'zh-CN',
+    })
+    await context.addCookies(session.cookies).catch(() => undefined)
+    const page = await context.newPage()
+    const errors = []
+    try {
+      const remote = await fetchCourses(context)
+      saveCourses(userId, remote)
+      const courses = listCourses(userId).filter((course) => course.selected)
+      let messages = 0
+      let assignments = 0
+      try {
+        const notices = await syncAllMessages(context, courses)
+        for (const notice of notices) upsertItems(userId, notice.course, 'message', [notice.item])
+        messages = notices.length
+      } catch (error) {
+        if (error instanceof ChaoxingError && error.status === 401) throw error
+        errors.push({
+          course: '全部课程',
+          kind: 'message',
+          message: error instanceof Error ? error.message : '消息同步失败',
+        })
+      }
+      try {
+        const homework = await syncAllHomework(page, courses)
+        for (const entry of homework) {
+          upsertItems(userId, entry.course, 'assignment', [entry.item])
+        }
+        assignments = homework.length
+      } catch (error) {
+        if (error instanceof ChaoxingError && error.status === 401) throw error
+        errors.push({
+          course: '全部课程',
+          kind: 'assignment',
+          message: error instanceof Error ? error.message : '作业同步失败',
+        })
+      }
+      session.cookies = await context.cookies().catch(() => session.cookies)
+      saveAccountSession(userId, session.cookies, session.ua)
+      touchAccount(userId, {
+        connected: true,
+        lastSyncAt: Date.now(),
+        lastError: errors.length ? errors[0].message : null,
+      })
+      return { courses: remote.length, messages, assignments, errors }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '自动同步失败'
+      if (error instanceof ChaoxingError && error.status === 401) {
+        sessions.delete(userId)
+        touchAccount(userId, { connected: false, lastError: message })
+        throw error
+      }
+      touchAccount(userId, { lastError: message })
+      if (error instanceof ChaoxingError) throw error
+      throw new ChaoxingError(message, 502)
+    } finally {
+      await context.close().catch(() => undefined)
+    }
+  }
+
+  async function quickSync(userId) {
+    return withSyncLock(userId, () => quickSyncUnlocked(userId))
+  }
+
   async function sync(userId) {
+    return withSyncLock(userId, () => syncUnlocked(userId))
+  }
+
+  function autoSync(userId) {
+    restoreSession(userId)
+    if (!sessions.has(userId)) return { started: false, reason: 'not-connected' }
+    if (syncLocks.has(userId)) return { started: false, reason: 'running' }
+    const account = accountRow(userId)
+    const lastSyncAt = Number(account?.last_sync_at || 0)
+    if (lastSyncAt && Date.now() - lastSyncAt < 10 * 60_000) {
+      return { started: false, reason: 'fresh', lastSyncAt }
+    }
+    void quickSync(userId).catch((error) => {
+      if (error instanceof ChaoxingError && error.status === 409) return
+      touchAccount(userId, { lastError: error instanceof Error ? error.message : '自动同步失败' })
+    })
+    return { started: true, mode: 'quick', lastSyncAt: lastSyncAt || null }
+  }
+
+  async function syncUnlocked(userId) {
     restoreSession(userId)
     const session = sessions.get(userId)
     if (!session) {
@@ -1488,6 +1595,8 @@ export function createChaoxingService(db, options = {}) {
     logout,
     sync,
     syncMessagesOnly,
+    quickSync,
+    autoSync,
     overview,
     markRead,
     setCourseSelected,

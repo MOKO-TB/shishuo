@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   BookOpen,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Badge, Modal } from '../../components/ui'
 import {
+  autoSyncChaoxing,
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
@@ -98,6 +99,7 @@ export function ChaoxingView() {
   const [overview, setOverview] = useState<ChaoxingOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [autoSyncing, setAutoSyncing] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [tab, setTab] = useState<ChaoxingTab>('message')
@@ -105,6 +107,11 @@ export function ChaoxingView() {
   const [bindOpen, setBindOpen] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState('')
   const [chapterCourse, setChapterCourse] = useState<ChaoxingCourseChapters | null>(null)
+  const lastSyncRef = useRef(overview?.lastSyncAt ?? 0)
+
+  useEffect(() => {
+    lastSyncRef.current = overview?.lastSyncAt ?? 0
+  }, [overview?.lastSyncAt])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -121,6 +128,45 @@ export function ChaoxingView() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // 打开学习通页面及停留期间自动同步消息/作业，减少学生手动点“同步全部”。
+  useEffect(() => {
+    if (!overview?.connected) return
+    let cancelled = false
+    let timer = 0
+    const run = async () => {
+      try {
+        const result = await autoSyncChaoxing()
+        if (cancelled || !result.started) return
+        setAutoSyncing(true)
+        const before = lastSyncRef.current
+        for (let i = 0; i < 8; i += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+          if (cancelled) return
+          try {
+            const next = await chaoxingOverview()
+            if (cancelled) return
+            setOverview(next)
+            if ((next.lastSyncAt ?? 0) !== before) break
+          } catch {
+            // 自动同步轮询失败不打断页面。
+          }
+        }
+      } catch {
+        // 自动同步失败时保留原数据，不弹错误打断阅读。
+      } finally {
+        if (!cancelled) setAutoSyncing(false)
+      }
+    }
+    void run()
+    timer = window.setInterval(() => {
+      void run()
+    }, 5 * 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [overview?.connected])
 
   const syncNow = async () => {
     setSyncing(true)
@@ -217,7 +263,13 @@ export function ChaoxingView() {
           {connected ? (
             <>
               <Badge tone="jade">已绑定</Badge>
-              <span>{overview?.lastSyncAt ? `上次同步 ${fmt(overview.lastSyncAt)}` : '还没有同步'}</span>
+              <span>
+                {autoSyncing
+                  ? '自动同步中…'
+                  : overview?.lastSyncAt
+                    ? `上次同步 ${fmt(overview.lastSyncAt)}`
+                    : '还没有同步'}
+              </span>
               <button className="button button-primary" onClick={() => void syncNow()} disabled={syncing}>
                 {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
                 {syncing ? '同步中…' : '同步全部'}

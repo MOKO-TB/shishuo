@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Badge, Modal } from '../../components/ui'
 import {
+  autoSyncChaoxing,
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
@@ -70,6 +71,29 @@ export function ChaoxingRailCard() {
     const timer = window.setInterval(() => void load(), 60_000)
     return () => window.clearInterval(timer)
   }, [load])
+
+  // 进入学生首页时顺带做一次轻量自动同步，让右栏消息/作业数保持新鲜。
+  useEffect(() => {
+    if (!overview?.connected) return
+    let cancelled = false
+    const run = async () => {
+      try {
+        const result = await autoSyncChaoxing()
+        if (!result.started || cancelled) return
+        for (let i = 0; i < 4; i += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 2500))
+          if (cancelled) return
+          await load()
+        }
+      } catch {
+        // 自动同步失败时保持静默，不打断首页。
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [overview?.connected, load])
 
   const unread = overview?.unread ?? 0
   const connected = Boolean(overview?.connected)

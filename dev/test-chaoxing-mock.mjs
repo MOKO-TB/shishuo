@@ -193,6 +193,16 @@ try {
     '资料应打开课程资料库入口，而不是文件直链',
   )
 
+  db.prepare('UPDATE chaoxing_accounts SET last_sync_at = 0 WHERE user_id = ?').run('test-student')
+  const auto = cx.autoSync('test-student')
+  assert.equal(auto.started, true)
+  assert.equal(auto.mode, 'quick')
+  for (let i = 0; i < 30; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    if ((cx.overview('test-student').lastSyncAt ?? 0) > 0) break
+  }
+  assert.ok((cx.overview('test-student').lastSyncAt ?? 0) > 0, '自动同步应刷新最后同步时间')
+
   cx.markRead('test-student', overview.items[0].id)
   const afterRead = cx.overview('test-student')
   assert.ok(afterRead.items.find((item) => item.id === overview.items[0].id)?.read_at)

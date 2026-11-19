@@ -105,6 +105,15 @@ export function syncChaoxing() {
   }>('/api/chaoxing/sync', {})
 }
 
+export function autoSyncChaoxing() {
+  return apiPost<{
+    started: boolean
+    mode?: 'quick'
+    reason?: 'not-connected' | 'running' | 'fresh'
+    lastSyncAt?: number | null
+  }>('/api/chaoxing/sync/auto', {})
+}
+
 export function logoutChaoxing() {
   return apiPost<{ ok: boolean }>('/api/chaoxing/logout', {})
 }

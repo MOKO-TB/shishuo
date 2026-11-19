@@ -102,9 +102,6 @@ export function ScheduleView({
           <br />
           <span>打开就能看。</span>
         </h1>
-        <p className="page-lede">
-          按天查看本周课程，上方可以前后翻周。课表来自「账号与课表」里绑定或手动添加的课程。
-        </p>
       </header>
 
       <section className="schedule-controls card">
