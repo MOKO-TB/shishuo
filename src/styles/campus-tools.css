@@ -737,6 +737,7 @@
 }
 
 .campus-map-search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -746,6 +747,96 @@
   border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--muted);
+}
+
+/* 清除按钮：有输入时替代「N 个地点」计数 */
+.campus-map-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+}
+
+.campus-map-clear:hover {
+  background: var(--bg-card-alt);
+  color: var(--ink);
+}
+
+/* 下拉候选：贴着搜索框下沿浮出 */
+.campus-map-suggest {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.campus-map-suggest.is-empty {
+  padding: 12px;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.campus-map-suggest li button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  text-align: left;
+}
+
+.campus-map-suggest li button:hover,
+.campus-map-suggest li button:focus-visible {
+  background: var(--bg-accent-mist);
+}
+
+.campus-map-suggest li button > span {
+  flex: 0 0 auto;
+  width: 22px;
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+}
+
+.campus-map-suggest li button > strong {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-map-suggest li button > em {
+  flex: 0 0 auto;
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+.campus-map-suggest-more {
+  padding: 8px 10px;
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+  text-align: center;
 }
 
 .campus-map-search input {
@@ -764,9 +855,10 @@
   white-space: nowrap;
 }
 
+/* 列表已移除，地图独占整宽 */
 .campus-map-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.5fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 11px;
   align-items: start;
 }
@@ -847,6 +939,30 @@
   background: var(--surface-3);
 }
 
+/* 浮在地图左下角，避免遮挡主要建筑 */
+.campus-map-info.is-floating {
+  position: absolute;
+  z-index: 10;
+  left: 12px;
+  bottom: 12px;
+  max-width: min(320px, calc(100% - 24px));
+  border-color: var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* 浮在地图左下角，避免遮挡主要建筑 */
+.campus-map-info.is-floating {
+  position: absolute;
+  z-index: 10;
+  left: 12px;
+  bottom: 12px;
+  max-width: min(320px, calc(100% - 24px));
+  border-color: var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
 .campus-map-info h3 {
   margin: 0;
   font-family: var(--serif);
@@ -865,53 +981,6 @@
 .campus-map-nearby {
   font-size: var(--text-meta);
   color: var(--faint);
-}
-
-.campus-building-list {
-  display: grid;
-  gap: 4px;
-  max-height: 310px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.campus-building-list button {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-xs);
-  text-align: left;
-}
-
-.campus-building-list button:hover,
-.campus-building-list button.is-active {
-  border-color: var(--line);
-  background: var(--surface-2);
-}
-
-.campus-building-list span {
-  font-family: var(--mono);
-  font-size: var(--text-meta);
-  color: var(--faint);
-}
-
-.campus-building-list strong {
-  font-size: var(--text-meta);
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.campus-building-list em {
-  font-size: var(--text-meta);
-  font-style: normal;
-  color: var(--muted);
-  white-space: nowrap;
 }
 
 [data-theme='dark'] .campus-map-box {
@@ -939,9 +1008,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .campus-building-list {
-    max-height: 240px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1047,7 +1113,32 @@
     height: 40px;
   }
 
-  .campus-building-list {
-    max-height: 200px;
+}
+
+@media (max-width: 700px) {
+  .campus-map-info.is-floating {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-width: none;
+    padding: 9px 10px;
+  }
+
+  .campus-map-suggest {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 700px) {
+  .campus-map-info.is-floating {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-width: none;
+    padding: 9px 10px;
+  }
+
+  .campus-map-suggest {
+    max-height: 260px;
   }
 }

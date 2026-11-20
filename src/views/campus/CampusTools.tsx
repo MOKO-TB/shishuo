@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen,
   CalendarDays,
@@ -158,6 +158,8 @@ export function CampusTools() {
   const [libraryError, setLibraryError] = useState('')
   const [loans, setLoans] = useState<LibraryLoansResult | null>(null)
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+  const searchWrapRef = useRef<HTMLDivElement>(null)
   const profile = useProfile()
 
   const autoStats = useMemo(
@@ -221,12 +223,17 @@ export function CampusTools() {
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
     if (!normalized) return CAMPUS_BUILDINGS
-    return CAMPUS_BUILDINGS.filter((building) =>
-      [building.name, building.category, building.area, ...building.aliases]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalized),
-    )
+    // 名称/别名命中排前面，「区域描述里提到」的排后面
+    const hits = (building: (typeof CAMPUS_BUILDINGS)[number]) => {
+      const primary = [building.name, ...building.aliases].join(' ').toLowerCase()
+      if (primary.includes(normalized)) return 0
+      const secondary = [building.category, building.area].join(' ').toLowerCase()
+      return secondary.includes(normalized) ? 1 : -1
+    }
+    return CAMPUS_BUILDINGS.map((building) => ({ building, rank: hits(building) }))
+      .filter((item) => item.rank >= 0)
+      .sort((a, b) => a.rank - b.rank || a.building.no - b.building.no)
+      .map((item) => item.building)
   }, [mapQuery])
 
   const requestLibraryCaptcha = async () => {
@@ -319,6 +326,24 @@ export function CampusTools() {
   }
 
   const selected = CAMPUS_BUILDINGS.find((building) => building.no === selectedBuilding) ?? null
+
+  /** 从下拉里选楼：选中、回填名称、收起候选 */
+  const pickBuilding = (no: number) => {
+    setSelectedBuilding(no)
+    const building = CAMPUS_BUILDINGS.find((item) => item.no === no)
+    if (building) setMapQuery(building.name)
+    setSuggestOpen(false)
+  }
+
+  // 点搜索框外部时收起候选
+  useEffect(() => {
+    if (!suggestOpen) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (!searchWrapRef.current?.contains(event.target as Node)) setSuggestOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [suggestOpen])
 
   return (
     <section className="campus-tools card">
@@ -720,15 +745,69 @@ export function CampusTools() {
 
       {tab === 'map' && (
         <div className="campus-tool-panel">
-          <div className="campus-map-search">
+          {/* 搜索框：输入关键词后从下拉候选里直接选楼，不再有独立的地点列表 */}
+          <div className="campus-map-search" ref={searchWrapRef}>
             <Search size={15} />
             <input
               value={mapQuery}
-              onChange={(event) => setMapQuery(event.target.value)}
+              onChange={(event) => {
+                setMapQuery(event.target.value)
+                setSuggestOpen(true)
+              }}
+              onFocus={() => setSuggestOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && filteredBuildings.length > 0) {
+                  event.preventDefault()
+                  pickBuilding(filteredBuildings[0].no)
+                }
+                if (event.key === 'Escape') setSuggestOpen(false)
+              }}
               placeholder="搜建筑名或别名，例如：图书馆、S2、A栋…"
               aria-label="搜索校园建筑"
+              aria-expanded={suggestOpen}
+              aria-controls="campus-map-suggest"
+              role="combobox"
+              aria-autocomplete="list"
             />
-            <span>{filteredBuildings.length} 个地点</span>
+            {mapQuery ? (
+              <button
+                type="button"
+                className="campus-map-clear"
+                onClick={() => {
+                  setMapQuery('')
+                  setSelectedBuilding(null)
+                  setSuggestOpen(false)
+                }}
+                aria-label="清空搜索"
+              >
+                <X size={14} />
+              </button>
+            ) : (
+              <span>{CAMPUS_BUILDINGS.length} 个地点</span>
+            )}
+
+            {suggestOpen && filteredBuildings.length > 0 && (
+              <ul className="campus-map-suggest" id="campus-map-suggest" role="listbox">
+                {filteredBuildings.slice(0, 8).map((building) => (
+                  <li key={building.no} role="option" aria-selected={building.no === selectedBuilding}>
+                    <button type="button" onClick={() => pickBuilding(building.no)}>
+                      <span>{building.no.toString().padStart(2, '0')}</span>
+                      <strong>{building.name}</strong>
+                      <em>{building.category}</em>
+                    </button>
+                  </li>
+                ))}
+                {filteredBuildings.length > 8 && (
+                  <li className="campus-map-suggest-more">
+                    还有 {filteredBuildings.length - 8} 个，继续输入可缩小范围
+                  </li>
+                )}
+              </ul>
+            )}
+
+            {suggestOpen && mapQuery && filteredBuildings.length === 0 && (
+              <div className="campus-map-suggest is-empty">没有匹配的地点，换个关键词试试</div>
+            )}
           </div>
           <div className="campus-map-layout">
             <div className="campus-map-stage">
@@ -771,46 +850,25 @@ export function CampusTools() {
                 })}
               </div>
               {selected && (
-                <button
-                  type="button"
-                  className="campus-map-reset"
-                  onClick={() => setSelectedBuilding(null)}
-                >
-                  还原全图
-                </button>
-              )}
-            </div>
-            <div className="campus-map-side">
-              <div className="campus-map-info">
-                {selected ? (
-                  <>
+                <>
+                  <button
+                    type="button"
+                    className="campus-map-reset"
+                    onClick={() => setSelectedBuilding(null)}
+                  >
+                    还原全图
+                  </button>
+                  {/* 详情浮在地图左下角，不再占用右侧栏 */}
+                  <div className="campus-map-info is-floating">
                     <span className="eyebrow">{selected.category}</span>
                     <h3>{selected.name}</h3>
                     <p>{selected.area}</p>
                     {selected.nearby.length > 0 && (
                       <span className="campus-map-nearby">附近：{selected.nearby.join('、')}</span>
                     )}
-                  </>
-                ) : (
-                  <>
-                    <h3>点地图上的框，或从列表选一个地点</h3>
-                    <p>这是手绘位置图，没有路网导航；到校后结合现场指示。</p>
-                  </>
-                )}
-              </div>
-              <div className="campus-building-list">
-                {filteredBuildings.map((building) => (
-                  <button
-                    key={building.no}
-                    className={building.no === selectedBuilding ? 'is-active' : ''}
-                    onClick={() => setSelectedBuilding(building.no)}
-                  >
-                    <span>{building.no.toString().padStart(2, '0')}</span>
-                    <strong>{building.name}</strong>
-                    <em>{building.category}</em>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
