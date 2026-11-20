@@ -17,7 +17,7 @@ import type { CourseMentor } from '../data/mentor'
 import {
   buildMentorPrompt,
   findMentorTopicByQuestion,
-  mentorTeacherName,
+  mentorForCourse,
 } from '../data/mentor'
 import { courseById } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
@@ -115,7 +115,7 @@ function MentorSwitcher({
               }}
             >
               <span>{option.title}</span>
-              <small>{mentorTeacherName(option) || option.name}</small>
+              <small>{option.name}</small>
             </button>
           ))}
         </div>
@@ -219,7 +219,7 @@ function MentorManager({
                   {enabled && <span className="mentor-manager-added">已添加</span>}
                 </div>
                 <em>
-                  {course.name} · {mentorTeacherName(mentor) || mentor.name}
+                  {course.name} · {mentor.name}
                 </em>
                 <p>{mentor.tagline}</p>
               </div>
@@ -339,16 +339,27 @@ function answerMentor(question: string, mentor: CourseMentor): MentorAnswer {
 }
 
 export function MajorMentorStrip({
+  courseId,
   data,
   onOpen,
 }: {
   profile: StudentProfile
+  courseId: string
   data: AppData
   onOpen: (prompt?: string) => void
   onEditMajor: () => void
 }) {
-  const { mentor, selectMentor, options } = useMentorSelection()
-  const teacher = mentorTeacherName(mentor)
+  const { mentor, selectMentor, options, enabledIds, addMentor } = useMentorSelection()
+
+  useEffect(() => {
+    if (!courseId || mentor.courseId === courseId) return
+    if (!mentorForCourse(courseId)) return
+    if (enabledIds.includes(courseId)) {
+      selectMentor(courseId)
+    } else {
+      addMentor(courseId)
+    }
+  }, [courseId, mentor.courseId, enabledIds, selectMentor, addMentor])
 
   return (
     <section className="mentor-strip" aria-label={`${mentor.title} AI 导师`}>
@@ -358,8 +369,8 @@ export function MajorMentorStrip({
         </span>
         <div className="mentor-strip-copy">
           <div className="mentor-strip-title">
-            <strong>{teacher ? `${teacher}老师` : mentor.name}</strong>
-            <span>{mentor.title} · AI 导师</span>
+            <strong>{mentor.name}</strong>
+            <span>{mentor.title}</span>
             <MentorSwitcher
               mentor={mentor}
               options={options}
@@ -593,8 +604,6 @@ export function MajorMentorDrawer({
     onRoute(mentor.courseId, question)
   }
 
-  const teacher = mentorTeacherName(mentor)
-
   return (
     <Drawer open={open} onClose={onClose} ariaLabel={`${mentor.title} AI 导师`}>
       <div className="mentor-drawer">
@@ -602,9 +611,7 @@ export function MajorMentorDrawer({
           <div className="mentor-drawer-head-main">
             <AiMark size={18} />
             <div>
-              <div className="eyebrow">
-                {teacher ? `${teacher}老师 · ` : ''}AI 导师
-              </div>
+              <div className="eyebrow">{mentor.name} · AI</div>
               <h2>{mentor.title}</h2>
             </div>
           </div>
@@ -644,14 +651,14 @@ export function MajorMentorDrawer({
                 <AiMark size={17} />
               </span>
               <div>
-                <strong>我是{mentor.title}的 AI 导师</strong>
+                <strong>我是你的{mentor.name}</strong>
                 <p>
                   {mentor.chapters.length > 0
                     ? `已把公开课整理成 ${mentor.chapters.length} 个章节。先告诉我你卡在哪：${mentor.chapters
                         .slice(0, 4)
                         .map((chapter) => chapter.label)
                         .join('、')}？我会先定位卡点，再讲关键一步，最后留一道换数字的题。`
-                    : `我会按${teacher ? `${teacher}老师的课程口径` : '课程知识库'}，先定位卡点，再讲关键一步；没有把握时建议转交任课老师。先告诉我你卡在哪。`}
+                    : '我会按这门课的课程知识和任课老师口径，先定位卡点，再讲关键一步；没有把握时建议转交任课老师。先告诉我你卡在哪。'}
                 </p>
                 <div className="mentor-quick">
                   {mentor.quickPrompts.map((prompt) => (

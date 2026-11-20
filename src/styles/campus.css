@@ -178,6 +178,12 @@
   gap: 12px;
 }
 
+.campus-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
 .campus-card {
   display: flex;
   flex-direction: column;

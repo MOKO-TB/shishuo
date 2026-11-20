@@ -195,6 +195,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const { data, dispatch } = useStore()
   const { user } = useAuth()
   const [query, setQuery] = useState('')
+  const [visibleLimit, setVisibleLimit] = useState(24)
   const [category, setCategory] = useState('all')
   const [credFilter, setCredFilter] = useState<CredFilter>('all')
   const [sort, setSort] = useState<SortMode>(role === 'teacher' ? 'review' : 'verified')
@@ -334,6 +335,15 @@ export function CampusView({ role, notify }: CampusViewProps) {
         return a.card.id.localeCompare(b.card.id)
       })
   }, [category, credFilter, items, sort, tokens])
+
+  useEffect(() => {
+    setVisibleLimit(24)
+  }, [query, category, credFilter, sort])
+
+  const shownItems = useMemo(
+    () => visibleItems.slice(0, visibleLimit),
+    [visibleItems, visibleLimit],
+  )
 
   const pendingCampus = useMemo(
     () =>
@@ -1116,8 +1126,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
           />
         </div>
       ) : (
-        <div className="campus-grid">
-          {visibleItems.map(({ card, faq }) => {
+        <>
+          <div className="campus-grid">
+            {shownItems.map(({ card, faq }) => {
             const meta = credibilityMeta(card.credibility)
             return (
               <article
@@ -1167,7 +1178,18 @@ export function CampusView({ role, notify }: CampusViewProps) {
               </article>
             )
           })}
-        </div>
+          </div>
+          {visibleItems.length > shownItems.length && (
+            <div className="campus-load-more">
+              <button
+                className="button button-secondary"
+                onClick={() => setVisibleLimit((limit) => limit + 24)}
+              >
+                加载更多（还剩 {visibleItems.length - shownItems.length} 条）
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <div className="knowledge-footnote campus-footnote">

@@ -6,33 +6,23 @@ import {
   ExternalLink,
   Library,
   MapPin,
-  Plus,
   Search,
   Sparkles,
-  Trash2,
   X,
 } from 'lucide-react'
 import { Badge } from '../../components/ui'
-import { useProfile, scoreStats, type ScoreRow } from '../../lib/profile'
-import { excerpt, makeId } from '../../lib/utils'
+import { useProfile, scoreStats } from '../../lib/profile'
+import { excerpt } from '../../lib/utils'
 import {
-  CAMPUS_BOOKS,
   CAMPUS_BUILDINGS,
   CAMPUS_CALENDAR_EVENTS,
   CAMPUS_LIBRARY_ITEMS,
   CAMPUS_MAP,
-  type CampusBook,
   type CampusCalendarEvent,
 } from '../../data/campusTools'
+import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
 type ToolTab = 'gpa' | 'calendar' | 'library' | 'map'
-
-interface ManualRow {
-  id: string
-  course: string
-  credit: string
-  score: string
-}
 
 function parseDate(value: string) {
   const [year, month, day] = value.split('-').map((part) => Number(part))
@@ -110,31 +100,15 @@ function BookCard({ book, recommended }: { book: CampusBook; recommended?: boole
 
 export function CampusTools() {
   const [tab, setTab] = useState<ToolTab>('gpa')
-  const [manualRows, setManualRows] = useState<ManualRow[]>([
-    { id: makeId('gpa'), course: '', credit: '3', score: '' },
-  ])
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
   const profile = useProfile()
 
-  const manualScores: ScoreRow[] = useMemo(
-    () =>
-      manualRows.map((row, index) => ({
-        id: `manual-${index}`,
-        course: row.course.trim() || `课程 ${index + 1}`,
-        score: row.score.trim(),
-        credit: Number(row.credit) > 0 ? Number(row.credit) : null,
-        semester: '手动试算',
-        kind: '必修',
-      })),
-    [manualRows],
-  )
   const autoStats = useMemo(
     () => (profile.scores.length > 0 ? scoreStats(profile.scores) : null),
     [profile.scores],
   )
-  const manualStats = useMemo(() => scoreStats(manualScores), [manualScores])
 
   const myCourseIds = useMemo(() => {
     const ids = new Set<string>()
@@ -201,12 +175,6 @@ export function CampusTools() {
   }, [mapQuery])
 
   const selected = CAMPUS_BUILDINGS.find((building) => building.no === selectedBuilding) ?? null
-
-  const updateRow = (id: string, patch: Partial<ManualRow>) => {
-    setManualRows((rows) =>
-      rows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
-    )
-  }
 
   return (
     <section className="campus-tools card">
@@ -275,81 +243,6 @@ export function CampusTools() {
               <strong>{autoStats?.gpaFive != null ? autoStats.gpaFive.toFixed(2) : '—'}</strong>
               <em>本校按 5.0 制计算</em>
             </div>
-          </div>
-
-          <div className="campus-gpa-head">
-            <div>
-              <strong>手动试算</strong>
-              <span>没同步教务成绩时，按学分和百分制成绩估算；只在本机计算，不上传。</span>
-            </div>
-            <button
-              className="button button-ghost"
-              onClick={() =>
-                setManualRows((rows) => [
-                  ...rows,
-                  { id: makeId('gpa'), course: '', credit: '3', score: '' },
-                ])
-              }
-            >
-              <Plus size={14} />
-              加一门课
-            </button>
-          </div>
-
-          <div className="campus-gpa-table">
-            <div className="campus-gpa-row is-head">
-              <span>课程</span>
-              <span>学分</span>
-              <span>百分制成绩</span>
-              <span />
-            </div>
-            {manualRows.map((row) => (
-              <div className="campus-gpa-row" key={row.id}>
-                <input
-                  value={row.course}
-                  onChange={(event) => updateRow(row.id, { course: event.target.value })}
-                  placeholder="例如：高等数学"
-                  aria-label="课程名"
-                />
-                <input
-                  value={row.credit}
-                  onChange={(event) => updateRow(row.id, { credit: event.target.value })}
-                  inputMode="decimal"
-                  placeholder="学分"
-                  aria-label="学分"
-                />
-                <input
-                  value={row.score}
-                  onChange={(event) => updateRow(row.id, { score: event.target.value })}
-                  inputMode="decimal"
-                  placeholder="成绩"
-                  aria-label="成绩"
-                />
-                <button
-                  className="icon-button"
-                  aria-label="删除这门课"
-                  onClick={() =>
-                    setManualRows((rows) =>
-                      rows.length > 1 ? rows.filter((item) => item.id !== row.id) : rows,
-                    )
-                  }
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="campus-gpa-result">
-            <span>
-              试算结果：加权平均 <strong>{manualStats.weightedAverage?.toFixed(2) ?? '—'}</strong>
-            </span>
-            <span>
-              GPA 5.0 <strong>{manualStats.gpaFive?.toFixed(2) ?? '—'}</strong>
-            </span>
-            <em>
-              已计入 {manualStats.counted} 门、{manualStats.credits} 学分；空成绩或 0 学分不计。
-            </em>
           </div>
         </div>
       )}
@@ -491,28 +384,53 @@ export function CampusTools() {
           </div>
           <div className="campus-map-layout">
             <div className="campus-map-stage">
-              <img src={CAMPUS_MAP.image} alt="广州应用科技学院肇庆校区手绘地图" loading="lazy" />
-              {CAMPUS_BUILDINGS.map((building) => {
-                if (building.bbox.length !== 4) return null
-                const [x1, y1, x2, y2] = building.bbox
-                const active = building.no === selectedBuilding
-                return (
-                  <button
-                    key={building.no}
-                    type="button"
-                    className={`campus-map-box ${active ? 'is-active' : ''}`}
-                    style={{
-                      left: `${(x1 / CAMPUS_MAP.width) * 100}%`,
-                      top: `${(y1 / CAMPUS_MAP.height) * 100}%`,
-                      width: `${((x2 - x1) / CAMPUS_MAP.width) * 100}%`,
-                      height: `${((y2 - y1) / CAMPUS_MAP.height) * 100}%`,
-                    }}
-                    aria-label={building.name}
-                    title={building.name}
-                    onClick={() => setSelectedBuilding(building.no)}
-                  />
-                )
-              })}
+              <div
+                className="campus-map-canvas"
+                data-zoomed={selected ? 'true' : undefined}
+                style={
+                  selected
+                    ? {
+                        transformOrigin: `${
+                          (((selected.bbox[0] + selected.bbox[2]) / 2) / CAMPUS_MAP.width) * 100
+                        }% ${
+                          (((selected.bbox[1] + selected.bbox[3]) / 2) / CAMPUS_MAP.height) * 100
+                        }%`,
+                      }
+                    : undefined
+                }
+              >
+                <img src={CAMPUS_MAP.image} alt="广州应用科技学院肇庆校区手绘地图" loading="lazy" />
+                {CAMPUS_BUILDINGS.map((building) => {
+                  if (building.bbox.length !== 4) return null
+                  const [x1, y1, x2, y2] = building.bbox
+                  const active = building.no === selectedBuilding
+                  return (
+                    <button
+                      key={building.no}
+                      type="button"
+                      className={`campus-map-box ${active ? 'is-active' : ''}`}
+                      style={{
+                        left: `${(x1 / CAMPUS_MAP.width) * 100}%`,
+                        top: `${(y1 / CAMPUS_MAP.height) * 100}%`,
+                        width: `${((x2 - x1) / CAMPUS_MAP.width) * 100}%`,
+                        height: `${((y2 - y1) / CAMPUS_MAP.height) * 100}%`,
+                      }}
+                      aria-label={building.name}
+                      title={building.name}
+                      onClick={() => setSelectedBuilding(building.no)}
+                    />
+                  )
+                })}
+              </div>
+              {selected && (
+                <button
+                  type="button"
+                  className="campus-map-reset"
+                  onClick={() => setSelectedBuilding(null)}
+                >
+                  还原全图
+                </button>
+              )}
             </div>
             <div className="campus-map-side">
               <div className="campus-map-info">

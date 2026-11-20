@@ -808,6 +808,7 @@ export function StudentView({
           <div className="mentor-mobile-entry">
             <MajorMentorStrip
               profile={profile}
+              courseId={courseId}
               data={data}
               onOpen={onOpenMentor}
               onEditMajor={() => onOpenAccount?.('identity')}

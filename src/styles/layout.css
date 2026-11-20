@@ -190,6 +190,65 @@
   flex: 0 0 auto;
 }
 
+/* 电脑端侧栏 AI 导师入口（手机端用首屏横条） */
+.side-mentor-entry {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--side-line);
+  border-radius: var(--radius-md);
+  background: var(--side-hover);
+  color: var(--fg-on-strong);
+  text-align: left;
+}
+
+.side-mentor-entry:hover {
+  border-color: var(--side-line-strong);
+  background: var(--side-line);
+}
+
+.side-mentor-entry-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--side-line);
+  color: var(--fg-on-strong);
+  flex: 0 0 auto;
+}
+
+.side-mentor-entry-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.side-mentor-entry-copy strong {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-mentor-entry-copy span {
+  overflow: hidden;
+  font-size: var(--text-meta);
+  color: var(--side-fg-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-mentor-entry > svg {
+  color: var(--side-fg-dim);
+  flex: 0 0 auto;
+}
+
 /* 唯一的底部入口：头像 + 设置 */
 .side-settings-button {
   display: flex;

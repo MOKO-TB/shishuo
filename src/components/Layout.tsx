@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Settings,
   ShieldCheck,
+  Sparkles,
   Sun,
   UserCog,
 } from "lucide-react";
@@ -33,6 +34,7 @@ import { useAuth } from "../auth";
 import { useStore } from "../store";
 import { cn } from "../lib/utils";
 import { loadTheme, toggleTheme, type Theme } from "../lib/theme";
+import { useMentorSelection } from "../lib/mentorSelection";
 import { Avatar, BrandMark } from "./ui";
 interface NavItem {
   key: ViewKey;
@@ -91,6 +93,7 @@ export function Layout({
   const { user, logout } = useAuth();
   const { syncState } = useStore();
   const studentProfile = useProfile();
+  const { mentor } = useMentorSelection();
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const syncLabel =
     syncState === "saving"
@@ -206,7 +209,18 @@ export function Layout({
             <span className="nav-label">方案说明</span>
           </button>
         </nav>
-        {/* AI 导师入口已统一收进「我的答疑」顶部横条，侧栏不再重复 */}
+        {!isTeacher && (
+          <button className="side-mentor-entry" onClick={() => onOpenMentor()}>
+            <span className="side-mentor-entry-mark">
+              <Sparkles size={15} />
+            </span>
+            <span className="side-mentor-entry-copy">
+              <strong>{mentor.name}</strong>
+              <span>{mentor.title} · AI 导师</span>
+            </span>
+            <ChevronRight size={14} />
+          </button>
+        )}
         <div className="sidebar-bottom">
           {/* 本周课程 + 设置：整体贴底，位置不随上方模块滚动 */}
           {!isTeacher && (

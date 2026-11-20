@@ -3114,3 +3114,50 @@
     max-height: 70vh;
   }
 }
+
+/* 手机端周课表：7 天全部塞进一屏，隐藏次要信息，保留课程名 */
+@media (max-width: 720px) {
+  .week-board:not(.is-zoomed) .week-grid {
+    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+    grid-auto-rows: 42px;
+    gap: 2px;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .week-board:not(.is-zoomed) .week-grid-day {
+    gap: 0;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-meta);
+    line-height: 1.2;
+  }
+
+  .week-board:not(.is-zoomed) .week-grid-day span {
+    display: none;
+  }
+
+  .week-board:not(.is-zoomed) .week-grid-period {
+    font-size: var(--text-meta);
+  }
+
+  .week-board:not(.is-zoomed) .week-grid-period em {
+    display: none;
+  }
+
+  .week-board:not(.is-zoomed) .week-class {
+    gap: 0;
+    margin: 1px;
+    padding: 3px;
+    border-radius: var(--radius-xs);
+  }
+
+  .week-board:not(.is-zoomed) .week-class strong {
+    font-size: var(--text-meta);
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+  }
+
+  .week-board:not(.is-zoomed) .week-class span {
+    display: none;
+  }
+}

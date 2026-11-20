@@ -2585,15 +2585,12 @@ const COURSE_MENTORS: CourseMentor[] = [
  * 没有视频/逐字稿来源，不做 B 站蒸馏，只对齐课程与教师口径。
  */
 function mentorFromCourse(course: Course): CourseMentor {
-  const teacher = course.teacher && course.teacher !== '未指定' ? course.teacher : ''
   return {
     courseId: course.id,
-    name: teacher ? `${teacher}老师` : `${course.shortName}导师`,
+    name: `${course.shortName}导师`,
     title: course.shortName,
-    tagline: teacher
-      ? `按${teacher}老师这门课的进度，先定位卡点，再讲下一步。`
-      : '先定位卡点，再讲关键一步；不确定就建议转交任课老师。',
-    attribution: '基于课程与任课教师信息生成；具体结论以课程知识库和任课老师为准。',
+    tagline: '先定位卡点，再讲下一步；课程口径以知识库和任课老师为准。',
+    attribution: '基于课程信息生成；具体结论以课程知识库和任课老师为准。',
     principles: [
       '先问清楚卡在哪一步，再给下一步；不堆通用定义。',
       '课程口径以课程知识库和任课老师为准，不编“老师说过”。',
