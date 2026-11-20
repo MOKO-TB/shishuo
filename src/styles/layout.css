@@ -222,6 +222,9 @@
 .side-settings-copy strong {
   font-size: var(--text-sm);
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .side-settings-copy span {
@@ -948,6 +951,9 @@
 .side-settings-copy strong {
   font-size: var(--text-sm);
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .side-settings-copy span {

@@ -306,7 +306,7 @@ export function Layout({
               size="sm"
             />
             <span className="side-settings-copy">
-              <strong>设置</strong>
+              <strong>{profile.name}</strong>
               <span>{isTeacher ? "教师账号" : "学生账号"}</span>
             </span>
             <Settings size={15} />
