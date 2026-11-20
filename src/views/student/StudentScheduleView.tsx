@@ -261,9 +261,11 @@ function EmptyClassroomModal({
 
   const buildings = useMemo(
     () =>
-      Array.from(new Set(rooms.map(roomBuilding))).sort((a, b) =>
-        a.localeCompare(b, 'zh-Hans-CN'),
-      ),
+      Array.from(new Set(rooms.map(roomBuilding))).sort((a, b) => {
+        if (a === '其他') return 1
+        if (b === '其他') return -1
+        return a.localeCompare(b, 'zh-Hans-CN')
+      }),
     [rooms],
   )
   const activeBuilding = buildings.includes(building) ? building : buildings[0] ?? ''
