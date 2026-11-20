@@ -39,6 +39,14 @@ import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
 type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'ask' | 'kb'
 
+type CalendarItem = {
+  event: CampusCalendarEvent
+  start: Date
+  end: Date | null
+  days: number
+  sortDate: number
+}
+
 function parseDate(value: string) {
   const [year, month, day] = value.split('-').map((part) => Number(part))
   if (!year || !month || !day) return null
@@ -81,6 +89,27 @@ function eventKindTone(kind: string) {
   if (kind === 'exam') return 'medium' as const
   if (kind === 'deadline') return 'danger' as const
   return 'gold' as const
+}
+
+function CalendarRow({ event, start, end, days }: CalendarItem) {
+  return (
+    <article className="campus-calendar-row">
+      <div className="campus-calendar-date">
+        <strong>{dateLabel(start)}</strong>
+        <span>
+          {days === 0 ? '今天' : days > 0 ? `${days} 天后` : `${Math.abs(days)} 天前`}
+        </span>
+      </div>
+      <div className="campus-calendar-main">
+        <div className="campus-calendar-top">
+          <Badge tone={eventKindTone(event.kind)}>{eventKindLabel(event.kind)}</Badge>
+          {end && <em>{dateLabel(end)} 结束</em>}
+        </div>
+        <strong>{event.name}</strong>
+        {event.note && <p>{excerpt(event.note, 130)}</p>}
+      </div>
+    </article>
+  )
 }
 
 function BookCard({ book, recommended }: { book: CampusBook; recommended?: boolean }) {
@@ -148,6 +177,7 @@ export function CampusTools({
   activeCategory = 'all',
   onPickCategory,
   askSlot,
+  children,
 }: {
   /** 「我的提问」条数，用于 tab 角标 */
   askCount?: number
@@ -159,11 +189,12 @@ export function CampusTools({
   onPickCategory?: (category: string) => void
   /** 我的提问面板（由父组件注入，避免把提问逻辑搬进工具组件） */
   askSlot?: React.ReactNode
+  /** 工具下方内容（知识卡列表等），放进吸顶作用域内 */
+  children?: React.ReactNode
 } = {}) {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const stickyHostRef = useRef<HTMLElement>(null)
   const toolsBarRef = useRef<HTMLElement>(null)
-  const bodyRef = useRef<HTMLElement>(null)
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
   const [liveQuery, setLiveQuery] = useState('')
@@ -221,7 +252,7 @@ export function CampusTools({
     return value
   }, [])
 
-  const upcomingEvents = useMemo(() => {
+  const calendarEvents = useMemo<CalendarItem[]>(() => {
     return CAMPUS_CALENDAR_EVENTS.map((event) => {
       const start = nextOccurrence(event, today)
       if (!start) return null
@@ -235,11 +266,14 @@ export function CampusTools({
         sortDate,
       }
     })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item))
-      .filter((item) => item.days >= 0)
+      .filter((item): item is CalendarItem => Boolean(item))
       .sort((a, b) => a.sortDate - b.sortDate)
-      .slice(0, 8)
   }, [today])
+
+  const upcomingEvents = calendarEvents.filter((item) => item.days >= 0)
+  const pastEvents = calendarEvents
+    .filter((item) => item.days < 0)
+    .sort((a, b) => b.sortDate - a.sortDate)
 
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
@@ -346,12 +380,17 @@ export function CampusTools({
 
   const selected = CAMPUS_BUILDINGS.find((building) => building.no === selectedBuilding) ?? null
 
-  /** 从下拉里选楼：选中、回填名称、收起候选 */
-  const pickBuilding = (no: number) => {
+  /** 选中建筑：地图和列表共用 */
+  const selectBuilding = (no: number) => {
     setSelectedBuilding(no)
+    setSuggestOpen(false)
+  }
+
+  /** 从搜索下拉里选楼：选中后回填名称，列表仍可继续点 */
+  const pickBuilding = (no: number) => {
+    selectBuilding(no)
     const building = CAMPUS_BUILDINGS.find((item) => item.no === no)
     if (building) setMapQuery(building.name)
-    setSuggestOpen(false)
   }
 
   // 点搜索框外部时收起候选
@@ -371,36 +410,25 @@ export function CampusTools({
   useEffect(() => {
     const host = stickyHostRef.current
     const bar = toolsBarRef.current
-    const body = bodyRef.current
-    const page = host?.parentElement
-    if (!host || !bar || !body || !page) return
+    if (!host || !bar) return
 
     const sync = () => {
-      // 1) 选项栏高度 → 内容区让位
-      const h = Math.round(bar.getBoundingClientRect().height)
-      body.style.setProperty('--tools-bar-h', `${h}px`)
-
-      // 2) 吸顶活动范围 → 包裹层必须撑到页面底部，
-      //    否则 sticky 只在「包裹层自身高度」内滑动，滚过就消失。
-      host.style.minHeight = ''
-      const hostRect = host.getBoundingClientRect()
-      const pageRect = page.getBoundingClientRect()
-      const remaining = pageRect.bottom - hostRect.top
-      if (remaining > hostRect.height) {
-        host.style.minHeight = `${Math.round(remaining)}px`
-      }
+      // 只同步选项栏高度，供知识列表的 scroll-margin-top 避开吸顶栏。
+      // 吸顶范围由包裹层内的真实内容撑开，不再人为设置 minHeight。
+      host.style.setProperty(
+        '--tools-bar-h',
+        `${Math.round(bar.getBoundingClientRect().height)}px`,
+      )
     }
 
     sync()
-    // 只观察 bar 与 page：不观察 host 自身，避免撑高触发自身形成循环
-    const observer = new ResizeObserver(() => sync())
+    const observer = new ResizeObserver(sync)
     observer.observe(bar)
-    observer.observe(page)
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', sync)
-      host.style.minHeight = ''
+      host.style.removeProperty('--tools-bar-h')
     }
   }, [tab])
 
@@ -481,7 +509,7 @@ export function CampusTools({
       </section>
 
       {/* 内容区：跟随页面滚动，不吸顶 */}
-      <section className="campus-tools-body card" ref={bodyRef}>
+      <section className="campus-tools-body card">
 
 
   {tab === 'gpa' && (
@@ -552,24 +580,21 @@ export function CampusTools({
         {upcomingEvents.length === 0 ? (
           <p className="campus-tool-empty">近期没有已录入的校历事件，请以教务处通知为准。</p>
         ) : (
-          upcomingEvents.map(({ event, start, end, days }) => (
-            <article className="campus-calendar-row" key={event.id}>
-              <div className="campus-calendar-date">
-                <strong>{dateLabel(start)}</strong>
-                <span>{days === 0 ? '今天' : `${days} 天后`}</span>
-              </div>
-              <div className="campus-calendar-main">
-                <div className="campus-calendar-top">
-                  <Badge tone={eventKindTone(event.kind)}>{eventKindLabel(event.kind)}</Badge>
-                  {end && <em>{dateLabel(end)} 结束</em>}
-                </div>
-                <strong>{event.name}</strong>
-                {event.note && <p>{excerpt(event.note, 130)}</p>}
-              </div>
-            </article>
+          upcomingEvents.map((item) => (
+            <CalendarRow {...item} key={item.event.id} />
           ))
         )}
       </div>
+      {pastEvents.length > 0 && (
+        <details className="campus-calendar-history">
+          <summary>查看已过的校历节点（{pastEvents.length} 条）</summary>
+          <div className="campus-calendar-list">
+            {pastEvents.map((item) => (
+              <CalendarRow {...item} key={item.event.id} />
+            ))}
+          </div>
+        </details>
+      )}
       <p className="campus-tool-note">
         校历来自学校官方/公开来源；「每年例行」条目是按往年日期投影，具体以当学期教务处通知为准。
       </p>
@@ -973,9 +998,9 @@ export function CampusTools({
                     width: `${((x2 - x1) / CAMPUS_MAP.width) * 100}%`,
                     height: `${((y2 - y1) / CAMPUS_MAP.height) * 100}%`,
                   }}
-                  aria-label={building.name}
+                  aria-label={`选择${building.name}`}
                   title={building.name}
-                  onClick={() => setSelectedBuilding(building.no)}
+                  onClick={() => selectBuilding(building.no)}
                 />
               )
             })}
@@ -1001,10 +1026,41 @@ export function CampusTools({
             </>
           )}
         </div>
+
+        <div className="campus-map-side">
+          <div className="campus-map-list-head">
+            <strong>{mapQuery.trim() ? '搜索结果' : '全部地点'}</strong>
+            <span>{filteredBuildings.length} 个</span>
+          </div>
+          <p className="campus-map-hint">点地图上的框，或从列表选一个地点</p>
+          <div className="campus-map-list" role="listbox" aria-label="校园建筑">
+            {filteredBuildings.length === 0 ? (
+              <p className="campus-tool-empty">没有匹配的地点，换个关键词试试</p>
+            ) : (
+              filteredBuildings.map((building) => (
+                <button
+                  key={building.no}
+                  type="button"
+                  role="option"
+                  aria-selected={building.no === selectedBuilding}
+                  className={building.no === selectedBuilding ? 'is-active' : ''}
+                  onClick={() => selectBuilding(building.no)}
+                >
+                  <span>{building.no.toString().padStart(2, '0')}</span>
+                  <strong>{building.name}</strong>
+                  <em>{building.category}</em>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )}
       </section>
+
+      {/* 工具下方内容也放进吸顶作用域，选项栏才能一直吸到列表底部 */}
+      {children}
     </section>
   )
 }

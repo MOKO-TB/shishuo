@@ -848,11 +848,13 @@ export function CampusView({ role, notify }: CampusViewProps) {
             setCategory(next)
             setCredFilter('all')
             setQuery('')
-            // 选完分类滚到下方知识卡列表，让用户直接看到过滤结果
+            // 等筛选结果渲染后再滚到知识卡列表
             window.requestAnimationFrame(() => {
-              document
-                .querySelector('.campus-filter-row')
-                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              window.requestAnimationFrame(() => {
+                document
+                  .querySelector('.campus-grid')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              })
             })
           }}
           askSlot={
@@ -907,7 +909,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
               ))}
             </div>
           }
-        />
+        >
 
       {role === 'teacher' && (
         <div className="campus-ops card">
@@ -1239,6 +1241,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
           )}
         </>
       )}
+      </CampusTools>
 
       <Modal
         open={Boolean(editingFaq)}

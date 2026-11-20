@@ -194,6 +194,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
   gap: 12px;
+  scroll-margin-top: calc(var(--header-h) + var(--tools-bar-h, 127px) + 16px);
 }
 
 .campus-load-more {
