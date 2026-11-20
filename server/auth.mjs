@@ -6,7 +6,9 @@ import {
 } from 'node:crypto'
 
 export const SESSION_COOKIE = 'shishuo_session'
-export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
+/** 长期“保持登录”令牌的有效期；浏览器 Cookie 被清掉时用它自动恢复会话。 */
+export const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 const SCRYPT_N = 16_384
 const SCRYPT_R = 8
@@ -110,6 +112,49 @@ export function createSession(db, userId) {
 export function deleteSession(db, token) {
   if (!token) return
   db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(token))
+}
+
+/**
+ * 记住登录令牌：明文只回给浏览器存 localStorage，服务端只留哈希。
+ * 用途是 WebView / 微信内置浏览器把 Cookie 清掉后，重新换一个会话。
+ */
+export function createRememberToken(db, userId) {
+  const token = newSessionToken()
+  const now = Date.now()
+  db.prepare('DELETE FROM remember_tokens WHERE expires_at <= ?').run(now)
+  db.prepare(
+    'INSERT INTO remember_tokens (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)',
+  ).run(hashToken(token), userId, now, now + REMEMBER_TTL_MS)
+  return token
+}
+
+export function userForRememberToken(db, token) {
+  if (!token) return null
+  const row = db
+    .prepare(
+      `SELECT u.id, u.email, u.name, u.role, u.profile_json, u.courses_json, u.is_admin,
+              u.status, u.status_reason, u.status_until, u.status_updated_at,
+              u.created_at, r.expires_at
+         FROM remember_tokens r
+         JOIN users u ON u.id = r.user_id
+        WHERE r.token_hash = ?`,
+    )
+    .get(hashToken(token))
+  if (!row) return null
+  if (Number(row.expires_at) <= Date.now()) {
+    db.prepare('DELETE FROM remember_tokens WHERE token_hash = ?').run(hashToken(token))
+    return null
+  }
+  return row
+}
+
+export function deleteRememberToken(db, token) {
+  if (!token) return
+  db.prepare('DELETE FROM remember_tokens WHERE token_hash = ?').run(hashToken(token))
+}
+
+export function deleteRememberTokensForUser(db, userId) {
+  db.prepare('DELETE FROM remember_tokens WHERE user_id = ?').run(userId)
 }
 
 export function userForRequest(db, req) {

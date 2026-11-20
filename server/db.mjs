@@ -38,6 +38,16 @@ export function openDatabase(dbPath) {
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
 
+    CREATE TABLE IF NOT EXISTS remember_tokens (
+      token_hash TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_remember_user ON remember_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_remember_expiry ON remember_tokens(expires_at);
+
     CREATE TABLE IF NOT EXISTS workspaces (
       id TEXT PRIMARY KEY,
       data_json TEXT,

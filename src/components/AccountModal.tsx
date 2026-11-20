@@ -1022,7 +1022,7 @@ export function AccountModal({
               <div className="settings-row is-static">
                 <span className="settings-row-copy">
                   <strong>退出登录</strong>
-                  <small>退出后需要重新输入邮箱和密码；未保存的修改会丢失。</small>
+                  <small>退出后需要重新输入密码；未保存的修改会丢失。</small>
                 </span>
                 <button
                   className="button button-danger-ghost"

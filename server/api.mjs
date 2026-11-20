@@ -1,5 +1,5 @@
 import { gzipSync } from 'node:zlib'
-import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId } from './auth.mjs'
+import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId, createRememberToken, userForRememberToken, deleteRememberToken, deleteRememberTokensForUser } from './auth.mjs'
 import { WORKSPACE_ID } from './db.mjs'
 import { HttpError } from './http-error.mjs'
 import { PILOT_COURSES, PILOT_COURSE_IDS, TEACHER_COURSES, parseJsonObject } from './policy.mjs'
@@ -582,6 +582,24 @@ export function createApiHandler({ db, config }) {
       return sendJson(res, 200, { user: row ? publicUser(row) : null })
     }
 
+    // 浏览器 Cookie 被清掉后用本地“保持登录”令牌换一个新会话。
+    if (pathname === '/api/auth/remember' && req.method === 'POST') {
+      if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+      const body = await readJson(req, SMALL_BODY_LIMIT)
+      const rememberToken = String(body.token ?? '').trim()
+      const row = userForRememberToken(db, rememberToken)
+      if (!row) {
+        res.setHeader('Set-Cookie', expiredSessionCookie({ secure: config.cookieSecure }))
+        return sendError(res, 401, '登录状态已失效，请重新登录。')
+      }
+      if (effectiveUserStatus(row).status === 'banned') {
+        return sendError(res, 403, '账号已被封禁，请联系管理员。')
+      }
+      const session = createSession(db, row.id)
+      res.setHeader('Set-Cookie', sessionCookie(session, { secure: config.cookieSecure }))
+      return sendJson(res, 200, { user: publicUser(row) })
+    }
+
     if (pathname === '/api/auth/login' && req.method === 'POST') {
       if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
       const body = await readJson(req, SMALL_BODY_LIMIT)
@@ -601,8 +619,9 @@ export function createApiHandler({ db, config }) {
         return sendError(res, 403, '账号已被封禁，请联系管理员。')
       }
       const token = createSession(db, row.id)
+      const rememberToken = createRememberToken(db, row.id)
       res.setHeader('Set-Cookie', sessionCookie(token, { secure: config.cookieSecure }))
-      return sendJson(res, 200, { user: publicUser(row) })
+      return sendJson(res, 200, { user: publicUser(row), rememberToken })
     }
 
     // 独立管理端登录：只有 is_admin 账号能通过，失败不会替换当前浏览器会话。
@@ -710,6 +729,7 @@ export function createApiHandler({ db, config }) {
         row.id,
       )
       db.prepare('DELETE FROM sessions WHERE user_id = ?').run(row.id)
+      deleteRememberTokensForUser(db, row.id)
       recordAudit(db, {
         user: row,
         action: 'password-reset',
@@ -779,12 +799,15 @@ export function createApiHandler({ db, config }) {
         courseIds: courses,
       })
       const token = createSession(db, id)
+      const rememberToken = createRememberToken(db, id)
       res.setHeader('Set-Cookie', sessionCookie(token, { secure: config.cookieSecure }))
-      return sendJson(res, 201, { user: publicUser(row) })
+      return sendJson(res, 201, { user: publicUser(row), rememberToken })
     }
 
     if (pathname === '/api/auth/logout' && req.method === 'POST') {
       if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+      const body = await readJson(req, SMALL_BODY_LIMIT)
+      deleteRememberToken(db, String(body.rememberToken ?? '').trim())
       deleteSession(db, sessionTokenFromRequest(req))
       res.setHeader('Set-Cookie', expiredSessionCookie({ secure: config.cookieSecure }))
       return sendJson(res, 200, { ok: true })
@@ -1267,6 +1290,7 @@ export function createApiHandler({ db, config }) {
           } else {
             db.prepare('DELETE FROM sessions WHERE user_id = ?').run(target.id)
           }
+          deleteRememberTokensForUser(db, target.id)
           recordAudit(db, {
             user: admin,
             action: 'password-reset',

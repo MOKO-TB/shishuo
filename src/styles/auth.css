@@ -361,6 +361,14 @@
   padding: 12px 18px;
 }
 
+.auth-remember-hint {
+  margin: 2px 0 0;
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  color: var(--faint);
+  text-align: center;
+}
+
 .auth-demo {
   margin-top: 26px;
   padding-top: 20px;

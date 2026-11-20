@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
+import { readRememberedEmail } from '../lib/authStorage'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
 import { BrandMark } from './ui'
 
@@ -23,7 +24,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function AuthScreen() {
   const { login, register, error: sessionError } = useAuth()
   const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(() => readRememberedEmail())
   const [password, setPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [name, setName] = useState('')
@@ -319,6 +320,7 @@ export function AuthScreen() {
               <input
                 className="input"
                 type="email"
+                name="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@school.edu.cn"
@@ -332,6 +334,7 @@ export function AuthScreen() {
                 <input
                   className="input"
                   type="password"
+                  name="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder={mode === 'register' ? '至少 8 位' : '输入密码'}
@@ -487,6 +490,12 @@ export function AuthScreen() {
                     ? '注册并进入'
                     : '重置密码'}
             </button>
+
+            {mode === 'login' && (
+              <p className="auth-remember-hint">
+                本机会保留登录状态 30 天，下次打开不用再输账号密码；公用设备请用完退出。
+              </p>
+            )}
           </form>
 
           {mode !== 'reset' && demoEnabled && (
