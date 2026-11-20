@@ -1060,3 +1060,64 @@
     padding-top: 8px;
   }
 }
+
+/* ---------- 窄侧栏（≤1080）：本周课程收成单个图标入口 ----------
+   侧栏只有 84px 时，课程卡按 10px 内边距 + 3px 外边距会撑到 97px，
+   横向溢出且标题被挤成三行。这里改成与导航项同宽的方形按钮。 */
+@media (max-width: 1080px) {
+  .side-timetable {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    display: flex;
+    justify-content: center;
+  }
+
+  .side-timetable-head {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+  }
+
+  /* 图标栏里没有空间放标题文字 */
+  .side-timetable-head > span {
+    display: none;
+  }
+
+  .side-timetable-link {
+    width: var(--touch);
+    height: var(--touch);
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--side-line);
+    border-radius: var(--radius-md);
+    background: var(--side-hover);
+    color: var(--fg-on-strong);
+    font-size: 0;
+    overflow: hidden;
+  }
+
+  .side-timetable-link:hover {
+    background: var(--side-line-strong);
+  }
+
+  /* 用「课」字代替被隐藏的文字，语义仍然是「查看 / 添加课表」 */
+  .side-timetable-link::before {
+    content: '课';
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--fg-on-strong);
+  }
+
+  /* 网格与脚注在图标栏里放不下 */
+  .side-timetable .side-week,
+  .side-timetable .side-timetable-foot,
+  .side-timetable .side-timetable-empty {
+    display: none;
+  }
+}
