@@ -1,5 +1,5 @@
 import { apiGet } from './api'
-import { CAMPUS_ANSWER_SKILL } from './campusAnswerSkill'
+import { CAMPUS_ANSWER_SKILL, CAMPUS_OFFICIAL_LINKS } from './campusAnswerSkill'
 
 export interface AIConfig {
   enabled: boolean
@@ -427,6 +427,9 @@ export async function answerCampusWithAI({
     month: '2-digit',
     day: '2-digit',
   })
+  const officialLinkBlock = CAMPUS_OFFICIAL_LINKS.map(
+    (item) => `- ${item.label}：${item.url}（${item.use}）`,
+  ).join('\n')
   const result = await callChatStream(
     [
       {
@@ -434,7 +437,10 @@ export async function answerCampusWithAI({
         content: `${CAMPUS_ANSWER_SKILL}
 
 今天是 ${today}。回答控制在 900 字以内；先判断检索片段与问题的关系，再组织答案。不要输出 Markdown 表格。
-格式硬性要求：每个 ## 小标题、每个 - 列表项、每个数字步骤都必须独立成行；小标题前后各空一行；不要把 ## 或列表符号夹在句子中间。`,
+格式硬性要求：每个 ## 小标题、每个 - 列表项、每个数字步骤都必须独立成行；小标题前后各空一行；不要把 ## 或列表符号夹在句子中间。
+
+可用官方入口（只在相关时选 2–4 个，不要全列；链接必须用完整 URL）：
+${officialLinkBlock}`,
       },
       ...(history ?? []).slice(-8).map((item) => ({
         role: item.role,
