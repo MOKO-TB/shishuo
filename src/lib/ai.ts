@@ -395,8 +395,17 @@ export async function answerWithExternalAI({
   return { text: result.content.slice(0, 4_000), model: result.model }
 }
 
-export async function answerCampusWithAI({
-  question,
+function normalizeCampusAnswer(text: string) {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]*#{2,3}[ \t]*/g, '\n\n## ')
+    .replace(/(##[^\n]*?)[ \t]*-[ \t]*/g, '$1\n\n- ')
+    .replace(/([。；：！？])[ \t]*-[ \t]*/g, '$1\n- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+export async function answerCampusWithAI({  question,
   localContext,
   onUpdate,
 }: {
@@ -418,7 +427,8 @@ export async function answerCampusWithAI({
         role: 'system',
         content: `${CAMPUS_ANSWER_SKILL}
 
-今天是 ${today}。回答控制在 900 字以内；先判断检索片段与问题的关系，再组织答案。不要输出 Markdown 表格。`,
+今天是 ${today}。回答控制在 900 字以内；先判断检索片段与问题的关系，再组织答案。不要输出 Markdown 表格。
+格式硬性要求：每个 ## 小标题、每个 - 列表项、每个数字步骤都必须独立成行；小标题前后各空一行；不要把 ## 或列表符号夹在句子中间。`,
       },
       {
         role: 'user',
@@ -428,7 +438,7 @@ export async function answerCampusWithAI({
     1_600,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
-  return { text: result.content.slice(0, 4_000), model: result.model }
+  return { text: normalizeCampusAnswer(result.content.slice(0, 4_000)), model: result.model }
 }
 
 export async function answerMentorWithAI({

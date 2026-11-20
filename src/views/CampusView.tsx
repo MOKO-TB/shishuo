@@ -878,7 +878,14 @@ export function CampusView({ role, notify }: CampusViewProps) {
                   <p>{thread.teacherReply.text}</p>
                 ) : thread.externalAnswer ? (
                   <>
-                    <p>{excerpt(thread.externalAnswer.text, 160)}</p>
+                    <p>
+                      {excerpt(
+                        thread.externalAnswer.text
+                          .replace(/^#{1,3}\s+/gm, '')
+                          .replace(/^[•-]\s+/gm, ''),
+                        160,
+                      )}
+                    </p>
                     <span className="campus-thread-ai-note">
                       <Sparkles size={11} />
                       AI 参考答复 · 等校园主理人核实
