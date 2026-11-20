@@ -187,12 +187,49 @@ function splitMath(text: string): InlinePart[] {
   return parts.length > 0 ? parts : [{ kind: 'text', value: text }]
 }
 
+function renderLinks(text: string) {
+  const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s<]+)/g)
+  return parts.filter(Boolean).map((part, index) => {
+    const markdown = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(part)
+    if (markdown) {
+      return (
+        <a
+          key={index}
+          className="rich-link"
+          href={markdown[2]}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {markdown[1]}
+        </a>
+      )
+    }
+    if (/^https?:\/\//.test(part)) {
+      let href = part
+      let tail = ''
+      while (/[),.;，。；、）】]+$/.test(href)) {
+        tail = href.slice(-1) + tail
+        href = href.slice(0, -1)
+      }
+      return (
+        <Fragment key={index}>
+          <a className="rich-link" href={href} target="_blank" rel="noreferrer">
+            {href}
+          </a>
+          {tail}
+        </Fragment>
+      )
+    }
+    return <Fragment key={index}>{part}</Fragment>
+  })
+}
+
 function renderBold(line: string) {
   return line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, index) =>
     part.startsWith('**') && part.endsWith('**') ? (
-      <strong key={index}>{part.slice(2, -2)}</strong>
+      <strong key={index}>{renderLinks(part.slice(2, -2))}</strong>
     ) : (
-      <span key={index}>{part}</span>
+      <Fragment key={index}>{renderLinks(part)}</Fragment>
     ),
   )
 }

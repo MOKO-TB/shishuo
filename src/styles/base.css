@@ -829,6 +829,19 @@ select.input {
   color: var(--ink);
 }
 
+.rich-link {
+  color: var(--jade-deep);
+  text-decoration: underline;
+  text-decoration-color: var(--jade-soft);
+  text-underline-offset: 2px;
+  word-break: break-word;
+}
+
+.rich-link:hover {
+  color: var(--jade);
+  text-decoration-color: var(--jade);
+}
+
 .math-text {
   white-space: pre-line;
 }

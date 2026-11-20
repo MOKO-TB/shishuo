@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import {
   ArrowRight,
   BookOpen,
@@ -9,6 +9,7 @@ import {
   CornerDownRight,
   KeyRound,
   Link2,
+  Send,
   Sparkles,
   Undo2,
 } from 'lucide-react'
@@ -43,6 +44,7 @@ export function ThreadDetailModal({
   onUndoReply,
   onWithdraw,
   onSupplement,
+  onCampusFollowUp,
   viewer = 'student',
   notify,
 }: {
@@ -55,6 +57,11 @@ export function ThreadDetailModal({
   onUndoReply?: (thread: Thread) => void
   onWithdraw?: (thread: Thread, withdrawn: boolean) => void
   onSupplement?: (thread: Thread, text: string) => void
+  onCampusFollowUp?: (
+    thread: Thread,
+    question: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) => Promise<{ text: string; model: string }>
   viewer?: 'student' | 'teacher'
   notify?: (message: string, tone?: 'success' | 'info' | 'danger') => void
 }) {
@@ -62,12 +69,22 @@ export function ThreadDetailModal({
   const [confirmUndo, setConfirmUndo] = useState(false)
   const [confirmWithdraw, setConfirmWithdraw] = useState(false)
   const [supplementDraft, setSupplementDraft] = useState('')
+  const [chatDraft, setChatDraft] = useState('')
+  const [chatBusy, setChatBusy] = useState(false)
+  const [chatError, setChatError] = useState('')
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; text: string }>
+  >([])
   const thread = threadId ? data.threads.find((item) => item.id === threadId) : undefined
 
   useEffect(() => {
     setConfirmUndo(false)
     setConfirmWithdraw(false)
     setSupplementDraft('')
+    setChatDraft('')
+    setChatBusy(false)
+    setChatError('')
+    setChatMessages([])
   }, [threadId])
 
   if (!thread) return null
@@ -115,6 +132,41 @@ export function ThreadDetailModal({
     /\^\{|_\{/.test(thread.aiAnswer)
       ? sources[0].answer
       : thread.aiAnswer
+  const canCampusChat = thread.courseId === 'campus' && Boolean(onCampusFollowUp)
+
+  const submitCampusChat = async (event: FormEvent) => {
+    event.preventDefault()
+    const question = chatDraft.trim()
+    if (!question || chatBusy || !onCampusFollowUp) return
+    const initialAnswer =
+      thread.externalAnswer?.text || thread.aiAnswer || thread.teacherReply?.text || ''
+    const history = [
+      { role: 'user' as const, content: thread.question },
+      ...(initialAnswer
+        ? [{ role: 'assistant' as const, content: initialAnswer }]
+        : []),
+      ...chatMessages.map((message) => ({
+        role: message.role,
+        content: message.text,
+      })),
+    ]
+    const nextMessages = [...chatMessages, { role: 'user' as const, text: question }]
+    setChatDraft('')
+    setChatError('')
+    setChatMessages(nextMessages)
+    setChatBusy(true)
+    try {
+      const result = await onCampusFollowUp(thread, question, history)
+      setChatMessages((current) => [
+        ...current,
+        { role: 'assistant', text: result.text },
+      ])
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : '继续追问失败，请稍后再试。')
+    } finally {
+      setChatBusy(false)
+    }
+  }
 
   return (
     <Modal
@@ -344,6 +396,41 @@ export function ThreadDetailModal({
               <RichText text={thread.externalAnswer.text} />
             </div>
           </div>
+        )}
+
+        {canCampusChat && (
+          <section className="campus-chat">
+            <div className="campus-chat-head">
+              <strong>继续追问</strong>
+              <span>AI 会带着上面的对话继续回答</span>
+            </div>
+            {chatMessages.map((message, index) => (
+              <div
+                className={`campus-chat-row is-${message.role}`}
+                key={`${message.role}-${index}`}
+              >
+                <strong>{message.role === 'user' ? '你' : '学长'}</strong>
+                <RichText text={message.text} />
+              </div>
+            ))}
+            {chatError && <p className="campus-chat-error">{chatError}</p>}
+            <form className="campus-chat-form" onSubmit={submitCampusChat}>
+              <input
+                value={chatDraft}
+                onChange={(event) => setChatDraft(event.target.value)}
+                placeholder="接着问，比如：那计算机专业具体先考哪个证？"
+                aria-label="继续追问校园 AI"
+              />
+              <button
+                className="button button-primary"
+                type="submit"
+                disabled={!chatDraft.trim() || chatBusy}
+              >
+                <Send size={14} />
+                {chatBusy ? '回答中…' : '发送'}
+              </button>
+            </form>
+          </section>
         )}
 
         {thread.escalation && (

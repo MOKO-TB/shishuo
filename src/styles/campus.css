@@ -1000,3 +1000,89 @@
     font-size: 11px;
   }
 }
+
+/* 校园 AI 连续追问 */
+.campus-chat {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.campus-chat-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.campus-chat-head strong {
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.campus-chat-head span {
+  font-size: var(--text-meta);
+  color: var(--faint);
+  text-align: right;
+}
+
+.campus-chat-row {
+  display: grid;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+}
+
+.campus-chat-row.is-user {
+  border-color: transparent;
+  background: var(--jade-soft);
+}
+
+.campus-chat-row > strong {
+  font-size: var(--text-meta);
+  color: var(--jade-deep);
+}
+
+.campus-chat-row .rich-text {
+  max-width: none;
+  font-size: var(--text-xs);
+  line-height: 1.65;
+}
+
+.campus-chat-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.campus-chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-xs);
+}
+
+.campus-chat-form input:focus {
+  border-color: var(--jade);
+  outline: none;
+}
+
+.campus-chat-form .button {
+  flex: 0 0 auto;
+  height: 38px;
+}
+
+.campus-chat-error {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--clay-deep);
+}

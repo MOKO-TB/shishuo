@@ -408,12 +408,15 @@ function normalizeCampusAnswer(text: string) {
     .trim()
 }
 
-export async function answerCampusWithAI({  question,
+export async function answerCampusWithAI({
+  question,
   localContext,
+  history,
   onUpdate,
 }: {
   question: string
   localContext?: string
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
   onUpdate?: (partial: string) => void
 }) {
   const contextBlock = localContext?.trim()
@@ -433,6 +436,10 @@ export async function answerCampusWithAI({  question,
 今天是 ${today}。回答控制在 900 字以内；先判断检索片段与问题的关系，再组织答案。不要输出 Markdown 表格。
 格式硬性要求：每个 ## 小标题、每个 - 列表项、每个数字步骤都必须独立成行；小标题前后各空一行；不要把 ## 或列表符号夹在句子中间。`,
       },
+      ...(history ?? []).slice(-8).map((item) => ({
+        role: item.role,
+        content: item.content.slice(0, 2_000),
+      })),
       {
         role: 'user',
         content: `学生的问题：${question}\n\n${contextBlock}`,

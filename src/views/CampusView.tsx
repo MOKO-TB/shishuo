@@ -760,6 +760,18 @@ export function CampusView({ role, notify }: CampusViewProps) {
               AI 生成，仅供参考；涉及政策、金额和截止日期时，请以学校官方通知为准。
             </span>
           </div>
+          {askThread && (
+            <div className="campus-answer-actions">
+              <button
+                className="button button-secondary"
+                onClick={() => setDetailThreadId(askThread.id)}
+              >
+                继续追问
+                <ArrowUpRight size={14} />
+              </button>
+              <span>会带着这次回答继续聊，不用从头再问</span>
+            </div>
+          )}
         </section>
       )}
 
@@ -1379,6 +1391,24 @@ export function CampusView({ role, notify }: CampusViewProps) {
         threadId={detailThreadId}
         onClose={() => setDetailThreadId(null)}
         viewer="student"
+        onCampusFollowUp={async (_thread, question, history) => {
+          const result = retrieve(campusFaqs, question, CAMPUS_COURSE_ID)
+          const localContext = result.matches
+            .slice(0, 3)
+            .map((match) => {
+              const faq = match.faq
+              const source = [
+                faq.sourceChannel ? `来源：${faq.sourceChannel}` : '',
+                faq.credibility ? `可信度：${faq.credibility}` : '',
+                faq.sourceUrl ? `链接：${faq.sourceUrl}` : '',
+              ]
+                .filter(Boolean)
+                .join('；')
+              return `Q: ${faq.question}\nA: ${faq.answer.slice(0, 600)}${source ? `\n${source}` : ''}`
+            })
+            .join('\n\n')
+          return answerCampusWithAI({ question, localContext, history })
+        }}
         onOpenFaq={(faqId) => {
           const faq = data.faqs.find((item) => item.id === faqId)
           if (faq) setQuery(faq.question)
