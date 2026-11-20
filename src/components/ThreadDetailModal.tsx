@@ -401,7 +401,6 @@ export function ThreadDetailModal({
           <section className="campus-chat">
             <div className="campus-chat-head">
               <strong>继续追问</strong>
-              <span>AI 会带着上面的对话继续回答</span>
             </div>
             {chatMessages.map((message, index) => (
               <div
@@ -554,13 +553,15 @@ export function ThreadDetailModal({
             <span className="pending-pulse" />
             <div>
               <strong>{course.teacher}{replyRole}还没有回复</strong>
-              <p>
-                {thread.kind === 'same'
-                  ? `已经并入同题组，${replyRole}一次回复会同步给你。`
-                  : thread.kind === 'follow-up'
-                    ? `追问已带上一次的${replyRole}回复，${replyRole}会接着上一段讲。`
-                    : `AI 已附上问题摘要和检索依据。同类问题会合并在一起，${replyRole}回复后会同步给你。`}
-              </p>
+              {thread.courseId !== 'campus' && (
+                <p>
+                  {thread.kind === 'same'
+                    ? `已经并入同题组，${replyRole}一次回复会同步给你。`
+                    : thread.kind === 'follow-up'
+                      ? `追问已带上一次的${replyRole}回复，${replyRole}会接着上一段讲。`
+                      : `AI 已附上问题摘要和检索依据。同类问题会合并在一起，${replyRole}回复后会同步给你。`}
+                </p>
+              )}
             </div>
           </div>
         ) : thread.status === 'needs-info' ? (
