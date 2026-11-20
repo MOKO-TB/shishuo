@@ -374,6 +374,159 @@
   color: var(--muted);
 }
 
+.library-login-form,
+.library-login-captcha,
+.library-loan-panel {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.library-login-captcha > p {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.library-login-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.library-login-row .input {
+  flex: 1 1 140px;
+  min-width: 0;
+  height: 36px;
+}
+
+.library-captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.library-captcha-row img {
+  display: block;
+  height: 44px;
+  width: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+.library-login-error {
+  margin: 0;
+  padding: 7px 9px;
+  border-radius: var(--radius-xs);
+  background: var(--clay-soft);
+  color: var(--clay-deep);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+}
+
+.library-loan-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.library-loan-toolbar strong {
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.library-loan-toolbar .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--text-meta);
+}
+
+.library-loan-list {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.library-loan-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+}
+
+.library-loan-row > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.library-loan-row strong {
+  overflow: hidden;
+  font-size: var(--text-xs);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-loan-row em {
+  font-size: var(--text-meta);
+  font-style: normal;
+  color: var(--muted);
+}
+
+.library-loan-due {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  flex: 0 0 auto;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.library-loan-due small {
+  color: var(--jade-deep);
+}
+
+.library-loan-due b {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.library-loan-raw {
+  max-height: 240px;
+  margin: 0;
+  padding: 9px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.campus-library-search-btn {
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.campus-book-status {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
 .campus-library-personal-icon {
   display: grid;
   place-items: center;

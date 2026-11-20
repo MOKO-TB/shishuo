@@ -1,34 +1,297 @@
-/* 学生端课程表：手机优先的按天视图。 */
+/* 学生端课程表：整周课表网格（横向一周、纵向节次），手机端压缩成 7 天全景。 */
 
 .schedule-page {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   align-content: start;
 }
 
 .schedule-head {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .schedule-head .display-title {
   margin: 0;
 }
 
-.schedule-head .page-lede {
+.schedule-title {
   margin: 0;
 }
 
-.schedule-controls {
-  display: grid;
-  gap: 13px;
-  padding: 14px;
+.schedule-note {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--muted);
 }
 
-.schedule-empty-button {
-  justify-self: flex-start;
+.schedule-note-short {
+  display: none;
+}
+
+.schedule-board {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* 工具栏：‹ 第 12 周 › … N 节课 … 空教室 / 放大查看 */
+.schedule-toolbar {
+  align-items: center;
+  gap: 12px;
+}
+
+.schedule-toolbar .week-nav {
+  gap: 10px;
+}
+
+.schedule-toolbar .week-nav strong {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.schedule-toolbar .week-nav-button {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+
+.schedule-toolbar .week-nav-button:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.schedule-toolbar .week-nav-button:disabled {
+  opacity: 0.4;
+}
+
+.schedule-toolbar .week-count {
+  font-size: var(--text-xs);
+}
+
+.schedule-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.schedule-toolbar-actions .button {
   height: 34px;
 }
+
+/* 网格：左栏节次 + 7 天；行高按 55 分钟一节排 */
+.schedule-board .week-grid,
+.schedule-zoom .week-grid {
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  grid-auto-rows: 58px;
+  gap: 5px;
+  padding-bottom: 2px;
+}
+
+.schedule-board .week-grid-day,
+.schedule-zoom .week-grid-day {
+  gap: 2px;
+  border-radius: var(--radius-md);
+}
+
+.schedule-board .week-grid-day strong,
+.schedule-zoom .week-grid-day strong {
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+
+.schedule-board .week-grid-day span,
+.schedule-zoom .week-grid-day span {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 左栏节次不加底色，和画布融为一体，视觉上更安静 */
+.schedule-board .week-grid-period,
+.schedule-zoom .week-grid-period {
+  gap: 3px;
+  background: transparent;
+  border-radius: 0;
+}
+
+.schedule-board .week-grid-period strong,
+.schedule-zoom .week-grid-period strong {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-board .week-grid-period em,
+.schedule-zoom .week-grid-period em {
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.schedule-board .week-grid-cell,
+.schedule-zoom .week-grid-cell {
+  border-radius: var(--radius-sm);
+}
+
+/* 课程块：整块可点，点开看老师、教室与周次 */
+.schedule-board .week-class,
+.schedule-zoom .week-class {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    box-shadow 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.schedule-board .week-class strong,
+.schedule-zoom .week-class strong {
+  font-size: var(--text-xs);
+}
+
+.schedule-board .week-class:hover,
+.schedule-zoom .week-class:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.schedule-board-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.schedule-board-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.schedule-board-foot p {
+  margin: 0;
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+.schedule-board-foot .text-button {
+  margin-left: auto;
+  font-size: var(--text-meta);
+}
+
+.schedule-mobile-hint {
+  display: none;
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+/* 放大查看：铺满视口的整周课表 */
+.schedule-zoom {
+  position: fixed;
+  inset: 20px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  box-shadow: var(--shadow-float);
+  overflow: auto;
+}
+
+.schedule-zoom-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.schedule-zoom-head .week-nav {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-zoom-head .week-nav strong {
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.schedule-zoom-head .week-nav-button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+}
+
+.schedule-zoom-head .week-count {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.schedule-zoom .week-grid.is-zoomed {
+  grid-auto-rows: 78px;
+  gap: 6px;
+}
+
+.schedule-zoom .week-class {
+  padding: 8px 9px;
+  gap: 2px;
+}
+
+.schedule-zoom .week-class strong {
+  font-size: var(--text-sm);
+}
+
+.schedule-zoom .week-class span,
+.schedule-zoom .week-class em {
+  font-size: var(--text-xs);
+}
+
+/* 课程详情弹窗 */
+.schedule-detail {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.schedule-detail > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.schedule-detail > div:last-child {
+  border-bottom: 0;
+}
+
+.schedule-detail dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.schedule-detail dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 空教室 ---------- */
 
 .empty-room-modal {
   display: grid;
@@ -221,314 +484,157 @@
   }
 }
 
-.schedule-weeknav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+/* ---------- 窄屏：7 天塞进一屏，只留课程名，点块看详情 ---------- */
 
-.schedule-weekarrow {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface-2);
-  color: var(--ink-soft);
-  flex: 0 0 auto;
-  transition:
-    border-color 0.2s var(--ease),
-    color 0.2s var(--ease);
-}
-
-.schedule-weekarrow:hover:not(:disabled) {
-  border-color: var(--line-strong);
-  color: var(--ink);
-}
-
-.schedule-weekarrow:disabled {
-  opacity: 0.4;
-}
-
-.schedule-weeklabel {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.schedule-weeklabel strong {
-  font-size: 14px;
-  color: var(--ink);
-}
-
-.schedule-weeklabel span {
-  font-size: var(--text-meta);
-  color: var(--muted);
-}
-
-.schedule-weeknav .text-button {
-  flex: 0 0 auto;
-  font-size: var(--text-meta);
-}
-
-.schedule-days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.schedule-day {
-  display: grid;
-  gap: 3px;
-  justify-items: center;
-  padding: 9px 2px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface-2);
-  color: var(--muted);
-  transition:
-    border-color 0.2s var(--ease),
-    background 0.2s var(--ease);
-}
-
-.schedule-day span {
-  font-size: 11px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.schedule-day em {
-  font-style: normal;
-  font-size: var(--text-meta);
-  color: var(--faint);
-  white-space: nowrap;
-}
-
-.schedule-day.is-empty {
-  opacity: 0.62;
-}
-
-.schedule-day.is-today span {
-  color: var(--jade-deep);
-}
-
-.schedule-day.is-active {
-  border-color: var(--jade);
-  background: var(--jade-soft);
-}
-
-.schedule-day.is-active span,
-.schedule-day.is-active em {
-  color: var(--jade-deep);
-}
-
-.schedule-list {
-  display: grid;
-  gap: 10px;
-}
-
-.schedule-card {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--jade);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.schedule-card.tone-jade { border-left-color: #146c56; }
-.schedule-card.tone-clay { border-left-color: #b8613e; }
-.schedule-card.tone-blue { border-left-color: #4d6e8a; }
-.schedule-card.tone-gold { border-left-color: #ad7f1d; }
-.schedule-card.tone-mint { border-left-color: #3f8f74; }
-.schedule-card.tone-rose { border-left-color: #a94f6d; }
-.schedule-card.tone-sea { border-left-color: #3a7a8c; }
-.schedule-card.tone-plum { border-left-color: #7a4d8a; }
-.schedule-card.tone-olive { border-left-color: #6b7a2e; }
-.schedule-card.tone-sky { border-left-color: #4a86b8; }
-.schedule-card.tone-sand { border-left-color: #a08a4a; }
-.schedule-card.tone-iris { border-left-color: #5f5aa8; }
-
-.schedule-time {
-  display: grid;
-  gap: 3px;
-  align-content: start;
-}
-
-.schedule-time strong {
-  font-size: 13px;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-}
-
-.schedule-time span {
-  font-size: var(--text-meta);
-  color: var(--muted);
-}
-
-.schedule-body {
-  display: grid;
-  gap: 4px;
-  align-content: start;
-  min-width: 0;
-}
-
-.schedule-body h3 {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.schedule-body p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-.schedule-weeks {
-  justify-self: start;
-  margin-top: 2px;
-  padding: 2px 7px;
-  border-radius: var(--radius-pill);
-  background: var(--paper-2);
-  color: var(--muted);
-  font-size: var(--text-meta);
-}
-
-.schedule-foot {
-  display: flex;
-  justify-content: center;
-  padding: 4px 0 10px;
-}
-
-@media (max-width: 560px) {
+@media (max-width: 720px) {
   .schedule-page {
-    gap: 14px;
-  }
-
-  .schedule-controls {
-    padding: 12px;
-  }
-
-  .schedule-card {
-    grid-template-columns: 76px minmax(0, 1fr);
     gap: 12px;
-    padding: 13px 14px;
   }
 
-  .schedule-time strong {
-    font-size: 12px;
+  .schedule-toolbar {
+    row-gap: 8px;
   }
 
-  .schedule-day {
-    padding: 8px 0;
+  .schedule-toolbar .week-nav {
+    order: 1;
+    gap: 6px;
   }
 
-  .schedule-day span {
+  .schedule-toolbar .week-nav strong {
+    font-size: var(--text-base);
+  }
+
+  .schedule-toolbar .week-nav-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .schedule-toolbar .week-count {
+    order: 2;
+    margin-left: 0;
+  }
+
+  .schedule-toolbar-actions {
+    order: 3;
+    width: auto;
+    margin-left: auto;
+    gap: 0;
+  }
+
+  /* 手机上放大查看没有更多信息，收起来省一行 */
+  .schedule-zoom-trigger {
+    display: none;
+  }
+
+  .schedule-toolbar-actions .button {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    color: var(--jade-deep);
+    font-size: var(--text-meta);
+    font-weight: 600;
+  }
+
+  .schedule-toolbar-actions .button:hover {
+    color: var(--jade);
+  }
+
+  .schedule-toolbar-actions .button svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .schedule-toolbar-actions .text-button {
     font-size: var(--text-meta);
   }
 
-  .schedule-day em {
+  .schedule-note-full {
+    display: none;
+  }
+
+  .schedule-note-short {
+    display: inline;
+  }
+
+  .schedule-board .week-grid,
+  .schedule-zoom .week-grid {
+    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+    grid-auto-rows: 46px;
+    gap: 3px;
+  }
+
+  .schedule-board .week-grid-day,
+  .schedule-zoom .week-grid-day {
+    gap: 1px;
+  }
+
+  .schedule-board .week-grid-day strong,
+  .schedule-zoom .week-grid-day strong {
     font-size: var(--text-meta);
   }
 
-  .schedule-body h3 {
-    font-size: 16px;
-  }
-}
-
-/* ---------- 周几切换：窄屏不再等分 7 格，改为可横滑的胶囊 ----------
-   问题：7 等分在 390px 下每格仅 42px，「周一 / 1 节」被挤成两行，
-   且 320px 时文字会溢出格子。改为：默认单行胶囊 + 横滑 + 吸附。 */
-
-.schedule-days {
-  display: flex;
-  gap: var(--space-2);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-
-.schedule-days::-webkit-scrollbar {
-  display: none;
-}
-
-.schedule-day {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 62px;
-  min-height: var(--touch);
-  padding: 0 12px;
-  justify-content: center;
-  scroll-snap-align: start;
-  white-space: nowrap;
-}
-
-.schedule-day span,
-.schedule-day em {
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-/* 宽屏时有空间，仍用 7 等分，视觉更整齐 */
-@media (min-width: 720px) {
-  .schedule-days {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    overflow: visible;
-    scroll-snap-type: none;
+  .schedule-board .week-grid-day span,
+  .schedule-zoom .week-grid-day span {
+    font-size: var(--text-meta);
+    line-height: 1.1;
   }
 
-  .schedule-day {
-    display: grid;
-    justify-items: center;
-    min-width: 0;
-    padding: 9px 2px;
+  .schedule-board .week-grid-period strong,
+  .schedule-zoom .week-grid-period strong {
+    font-size: var(--text-meta);
   }
-}
 
-/* ---------- 课程行：时间列固定、正文可压缩，长课程名不顶破卡片 ---------- */
-.schedule-card,
-.schedule-row {
-  min-width: 0;
-}
+  .schedule-board .week-grid-period em,
+  .schedule-zoom .week-grid-period em {
+    display: none;
+  }
 
-.schedule-time {
-  flex: 0 0 auto;
-  min-width: 76px;
-}
+  .schedule-board .week-class,
+  .schedule-zoom .week-class {
+    margin: 1px;
+    padding: 3px;
+    gap: 1px;
+    border-radius: var(--radius-xs);
+  }
 
-.schedule-body {
-  min-width: 0;
-}
+  .schedule-board .week-class strong,
+  .schedule-zoom .week-class strong {
+    font-size: var(--text-meta);
+    line-height: 1.25;
+  }
 
-.schedule-body h3 {
-  overflow-wrap: anywhere;
-}
+  /* 两节连堂的块更高，课程名多显示一行 */
+  .schedule-board .week-class:not([data-span='1']) strong,
+  .schedule-zoom .week-class:not([data-span='1']) strong {
+    -webkit-line-clamp: 3;
+  }
 
-.schedule-body p,
-.schedule-weeks {
-  overflow-wrap: anywhere;
-}
+  .schedule-board .week-class span,
+  .schedule-zoom .week-class span {
+    display: none;
+  }
 
-@media (max-width: 420px) {
-  .schedule-time {
-    min-width: 64px;
+  .schedule-board-foot p {
+    display: none;
+  }
+
+  .schedule-mobile-hint {
+    display: block;
+    margin-top: -4px;
+  }
+
+  .schedule-board-foot .text-button {
+    margin-left: 0;
+  }
+
+  .schedule-zoom {
+    inset: 10px;
+    padding: 14px 12px;
+  }
+
+  .schedule-zoom .week-grid.is-zoomed {
+    grid-auto-rows: 58px;
   }
 }

@@ -5,7 +5,11 @@ import {
   Calculator,
   ExternalLink,
   Library,
+  Loader2,
+  LogIn,
+  LogOut,
   MapPin,
+  RefreshCw,
   Search,
   Sparkles,
   UserRound,
@@ -14,6 +18,15 @@ import {
 import { Badge } from '../../components/ui'
 import { useProfile, scoreStats } from '../../lib/profile'
 import { excerpt } from '../../lib/utils'
+import {
+  libraryLoginComplete,
+  libraryLoginStart,
+  libraryLoans,
+  libraryLogout,
+  librarySearch,
+  type LibraryBook,
+  type LibraryLoansResult,
+} from '../../lib/library'
 import {
   CAMPUS_BUILDINGS,
   CAMPUS_CALENDAR_EVENTS,
@@ -99,10 +112,50 @@ function BookCard({ book, recommended }: { book: CampusBook; recommended?: boole
   )
 }
 
+function LiveBookCard({ book }: { book: LibraryBook }) {
+  return (
+    <article className="campus-book-card">
+      <div className="campus-book-top">
+        <Badge tone={book.available > 0 ? 'jade' : 'neutral'}>
+          {book.total > 0
+            ? `在架 ${book.available}/${book.total}`
+            : `馆藏 ${book.total}`}
+        </Badge>
+        <em>{book.callNo || '索书号待查'}</em>
+      </div>
+      <strong>{book.title}</strong>
+      <span className="campus-book-author">{book.author || '作者待查'}</span>
+      <p>
+        {book.publisher || '出版社待查'}
+        {book.year ? ` · ${book.year}` : ''}
+      </p>
+      <div className="campus-book-location">
+        <MapPin size={12} />
+        {book.locations.length > 0 ? book.locations.join('、') : '馆藏地待查'}
+      </div>
+      {book.statuses.length > 0 && (
+        <span className="campus-book-status">{book.statuses.join(' · ')}</span>
+      )}
+    </article>
+  )
+}
+
+
 export function CampusTools() {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
+  const [liveBooks, setLiveBooks] = useState<LibraryBook[] | null>(null)
+  const [liveBusy, setLiveBusy] = useState(false)
+  const [liveError, setLiveError] = useState('')
+  const [libraryAccount, setLibraryAccount] = useState('')
+  const [libraryPassword, setLibraryPassword] = useState('')
+  const [captchaCode, setCaptchaCode] = useState('')
+  const [captchaImage, setCaptchaImage] = useState('')
+  const [libraryLoginId, setLibraryLoginId] = useState('')
+  const [libraryBusy, setLibraryBusy] = useState(false)
+  const [libraryError, setLibraryError] = useState('')
+  const [loans, setLoans] = useState<LibraryLoansResult | null>(null)
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
   const profile = useProfile()
 
@@ -174,6 +227,93 @@ export function CampusTools() {
         .includes(normalized),
     )
   }, [mapQuery])
+
+  const requestLibraryCaptcha = async () => {
+    if (!libraryAccount.trim() || !libraryPassword) {
+      setLibraryError('请填写图书馆账号和密码。')
+      return
+    }
+    setLibraryBusy(true)
+    setLibraryError('')
+    try {
+      const result = await libraryLoginStart(libraryAccount.trim(), libraryPassword)
+      setLibraryLoginId(result.loginId)
+      setCaptchaImage(result.image)
+      setCaptchaCode('')
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : '图书馆登录失败。')
+    } finally {
+      setLibraryBusy(false)
+    }
+  }
+
+  const confirmLibraryLogin = async () => {
+    if (!libraryLoginId || !captchaCode.trim()) {
+      setLibraryError('请输入验证码。')
+      return
+    }
+    setLibraryBusy(true)
+    setLibraryError('')
+    try {
+      await libraryLoginComplete(libraryLoginId, captchaCode.trim())
+      setCaptchaImage('')
+      setLibraryLoginId('')
+      setLibraryPassword('')
+      const data = await libraryLoans()
+      setLoans(data)
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : '图书馆登录失败。')
+      setCaptchaImage('')
+      setLibraryLoginId('')
+    } finally {
+      setLibraryBusy(false)
+    }
+  }
+
+  const reloadLibraryLoans = async () => {
+    setLibraryBusy(true)
+    setLibraryError('')
+    try {
+      setLoans(await libraryLoans())
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : '借阅记录加载失败。')
+    } finally {
+      setLibraryBusy(false)
+    }
+  }
+
+  const logoutLibraryAccount = async () => {
+    setLibraryBusy(true)
+    try {
+      await libraryLogout()
+    } catch {
+      // 退出失败也清空本地展示，避免继续显示旧借阅。
+    } finally {
+      setLoans(null)
+      setLibraryError('')
+      setLibraryBusy(false)
+    }
+  }
+
+  const runLibrarySearch = async (rawQuery: string) => {
+    const query = rawQuery.trim()
+    if (!query) {
+      setLiveBooks(null)
+      setLiveError('')
+      return
+    }
+    setLiveBusy(true)
+    setLiveError('')
+    try {
+      const result = await librarySearch(query)
+      setLiveBooks(result.items)
+    } catch (error) {
+      setLiveBooks([])
+      setLiveError(error instanceof Error ? error.message : '馆藏检索失败。')
+    } finally {
+      setLiveBusy(false)
+    }
+  }
 
   const selected = CAMPUS_BUILDINGS.find((building) => building.no === selectedBuilding) ?? null
 
@@ -287,25 +427,149 @@ export function CampusTools() {
               </span>
               <span className="campus-library-personal-copy">
                 <strong>个人借阅</strong>
-                <em>登录图书馆账号后查看在借书目、续借和到期提醒</em>
+                <em>
+                  {loans
+                    ? `已登录 · 在借 ${loans.total} 本${
+                        loans.historyTotal ? ` · 历史 ${loans.historyTotal} 本` : ''
+                      }`
+                    : '登录图书馆账号后直接查看在借书目和到期时间'}
+                </em>
               </span>
               <a
                 href="https://mfindgzyykj.libsp.cn/#/personalCenter"
                 target="_blank"
                 rel="noreferrer"
               >
-                新窗口打开
+                新窗口
                 <ExternalLink size={12} />
               </a>
             </div>
-            <iframe
-              className="campus-library-personal-frame"
-              src="https://mfindgzyykj.libsp.cn/#/personalCenter"
-              title="图书馆个人借阅"
-              loading="lazy"
-            />
+
+            {loans ? (
+              <div className="library-loan-panel">
+                <div className="library-loan-toolbar">
+                  <strong>我的借阅</strong>
+                  <span>
+                    在借 {loans.total} 本
+                    {loans.historyTotal ? ` · 历史 ${loans.historyTotal} 本` : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => void reloadLibraryLoans()}
+                    disabled={libraryBusy}
+                  >
+                    <RefreshCw size={12} />
+                    刷新
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => void logoutLibraryAccount()}
+                    disabled={libraryBusy}
+                  >
+                    退出图书馆
+                  </button>
+                </div>
+                {loans.items.length > 0 ? (
+                  <div className="library-loan-list">
+                    {loans.items.map((loan, index) => (
+                      <div className="library-loan-row" key={`${loan.title}-${index}`}>
+                        <span>
+                          <strong>{loan.title}</strong>
+                          {loan.author && <em>{loan.author}</em>}
+                        </span>
+                        <span className="library-loan-due">
+                          {loan.status && <small>{loan.status}</small>}
+                          {loan.due && <b>应还 {loan.due}</b>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : loans.raw ? (
+                  <pre className="library-loan-raw">{loans.raw}</pre>
+                ) : (
+                  <p className="campus-tool-empty">当前没有在借书目。</p>
+                )}
+              </div>
+            ) : captchaImage ? (
+              <div className="library-login-captcha">
+                <p>输入验证码完成登录</p>
+                <div className="library-captcha-row">
+                  <img src={captchaImage} alt="图书馆登录验证码" />
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => void requestLibraryCaptcha()}
+                    disabled={libraryBusy}
+                  >
+                    换一张
+                  </button>
+                </div>
+                <div className="library-login-row">
+                  <input
+                    className="input"
+                    value={captchaCode}
+                    onChange={(event) => setCaptchaCode(event.target.value)}
+                    placeholder="验证码"
+                    aria-label="图书馆登录验证码"
+                  />
+                  <button
+                    className="button button-primary"
+                    onClick={() => void confirmLibraryLogin()}
+                    disabled={libraryBusy || !captchaCode.trim()}
+                  >
+                    {libraryBusy ? <Loader2 size={14} className="spin-icon" /> : <LogIn size={14} />}
+                    确认登录
+                  </button>
+                  <button
+                    className="button button-ghost"
+                    onClick={() => {
+                      setCaptchaImage('')
+                      setLibraryLoginId('')
+                      setCaptchaCode('')
+                    }}
+                    disabled={libraryBusy}
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="library-login-form">
+                <div className="library-login-row">
+                  <input
+                    className="input"
+                    value={libraryAccount}
+                    onChange={(event) => setLibraryAccount(event.target.value)}
+                    placeholder="图书馆账号 / 学号"
+                    autoComplete="username"
+                    aria-label="图书馆账号"
+                  />
+                  <input
+                    className="input"
+                    type="password"
+                    value={libraryPassword}
+                    onChange={(event) => setLibraryPassword(event.target.value)}
+                    placeholder="图书馆密码"
+                    autoComplete="current-password"
+                    aria-label="图书馆密码"
+                  />
+                  <button
+                    className="button button-primary"
+                    onClick={() => void requestLibraryCaptcha()}
+                    disabled={libraryBusy}
+                  >
+                    {libraryBusy ? <Loader2 size={14} className="spin-icon" /> : <LogIn size={14} />}
+                    登录图书馆
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {libraryError && <p className="library-login-error">{libraryError}</p>}
             <p className="campus-library-personal-note">
-              首次使用请在下方登录图书馆账号；借阅数据由图书馆 OPAC 提供，登录态只在图书馆站点内。
+              账号密码只提交给学校图书馆 OPAC 换取登录态；师说不保存密码，借阅信息仅用于本页展示。
             </p>
           </section>
 
@@ -313,7 +577,13 @@ export function CampusTools() {
             <Search size={16} />
             <input
               value={bookQuery}
-              onChange={(event) => setBookQuery(event.target.value)}
+              onChange={(event) => {
+                setBookQuery(event.target.value)
+                if (!event.target.value.trim()) setLiveBooks(null)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void runLibrarySearch(bookQuery)
+              }}
               placeholder="搜书名、作者、索书号或关键词…"
               aria-label="搜索图书馆藏书"
             />
@@ -321,15 +591,28 @@ export function CampusTools() {
               <button
                 type="button"
                 className="campus-library-clear"
-                onClick={() => setBookQuery('')}
+                onClick={() => {
+                  setBookQuery('')
+                  setLiveBooks(null)
+                  setLiveError('')
+                }}
                 aria-label="清空书目搜索"
               >
                 <X size={14} />
               </button>
             )}
+            <button
+              type="button"
+              className="button button-primary campus-library-search-btn"
+              onClick={() => void runLibrarySearch(bookQuery)}
+              disabled={!bookQuery.trim() || liveBusy}
+            >
+              {liveBusy ? <Loader2 size={14} className="spin-icon" /> : <Search size={14} />}
+              检索馆藏
+            </button>
           </div>
 
-          {!bookQuery && (
+          {!bookQuery && liveBooks === null && (
             <section className="campus-book-section">
               <div className="campus-book-head">
                 <Sparkles size={15} />
@@ -344,24 +627,51 @@ export function CampusTools() {
             </section>
           )}
 
-          <section className="campus-book-section">
-            <div className="campus-book-head">
-              <BookOpen size={15} />
-              <strong>{bookQuery ? `“${bookQuery}”的检索结果` : '全部书目'}</strong>
-              <span>{bookResults.length} 本</span>
-            </div>
-            {bookResults.length === 0 ? (
-              <p className="campus-tool-empty">
-                没有匹配的书目，换个书名或作者试试；也可以直接到 OPAC 检索全馆。
-              </p>
-            ) : (
-              <div className="campus-book-grid">
-                {bookResults.map((book) => (
-                  <BookCard key={book.id} book={book} />
-                ))}
+          {liveBooks !== null ? (
+            <section className="campus-book-section">
+              <div className="campus-book-head">
+                <BookOpen size={15} />
+                <strong>“{bookQuery}”的馆藏检索</strong>
+                <span>
+                  {liveBusy ? '检索中…' : `${liveBooks.length} 条`}
+                </span>
               </div>
-            )}
-          </section>
+              {liveError ? (
+                <p className="campus-tool-empty">{liveError}</p>
+              ) : liveBusy ? (
+                <p className="campus-tool-empty">正在查询图书馆 OPAC…</p>
+              ) : liveBooks.length === 0 ? (
+                <p className="campus-tool-empty">
+                  没有匹配的书目，换个书名或作者试试。
+                </p>
+              ) : (
+                <div className="campus-book-grid">
+                  {liveBooks.map((book) => (
+                    <LiveBookCard key={book.recordId} book={book} />
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : (
+            <section className="campus-book-section">
+              <div className="campus-book-head">
+                <BookOpen size={15} />
+                <strong>全部书目</strong>
+                <span>{bookResults.length} 本</span>
+              </div>
+              {bookResults.length === 0 ? (
+                <p className="campus-tool-empty">
+                  没有匹配的书目，换个书名或作者试试；也可以直接到 OPAC 检索全馆。
+                </p>
+              ) : (
+                <div className="campus-book-grid">
+                  {bookResults.map((book) => (
+                    <BookCard key={book.id} book={book} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           <details className="campus-library-more">
             <summary>馆藏规模、分类与找书方法</summary>

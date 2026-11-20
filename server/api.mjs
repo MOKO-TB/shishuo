@@ -31,6 +31,7 @@ import {
 import { sendMail, sendVerificationCode } from './mail.mjs'
 import { createJwService, JwError } from './jw.mjs'
 import { ChaoxingError, createChaoxingService } from './chaoxing.mjs'
+import { createLibraryService } from './library.mjs'
 import {
   checkSendRate,
   deleteEmailCode,
@@ -474,6 +475,7 @@ export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
   const jw = createJwService()
   const chaoxing = createChaoxingService(db)
+  const library = createLibraryService()
   /**
    * 工作区响应缓存：连「投影 + 序列化 + gzip」一起缓存，命中时只写 socket。
    * revision 每次成功写入都会递增，因此数据不变时缓存必然安全；
@@ -955,6 +957,50 @@ export function createApiHandler({ db, config }) {
     }
   }
 
+  async function handleLibrary(req, res, pathname) {
+    try {
+      const user = requireUser(req)
+      if (pathname === '/api/library/loans' && req.method === 'GET') {
+        return sendJson(res, 200, await library.loans(user.id))
+      }
+      if (pathname === '/api/library/search' && req.method === 'POST') {
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        return sendJson(res, 200, await library.search(body.query))
+      }
+      if (pathname === '/api/library/login/start' && req.method === 'POST') {
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        if (!String(body.account ?? '').trim() || !String(body.password ?? '')) {
+          return sendError(res, 400, '请填写图书馆账号和密码。')
+        }
+        return sendJson(
+          res,
+          200,
+          await library.startLogin(user.id, body.account, body.password),
+        )
+      }
+      if (pathname === '/api/library/login/complete' && req.method === 'POST') {
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        return sendJson(
+          res,
+          200,
+          await library.completeLogin(user.id, body.loginId, body.captcha),
+        )
+      }
+      if (pathname === '/api/library/logout' && req.method === 'POST') {
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        await library.logout(user.id)
+        return sendJson(res, 200, { ok: true })
+      }
+      return sendError(res, 404, '没有这个图书馆接口。')
+    } catch (error) {
+      const status = error instanceof HttpError ? error.status : 502
+      return sendError(res, status, error instanceof Error ? error.message : '图书馆服务暂时不可用。')
+    }
+  }
+
   async function handleChaoxing(req, res, pathname, url) {
     try {
       const user = requireUser(req)
@@ -1059,6 +1105,10 @@ export function createApiHandler({ db, config }) {
 
       if (pathname.startsWith('/api/jw/')) {
         return await handleJw(req, res, pathname)
+      }
+
+      if (pathname.startsWith('/api/library/')) {
+        return await handleLibrary(req, res, pathname)
       }
 
       if (pathname.startsWith('/api/chaoxing/')) {

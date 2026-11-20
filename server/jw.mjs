@@ -191,7 +191,7 @@ function browserCandidates() {
   return BROWSER_CANDIDATES.filter((candidate) => existsSync(candidate))
 }
 
-function resolveBrowserPath(explicitPath) {
+export function resolveBrowserPath(explicitPath) {
   if (explicitPath && existsSync(explicitPath)) return explicitPath
   const system = browserCandidates()[0]
   if (system) return system

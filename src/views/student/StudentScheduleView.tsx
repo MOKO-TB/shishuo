@@ -1,14 +1,29 @@
-import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, DoorOpen, Plus, SlidersHorizontal } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  DoorOpen,
+  Maximize2,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
+import { isSeededCourse } from '../../data/seed'
 import {
   courseToneMap,
+  monthDayOf,
   periodTime,
   runsInWeek,
+  sectionBell,
   sectionLabel,
   teachingWeek,
   useProfile,
+  weekLabel,
+  weekMonday,
   weekdayLabel,
   weekdayNumber,
+  type CourseTone,
   type ScheduleEntry,
 } from '../../lib/profile'
 import { EmptyState, Modal } from '../../components/ui'
@@ -16,10 +31,11 @@ import { cn } from '../../lib/utils'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7]
 const MAX_WEEK = 24
+const MIN_SECTIONS = 11
 
 /**
- * 学生端「课程表」：按天查看本周上什么课、几点上、在哪间教室。
- * 手机优先设计：默认选中今天，上方可切天、翻周；桌面下同样可用。
+ * 学生端「课程表」：按整周铺开的课表网格，横向看一周、纵向看节次。
+ * 左栏是学校标准作息，课程块按上课节次跨行；点块可看老师、教室与周次。
  */
 export function ScheduleView({
   onOpenAccount,
@@ -28,33 +44,44 @@ export function ScheduleView({
 }) {
   const profile = useProfile()
   const currentWeek = teachingWeek(profile.termStart)
+  const maxWeek = Math.max(MAX_WEEK, currentWeek ?? 0)
   const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek ?? 1)
-  const [selectedDay, setSelectedDay] = useState<number>(() => weekdayNumber())
   const [emptyOpen, setEmptyOpen] = useState(false)
-  const weekFilterable = currentWeek != null
+  const [zoom, setZoom] = useState(false)
+  const [detail, setDetail] = useState<ScheduleEntry | null>(null)
+  const hasCalendar = currentWeek != null
+
+  useEffect(() => {
+    if (!zoom) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setZoom(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [zoom])
 
   const weekEntries = useMemo(() => {
-    if (!weekFilterable) return profile.schedule
+    if (!hasCalendar) return profile.schedule
     return profile.schedule.filter((entry) => runsInWeek(entry.weeks, selectedWeek))
-  }, [profile.schedule, selectedWeek, weekFilterable])
-
-  const byDay = useMemo(() => {
-    const map = new Map<number, ScheduleEntry[]>()
-    for (const entry of weekEntries) {
-      const list = map.get(entry.day) ?? []
-      list.push(entry)
-      map.set(entry.day, list)
-    }
-    for (const list of map.values()) {
-      list.sort((a, b) => a.startSection - b.startSection)
-    }
-    return map
-  }, [weekEntries])
+  }, [hasCalendar, profile.schedule, selectedWeek])
 
   const tones = useMemo(() => courseToneMap(profile.schedule), [profile.schedule])
-  const today = weekdayNumber()
-  const dayEntries = byDay.get(selectedDay) ?? []
-  const total = weekEntries.length
+
+  /** 课表里真正接入答疑的自建课程数（教务同步的课程会绑定到种子课程）。 */
+  const ownCourseCount = useMemo(
+    () =>
+      new Set(
+        profile.schedule
+          .map((entry) => entry.matchedCourseId)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0 && !isSeededCourse(id)),
+      ).size,
+    [profile.schedule],
+  )
 
   if (profile.schedule.length === 0) {
     return (
@@ -74,13 +101,12 @@ export function ScheduleView({
           <EmptyState
             icon={<CalendarDays size={20} />}
             title="还没有课程表"
-            description="绑定教务或手动添加课程后，就能在这里按天查看上课时间、教室和任课老师。"
+            description="绑定教务或手动添加课程后，就能在这里按周查看上课时间、教室和任课老师。"
             action={
               <button
                 className="button button-primary"
                 onClick={() => onOpenAccount('schedule')}
               >
-                <Plus size={15} />
                 添加课程表
               </button>
             }
@@ -90,49 +116,55 @@ export function ScheduleView({
     )
   }
 
+  const weekLabelText = hasCalendar ? `第 ${selectedWeek} 周` : '全部课程'
+
   return (
     <div className="page schedule-page">
       <header className="schedule-head">
-        <div className="eyebrow">
+        <h1 className="eyebrow schedule-title">
           <span className="eyebrow-mark jade" />
           我的课程表
           {currentWeek != null && <> · 现在是第 {currentWeek} 周</>}
-        </div>
-        <h1 className="display-title">
-          什么时候上什么课
-          <br />
-          <span>打开就能看</span>
         </h1>
+        {ownCourseCount > 0 && (
+          <p className="schedule-note">
+            <span className="schedule-note-full">
+              其中 {ownCourseCount} 门课表课程会接入首页答疑；任课老师也会自动加入教师端切换列表。
+            </span>
+            <span className="schedule-note-short">
+              {ownCourseCount} 门课表课程已接入首页答疑
+            </span>
+          </p>
+        )}
       </header>
 
-      <section className="schedule-controls card">
-        {weekFilterable && (
-          <div className="schedule-weeknav">
-            <button
-              type="button"
-              className="schedule-weekarrow"
-              onClick={() => setSelectedWeek((week) => Math.max(1, week - 1))}
-              disabled={selectedWeek <= 1}
-              aria-label="上一周"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <div className="schedule-weeklabel">
-              <strong>第 {selectedWeek} 周</strong>
-              <span>
-                {currentWeek === selectedWeek ? '本周' : `共 ${total} 节课`}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="schedule-weekarrow"
-              onClick={() => setSelectedWeek((week) => Math.min(MAX_WEEK, week + 1))}
-              disabled={selectedWeek >= MAX_WEEK}
-              aria-label="下一周"
-            >
-              <ChevronRight size={16} />
-            </button>
-            {currentWeek != null && currentWeek !== selectedWeek && (
+      <section className="schedule-board" aria-label="周课程表">
+        <div className="week-toolbar schedule-toolbar">
+          <div className="week-nav">
+            {hasCalendar && (
+              <button
+                type="button"
+                className="week-nav-button"
+                onClick={() => setSelectedWeek((week) => Math.max(1, week - 1))}
+                disabled={selectedWeek <= 1}
+                aria-label="上一周"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            )}
+            <strong>{weekLabelText}</strong>
+            {hasCalendar && (
+              <button
+                type="button"
+                className="week-nav-button"
+                onClick={() => setSelectedWeek((week) => Math.min(maxWeek, week + 1))}
+                disabled={selectedWeek >= maxWeek}
+                aria-label="下一周"
+              >
+                <ChevronRight size={16} />
+              </button>
+            )}
+            {hasCalendar && currentWeek != null && currentWeek !== selectedWeek && (
               <button
                 type="button"
                 className="text-button"
@@ -142,92 +174,260 @@ export function ScheduleView({
               </button>
             )}
           </div>
+
+          <span className="week-count">{weekEntries.length} 节课</span>
+
+          <div className="schedule-toolbar-actions">
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={() => setEmptyOpen(true)}
+            >
+              <DoorOpen size={15} />
+              空教室
+            </button>
+            <button
+              type="button"
+              className="text-button schedule-zoom-trigger"
+              onClick={() => setZoom(true)}
+            >
+              <Maximize2 size={13} />
+              放大查看
+            </button>
+          </div>
+        </div>
+
+        {weekEntries.length === 0 && (
+          <p className="schedule-board-empty">
+            这一周没有课（周次范围之外的课程不会显示）。
+          </p>
         )}
 
-        <button
-          type="button"
-          className="button button-ghost schedule-empty-button"
-          onClick={() => setEmptyOpen(true)}
-        >
-          <DoorOpen size={15} />
-          空教室
-        </button>
+        <p className="schedule-mobile-hint">点课程块可看老师、教室</p>
 
-        <div className="schedule-days" role="tablist" aria-label="按天查看课程">
-          {DAYS.map((day) => {
-            const count = (byDay.get(day) ?? []).length
-            const isToday = day === today
-            return (
-              <button
-                key={day}
-                type="button"
-                role="tab"
-                aria-selected={selectedDay === day}
-                className={cn(
-                  'schedule-day',
-                  selectedDay === day && 'is-active',
-                  isToday && 'is-today',
-                  count === 0 && 'is-empty',
-                )}
-                onClick={() => setSelectedDay(day)}
-              >
-                <span>{weekdayLabel(day)}</span>
-                <em>{isToday ? '今天' : count > 0 ? `${count} 节` : '没课'}</em>
-              </button>
-            )
-          })}
+        <WeekTimetable
+          entries={weekEntries}
+          week={selectedWeek}
+          termStart={profile.termStart}
+          tones={tones}
+          onSelect={setDetail}
+        />
+
+        <div className="schedule-board-foot">
+          <p>左栏是学校标准作息；课程块里的时间来自教务课表，教务没写时按节次推算。</p>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => onOpenAccount('schedule')}
+          >
+            <SlidersHorizontal size={13} />
+            课程表不对？去「账号与课表」调整
+          </button>
         </div>
       </section>
 
-      <section className="schedule-list">
-        {dayEntries.length === 0 ? (
-          <div className="card">
-            <EmptyState
-              icon={<CalendarDays size={20} />}
-              title={selectedDay === today ? '今天没有课' : `${weekdayLabel(selectedDay)}没有课`}
-              description="换一天看看，或者去「账号与课表」补录临时课程。"
+      {zoom &&
+        createPortal(
+          <div
+            className="schedule-zoom"
+            role="dialog"
+            aria-modal="true"
+            aria-label="放大查看课程表"
+          >
+            <div className="schedule-zoom-head">
+              <div className="week-nav">
+                {hasCalendar && (
+                  <button
+                    type="button"
+                    className="week-nav-button"
+                    onClick={() => setSelectedWeek((week) => Math.max(1, week - 1))}
+                    disabled={selectedWeek <= 1}
+                    aria-label="上一周"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                )}
+                <strong>{weekLabelText}</strong>
+                {hasCalendar && (
+                  <button
+                    type="button"
+                    className="week-nav-button"
+                    onClick={() => setSelectedWeek((week) => Math.min(maxWeek, week + 1))}
+                    disabled={selectedWeek >= maxWeek}
+                    aria-label="下一周"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                )}
+              </div>
+              <span className="week-count">{weekEntries.length} 节课</span>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setZoom(false)}
+                aria-label="关闭放大查看"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <WeekTimetable
+              entries={weekEntries}
+              week={selectedWeek}
+              termStart={profile.termStart}
+              tones={tones}
+              zoomed
+              onSelect={setDetail}
             />
-          </div>
-        ) : (
-          dayEntries.map((entry) => {
-            const tone = tones.get(entry.course) ?? 'jade'
-            return (
-              <article key={entry.id} className={`schedule-card tone-${tone}`}>
-                <div className="schedule-time">
-                  <strong>{periodTime(entry) || sectionLabel(entry)}</strong>
-                  <span>{sectionLabel(entry)}</span>
-                </div>
-                <div className="schedule-body">
-                  <h3>{entry.course}</h3>
-                  <p>
-                    {entry.teacher || '老师待补充'}
-                    {entry.room ? ` · ${entry.room}` : ''}
-                  </p>
-                  {entry.weeks && <span className="schedule-weeks">{entry.weeks}</span>}
-                </div>
-              </article>
-            )
-          })
+          </div>,
+          document.body,
         )}
-      </section>
 
-      <div className="schedule-foot">
-        <button
-          className="button button-ghost"
-          onClick={() => onOpenAccount('schedule')}
-        >
-          <SlidersHorizontal size={14} />
-          课程表不对？去「账号与课表」调整
-        </button>
-      </div>
+      <CourseDetailModal entry={detail} onClose={() => setDetail(null)} />
 
       <EmptyClassroomModal
         open={emptyOpen}
         onClose={() => setEmptyOpen(false)}
         entries={weekEntries}
-        initialDay={selectedDay}
+        initialDay={weekdayNumber()}
       />
     </div>
+  )
+}
+
+function WeekTimetable({
+  entries,
+  week,
+  termStart,
+  tones,
+  zoomed,
+  onSelect,
+}: {
+  entries: ScheduleEntry[]
+  week: number
+  termStart: number | null
+  tones: Map<string, CourseTone>
+  zoomed?: boolean
+  onSelect: (entry: ScheduleEntry) => void
+}) {
+  const today = weekdayNumber()
+  const monday = weekMonday(termStart, week)
+  const showDates = termStart != null
+  const sectionCount = Math.max(
+    MIN_SECTIONS,
+    ...entries.map((entry) => Math.min(16, Math.max(1, entry.endSection))),
+  )
+  const sections = Array.from({ length: sectionCount }, (_, index) => index + 1)
+
+  return (
+    <div
+      className={cn('week-grid', zoomed && 'is-zoomed')}
+      role="table"
+      aria-label="周课表"
+    >
+      <div className="week-grid-corner" style={{ gridColumn: 1, gridRow: 1 }} />
+      {DAYS.map((day) => (
+        <div
+          className={cn('week-grid-day', day === today && 'is-today')}
+          key={day}
+          style={{ gridColumn: day + 1, gridRow: 1 }}
+        >
+          <strong>{weekdayLabel(day)}</strong>
+          {showDates && <span>{monthDayOf(monday + (day - 1) * 86_400_000)}</span>}
+        </div>
+      ))}
+      {sections.map((section) => (
+        <Fragment key={section}>
+          <div className="week-grid-period" style={{ gridColumn: 1, gridRow: section + 1 }}>
+            <strong>{section}</strong>
+            <em>
+              {sectionBell(section).split('-').map((part, index) =>
+                index === 0 ? part : <Fragment key={part}><br />{part}</Fragment>,
+              )}
+            </em>
+          </div>
+          {DAYS.map((day) => (
+            <div
+              className={cn('week-grid-cell', day === today && 'is-today')}
+              key={day}
+              style={{ gridColumn: day + 1, gridRow: section + 1 }}
+            />
+          ))}
+        </Fragment>
+      ))}
+      {entries.map((entry) => {
+        // 脏数据（第 0 节、星期越界）不能撑破网格。
+        const start = Math.min(16, Math.max(1, entry.startSection))
+        const end = Math.min(16, Math.max(start, entry.endSection))
+        const day = Math.min(7, Math.max(1, entry.day))
+        return (
+          <button
+            type="button"
+            className={cn('week-class', `tone-${tones.get(entry.course) ?? 'jade'}`)}
+            key={entry.id}
+            data-span={end - start + 1}
+            style={{
+              gridColumn: day + 1,
+              gridRow: `${start + 1} / ${end + 2}`,
+            }}
+            title={`${entry.course}${entry.teacher ? ` · ${entry.teacher}` : ''}${entry.room ? ` · ${entry.room}` : ''}${entry.weeks ? ` · ${entry.weeks}` : ''}`}
+            onClick={() => onSelect(entry)}
+          >
+            <strong>{entry.course}</strong>
+            {periodTime(entry) && <span className="week-class-time">{periodTime(entry)}</span>}
+            {entry.teacher && <span>{entry.teacher}</span>}
+            {entry.room && <span>{entry.room}</span>}
+            {entry.weeks && <span className="week-class-weeks">{weekLabel(entry.weeks)}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function CourseDetailModal({
+  entry,
+  onClose,
+}: {
+  entry: ScheduleEntry | null
+  onClose: () => void
+}) {
+  const time = entry ? periodTime(entry) || sectionLabel(entry) : ''
+  return (
+    <Modal
+      open={Boolean(entry)}
+      onClose={onClose}
+      eyebrow="课程详情"
+      title={entry?.course ?? '课程'}
+      size="sm"
+    >
+      {entry && (
+        <dl className="schedule-detail">
+          <div>
+            <dt>上课时间</dt>
+            <dd>
+              {weekdayLabel(entry.day)} · {time}
+              {time !== sectionLabel(entry) ? `（${sectionLabel(entry)}）` : ''}
+            </dd>
+          </div>
+          {entry.teacher && (
+            <div>
+              <dt>任课老师</dt>
+              <dd>{entry.teacher}</dd>
+            </div>
+          )}
+          {entry.room && (
+            <div>
+              <dt>上课教室</dt>
+              <dd>{entry.room}</dd>
+            </div>
+          )}
+          <div>
+            <dt>上课周次</dt>
+            <dd>{weekLabel(entry.weeks)}</dd>
+          </div>
+        </dl>
+      )}
+    </Modal>
   )
 }
 
