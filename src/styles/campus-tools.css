@@ -1142,3 +1142,161 @@
     max-height: 260px;
   }
 }
+
+/* ---------- 校园工具：新增「知识分类」与「我的提问」入口 ---------- */
+
+/* 6 个 tab 时允许换行，每格最小 108px，避免挤压 */
+.campus-tool-tabs button {
+  flex: 1 1 108px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.campus-tool-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--fg-on-strong);
+  font-size: var(--text-meta);
+  line-height: 1;
+}
+
+.campus-tool-hint {
+  margin: 0 0 10px;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 知识分类：按官网数据类型平铺，两列自适应 */
+.campus-kb-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.campus-kb-cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.campus-kb-cat strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-kb-cat span {
+  flex: 0 0 auto;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 「我的提问」面板里复用列表，去掉外层卡片重复留白 */
+.campus-tool-panel .campus-thread-list {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .campus-tool-tabs button {
+    flex: 1 1 88px;
+    font-size: var(--text-xs);
+  }
+
+  .campus-kb-cats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- 校园工具：新增「知识分类」与「我的提问」入口 ---------- */
+
+/* 6 个 tab 时允许换行，每格最小 108px，避免挤压 */
+.campus-tool-tabs button {
+  flex: 1 1 108px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.campus-tool-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--fg-on-strong);
+  font-size: var(--text-meta);
+  line-height: 1;
+}
+
+.campus-tool-hint {
+  margin: 0 0 10px;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 知识分类：按官网数据类型平铺，两列自适应 */
+.campus-kb-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.campus-kb-cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.campus-kb-cat strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-kb-cat span {
+  flex: 0 0 auto;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 「我的提问」面板里复用列表，去掉外层卡片重复留白 */
+.campus-tool-panel .campus-thread-list {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .campus-tool-tabs button {
+    flex: 1 1 88px;
+    font-size: var(--text-xs);
+  }
+
+  .campus-kb-cats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

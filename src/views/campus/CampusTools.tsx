@@ -9,6 +9,7 @@ import {
   LogIn,
   LogOut,
   MapPin,
+  MessageCircle,
   RefreshCw,
   Search,
   Sparkles,
@@ -36,7 +37,7 @@ import {
 } from '../../data/campusTools'
 import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
-type ToolTab = 'gpa' | 'calendar' | 'library' | 'map'
+type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'ask' | 'kb'
 
 function parseDate(value: string) {
   const [year, month, day] = value.split('-').map((part) => Number(part))
@@ -141,7 +142,21 @@ function LiveBookCard({ book }: { book: LibraryBook }) {
 }
 
 
-export function CampusTools() {
+export function CampusTools({
+  askCount = 0,
+  kbCategories = [],
+  askSlot,
+  kbSlot,
+}: {
+  /** 「我的提问」条数，用于 tab 角标 */
+  askCount?: number
+  /** 知识分类与条数，用于 tab 内分类入口 */
+  kbCategories?: { name: string; count: number }[]
+  /** 我的提问面板（由父组件注入，避免把提问逻辑搬进工具组件） */
+  askSlot?: React.ReactNode
+  /** 知识分类面板 */
+  kbSlot?: (category: string) => React.ReactNode
+} = {}) {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
@@ -348,7 +363,6 @@ export function CampusTools() {
       <div className="campus-tools-head">
         <div>
           <strong>校园工具</strong>
-          <span>GPA 试算、校历、图书馆和校园地图；数据有来源，日期以学校通知为准。</span>
         </div>
         <Badge tone="gold">引路学长</Badge>
       </div>
@@ -390,6 +404,27 @@ export function CampusTools() {
           <MapPin size={15} />
           校园地图
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'kb'}
+          className={tab === 'kb' ? 'is-active' : ''}
+          onClick={() => setTab('kb')}
+        >
+          <BookOpen size={15} />
+          知识分类
+        </button>
+        {askCount > 0 && (
+          <button
+            role="tab"
+            aria-selected={tab === 'ask'}
+            className={tab === 'ask' ? 'is-active' : ''}
+            onClick={() => setTab('ask')}
+          >
+            <MessageCircle size={15} />
+            我的提问
+            <span className="campus-tool-tab-badge">{askCount}</span>
+          </button>
+        )}
       </div>
 
       {tab === 'gpa' && (
@@ -413,6 +448,22 @@ export function CampusTools() {
           </div>
         </div>
       )}
+
+      {tab === 'kb' && (
+        <div className="campus-tool-panel">
+          <p className="campus-tool-hint">按学校官网的数据类型整理，点分类可筛选对应知识卡。</p>
+          <div className="campus-kb-cats">
+            {kbCategories.map((item) => (
+              <div className="campus-kb-cat" key={item.name}>
+                <strong>{item.name}</strong>
+                <span>{item.count} 条</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'ask' && <div className="campus-tool-panel">{askSlot}</div>}
 
       {tab === 'calendar' && (
         <div className="campus-tool-panel">

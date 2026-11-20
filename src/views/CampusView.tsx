@@ -651,10 +651,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
               <span>条待核实</span>
             </div>
           </div>
-          <div className="campus-card-foot">
-            <ShieldCheck size={14} />
-            采集于 {CAMPUS_KB_COLLECTED_AT} · 来自引路学长（MIT）
-          </div>
+
         </aside>
       </header>
 
@@ -851,68 +848,62 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </section>
       )}
 
-      {role === 'student' && myCampusThreads.length > 0 && (
-        <section className="campus-my-threads">
-          <div className="campus-section-head">
-            <div>
-              <strong>我的校园提问</strong>
-              <span>{myCampusThreads.length} 条</span>
+<CampusTools
+          askCount={role === 'student' ? myCampusThreads.length : 0}
+          kbCategories={categories.map((name) => ({ name, count: categoryCounts[name] ?? 0 }))}
+          askSlot={
+            <div className="campus-thread-list">
+              {myCampusThreads.slice(0, 4).map((thread) => (
+                <article
+                  className="campus-thread card"
+                  key={thread.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`查看提问详情：${thread.question}`}
+                  onClick={() => setDetailThreadId(thread.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setDetailThreadId(thread.id)
+                    }
+                  }}
+                >
+                  <div className="campus-thread-top">
+                    <Badge tone={thread.status === 'answered' ? 'answered' : 'pending'}>
+                      {thread.status === 'pending'
+                        ? '待校园主理人回复'
+                        : thread.status === 'answered'
+                          ? '校园主理人已回复'
+                          : statusLabel(thread)}
+                    </Badge>
+                    <span>{formatRelative(thread.createdAt)}</span>
+                  </div>
+                  <strong>{thread.question}</strong>
+                  {thread.teacherReply ? (
+                    <p>{thread.teacherReply.text}</p>
+                  ) : thread.externalAnswer ? (
+                    <>
+                      <p>
+                        {excerpt(
+                          thread.externalAnswer.text
+                            .replace(/^#{1,3}\s+/gm, '')
+                            .replace(/^[•-]\s+/gm, ''),
+                          160,
+                        )}
+                      </p>
+                      <span className="campus-thread-ai-note">
+                        <Sparkles size={11} />
+                        AI 参考答复 · 等校园主理人核实
+                      </span>
+                    </>
+                  ) : (
+                    <p className="campus-thread-waiting">等校园主理人回复…</p>
+                  )}
+                </article>
+              ))}
             </div>
-          </div>
-          <div className="campus-thread-list">
-            {myCampusThreads.slice(0, 4).map((thread) => (
-              <article
-                className="campus-thread card"
-                key={thread.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`查看提问详情：${thread.question}`}
-                onClick={() => setDetailThreadId(thread.id)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    setDetailThreadId(thread.id)
-                  }
-                }}
-              >
-                <div className="campus-thread-top">
-                  <Badge tone={thread.status === 'answered' ? 'answered' : 'pending'}>
-                    {thread.status === 'pending'
-                      ? '待校园主理人回复'
-                      : thread.status === 'answered'
-                        ? '校园主理人已回复'
-                        : statusLabel(thread)}
-                  </Badge>
-                  <span>{formatRelative(thread.createdAt)}</span>
-                </div>
-                <strong>{thread.question}</strong>
-                {thread.teacherReply ? (
-                  <p>{thread.teacherReply.text}</p>
-                ) : thread.externalAnswer ? (
-                  <>
-                    <p>
-                      {excerpt(
-                        thread.externalAnswer.text
-                          .replace(/^#{1,3}\s+/gm, '')
-                          .replace(/^[•-]\s+/gm, ''),
-                        160,
-                      )}
-                    </p>
-                    <span className="campus-thread-ai-note">
-                      <Sparkles size={11} />
-                      AI 参考答复 · 等校园主理人核实
-                    </span>
-                  </>
-                ) : (
-                  <p className="campus-thread-waiting">等校园主理人回复…</p>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <CampusTools />
+          }
+        />
 
       {role === 'teacher' && (
         <div className="campus-ops card">
