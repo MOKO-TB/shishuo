@@ -34,7 +34,7 @@
 
 .guide-step-number {
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--clay);
@@ -46,7 +46,7 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink-soft);
 }
@@ -72,7 +72,7 @@
 
 .guide-step-head span {
   font-family: var(--mono);
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -80,7 +80,7 @@
 .guide-step-copy p {
   margin-top: 4px;
   max-width: 100%;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.75;
   color: var(--muted);
   overflow-wrap: anywhere;
@@ -91,7 +91,7 @@
   align-items: flex-start;
   gap: 7px;
   padding: 10px 11px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--gold-soft);
   color: var(--gold-deep);
 }
@@ -101,7 +101,7 @@
 }
 
 .guide-tip p {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 
@@ -110,6 +110,6 @@
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }

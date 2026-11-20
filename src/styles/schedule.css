@@ -37,7 +37,7 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
   color: var(--ink-soft);
   flex: 0 0 auto;
@@ -68,13 +68,13 @@
 }
 
 .schedule-weeklabel span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .schedule-weeknav .text-button {
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .schedule-days {
@@ -105,7 +105,7 @@
 
 .schedule-day em {
   font-style: normal;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -172,7 +172,7 @@
 }
 
 .schedule-time span {
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -204,10 +204,10 @@
   justify-self: start;
   margin-top: 2px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
   color: var(--muted);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .schedule-foot {
@@ -240,14 +240,99 @@
   }
 
   .schedule-day span {
-    font-size: 10px;
+    font-size: var(--text-meta);
   }
 
   .schedule-day em {
-    font-size: 8.5px;
+    font-size: var(--text-meta);
   }
 
   .schedule-body h3 {
     font-size: 16px;
+  }
+}
+
+/* ---------- 周几切换：窄屏不再等分 7 格，改为可横滑的胶囊 ----------
+   问题：7 等分在 390px 下每格仅 42px，「周一 / 1 节」被挤成两行，
+   且 320px 时文字会溢出格子。改为：默认单行胶囊 + 横滑 + 吸附。 */
+
+.schedule-days {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.schedule-days::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-day {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 62px;
+  min-height: var(--touch);
+  padding: 0 12px;
+  justify-content: center;
+  scroll-snap-align: start;
+  white-space: nowrap;
+}
+
+.schedule-day span,
+.schedule-day em {
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* 宽屏时有空间，仍用 7 等分，视觉更整齐 */
+@media (min-width: 720px) {
+  .schedule-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .schedule-day {
+    display: grid;
+    justify-items: center;
+    min-width: 0;
+    padding: 9px 2px;
+  }
+}
+
+/* ---------- 课程行：时间列固定、正文可压缩，长课程名不顶破卡片 ---------- */
+.schedule-card,
+.schedule-row {
+  min-width: 0;
+}
+
+.schedule-time {
+  flex: 0 0 auto;
+  min-width: 76px;
+}
+
+.schedule-body {
+  min-width: 0;
+}
+
+.schedule-body h3 {
+  overflow-wrap: anywhere;
+}
+
+.schedule-body p,
+.schedule-weeks {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+  .schedule-time {
+    min-width: 64px;
   }
 }

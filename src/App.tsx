@@ -96,6 +96,8 @@ export default function App() {
   }, [data.guideSeen, markGuideSeen])
 
   const navigate = useCallback((next: ViewKey) => {
+    // 导航即离开设置页：否则 accountOpen 仍为 true，内容区继续被设置页独占
+    setAccountOpen(false)
     setView(next)
     if (next === 'student' || next === 'schedule') setRole('student')
     if (next === 'teacher' || next === 'insights') setRole('teacher')
@@ -295,13 +297,24 @@ export default function App() {
         unreadCount={unreadCount}
         onOpenNotifications={() => setNotificationsOpen(true)}
         onOpenAccount={openAccount}
+        accountOpen={accountOpen}
         onOpenAdmin={() => window.location.assign('/admin/')}
         onOpenMentor={openMentor}
         onNavigate={navigate}
         onOpenGuide={openGuide}
         onRequestReset={() => setResetOpen(true)}
       >
-        {view === 'student' && (
+        {accountOpen ? (
+          <div className="page page-sheet-page">
+            <AccountModal
+              open={accountOpen}
+              initialTab={accountTab}
+              onClose={() => setAccountOpen(false)}
+              notify={notify}
+            />
+          </div>
+        ) : null}
+        {!accountOpen && view === 'student' && (
           <StudentView
             notify={notify}
             openFaq={openFaq}
@@ -314,7 +327,7 @@ export default function App() {
             onFocusHandled={focusHandled}
           />
         )}
-        {view === 'teacher' && (
+        {!accountOpen && view === 'teacher' && (
           <TeacherView
             key={selectedTeacher.name}
             teacherName={selectedTeacher.name}
@@ -329,9 +342,9 @@ export default function App() {
             onFocusHandled={focusHandled}
           />
         )}
-        {view === 'schedule' && <ScheduleView onOpenAccount={openAccount} />}
-        {view === 'chaoxing' && <ChaoxingView />}
-        {view === 'knowledge' && (
+        {!accountOpen && view === 'schedule' && <ScheduleView onOpenAccount={openAccount} />}
+        {!accountOpen && view === 'chaoxing' && <ChaoxingView />}
+        {!accountOpen && view === 'knowledge' && (
           <KnowledgeView
             role={role}
             teacherName={selectedTeacher.name}
@@ -342,11 +355,11 @@ export default function App() {
             onGoTeacher={() => navigate('teacher')}
           />
         )}
-        {view === 'campus' && <CampusView role={role} notify={notify} />}
-        {view === 'insights' && (
+        {!accountOpen && view === 'campus' && <CampusView role={role} notify={notify} />}
+        {!accountOpen && view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}
-        {view === 'about' && (
+        {!accountOpen && view === 'about' && (
           <AboutView
             onEnterStudent={() => switchRole('student')}
             onEnterTeacher={() => switchRole('teacher')}
@@ -385,13 +398,6 @@ export default function App() {
           setGuideOpen(false)
           setResetOpen(true)
         }}
-      />
-
-      <AccountModal
-        open={accountOpen}
-        initialTab={accountTab}
-        onClose={() => setAccountOpen(false)}
-        notify={notify}
       />
 
       <WorkspaceBackupModal

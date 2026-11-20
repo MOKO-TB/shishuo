@@ -1,0 +1,148 @@
+/**
+ * page-sheet.css —— 二级设置页面
+ *
+ * 用于「设置」这类需要承载较多分组的界面：占据内容区、左侧返回，
+ * 不遮挡页面、不锁滚动，移动端满宽。
+ */
+
+/* 二级页面：外层用 .page 提供统一留白，这里只控制内容栅格与宽度 */
+.page-sheet {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 860px;
+  margin: 0 auto;
+  padding-bottom: var(--space-6);
+  /* 入场动效：与主站页面切换同一节奏（pageFade 0.32s） */
+  animation: pageFade 0.32s var(--ease);
+}
+
+/* 尊重「减少动态效果」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .page-sheet {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-sheet {
+    /* 手机上左右各留 16px，不贴边 */
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* 分块依次淡入，节奏与主站卡片一致 */
+  .page-sheet-bar {
+    animation: fadeUp 0.3s var(--ease) both;
+  }
+
+  .settings-group:nth-child(1) { animation: fadeUp 0.3s var(--ease) 0.04s both; }
+  .settings-group:nth-child(2) { animation: fadeUp 0.3s var(--ease) 0.08s both; }
+  .settings-group:nth-child(3) { animation: fadeUp 0.3s var(--ease) 0.12s both; }
+  .settings-group:nth-child(4) { animation: fadeUp 0.3s var(--ease) 0.16s both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-sheet-bar,
+    .settings-group:nth-child(n) {
+      animation: none;
+    }
+  }
+}
+
+/* 顶部：返回 + 标题 + 操作 */
+.page-sheet-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-sheet-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px 0 6px;
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.page-sheet-back:hover {
+  background: var(--bg-card-alt);
+  color: var(--fg);
+}
+
+.page-sheet-heading {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.page-sheet-eyebrow {
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+}
+
+.page-sheet-heading strong {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.page-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-sheet-body {
+  min-width: 0;
+}
+
+.page-sheet-body:focus {
+  outline: none;
+}
+
+.page-sheet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+  .page-sheet {
+    gap: var(--space-3);
+  }
+
+  .page-sheet-bar {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .page-sheet-heading strong {
+    font-size: var(--text-base);
+  }
+
+  .page-sheet-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+
+/* 手机上左右留白与主站一致（16px），二级页面不贴边 */
+@media (max-width: 720px) {
+  .page-sheet-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

@@ -119,7 +119,7 @@
 }
 
 .admin-console-user span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -145,7 +145,7 @@
 }
 
 .admin-console-health span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -163,7 +163,7 @@
 .admin-refresh {
   width: 100%;
   height: 32px;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-console-tabs {
@@ -178,7 +178,7 @@
 .admin-panel {
   padding: 16px 18px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -204,7 +204,7 @@
 }
 
 .admin-panel-toolbar span {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -217,7 +217,7 @@
 
 .admin-panel-actions .button {
   height: 34px;
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-stat-grid {
@@ -232,7 +232,7 @@
   gap: 3px;
   padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -251,7 +251,7 @@
 }
 
 .admin-stat-card > em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -274,7 +274,7 @@
   min-width: 0;
   padding: 13px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   text-align: left;
   transition:
@@ -292,7 +292,7 @@
   height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--jade-mist);
   color: var(--jade-deep);
   flex: 0 0 auto;
@@ -310,7 +310,7 @@
 }
 
 .admin-quick-card em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   line-height: 1.45;
   color: var(--muted);
@@ -332,7 +332,7 @@
   min-width: 0;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -357,7 +357,7 @@
 }
 
 .admin-content-head span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -366,7 +366,7 @@
 }
 
 .admin-content-head .text-button {
-  font-size: 9px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -382,7 +382,7 @@
   gap: 8px;
   padding: 6px 0;
   border-top: 1px dashed var(--line);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -397,11 +397,11 @@
   gap: 5px;
   min-width: 0;
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-recent-user em {
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -414,7 +414,7 @@
 
 .admin-recent-time {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -430,7 +430,7 @@
   gap: 9px;
   padding: 9px 10px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   text-align: left;
 }
@@ -447,12 +447,12 @@
 }
 
 .admin-workspace-links strong {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
 .admin-workspace-links em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--muted);
 }
@@ -469,7 +469,7 @@
   margin-top: 12px;
   padding-top: 9px;
   border-top: 1px dashed var(--line);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -482,7 +482,7 @@
 
 .admin-panel-note-inline {
   margin: 10px 0 0;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--muted);
 }
@@ -504,7 +504,7 @@
   height: 36px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--muted);
 }
@@ -516,7 +516,7 @@
   outline: none;
   background: transparent;
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-filter-select {
@@ -526,9 +526,9 @@
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -537,7 +537,7 @@
   outline: none;
   background: transparent;
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-page .admin-audit {
@@ -567,7 +567,7 @@
   margin-bottom: 12px;
   padding: 11px 13px;
   border: 1px solid #e6d7b2;
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(90deg, #f8efd9, #fbf7ed);
   color: var(--gold-deep);
 }
@@ -583,7 +583,7 @@
 }
 
 .admin-config-warning span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--ink-soft);
 }
@@ -605,13 +605,13 @@
   grid-template-columns: 70px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .admin-content-bar {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(23, 36, 30, 0.06);
   overflow: hidden;
 }
@@ -625,7 +625,7 @@
 
 .admin-content-bar-row em {
   font-style: normal;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -642,11 +642,11 @@
 }
 
 .admin-content-actions .text-button {
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-content-actions > span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -673,13 +673,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
 .admin-course-name em {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -707,11 +707,11 @@
   margin: 0;
   padding: 11px 13px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--ink-soft);
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   overflow-x: auto;
   white-space: pre-wrap;
@@ -736,7 +736,7 @@
   gap: 8px;
   padding: 5px 0;
   border-top: 1px dashed var(--line);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-api-row:first-child {
@@ -746,7 +746,7 @@
 
 .admin-api-row code {
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -755,7 +755,7 @@
 
 .admin-api-row em {
   font-style: normal;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -765,7 +765,7 @@
   padding: 2px 5px;
   border-radius: 5px;
   font-family: var(--mono);
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   font-weight: 700;
   letter-spacing: 0.03em;
 }
@@ -816,13 +816,13 @@
 }
 
 .admin-command-row strong {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
 .admin-command-row code {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -845,7 +845,7 @@
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--ink-soft);
 }
@@ -888,7 +888,7 @@
   height: 38px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--ink);
   font-size: 11px;
@@ -917,7 +917,7 @@
 }
 
 .admin-term-test span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -938,7 +938,7 @@
   gap: 9px;
   padding: 7px 0;
   border-top: 1px dashed var(--line);
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -954,7 +954,7 @@
 
 .admin-term-row em {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
 }
@@ -970,7 +970,7 @@
   gap: 8px;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -1002,12 +1002,12 @@
 }
 
 .admin-image-meta > div > span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
 .admin-image-meta strong {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: var(--ink);
   overflow: hidden;
@@ -1016,7 +1016,7 @@
 }
 
 .admin-image-meta em {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--muted);
 }
@@ -1030,7 +1030,7 @@
 
 .admin-image-actions .button {
   height: 28px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-risk-list {
@@ -1074,12 +1074,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
 .admin-risk-info em {
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--muted);
   overflow: hidden;
@@ -1088,7 +1088,7 @@
 }
 
 .admin-risk-reason {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1103,7 +1103,7 @@
 .admin-risk-actions .button {
   height: 26px;
   padding: 0 7px;
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .admin-mod-thread-list {
@@ -1116,7 +1116,7 @@
   gap: 7px;
   padding: 11px 13px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
@@ -1125,7 +1125,7 @@
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -1145,7 +1145,7 @@
   display: block;
   width: 74px;
   height: 54px;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
   background: var(--surface-2);
 }
@@ -1157,13 +1157,13 @@
 }
 
 .admin-mod-attachment span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .admin-mod-thread p {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -1175,14 +1175,14 @@
 
 .admin-mod-actions .button {
   height: 28px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-verification-filters {
   flex: 0 0 auto;
   margin: 0;
   padding: 3px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -1190,7 +1190,7 @@
   flex: 0 0 auto;
   min-width: 56px;
   padding: 0 9px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-verification-list {
@@ -1223,13 +1223,13 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .admin-verification-cred {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -1243,13 +1243,13 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
 .admin-verification-actions .button {
   height: 30px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -1262,7 +1262,7 @@
   margin: 0;
   padding: 9px 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-size: 11px;
   line-height: 1.55;
@@ -1313,7 +1313,7 @@
 }
 
 .admin-login-brand span {
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -1323,7 +1323,7 @@
   gap: 13px;
   padding: 26px 28px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -1336,7 +1336,7 @@
   gap: 10px;
   padding: 10px 12px;
   border: 1px solid #e6d7b2;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: linear-gradient(90deg, #f8efd9, #fbf7ed);
 }
 
@@ -1347,12 +1347,12 @@
 }
 
 .admin-login-current strong {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
 .admin-login-current span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -1360,7 +1360,7 @@
   flex: 0 0 auto;
   height: 30px;
   padding: 0 10px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-login-head {
@@ -1386,7 +1386,7 @@
 
 .admin-login-head p {
   margin: 4px 0 0;
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -1394,10 +1394,10 @@
 .admin-login-error {
   padding: 9px 11px;
   border: 1px solid rgba(184, 97, 62, 0.35);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--clay-soft);
   color: var(--clay-deep);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
 }
 
@@ -1412,7 +1412,7 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -1445,10 +1445,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  height: 58px;
-  padding: 0 22px;
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  height: var(--header-h);
+  padding: 0 44px;
+  border-bottom: 1px solid var(--border-translucent);
+  background: var(--bg-translucent);
   backdrop-filter: blur(14px);
 }
 
@@ -1471,7 +1471,7 @@
 }
 
 .admin-standalone-brand em {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--muted);
 }
@@ -1484,7 +1484,7 @@
 }
 
 .admin-standalone-user > span {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--ink);
 }
 
@@ -1506,9 +1506,9 @@
   height: 30px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-standalone-logout:hover {
@@ -1546,10 +1546,6 @@
   .admin-login-card {
     padding: 22px 20px;
   }
-}
-
-[data-theme='dark'] .admin-standalone-bar {
-  background: rgba(22, 33, 28, 0.9);
 }
 
 [data-theme='dark'] .admin-login-page {
@@ -1629,8 +1625,14 @@
 }
 
 @media (max-width: 640px) {
-  .admin-stat-grid,
-  .admin-quick-grid,
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-create-wide {
     grid-template-columns: 1fr;
   }
@@ -1698,7 +1700,7 @@
   .admin-login-card {
     gap: 14px;
     padding: 22px 18px;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 
   .admin-login-head h1 {
@@ -1752,8 +1754,8 @@
   }
 
   .admin-console-head-main .display-title {
-    font-size: 30px;
-    line-height: 1.14;
+    font-size: clamp(22px, 6vw, 30px);
+    line-height: 1.18;
   }
 
   .admin-console-head-main .page-lede {
@@ -1774,7 +1776,7 @@
     flex-wrap: nowrap;
     overflow-x: auto;
     padding: 4px;
-    border-radius: 11px;
+    border-radius: var(--radius-sm);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -1788,7 +1790,7 @@
     min-width: 92px;
     height: 34px;
     padding: 0 10px;
-    font-size: 9.5px;
+    font-size: var(--text-meta);
   }
 
   .admin-panel {
@@ -1811,7 +1813,7 @@
   .admin-panel-actions .button {
     flex: 1 1 calc(50% - 6px);
     height: 38px;
-    font-size: 10px;
+    font-size: var(--text-meta);
   }
 
   .admin-stat-grid {
@@ -1861,7 +1863,7 @@
 
   .admin-risk-actions .button {
     height: 30px;
-    font-size: 9px;
+    font-size: var(--text-meta);
   }
 
   .admin-content-card {
@@ -1887,7 +1889,7 @@
   margin-bottom: 14px;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background:
     radial-gradient(circle at 100% 0%, rgba(20, 108, 86, 0.05), transparent 34%),
     var(--surface);
@@ -1920,7 +1922,7 @@
 }
 
 .admin-ai-head span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -1942,7 +1944,7 @@
   display: grid;
   gap: 4px;
   min-width: 0;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -1955,10 +1957,10 @@
   height: 34px;
   padding: 0 9px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--text-meta);
   outline: none;
 }
 
@@ -1971,7 +1973,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
 }
 
@@ -1992,12 +1994,12 @@
 
 .admin-ai-actions .button {
   height: 32px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-ai-meta {
   margin-left: auto;
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -2067,7 +2069,7 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
@@ -2075,9 +2077,9 @@
   flex: 1;
   min-width: 0;
   padding: 6px 5px;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -2104,10 +2106,10 @@
   min-width: 0;
   padding: 0 8px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-3);
   color: var(--ink);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   outline: none;
 }
 
@@ -2126,7 +2128,7 @@
   width: 100%;
   padding: 9px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   text-align: left;
 }
 
@@ -2148,7 +2150,7 @@
 
 .admin-thread-row-top > span:last-child {
   color: var(--faint);
-  font-size: 8px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -2156,7 +2158,7 @@
   display: -webkit-box;
   overflow: hidden;
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   font-weight: 600;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -2167,7 +2169,7 @@
   display: flex;
   gap: 8px;
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-detail {
@@ -2198,7 +2200,7 @@
 
 .admin-thread-empty span {
   max-width: 240px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 
@@ -2220,26 +2222,26 @@
   gap: 5px 14px;
   margin-top: 10px;
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-quote {
   margin-top: 12px;
   padding: 10px 12px;
   border: 1px dashed var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
 
 .admin-thread-quote strong {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-quote p {
   margin-top: 3px;
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -2260,7 +2262,7 @@
 .admin-thread-ai-note {
   display: block;
   margin-top: 6px;
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -2268,7 +2270,7 @@
   margin-top: 14px;
   padding: 12px 13px;
   border: 1px solid rgba(20, 108, 86, 0.16);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--jade-mist);
 }
 
@@ -2281,18 +2283,18 @@
 
 .admin-thread-reply-head strong {
   color: var(--jade-deep);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-reply-head span {
   color: var(--faint);
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-reply p {
   margin-top: 6px;
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-word;
@@ -2304,7 +2306,7 @@
   gap: 4px;
   margin-top: 8px;
   color: var(--jade-deep);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-compose {
@@ -2321,12 +2323,12 @@
 
 .admin-thread-compose-head strong {
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-compose-head span {
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
 }
 
@@ -2335,10 +2337,10 @@
   min-height: 118px;
   padding: 9px 10px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   outline: none;
   resize: vertical;
@@ -2354,7 +2356,7 @@
   gap: 7px;
   margin-top: 8px;
   color: var(--ink-soft);
-  font-size: 9px;
+  font-size: var(--text-meta);
   cursor: pointer;
 }
 
@@ -2372,7 +2374,7 @@
 
 .admin-thread-check em {
   color: var(--faint);
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-style: normal;
 }
 
@@ -2391,12 +2393,12 @@
 
 .admin-thread-compose-actions > span {
   color: var(--faint);
-  font-size: 8px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-compose-actions .button {
   height: 32px;
-  font-size: 9px;
+  font-size: var(--text-meta);
 }
 
 .admin-thread-readonly {
@@ -2406,10 +2408,10 @@
   margin-top: 14px;
   padding: 11px 12px;
   border: 1px dashed var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 
@@ -2455,5 +2457,109 @@
   .admin-thread-compose-actions .button {
     width: 100%;
     height: 38px;
+  }
+}
+
+/* ---------- 管理端：与主站对齐（设置类左右布局 / 表单类上下布局） ---------- */
+
+/* 1) 表单字段：标签在上、输入在下，并保证手机端字号 ≥ 16px 不触发 iOS 缩放 */
+.admin-ai-field {
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--fg-soft);
+}
+
+.admin-ai-field input,
+.admin-ai-field select {
+  height: var(--touch);
+  padding: 0 12px;
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--fg);
+  font-size: var(--text-base);
+}
+
+.admin-ai-field input::placeholder {
+  color: var(--fg-faint);
+}
+
+.admin-ai-field input:focus-visible,
+.admin-ai-field select:focus-visible {
+  border-color: var(--accent);
+}
+
+/* 2) 设置类条目：名称左、控件右，每项一行 */
+.admin-settings-list {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.admin-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-settings-row + .admin-settings-row {
+  border-top: 1px solid var(--border);
+}
+
+.admin-settings-row-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-settings-row-copy strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-settings-row-copy small {
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* 3) 面板：去掉重复的外层描边，让分组留白来分段 */
+.admin-console-tabs + .admin-panel,
+.admin-page .admin-panel {
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.admin-page .admin-content-card,
+.admin-page .admin-table-card {
+  border-radius: var(--radius-lg);
+}
+
+/* 4) 移动端：表单字段一列到底，触控目标 44px */
+@media (max-width: 720px) {
+  .admin-ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-ai-field.is-wide {
+    grid-column: auto;
+  }
+
+  .admin-ai-field input,
+  .admin-ai-field select {
+    height: var(--touch);
+    font-size: var(--text-base);
+  }
+
+  .admin-settings-row {
+    padding: var(--space-3);
   }
 }

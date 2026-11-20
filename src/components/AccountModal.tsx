@@ -72,13 +72,16 @@ import {
   scheduleExportReady,
 } from '../lib/export'
 import { makeId } from '../lib/utils'
-import { Badge, EmptyState, Modal } from './ui'
+import { Avatar, Badge, EmptyState, Modal } from './ui'
+import { PageSheet } from './PageSheet'
 
 interface AccountModalProps {
   open: boolean
   initialTab?: TabKey
   onClose: () => void
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
+  /** page：作为二级页面展示（默认，设置场景）；dialog：保留弹窗形态 */
+  variant?: 'page' | 'dialog'
 }
 
 type TabKey = 'identity' | 'schedule' | 'scores' | 'teachers'
@@ -298,11 +301,12 @@ function JwLoginFields({
 export function AccountModal({
   open,
   initialTab = 'identity',
+  variant = 'page',
   onClose,
   notify,
 }: AccountModalProps) {
   const profile = useProfile()
-  const { logout: logoutAccount } = useAuth()
+  const { user, logout: logoutAccount } = useAuth()
   const { data } = useStore()
   const [tab, setTab] = useState<TabKey>('identity')
   const [teacherQuery, setTeacherQuery] = useState('')
@@ -361,6 +365,20 @@ export function AccountModal({
     // Only reset when the dialog opens; saving a tab must not jump back to identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTab])
+
+  useEffect(() => {
+    if (!open) return
+
+    // 首次进入与再次切换回来都从最顶端开始，避免用户进来先看到页面中段。
+    const toTop = () => {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      document.querySelector<HTMLElement>('.page-sheet-page')?.scrollTo?.({ top: 0 })
+    }
+    toTop()
+    // 布局与动画结束后再兜一次，防止浏览器恢复上一次的滚动位置
+    const timer = window.setTimeout(toTop, 60)
+    return () => window.clearTimeout(timer)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -709,34 +727,114 @@ export function AccountModal({
       : '课程表'
   const staleSchedule = displayEntries.length > 0 && displayEntries.every((entry) => !entry.startTime && !entry.weeks)
 
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      eyebrow="学生账号 · 服务端同步"
-      title="账号与课表绑定"
-      size="lg"
-      footer={
-        <div className="modal-actions modal-actions-split account-modal-footer">
+  // 教师端没有学生课表/成绩，设置页只展示账号与退出，避免误改学生资料。
+  if (user?.role === 'teacher') {
+    const TeacherShell = variant === 'page' ? PageSheet : Modal
+    return (
+      <TeacherShell
+        open={open}
+        onClose={onClose}
+        eyebrow="教师账号 · 服务端同步"
+        title="设置"
+        footer={
           <div className="modal-actions-right">
-            <button
-              className="text-button danger account-logout-button"
-              onClick={() => {
-                onClose()
-                void logoutAccount()
-              }}
-            >
-              <LogOut size={14} />
-              退出登录
-            </button>
             <button className="button button-ghost" onClick={onClose}>
               关闭
             </button>
+          </div>
+        }
+      >
+        <div className="settings-sheet">
+          <section className="settings-account" aria-label="当前账号">
+            <span className="settings-account-avatar">
+              <Avatar name={user.name} tone="jade" size="lg" />
+            </span>
+            <div className="settings-account-copy">
+              <strong>{user.name}</strong>
+              <span>{user.email}</span>
+            </div>
+            <Badge tone="neutral">教师账号</Badge>
+          </section>
+
+          <section className="settings-group" aria-labelledby="settings-teacher-notes">
+            <h3 className="settings-group-title" id="settings-teacher-notes">
+              说明
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>教师账号由管理员分配</strong>
+                  <small>课程、学生与共享空间的内容在教师端维护；账号资料如需修改，请联系管理员。</small>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="settings-group is-danger" aria-labelledby="settings-teacher-danger">
+            <h3 className="settings-group-title" id="settings-teacher-danger">
+              账号操作
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>退出登录</strong>
+                  <small>退出后需要重新输入邮箱和密码。</small>
+                </span>
+                <button
+                  className="button button-danger-ghost"
+                  onClick={() => {
+                    onClose()
+                    void logoutAccount()
+                  }}
+                >
+                  <LogOut size={14} />
+                  退出
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </TeacherShell>
+    )
+  }
+
+  const shellProps =
+    variant === 'page'
+      ? {
+          open,
+          onClose,
+          eyebrow: '学生账号 · 服务端同步',
+          title: '设置',
+        }
+      : {
+          open,
+          onClose,
+          eyebrow: '学生账号 · 服务端同步',
+          title: '账号与课表绑定',
+          size: 'lg' as const,
+        }
+  const Shell = variant === 'page' ? PageSheet : Modal
+
+  return (
+    <Shell
+      open={open}
+      onClose={onClose}
+      eyebrow={shellProps.eyebrow}
+      title={shellProps.title}
+      footer={
+        <>
+          <span className="page-sheet-fineprint">
+            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
+          </span>
+          <div className="modal-actions-right">
+            <button className="button button-ghost" onClick={onClose}>
+              取消
+            </button>
             <button className="button button-primary" onClick={saveProfile}>
-              保存账号设置
+              保存设置
             </button>
           </div>
-        </div>
+        </>
       }
     >
       <div className="account-tabs" role="tablist" aria-label="账号设置" ref={tabsRef}>
@@ -782,96 +880,163 @@ export function AccountModal({
       </div>
 
       {tab === 'identity' ? (
-        <div className="account-fields">
-          <label className="field">
-            <span className="field-label">姓名（老师看到的提问人）</span>
-            <input
-              className="input"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              placeholder="例如：林晓"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">学院 / 年级</span>
-            <input
-              className="input"
-              value={form.college}
-              onChange={(event) => setForm({ ...form, college: event.target.value })}
-              placeholder="例如：计算机学院 · 2024 级"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">专业（学习背景）</span>
-            <input
-              className="input"
-              list="major-options"
-              value={form.major}
-              onChange={(event) => setForm({ ...form, major: event.target.value })}
-              placeholder="例如：计算机科学与技术"
-            />
-            <datalist id="major-options">
-              {majorOptions().map((major) => (
-                <option key={major} value={major} />
-              ))}
-            </datalist>
-            <span className="field-hint">
-              手动填写或从建议里选；没有演示资料的专业会用通用模式，不编课程地图。
+        <div className="settings-sheet">
+          {/* 账号头卡：头像与身份从侧栏收进来 */}
+          <section className="settings-account" aria-label="当前账号">
+            <span className="settings-account-avatar">
+              <Avatar name={form.name || profile.name} tone="jade" size="lg" />
             </span>
-          </label>
-          <div className="account-field-row">
-            <label className="field">
-              <span className="field-label">学号（可选，仅自己可见）</span>
-              <input
-                className="input"
-                value={form.studentNo}
-                onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
-                inputMode="numeric"
-              />
-            </label>
-            <label className="field">
-              <span className="field-label">默认课程</span>
-              <select
-                className="input"
-                value={form.defaultCourseId}
-                onChange={(event) => setForm({ ...form, defaultCourseId: event.target.value })}
-              >
-                {allCourses()
-                  .filter((course) =>
-                    studentCourses(form).some((item) => item.id === course.id),
-                  )
-                  .map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.name} · {course.teacher}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          </div>
-          <label className="account-email-toggle">
-            <input
-              type="checkbox"
-              checked={form.emailOnTeacherReply}
-              onChange={(event) =>
-                setForm({ ...form, emailOnTeacherReply: event.target.checked })
-              }
-            />
-            <span className="account-email-toggle-copy">
-              <strong>老师回复时邮件提醒我</strong>
-              <small>需要服务端配置 SMTP 才会真正发信；站内铃铛通知不受影响。</small>
-            </span>
-          </label>
-          <div className="inline-note">
-            <CircleAlert size={14} />
-            <span>历史提问仍属于这个身份；改名不会让「我的提问」变空。匿名提问时老师看到的仍然是「匿名同学」。</span>
-          </div>
+            <div className="settings-account-copy">
+              <strong>{form.name || profile.name}</strong>
+              <span>{user?.email ?? '未登录'}</span>
+            </div>
+            <Badge tone="neutral">学生账号</Badge>
+          </section>
 
-          <div className="inline-note">
-            <CircleAlert size={14} />
-            <span>
-              共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
-            </span>
-          </div>
+          <section className="settings-group" aria-labelledby="settings-identity">
+            <h3 className="settings-group-title" id="settings-identity">
+              身份信息
+            </h3>
+            <p className="settings-group-lede">老师看到的是这里填的姓名与专业，其余信息只给自己看。</p>
+            <div className="account-fields">
+              <label className="field">
+                <span className="field-label">姓名（老师看到的提问人）</span>
+                <input
+                  className="input"
+                  value={form.name}
+                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  placeholder="例如：林晓"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">学院 / 年级</span>
+                <input
+                  className="input"
+                  value={form.college}
+                  onChange={(event) => setForm({ ...form, college: event.target.value })}
+                  placeholder="例如：计算机学院 · 2024 级"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">专业（学习背景）</span>
+                <input
+                  className="input"
+                  list="major-options"
+                  value={form.major}
+                  onChange={(event) => setForm({ ...form, major: event.target.value })}
+                  placeholder="例如：计算机科学与技术"
+                />
+                <datalist id="major-options">
+                  {majorOptions().map((major) => (
+                    <option key={major} value={major} />
+                  ))}
+                </datalist>
+                <span className="field-hint">
+                  手动填写或从建议里选；没有演示资料的专业会用通用模式，不编课程地图。
+                </span>
+              </label>
+              <div className="account-field-row">
+                <label className="field">
+                  <span className="field-label">学号（可选，仅自己可见）</span>
+                  <input
+                    className="input"
+                    value={form.studentNo}
+                    onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">默认课程</span>
+                  <select
+                    className="input"
+                    value={form.defaultCourseId}
+                    onChange={(event) => setForm({ ...form, defaultCourseId: event.target.value })}
+                  >
+                    {allCourses()
+                      .filter((course) =>
+                        studentCourses(form).some((item) => item.id === course.id),
+                      )
+                      .map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.name} · {course.teacher}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section className="settings-group" aria-labelledby="settings-notify">
+            <h3 className="settings-group-title" id="settings-notify">
+              通知
+            </h3>
+            <div className="settings-row-list">
+              <label className="settings-row">
+                <span className="settings-row-copy">
+                  <strong>老师回复时邮件提醒我</strong>
+                  <small>需要服务端配置 SMTP 才会真正发信；站内铃铛通知不受影响。</small>
+                </span>
+                <input
+                  className="settings-switch"
+                  type="checkbox"
+                  checked={form.emailOnTeacherReply}
+                  onChange={(event) =>
+                    setForm({ ...form, emailOnTeacherReply: event.target.checked })
+                  }
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="settings-group" aria-labelledby="settings-notes">
+            <h3 className="settings-group-title" id="settings-notes">
+              说明
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>改名不影响历史提问</strong>
+                  <small>
+                    历史提问仍属于这个身份，「我的提问」不会变空；匿名提问时老师看到的仍然是「匿名同学」。
+                  </small>
+                </span>
+              </div>
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>数据归属</strong>
+                  <small>
+                    共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
+                  </small>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* 危险操作单独成组：退出登录收进设置，不再占用侧栏按钮 */}
+          <section className="settings-group is-danger" aria-labelledby="settings-danger">
+            <h3 className="settings-group-title" id="settings-danger">
+              账号操作
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>退出登录</strong>
+                  <small>退出后需要重新输入邮箱和密码；未保存的修改会丢失。</small>
+                </span>
+                <button
+                  className="button button-danger-ghost"
+                  onClick={() => {
+                    onClose()
+                    void logoutAccount()
+                  }}
+                >
+                  <LogOut size={14} />
+                  退出
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
       ) : tab === 'schedule' ? (
         <div className="account-schedule">
@@ -1541,6 +1706,6 @@ export function AccountModal({
           )}
         </div>
       )}
-    </Modal>
+    </Shell>
   )
 }

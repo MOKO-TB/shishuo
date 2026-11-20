@@ -1,0 +1,144 @@
+/**
+ * tokens.css —— 语义层（唯一允许出现字面色值的文件之一，另一个是 base.css 的原始色板）
+ *
+ * 规则：
+ * 1) 组件样式只准用语义变量（--bg-card / --fg-muted / --radius-lg …），不写 #hex、rgba()、px 圆角。
+ * 2) 深色模式只换这里的值，不再在组件里写 [data-theme='dark'] 覆盖块。
+ * 3) 填充只有 5 个角色：bg / bg-card / bg-card-alt / bg-inset / bg-strong；强调底只有 accent（jade）。
+ * 4) 字号下限：--text-meta 11px（仅用于徽标、计数），正文不小于 13px。
+ */
+
+:root {
+  /* ---- 底色层级（从外到内） ---- */
+  --bg: #f4f0e6;
+  --bg-card: #fbf9f3;
+  --bg-card-alt: #f7f3ea;
+  --bg-inset: #fffdf8;
+  --bg-soft: #ece7da;
+  --bg-accent: #e2efe9;
+  --bg-accent-mist: #f0f6f2;
+  --bg-strong: #14211b;
+  /* 深色侧栏上的描边与悬停（与 --fg-on-strong 同色系） */
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
+  --bg-strong-soft: #1d3028;
+
+  /* 深色侧栏上的描边与悬停（与 --fg-on-strong 同色系） */
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
+
+  /* ---- 文字 ---- */
+  --fg: #17241e;
+  --fg-soft: #3f4f48;
+  --fg-muted: #5d6b64; /* 4.99:1 on --bg */
+  --fg-faint: #77837c; /* 3.2:1，仅装饰/分隔，不承载正文 */
+  --fg-on-strong: #f7f1e3;
+
+  /* ---- 描边 ---- */
+  --border: #e2dccf;
+  --border-strong: #cec6b6;
+  --border-translucent: rgba(206, 198, 182, 0.52);
+  --bg-translucent: rgba(244, 240, 230, 0.82);
+
+  /* ---- 强调（保留名称以兼容存量写法） ---- */
+  --accent: #146c56;
+  --accent-deep: #0c4e3d;
+  --accent-clay: #b8613e;
+  --accent-gold: #ad7f1d;
+  --accent-blue: #4d6e8a;
+  --danger: #a53f35;
+
+  /* ---- 圆角阶梯（只允许这 6 档） ---- */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ---- 阴影 ---- */
+  --shadow-switch: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-switch: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-card: 0 1px 1px rgba(23, 36, 30, 0.03), 0 18px 45px -32px rgba(23, 36, 30, 0.34);
+  --shadow-float: 0 30px 80px -38px rgba(20, 33, 27, 0.42);
+
+  /* ---- 填充（渐变只允许两个） ---- */
+  --fill-hero: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-accent-mist) 100%);
+  --fill-panel: linear-gradient(135deg, var(--bg-card-alt) 0%, var(--bg-accent-mist) 100%);
+  --fill-strong: linear-gradient(160deg, var(--bg-strong-soft) 0%, var(--bg-strong) 100%);
+  --rule-accent: linear-gradient(90deg, var(--accent), transparent 62%);
+
+  /* ---- 字号阶梯 ---- */
+  --text-meta: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-display: clamp(22px, 2.4vw, 38px);
+
+  /* ---- 间距（4 的倍数） ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* ---- 结构 ---- */
+  --header-h: 64px;
+  --touch: 44px;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+[data-theme='dark'] {
+  --bg: #0b1210;
+  --bg-card: #16211c;
+  --bg-card-alt: #1b2822;
+  --bg-inset: #20302a;
+  --bg-soft: #141f1a;
+  --bg-accent: #1e352d;
+  --bg-accent-mist: #1a2a24;
+  --bg-strong: #070d0a;
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
+  --bg-strong-soft: #0f1a15;
+  --side-line: rgba(247, 241, 227, 0.1);
+  --side-line-strong: rgba(247, 241, 227, 0.18);
+  --side-hover: rgba(247, 241, 227, 0.07);
+  --side-fg-dim: rgba(247, 241, 227, 0.55);
+
+  --fg: #ecf3ee;
+  --fg-soft: #c0cdc6;
+  --fg-muted: #a3b4ab; /* 7.1:1 on --bg-card */
+  --fg-faint: #86978e;
+  --fg-on-strong: #f2ede1;
+
+  --border: #2a3a33;
+  --border-strong: #3b4d45;
+  --border-translucent: rgba(42, 58, 51, 0.72);
+  --bg-translucent: rgba(11, 18, 16, 0.86);
+
+  --accent: #55d3a7;
+  --accent-deep: #8ae6c6;
+  --accent-clay: #e28d66;
+  --accent-gold: #d6b162;
+  --accent-blue: #86add0;
+  --danger: #e58172;
+
+  --shadow-switch: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-switch: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.35), 0 18px 45px -30px rgba(0, 0, 0, 0.7);
+  --shadow-float: 0 30px 80px -38px rgba(0, 0, 0, 0.85);
+
+  --fill-hero: linear-gradient(160deg, #1b2822 0%, #16211c 100%);
+  --fill-panel: linear-gradient(135deg, #1b2822 0%, #16211c 100%);
+  --fill-strong: linear-gradient(160deg, #12201a 0%, #070d0a 100%);
+}

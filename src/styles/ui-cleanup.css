@@ -39,6 +39,7 @@
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: none;
+    mask-image: linear-gradient(90deg, black 0, black calc(100% - 24px), transparent 100%);
   }
 
   .ask-suggestions::-webkit-scrollbar {

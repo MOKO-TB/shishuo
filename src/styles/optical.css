@@ -1,0 +1,42 @@
+/**
+ * optical.css —— 视觉对齐（Optical Alignment）微调层
+ *
+ * 原则：
+ * 1) 先对齐几何参考线（左右内边距、网格、基线），能靠布局解决的不用这个文件；
+ * 2) 只有"几何居中但看起来偏"的元素才在这里做 1–3px 的感知补偿；
+ * 3) 每条规则都要写明为什么偏，不写原因的不许加进来。
+ *
+ * 常见需要补偿的形状：
+ * - 三角形播放键：视觉重心偏左，几何居中看起来像靠左 → 右移
+ * - 星星/收藏/下载/箭头：视觉重心偏下 → 上移
+ * - 圆形头像里的单字：字形本身带侧重心 → 上移 0.5–1px
+ * - 图标 + 文字的按钮：图标按字体行高居中会偏上 → 下移 1px
+ */
+
+/* 三角形播放键：视觉重心偏左，右移 1px 才与容器中心重合 */
+.optical-triangle-right {
+  transform: translateX(1px);
+}
+
+/* 星形 / 书签类：重心偏下，上移 1px */
+.optical-star {
+  transform: translateY(-1px);
+}
+
+/* 圆形头像里的单字：汉字重心略高，下压 0.5px 更居中 */
+.avatar > span,
+.avatar-copy {
+  transform: translateY(0.5px);
+}
+
+/* 图标 + 文字：图标视觉重心略高，下移 1px 与文字基线齐平 */
+.button > svg:first-child,
+.settings-row-copy > strong + svg {
+  transform: translateY(1px);
+}
+
+/* 只有一条竖线的分隔（如"·"与"/"），避免上下留白不等 */
+.eyebrow-sep {
+  display: inline-block;
+  transform: translateY(-1px);
+}

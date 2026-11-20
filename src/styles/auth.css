@@ -66,7 +66,7 @@
   gap: 8px;
   padding: 7px 12px;
   border: 1px solid rgba(247, 241, 227, 0.22);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: rgba(247, 241, 227, 0.82);
   font-size: 12px;
   letter-spacing: 0.12em;
@@ -98,7 +98,7 @@
 
 .auth-pilot-row span {
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(247, 241, 227, 0.08);
   border: 1px solid rgba(247, 241, 227, 0.14);
   color: rgba(247, 241, 227, 0.9);
@@ -174,12 +174,12 @@
   padding: 4px;
   background: var(--paper-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .auth-tabs button {
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
@@ -199,13 +199,13 @@
   gap: 4px;
   padding: 3px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--paper-2);
 }
 
 .auth-role-toggle button {
   padding: 6px 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
@@ -230,7 +230,7 @@
 .auth-course-option {
   padding: 7px 12px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--muted);
   font-size: 12px;
@@ -278,7 +278,7 @@
 
 .auth-forgot {
   color: var(--jade-deep);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
 }
 
 .auth-forgot:hover {
@@ -301,7 +301,7 @@
   height: 39px;
   padding: 0 12px;
   flex: 0 0 auto;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -311,10 +311,10 @@
   gap: 8px;
   padding: 8px 10px;
   border: 1px dashed rgba(20, 108, 86, 0.3);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--jade-mist);
   color: var(--jade-deep);
-  font-size: 10px;
+  font-size: var(--text-meta);
 }
 
 .auth-dev-code strong {
@@ -326,10 +326,10 @@
 .auth-dev-code button {
   margin-left: auto;
   padding: 3px 7px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: rgba(20, 108, 86, 0.1);
   color: var(--jade-deep);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
 }
 
 .auth-dev-code button:hover {
@@ -345,7 +345,7 @@
   border-radius: 0 8px 8px 0;
   background: var(--jade-mist);
   color: var(--jade-deep);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.6;
 }
 
@@ -397,7 +397,7 @@
   gap: 11px;
   padding: 11px 13px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   text-align: left;
   transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
@@ -431,7 +431,7 @@
 .auth-demo-note {
   margin-top: 10px;
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 

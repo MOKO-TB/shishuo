@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   letter-spacing: 0.09em;
   color: var(--muted);
 }
@@ -96,9 +96,9 @@
 .about-tags span {
   padding: 4px 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(251, 249, 243, 0.5);
-  font-size: 8px;
+  font-size: var(--text-meta);
   letter-spacing: 0.03em;
   color: var(--muted);
 }
@@ -110,7 +110,7 @@
   justify-self: end;
   padding: 17px;
   border: 1px solid var(--line-strong);
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   background:
     radial-gradient(circle at 12% 8%, rgba(173, 127, 29, 0.08), transparent 34%),
     linear-gradient(155deg, #fbf8f0, #eee9dc);
@@ -138,7 +138,7 @@
   gap: 10px;
   margin-bottom: 12px;
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: var(--text-meta);
   letter-spacing: 0.09em;
   color: var(--faint);
   text-transform: uppercase;
@@ -163,7 +163,7 @@
 .visual-teacher-card {
   padding: 11px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: 0 12px 24px -24px rgba(23, 36, 30, 0.4);
 }
@@ -173,7 +173,7 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 6px;
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
@@ -181,7 +181,7 @@
   margin-left: auto;
   color: var(--faint);
   font-family: var(--mono);
-  font-size: 6.5px;
+  font-size: var(--text-meta);
 }
 
 .visual-avatar {
@@ -193,7 +193,7 @@
   background: var(--jade-soft);
   color: var(--jade-deep);
   font-family: var(--serif);
-  font-size: 7px;
+  font-size: var(--text-meta);
   font-weight: 700;
 }
 
@@ -224,7 +224,7 @@
 }
 
 .visual-connector em {
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   font-style: normal;
   color: var(--faint);
   letter-spacing: 0.02em;
@@ -253,18 +253,18 @@
 }
 
 .visual-ai-head strong {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-weight: 650;
 }
 
 .visual-ai-head .badge {
   margin-left: auto;
   height: 18px;
-  font-size: 7.5px;
+  font-size: var(--text-meta);
 }
 
 .visual-ai-card p {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--ink-soft);
 }
@@ -276,7 +276,7 @@
   margin-top: 7px;
   padding-top: 6px;
   border-top: 1px dashed var(--line);
-  font-size: 7px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -299,19 +299,19 @@
 }
 
 .visual-teacher-head strong {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   font-weight: 650;
 }
 
 .visual-teacher-head em {
-  font-size: 7px;
+  font-size: var(--text-meta);
   color: var(--muted);
   font-style: normal;
 }
 
 .visual-teacher-card p {
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   color: var(--ink-soft);
 }
@@ -323,12 +323,12 @@
   margin-top: 11px;
   padding-top: 9px;
   border-top: 1px dashed var(--line-strong);
-  font-size: 7.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .visual-footnote svg {
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
 }
 
 .about-section {
@@ -366,7 +366,7 @@
 .about-section-note {
   max-width: 160px;
   padding-top: 7px;
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
   text-align: right;
@@ -401,7 +401,7 @@
 
 .pain-number {
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 600;
   color: var(--clay);
   letter-spacing: 0.1em;
@@ -426,7 +426,7 @@
   padding-top: 11px;
   border-top: 1px dashed var(--line);
   font-family: var(--serif);
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   color: var(--muted);
 }
@@ -447,7 +447,7 @@
   height: 100%;
   padding: 17px 16px 16px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
@@ -457,7 +457,7 @@
   height: 34px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
 }
 
 .loop-icon.jade {
@@ -485,7 +485,7 @@
   top: 18px;
   right: 16px;
   font-family: var(--serif);
-  font-size: 9px;
+  font-size: var(--text-meta);
   color: var(--faint);
   letter-spacing: 0.06em;
 }
@@ -498,7 +498,7 @@
 }
 
 .loop-step p {
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.8;
   color: var(--muted);
 }
@@ -537,7 +537,7 @@
   height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-2);
   color: var(--jade-deep);
 }
@@ -551,7 +551,7 @@
 }
 
 .ai-cap-card p {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.8;
   color: var(--muted);
 }
@@ -560,7 +560,7 @@
   position: relative;
   margin: 44px 0;
   padding: 26px 28px 20px;
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   background:
     radial-gradient(circle at 95% 0%, rgba(127, 196, 168, 0.14), transparent 36%),
     linear-gradient(145deg, #182820, #111e18);
@@ -593,7 +593,7 @@
 }
 
 .about-metric-note {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.34);
 }
 
@@ -634,7 +634,7 @@
 }
 
 .about-metric-grid span {
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
   color: rgba(247, 241, 227, 0.47);
 }
@@ -642,7 +642,7 @@
 .about-metrics-foot {
   padding-top: 13px;
   border-top: 1px solid rgba(247, 241, 227, 0.12);
-  font-size: 9px;
+  font-size: var(--text-meta);
   line-height: 1.7;
   color: rgba(247, 241, 227, 0.4);
 }
@@ -698,7 +698,7 @@
 }
 
 .criteria-card p {
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   line-height: 1.85;
   color: var(--muted);
 }
@@ -747,7 +747,7 @@
   gap: 7px;
   padding: 7px 0;
   border-top: 1px dashed var(--line);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--ink-soft);
 }
@@ -767,7 +767,7 @@
   gap: 8px;
   padding: 12px 14px;
   border: 1px dashed var(--line-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(251, 249, 243, 0.45);
 }
 
@@ -777,7 +777,7 @@
 }
 
 .about-feasibility p {
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   line-height: 1.8;
   color: var(--muted);
 }
@@ -794,7 +794,7 @@
   gap: 26px;
   margin-top: 34px;
   padding: 24px 26px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 95% 10%, rgba(127, 196, 168, 0.16), transparent 38%),
     linear-gradient(130deg, #182820, #203b30);
@@ -808,7 +808,7 @@
 }
 
 .about-cta > div:first-child > svg {
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
 }
 
 .about-cta .eyebrow {

@@ -12,6 +12,7 @@
   padding: 24px 16px 16px;
   display: flex;
   flex-direction: column;
+  /* 顶部导航可滚动，底部课程与设置固定 */
   overflow: hidden;
   color: var(--cream);
   background:
@@ -47,7 +48,7 @@
 
 .brand svg {
   box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.55);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .brand-text {
@@ -64,7 +65,7 @@
 }
 
 .brand-text span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   line-height: 1.3;
   letter-spacing: 0.16em;
   color: rgba(247, 241, 227, 0.48);
@@ -77,7 +78,7 @@
   align-items: center;
   gap: 7px;
   border-bottom: 1px solid rgba(247, 241, 227, 0.08);
-  font-size: 9.5px;
+  font-size: var(--text-meta);
   letter-spacing: 0.06em;
   color: rgba(247, 241, 227, 0.46);
 }
@@ -91,16 +92,22 @@
 }
 
 .side-nav {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.side-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-section-label {
   padding: 7px 12px 6px;
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-weight: 600;
   letter-spacing: 0.16em;
   color: rgba(247, 241, 227, 0.3);
@@ -118,7 +125,7 @@
   width: 100%;
   min-height: 40px;
   padding: 9px 11px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   color: rgba(247, 241, 227, 0.68);
   font-size: 12.5px;
   letter-spacing: 0.02em;
@@ -159,19 +166,72 @@
   padding: 0 5px;
   display: grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--gold);
   color: #1b241e;
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 700;
   line-height: 1;
 }
 
+/* 底部固定区：本周课程 + 设置，位置不随上方模块滚动 */
 .sidebar-bottom {
-  margin-top: auto;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   display: grid;
+  gap: 8px;
+  flex: 0 0 auto;
+  border-top: 1px solid var(--side-line);
+}
+
+/* 上半区（品牌 / 导航 / 导师卡）可滚动，滚动条不外露 */
+.side-nav,
+.sidebar-role-note {
+  flex: 0 0 auto;
+}
+
+/* 唯一的底部入口：头像 + 设置 */
+.side-settings-button {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  width: 100%;
+  min-height: var(--touch);
+  padding: 6px 8px;
+  border: 1px solid var(--side-line);
+  border-radius: var(--radius-md);
+  color: var(--fg-on-strong);
+  text-align: left;
+  transition:
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.side-settings-button:hover {
+  background: var(--side-hover);
+  border-color: var(--side-line-strong);
+}
+
+.side-settings-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.side-settings-copy strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.side-settings-copy span {
+  font-size: var(--text-meta);
+  color: var(--side-fg-dim);
+}
+
+.side-settings-button > svg {
+  color: var(--side-fg-dim);
+  flex: 0 0 auto;
 }
 
 .side-profile {
@@ -181,7 +241,7 @@
   gap: 9px;
   padding: 9px;
   border: 1px solid rgba(247, 241, 227, 0.08);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: rgba(247, 241, 227, 0.045);
   text-align: left;
   transition: background 0.2s var(--ease);
@@ -207,7 +267,7 @@
 }
 
 .side-profile-copy span {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.4);
   white-space: nowrap;
   overflow: hidden;
@@ -215,27 +275,55 @@
 }
 
 .side-profile-role {
-  font-size: 8px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.55);
   padding: 2px 5px;
   border: 1px solid rgba(247, 241, 227, 0.13);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   flex: 0 0 auto;
 }
 
+/* 底部工具按钮：等宽平分、一字排开，不做两端顶开的三角排布 */
+/* 三格等分：按钮数量和容器宽度都对得上，不做两端顶开 */
+/* 三格等分：按钮数量和容器宽度都对得上，不做两端顶开 */
+/* 三格等分：用 flex 1 1 0 保证每格一样宽，不做两端顶开 */
 .sidebar-utility {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 6px;
   padding: 0 3px;
+}
+
+.sidebar-utility > button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.sidebar-utility > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 三格排开时文字要够小才放得下，但不低于 11px */
+.side-utility-label {
+  font-size: var(--text-meta);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .side-utility-button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.38);
   transition: color 0.2s var(--ease);
 }
@@ -250,8 +338,8 @@
   gap: 6px;
   padding: 6px 12px;
   border: 1px solid rgba(247, 241, 227, 0.18);
-  border-radius: 8px;
-  font-size: 10px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.6);
   background: rgba(247, 241, 227, 0.04);
   transition: all 0.2s var(--ease);
@@ -266,7 +354,7 @@
 
 .side-version {
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: var(--text-meta);
   color: rgba(247, 241, 227, 0.22);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -283,15 +371,15 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  height: 70px;
+  height: var(--header-h);
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   padding: 0 44px;
-  border-bottom: 1px solid rgba(206, 198, 182, 0.52);
-  background: rgba(244, 240, 230, 0.82);
+  border-bottom: 1px solid var(--border-translucent);
+  background: var(--bg-translucent);
   backdrop-filter: blur(16px);
 }
 
@@ -315,7 +403,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
   white-space: nowrap;
 }
@@ -342,9 +430,9 @@
   height: 26px;
   padding: 0 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(251, 249, 243, 0.6);
-  font-size: 8.5px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card-alt);
+  font-size: var(--text-meta);
   letter-spacing: 0.05em;
   color: var(--muted);
   white-space: nowrap;
@@ -375,10 +463,10 @@
   height: 28px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(251, 249, 243, 0.72);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card-alt);
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: var(--text-meta);
   white-space: nowrap;
 }
 
@@ -388,7 +476,7 @@
 
 .topbar-account small {
   color: var(--faint);
-  font-size: 8.5px;
+  font-size: var(--text-meta);
   letter-spacing: 0.04em;
 }
 
@@ -398,7 +486,7 @@
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(236, 231, 218, 0.7);
 }
 
@@ -408,8 +496,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border-radius: 999px;
-  font-size: 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
   color: var(--muted);
   transition:
     background 0.2s var(--ease),
@@ -438,9 +526,9 @@
   height: 32px;
   padding: 0 11px;
   border: 1px solid var(--line-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
-  font-size: 10px;
+  font-size: var(--text-meta);
   color: var(--ink-soft);
   transition:
     border-color 0.2s var(--ease),
@@ -486,11 +574,11 @@
   display: grid;
   place-items: center;
   border: 2px solid var(--paper);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--clay);
   color: #fffaf4;
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: var(--text-meta);
   font-weight: 700;
   line-height: 1;
 }
@@ -523,6 +611,7 @@
 
   .topbar {
     padding: 0 32px;
+    min-height: var(--header-h);
   }
 }
 
@@ -565,7 +654,7 @@
     min-height: 44px;
     margin: 0 auto;
     padding: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
   }
 
   .nav-icon {
@@ -578,7 +667,7 @@
     right: 0;
     min-width: 16px;
     height: 16px;
-    font-size: 8px;
+    font-size: var(--text-meta);
   }
 
   .sidebar-bottom {
@@ -591,7 +680,7 @@
     height: 44px;
     padding: 0;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
   }
 
   .side-profile .avatar {
@@ -600,18 +689,21 @@
   }
 
   .sidebar-utility {
+    grid-auto-flow: column;
+    grid-auto-columns: var(--touch);
     justify-content: center;
+    gap: 6px;
     padding: 0;
   }
 
   .sidebar-utility .side-utility-button {
     display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: var(--touch);
+    height: var(--touch);
     justify-content: center;
     gap: 0;
     padding: 0;
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     background: rgba(247, 241, 227, 0.045);
     font-size: 0;
     overflow: hidden;
@@ -624,12 +716,12 @@
 
   .sidebar-utility .side-logout-button {
     display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: var(--touch);
+    height: var(--touch);
     justify-content: center;
     gap: 0;
     padding: 0;
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     font-size: 0;
     overflow: hidden;
   }
@@ -690,7 +782,7 @@
   }
 
   .page {
-    padding: 24px 16px 104px;
+    padding: 24px 16px calc(104px + env(safe-area-inset-bottom, 0px));
   }
 
   .mobile-nav {
@@ -698,15 +790,16 @@
     z-index: 60;
     left: 12px;
     right: 12px;
-    bottom: 12px;
-    height: 60px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    height: auto;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: space-around;
     gap: 4px;
-    padding: 5px 8px;
+    padding: 5px 8px calc(5px + env(safe-area-inset-bottom, 0px));
     border: 1px solid rgba(247, 241, 227, 0.1);
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     background: rgba(20, 33, 27, 0.94);
     backdrop-filter: blur(16px);
     box-shadow: 0 20px 50px -20px rgba(16, 26, 21, 0.6);
@@ -720,9 +813,9 @@
     align-items: center;
     justify-content: center;
     gap: 3px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     color: rgba(247, 241, 227, 0.5);
-    font-size: 8px;
+    font-size: var(--text-meta);
     letter-spacing: 0.02em;
   }
 
@@ -739,7 +832,7 @@
     width: calc(100vw - 20px);
     max-height: 92vh;
     margin: 4vh auto 0;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
 
   .modal-head,
@@ -780,5 +873,125 @@
 
   .toast {
     bottom: 86px;
+  }
+}
+
+/* ---------- 侧栏结构：上半可滚，底部固定 ---------- */
+
+/* 品牌与导航区可滚动，导师卡跟随其后 */
+.sidebar > .brand,
+.sidebar > .sidebar-role-note,
+.side-nav {
+  flex: 0 0 auto;
+}
+
+/* ---------- 底部固定区：本周课程 + 设置 ----------
+   这两块是一个整体，靠 flex 的 auto 外边距吸到侧栏底部，
+   不参与上方导航的滚动，位置恒定。 */
+
+.sidebar-bottom {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-height: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--side-line);
+}
+
+/* 课程卡在底部区里不再自己吸底 */
+.side-timetable {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+/* 导航区在空间不足时才滚动，避免把底部区顶出去 */
+.side-nav {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.side-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* 唯一的设置入口：头像 + 设置 */
+.side-settings-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--touch);
+  padding: 6px 8px;
+  border: 1px solid var(--side-line);
+  border-radius: var(--radius-md);
+  color: var(--fg-on-strong);
+  text-align: left;
+  transition:
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.side-settings-button:hover {
+  background: var(--side-hover);
+  border-color: var(--side-line-strong);
+}
+
+.side-settings-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.side-settings-copy strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.side-settings-copy span {
+  font-size: var(--text-meta);
+  color: var(--side-fg-dim);
+}
+
+.side-settings-button > svg {
+  flex: 0 0 auto;
+  color: var(--side-fg-dim);
+}
+
+/* 1080 以下图标态：设置按钮收成圆形，与导航项同宽 */
+@media (max-width: 1080px) {
+  .side-settings-button {
+    width: var(--touch);
+    min-height: var(--touch);
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .side-settings-copy,
+  .side-settings-button > svg {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .sidebar-bottom {
+    display: none;
+  }
+}
+
+/* 极矮视口（<720px）底部固定区压缩：课程网格收起，只留标题入口与设置 */
+@media (max-height: 720px) {
+  .side-timetable .side-week,
+  .side-timetable .side-timetable-foot,
+  .side-timetable .side-timetable-empty {
+    display: none;
+  }
+
+  .sidebar-bottom {
+    gap: 6px;
+    padding-top: 8px;
   }
 }
