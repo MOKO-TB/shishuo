@@ -342,14 +342,21 @@ export function MajorMentorStrip({
   courseId,
   data,
   onOpen,
+  onSelectCourse,
 }: {
   profile: StudentProfile
   courseId: string
   data: AppData
   onOpen: (prompt?: string) => void
+  onSelectCourse: (courseId: string) => void
   onEditMajor: () => void
 }) {
   const { mentor, selectMentor, options, enabledIds, addMentor } = useMentorSelection()
+
+  const chooseMentor = (id: string) => {
+    selectMentor(id)
+    onSelectCourse(id)
+  }
 
   useEffect(() => {
     if (!courseId || mentor.courseId === courseId) return
@@ -374,7 +381,7 @@ export function MajorMentorStrip({
             <MentorSwitcher
               mentor={mentor}
               options={options}
-              onSelect={selectMentor}
+              onSelect={chooseMentor}
               variant="light"
             />
           </div>
@@ -408,6 +415,7 @@ export function MajorMentorDrawer({
   seed,
   onRoute,
   onOpenCourse,
+  onSelectCourse,
 }: {
   open: boolean
   onClose: () => void
@@ -416,6 +424,7 @@ export function MajorMentorDrawer({
   seed: { id: number; text: string } | null
   onRoute: (courseId: string, question: string) => void
   onOpenCourse: (courseId: string) => void
+  onSelectCourse: (courseId: string) => void
   onEditMajor: () => void
 }) {
   const {
@@ -625,7 +634,10 @@ export function MajorMentorDrawer({
               <button
                 key={option.courseId}
                 className={`mentor-teacher-chip ${option.courseId === mentor.courseId ? 'is-active' : ''}`}
-                onClick={() => selectMentor(option.courseId)}
+                onClick={() => {
+                  selectMentor(option.courseId)
+                  onSelectCourse(option.courseId)
+                }}
               >
                 {option.title}
               </button>
@@ -645,8 +657,7 @@ export function MajorMentorDrawer({
         {mentor.courseId === 'analog' && <AnalogMentorTools />}
 
         <div className="mentor-drawer-body" ref={bodyRef}>
-          {messages.length === 0 && (
-            <div className="mentor-welcome">
+          <div className={`mentor-welcome ${messages.length > 0 ? 'is-kept' : ''}`}>
               <span className="mentor-welcome-mark">
                 <AiMark size={17} />
               </span>
@@ -750,7 +761,6 @@ export function MajorMentorDrawer({
                 )}
               </div>
             </div>
-          )}
 
           <div className="mentor-thread">
             {messages.map((message) =>

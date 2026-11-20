@@ -52,6 +52,7 @@ export default function App() {
     courseId: string
     question: string
   } | null>(null)
+  const [courseRequest, setCourseRequest] = useState<{ id: number; courseId: string } | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
   const toastTimer = useRef<number | null>(null)
 
@@ -240,6 +241,7 @@ export default function App() {
   }, [])
 
   const mentorRequestHandled = useCallback(() => setMentorRequest(null), [])
+  const courseRequestHandled = useCallback(() => setCourseRequest(null), [])
 
   const handleReset = useCallback(() => {
     resetDemo()
@@ -323,6 +325,8 @@ export default function App() {
             onOpenMentor={openMentor}
             mentorRequest={mentorRequest}
             onMentorRequestHandled={mentorRequestHandled}
+            courseRequest={courseRequest}
+            onCourseRequestHandled={courseRequestHandled}
             focusThreadId={focusThread}
             onFocusHandled={focusHandled}
           />
@@ -375,6 +379,7 @@ export default function App() {
         seed={mentorSeed}
         onRoute={routeFromMentor}
         onOpenCourse={(courseId) => routeFromMentor(courseId, '')}
+        onSelectCourse={(courseId) => setCourseRequest({ id: Date.now(), courseId })}
         onEditMajor={() => {
           setMentorOpen(false)
           openAccount('identity')

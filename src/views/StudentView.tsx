@@ -90,6 +90,8 @@ interface StudentViewProps {
   onOpenMentor: (prompt?: string) => void
   mentorRequest?: { id: number; courseId: string; question: string } | null
   onMentorRequestHandled?: () => void
+  courseRequest?: { id: number; courseId: string } | null
+  onCourseRequestHandled?: () => void
   focusThreadId?: string | null
   onFocusHandled?: () => void
 }
@@ -160,6 +162,8 @@ export function StudentView({
   onOpenMentor,
   mentorRequest,
   onMentorRequestHandled,
+  courseRequest,
+  onCourseRequestHandled,
   focusThreadId,
   onFocusHandled,
 }: StudentViewProps) {
@@ -429,6 +433,14 @@ export function StudentView({
     // focusAskCard is recreated each render; the request id is the dedupe key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mentorRequest, thinking, notify, onMentorRequestHandled])
+
+  useEffect(() => {
+    if (!courseRequest) return
+    changeCourse(courseRequest.courseId)
+    onCourseRequestHandled?.()
+    // courseRequest.id 是去重键；changeCourse 每次渲染都会重建，不放进依赖。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseRequest, onCourseRequestHandled])
 
   const chooseImage = () => {
     if (thinking) return
@@ -811,6 +823,7 @@ export function StudentView({
               courseId={courseId}
               data={data}
               onOpen={onOpenMentor}
+              onSelectCourse={changeCourse}
               onEditMajor={() => onOpenAccount?.('identity')}
             />
           </div>

@@ -552,6 +552,12 @@
   background: var(--surface);
 }
 
+.mentor-welcome.is-kept {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom-color: var(--line-strong);
+}
+
 .mentor-welcome-mark {
   display: inline-flex;
   flex: 0 0 auto;
