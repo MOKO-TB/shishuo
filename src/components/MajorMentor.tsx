@@ -271,7 +271,7 @@ function answerMentor(question: string, mentor: CourseMentor): MentorAnswer {
   if (/(全课|课程地图|学习路线|怎么排)/.test(text)) {
     return {
       title: '课程学习顺序',
-      text: `按${mentor.name}的章节顺序：先把基础章打穿，再进后续章节；不要跳章硬啃。`,
+      text: `按知识主题的顺序：先把基础主题打穿，再进后续主题；不要跳主题硬啃。`,
       bullets: mentor.chapters
         .filter((item) => item.label !== '黑板版补充')
         .map((item) => item.label),
@@ -280,18 +280,18 @@ function answerMentor(question: string, mentor: CourseMentor): MentorAnswer {
     }
   }
 
-  const asksChapter = /这一章|章节/.test(text)
+  const asksChapter = /这一章|这一节|章节|这个主题/.test(text)
   const chapter = asksChapter
     ? mentor.chapters.find((item) => text.includes(item.label))
     : undefined
 
   if (chapter) {
     return {
-      title: `章节：${chapter.label}`,
+      title: `主题：${chapter.label}`,
       text: chapter.advice,
       bullets: chapter.topics,
-      routeQuestion: `请按「${chapter.label}」这一章给我一个学习顺序。`,
-      routeLabel: `去《${course.shortName}》问这一章`,
+      routeQuestion: `请围绕「${chapter.label}」这个主题，讲清最关键的知识点和条件。`,
+      routeLabel: `去《${course.shortName}》问这个主题`,
     }
   }
 
@@ -320,10 +320,10 @@ function answerMentor(question: string, mentor: CourseMentor): MentorAnswer {
   if (/(基础差|先补|怎么学|学习计划|顺序|规划|跟不上|从头学)/.test(text)) {
     return {
       title: '先补这三块，再谈刷题',
-      text: `${mentor.title}不是从最后一章才开始卡，很多问题在前面就已经埋下了。`,
+      text: `${mentor.title}不是从最难的部分才开始卡，很多问题在前面就已经埋下了。`,
       bullets: [
         ...mentor.foundation.map((item, index) => `先修 ${index + 1}：${item}`),
-        '每周 2 次、每次 45 分钟；先做课本例题，再做 2 道变式，不要一次铺五章。',
+        '每周 2 次、每次 45 分钟；先做课本例题，再做 2 道变式，不要一次铺五个主题。',
       ],
       routeQuestion: `我${mentor.title}基础差，应该先补哪几块？`,
       routeLabel: `去《${course.shortName}》问基础补强`,
@@ -665,7 +665,7 @@ export function MajorMentorDrawer({
                 <strong>我是你的{mentor.name}</strong>
                 <p>
                   {mentor.chapters.length > 0
-                    ? `已把公开课整理成 ${mentor.chapters.length} 个章节。先告诉我你卡在哪：${mentor.chapters
+                    ? `已把公开课整理成 ${mentor.chapters.length} 个知识主题。先告诉我你卡在哪：${mentor.chapters
                         .slice(0, 4)
                         .map((chapter) => chapter.label)
                         .join('、')}？我会先定位卡点，再讲关键一步，最后留一道换数字的题。`
@@ -686,14 +686,14 @@ export function MajorMentorDrawer({
                 <div className="mentor-course-map">
                   <div className="mentor-course-map-head">
                     <GraduationCap size={14} />
-                    <span>课程地图 · {mentor.chapters.length} 章</span>
+                    <span>知识地图 · {mentor.chapters.length} 个主题</span>
                   </div>
                   <div className="mentor-course-chips">
                     {mentor.chapters.map((chapter) => (
                       <button
                         key={chapter.label}
                         className="mentor-course-chip"
-                        onClick={() => send(`「${chapter.label}」这一章先学什么？`)}
+                        onClick={() => send(`「${chapter.label}」这个主题先讲什么？`)}
                       >
                         {chapter.label}
                       </button>

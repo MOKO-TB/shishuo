@@ -5,6 +5,7 @@ import { ARTSCI_MENTORS } from './artsciMentors'
 import { LAW_BIOCHEM_MENTORS } from './lawBiochemMentors'
 import { ENG2_MENTORS } from './eng2Mentors'
 import { allCourses, courseById } from './seed'
+import { distilledMentorFor } from './biliMentors'
 import type { Course } from '../types'
 
 export interface MentorMisconception {
@@ -2585,27 +2586,33 @@ const COURSE_MENTORS: CourseMentor[] = [
  * 没有视频/逐字稿来源，不做 B 站蒸馏，只对齐课程与教师口径。
  */
 function mentorFromCourse(course: Course): CourseMentor {
+  const distilled = distilledMentorFor(course.name, course.shortName)
   return {
     courseId: course.id,
     name: `${course.shortName}导师`,
     title: course.shortName,
-    tagline: '先定位卡点，再讲下一步；课程口径以知识库和任课老师为准。',
-    attribution: '基于课程信息生成；具体结论以课程知识库和任课老师为准。',
-    principles: [
-      '先问清楚卡在哪一步，再给下一步；不堆通用定义。',
-      '课程口径以课程知识库和任课老师为准，不编“老师说过”。',
-      '讲完留一道换数字或换场景的迁移题，答案默认不展开。',
-    ],
-    foundation: [],
-    quickPrompts: [
-      `${course.shortName}这周讲到哪，我该先补什么？`,
-      `我在${course.shortName}这一步卡住了，下一步怎么走？`,
-      `${course.shortName}作业应该怎么拆步骤？`,
-    ],
+    tagline:
+      distilled?.tagline ?? '先定位卡点，再讲下一步；课程口径以知识库和任课老师为准。',
+    attribution: distilled
+      ? '基于 B 站公开课的课程结构与字幕整理；不复制视频、不冒充任课老师，具体结论以课程知识库和任课老师为准。'
+      : '基于课程信息生成；具体结论以课程知识库和任课老师为准。',
+    principles:
+      distilled?.principles ?? [
+        '先问清楚卡在哪一步，再给下一步；不堆通用定义。',
+        '课程口径以课程知识库和任课老师为准，不编“老师说过”。',
+        '讲完留一道换数字或换场景的迁移题，答案默认不展开。',
+      ],
+    foundation: distilled?.foundation ?? [],
+    quickPrompts:
+      distilled?.quickPrompts ?? [
+        `${course.shortName}最核心的概念怎么理解？`,
+        `我在${course.shortName}这道题卡住了，下一步怎么想？`,
+        `${course.shortName}作业应该怎么拆步骤？`,
+      ],
     totalEpisodes: 0,
     totalHours: 0,
-    chapters: [],
-    styleNotes: [],
+    chapters: distilled?.chapters ?? [],
+    styleNotes: distilled?.styleNotes ?? [],
     topics: [],
   }
 }
@@ -2713,10 +2720,11 @@ ${focus}
 1. 用中文，像这位老师在课后答疑：先给位置感/卡点，再讲关键一步，不要先堆通用定义。
 2. 先做一次诊断（问一个关键问题或点明类型），再给先修检查；如果学生只是打招呼，用一两句话把话题拉回“你现在卡在哪”。
 3. 只讲最关键的一步“为什么可以”，给一个反例或边界；不要把所有步骤一次倒完。
-4. 结尾留一道换数字的迁移题，不要直接给答案；可以给提示。
-5. 数学公式用 $...$ 包裹，不要用代码块或裸露的 ^{} / _{}；不用 Markdown 表格。
-6. 学生可能没看过公开课视频：不要用“第几集”“P 编号”这类集数定位，也不要问“学到哪一集”；需要确认进度时，只给 2–3 个章节名或主题让学生选。
-7. 不冒充任课老师，不编“老师说过”或课程引用；不确定就建议转交任课老师。控制在 600 字以内。`
+4. 答案必须落到这门科目的定义、条件、步骤和例子；不要用学习计划、进度或“先去看哪一章”代替知识讲解。
+5. 结尾留一道换数字的迁移题，不要直接给答案；可以给提示。
+6. 数学公式用 $...$ 包裹，不要用代码块或裸露的 ^{} / _{}；不用 Markdown 表格。
+7. 不要出现“第几章”“第几节”“第几讲”“第几集”“P 编号”这类序号定位，也不要问“学到哪一章/哪一集”；需要确认范围时，只列 2–3 个知识主题让学生选。
+8. 不冒充任课老师，不编“老师说过”或课程引用；不确定就建议转交任课老师。控制在 600 字以内。`
 }
 
 export function mentorBriefForCourse(courseId: string) {
@@ -2727,7 +2735,7 @@ export function mentorBriefForCourse(courseId: string) {
   return [
     `你是《${course.name}》课程的 AI 导师${teacher ? `，教学口径对齐${teacher}老师` : ''}，但不冒充老师本人。${mentor.tagline}`,
     '回答顺序：先点明卡点或类型 → 检查一个先修 → 只讲关键一步为什么成立（给条件或反例）→ 留一道换数字的迁移题（不要直接给答案）。',
-    '用章节名/主题定位，不要提集数或 P 编号；学生可能没看过公开课视频。',
+    '直接按这门科目的定义、条件、步骤和例子回答；不要提“第几章/第几节/第几讲/第几集/P 编号”，也不要用学习进度代替知识讲解。',
     '数学公式用 $...$ 包裹（行内），不要用代码块或裸露的 ^{} / _{}。',
     '不冒充任课老师，不编造“老师说过”或课程引用；没有把握就建议转交任课老师。',
     '课程口径以课程知识库为准；公开课只作教学法参考。',
