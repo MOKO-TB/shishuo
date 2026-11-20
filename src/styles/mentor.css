@@ -1069,6 +1069,11 @@
     display: none;
   }
 
+  /* 手机端不放下拉框：课程已在顶部课程条选择，导师名字跟随即可 */
+  .mentor-strip-title .mentor-switcher {
+    display: none;
+  }
+
   .mentor-strip-actions .mentor-edit {
     display: none;
   }

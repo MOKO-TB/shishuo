@@ -793,7 +793,7 @@ export function StudentView({
           <div className="course-switch-actions">
             <button
               className="course-timetable-button"
-              onClick={() => onOpenAccount?.('schedule')}
+              onClick={() => onNavigate('schedule')}
               aria-label={profile.schedule.length > 0 ? '查看课程表' : '添加课程表'}
             >
               <CalendarDays size={15} />
@@ -801,16 +801,6 @@ export function StudentView({
                 {profile.schedule.length > 0 ? '课程表' : '添加课程表'}
               </span>
             </button>
-            {profile.customCourses.length > 0 && (
-              <button
-                className="course-manage-button"
-                onClick={() => onOpenAccount?.('teachers')}
-                aria-label="管理任课老师"
-              >
-                <Users size={14} />
-                管理老师
-              </button>
-            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Check, Layers, RotateCcw, X } from 'lucide-react'
 import { useStore } from '../store'
 import { currentStudentId, setProfile, useProfile } from '../lib/profile'
 import { courseById } from '../data/seed'
+import { CAMPUS_COURSE_ID } from '../data/campus'
 import type { Thread } from '../types'
 import { formatRelative, truncate } from '../lib/utils'
 import { Badge, EmptyState, Modal, RichText } from './ui'
@@ -54,7 +55,13 @@ export function ReviewModal({
     if (!open) return []
     const me = currentStudentId()
     return data.threads
-      .filter((thread) => thread.student.id === me && !thread.withdrawnAt)
+      .filter(
+        (thread) =>
+          thread.student.id === me &&
+          !thread.withdrawnAt &&
+          // 复习卡只收课程学习问题；校园生活不属于课程错题本。
+          thread.courseId !== CAMPUS_COURSE_ID,
+      )
       .map((thread) => {
         const hasAnswer = Boolean(
           thread.teacherReply?.text ||

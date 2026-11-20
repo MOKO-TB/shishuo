@@ -27,7 +27,7 @@ export interface StudentRailProps {
   onOpenAccount?: (tab: 'identity' | 'schedule' | 'scores' | 'teachers') => void
   onOpenJoinGroup: (group: ThreadGroup) => void
   onOpenFaq: (faqId: string) => void
-  onNavigate: (view: 'student' | 'knowledge' | 'teacher' | 'insights' | 'about') => void
+  onNavigate: (view: 'student' | 'schedule' | 'knowledge' | 'teacher' | 'insights' | 'about') => void
 }
 
 /** 学生端右侧栏：今日答疑 / 课程表 / 等老师 / 知识库热度 / 教师信息。纯展示，数据由视图注入。 */
@@ -117,7 +117,7 @@ export function StudentRail({
               )
             })}
           </div>
-          <button className="text-button class-card-link" onClick={() => onOpenAccount?.('schedule')}>
+          <button className="text-button class-card-link" onClick={() => onNavigate('schedule')}>
             查看整周课程表
             <ArrowRight size={13} />
           </button>
@@ -139,7 +139,9 @@ export function StudentRail({
           </p>
           <button
             className="button button-secondary class-card-cta"
-            onClick={() => onOpenAccount?.('schedule')}
+            onClick={() =>
+              hasSchedule ? onNavigate('schedule') : onOpenAccount?.('schedule')
+            }
           >
             {hasSchedule ? '查看整周课程表' : '添加课程'}
           </button>

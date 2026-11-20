@@ -2227,19 +2227,9 @@
     justify-content: flex-end;
   }
 
-  /* 移动端只留图标，避免把课程条挤成两行 */
-  .course-timetable-label {
-    display: none;
-  }
-
-  .course-timetable-button {
-    min-width: var(--touch);
-    padding: 0 10px;
-  }
-
+  /* 移动端不再显示课程表快捷按钮：底部导航已有「课表」 */
   .course-switch-actions {
-    width: auto;
-    justify-content: flex-end;
+    display: none;
   }
 
   .ask-card,
