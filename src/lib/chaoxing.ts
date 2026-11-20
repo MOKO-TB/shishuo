@@ -136,20 +136,10 @@ export function loginChaoxingPassword(account: string, password: string) {
 }
 
 /**
- * 手机端把 PC 版 mooc1/mooc2 链接换到 m.chaoxing.com。
- * 手机浏览器通常只在移动域下保留学习通登录态，直接开 PC 域会重新要求登录。
+ * 学习通的资源/作业详情没有对应的移动版路径，强换 m.chaoxing.com 会 404；
+ * 这里保持教务同步下来的原始 PC 链接，交给手机浏览器打开网页版。
  */
 export function chaoxingExternalUrl(url: string) {
-  if (typeof window === 'undefined') return url
-  if (!window.matchMedia('(max-width: 700px)').matches) return url
-  try {
-    const next = new URL(url)
-    if (/^mooc[0-9a-z-]*\.chaoxing\.com$/i.test(next.hostname)) {
-      next.hostname = 'm.chaoxing.com'
-    }
-    return next.toString()
-  } catch {
-    return url
-  }
+  return url
 }
 

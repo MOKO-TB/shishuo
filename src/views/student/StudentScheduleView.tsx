@@ -371,8 +371,8 @@ function WeekTimetable({
           >
             <strong>{entry.course}</strong>
             {periodTime(entry) && <span className="week-class-time">{periodTime(entry)}</span>}
-            {entry.teacher && <span>{entry.teacher}</span>}
-            {entry.room && <span>{entry.room}</span>}
+            {entry.teacher && <span className="week-class-teacher">{entry.teacher}</span>}
+            {entry.room && <span className="week-class-room">{entry.room}</span>}
             {entry.weeks && <span className="week-class-weeks">{weekLabel(entry.weeks)}</span>}
           </button>
         )

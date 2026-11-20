@@ -642,6 +642,19 @@
     display: none;
   }
 
+  /* 手机端课程块也保留老师和教室，时间/周次仍收进详情 */
+  .schedule-board .week-class .week-class-teacher,
+  .schedule-board .week-class .week-class-room {
+    display: block;
+    font-size: var(--text-meta);
+    line-height: 1.05;
+    opacity: 0.88;
+  }
+
+  .schedule-board .week-class[data-span='1'] strong {
+    -webkit-line-clamp: 1;
+  }
+
   .schedule-board-foot p {
     display: none;
   }
