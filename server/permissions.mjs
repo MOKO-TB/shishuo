@@ -655,6 +655,8 @@ function redactThread(thread) {
     const { note, ...rest } = redacted.escalation
     redacted.escalation = rest
   }
+  // 学生选择「只给 AI 识别」的图片，对同班同学也不下发。
+  if (redacted.attachment?.teacherVisible === false) delete redacted.attachment
   return redacted
 }
 
@@ -717,7 +719,14 @@ export function projectWorkspace(data, user) {
     const courses = teacherCourseSet(user)
     const threads = (data.threads ?? [])
       .filter((thread) => courses.has(thread.courseId))
-      .map((thread) => (isAnonymousThread(thread) ? redactThread(thread) : thread))
+      .map((thread) => {
+        const view = isAnonymousThread(thread) ? redactThread(thread) : thread
+        if (thread.attachment?.teacherVisible === false) {
+          const { attachment: _privateImage, ...rest } = view
+          return rest
+        }
+        return view
+      })
     return {
       ...data,
       threads,

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  BookOpen,
   CalendarDays,
   Calculator,
   ExternalLink,
@@ -7,16 +8,20 @@ import {
   MapPin,
   Plus,
   Search,
+  Sparkles,
   Trash2,
+  X,
 } from 'lucide-react'
 import { Badge } from '../../components/ui'
 import { useProfile, scoreStats, type ScoreRow } from '../../lib/profile'
 import { excerpt, makeId } from '../../lib/utils'
 import {
+  CAMPUS_BOOKS,
   CAMPUS_BUILDINGS,
   CAMPUS_CALENDAR_EVENTS,
   CAMPUS_LIBRARY_ITEMS,
   CAMPUS_MAP,
+  type CampusBook,
   type CampusCalendarEvent,
 } from '../../data/campusTools'
 
@@ -73,12 +78,43 @@ function eventKindTone(kind: string) {
   return 'gold' as const
 }
 
+function BookCard({ book, recommended }: { book: CampusBook; recommended?: boolean }) {
+  return (
+    <article className="campus-book-card">
+      <div className="campus-book-top">
+        <Badge tone={book.available > 0 ? 'jade' : 'neutral'}>
+          {book.available > 0 ? `在架 ${book.available}/${book.total}` : '已借完'}
+        </Badge>
+        {recommended && (
+          <span className="campus-book-ai">
+            <Sparkles size={11} />
+            AI 推荐
+          </span>
+        )}
+        <em>{book.callNo}</em>
+      </div>
+      <strong>{book.title}</strong>
+      <span className="campus-book-author">{book.author}</span>
+      <p>{book.summary}</p>
+      <div className="campus-book-location">
+        <MapPin size={12} />
+        {book.location}
+      </div>
+      <a href="https://mfindgzyykj.libsp.cn/" target="_blank" rel="noreferrer">
+        在 OPAC 查馆藏
+        <ExternalLink size={12} />
+      </a>
+    </article>
+  )
+}
+
 export function CampusTools() {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const [manualRows, setManualRows] = useState<ManualRow[]>([
     { id: makeId('gpa'), course: '', credit: '3', score: '' },
   ])
   const [mapQuery, setMapQuery] = useState('')
+  const [bookQuery, setBookQuery] = useState('')
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
   const profile = useProfile()
 
@@ -99,6 +135,33 @@ export function CampusTools() {
     [profile.scores],
   )
   const manualStats = useMemo(() => scoreStats(manualScores), [manualScores])
+
+  const myCourseIds = useMemo(() => {
+    const ids = new Set<string>()
+    if (profile.defaultCourseId) ids.add(profile.defaultCourseId)
+    for (const entry of profile.schedule) {
+      if (entry.matchedCourseId) ids.add(entry.matchedCourseId)
+    }
+    return ids
+  }, [profile.defaultCourseId, profile.schedule])
+
+  const recommendedBooks = useMemo(() => {
+    const matched = CAMPUS_BOOKS.filter((book) =>
+      book.courseIds.some((courseId) => myCourseIds.has(courseId)),
+    )
+    return (matched.length > 0 ? matched : CAMPUS_BOOKS).slice(0, 3)
+  }, [myCourseIds])
+
+  const bookResults = useMemo(() => {
+    const keyword = bookQuery.trim().toLowerCase()
+    if (!keyword) return CAMPUS_BOOKS.slice(0, 8)
+    return CAMPUS_BOOKS.filter((book) =>
+      [book.title, book.author, book.callNo, book.location, ...book.tags]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
+    )
+  }, [bookQuery])
 
   const today = useMemo(() => {
     const value = new Date()
@@ -208,14 +271,9 @@ export function CampusTools() {
               <em>按学分加权</em>
             </div>
             <div>
-              <span>GPA（4.0）</span>
-              <strong>{autoStats?.gpaFour != null ? autoStats.gpaFour.toFixed(2) : '—'}</strong>
-              <em>{autoStats ? '基于已同步成绩' : '可用下方手动试算'}</em>
-            </div>
-            <div>
               <span>GPA（5.0）</span>
               <strong>{autoStats?.gpaFive != null ? autoStats.gpaFive.toFixed(2) : '—'}</strong>
-              <em>不同学校换算规则可能不同</em>
+              <em>本校按 5.0 制计算</em>
             </div>
           </div>
 
@@ -287,9 +345,6 @@ export function CampusTools() {
               试算结果：加权平均 <strong>{manualStats.weightedAverage?.toFixed(2) ?? '—'}</strong>
             </span>
             <span>
-              GPA 4.0 <strong>{manualStats.gpaFour?.toFixed(2) ?? '—'}</strong>
-            </span>
-            <span>
               GPA 5.0 <strong>{manualStats.gpaFive?.toFixed(2) ?? '—'}</strong>
             </span>
             <em>
@@ -331,37 +386,94 @@ export function CampusTools() {
 
       {tab === 'library' && (
         <div className="campus-tool-panel">
-          <div className="campus-library-grid">
-            {CAMPUS_LIBRARY_ITEMS.map((item) => (
-              <article className="campus-library-card" key={item.id}>
-                <div className="campus-library-top">
-                  <Badge tone="jade">馆藏</Badge>
-                  {item.publishAt && <span>{item.publishAt}</span>}
-                </div>
-                <strong>{item.title}</strong>
-                <p>{excerpt(item.content, 180)}</p>
-                <div className="tag-row">
-                  {item.tags.slice(0, 4).map((tag) => (
-                    <span className="tag" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="campus-library-foot">
-                  <span>{item.source}</span>
-                  {item.url && (
-                    <a href={item.url} target="_blank" rel="noreferrer">
-                      打开 OPAC
-                      <ExternalLink size={12} />
-                    </a>
-                  )}
-                </div>
-              </article>
-            ))}
+          <div className="campus-library-search">
+            <Search size={16} />
+            <input
+              value={bookQuery}
+              onChange={(event) => setBookQuery(event.target.value)}
+              placeholder="搜书名、作者、索书号或关键词…"
+              aria-label="搜索图书馆藏书"
+            />
+            {bookQuery && (
+              <button
+                type="button"
+                className="campus-library-clear"
+                onClick={() => setBookQuery('')}
+                aria-label="清空书目搜索"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <p className="campus-tool-note">
-            查具体某本书请用图书馆 OPAC；这里只提供馆藏规模、分类和找书方法。
-          </p>
+
+          {!bookQuery && (
+            <section className="campus-book-section">
+              <div className="campus-book-head">
+                <Sparkles size={15} />
+                <strong>AI 推荐</strong>
+                <span>根据你这学期的课程和常见入门需求</span>
+              </div>
+              <div className="campus-book-grid">
+                {recommendedBooks.map((book) => (
+                  <BookCard key={book.id} book={book} recommended />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="campus-book-section">
+            <div className="campus-book-head">
+              <BookOpen size={15} />
+              <strong>{bookQuery ? `“${bookQuery}”的检索结果` : '全部书目'}</strong>
+              <span>{bookResults.length} 本</span>
+            </div>
+            {bookResults.length === 0 ? (
+              <p className="campus-tool-empty">
+                没有匹配的书目，换个书名或作者试试；也可以直接到 OPAC 检索全馆。
+              </p>
+            ) : (
+              <div className="campus-book-grid">
+                {bookResults.map((book) => (
+                  <BookCard key={book.id} book={book} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <details className="campus-library-more">
+            <summary>馆藏规模、分类与找书方法</summary>
+            <div className="campus-library-grid">
+              {CAMPUS_LIBRARY_ITEMS.map((item) => (
+                <article className="campus-library-card" key={item.id}>
+                  <div className="campus-library-top">
+                    <Badge tone="jade">馆藏</Badge>
+                    {item.publishAt && <span>{item.publishAt}</span>}
+                  </div>
+                  <strong>{item.title}</strong>
+                  <p>{excerpt(item.content, 180)}</p>
+                  <div className="tag-row">
+                    {item.tags.slice(0, 4).map((tag) => (
+                      <span className="tag" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="campus-library-foot">
+                    <span>{item.source}</span>
+                    {item.url && (
+                      <a href={item.url} target="_blank" rel="noreferrer">
+                        打开 OPAC
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="campus-tool-note">
+              书目与在架数量是馆藏检索演示数据，真实借阅状态以 OPAC 为准；索书号首字母对应中图法大类。
+            </p>
+          </details>
         </div>
       )}
 

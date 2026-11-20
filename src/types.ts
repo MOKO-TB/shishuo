@@ -96,6 +96,8 @@ export interface ThreadAttachment {
   url?: string
   name: string
   type: string
+  /** false = 只给 AI 识别，任课老师与同班同学看不到原图。 */
+  teacherVisible?: boolean
 }
 
 export interface ExternalAnswer {

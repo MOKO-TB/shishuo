@@ -7,7 +7,6 @@ import { sectionLabel, weekdayLabel } from '../../lib/profile'
 import { courseById } from '../../data/seed'
 import { Avatar, Badge } from '../../components/ui'
 import { Donut } from '../../components/charts'
-import { ChaoxingRailCard } from './ChaoxingPanel'
 
 export interface StudentRailProps {
   todayAi: number
@@ -15,6 +14,7 @@ export interface StudentRailProps {
   todayRate: number
   firstResponse: { value: string; unit: string }
   todaysClasses: ScheduleEntry[]
+  hasSchedule: boolean
   waitingGroups: ThreadGroup[]
   hotFaqs: { id: string; courseId: string; question: string; citations: number }[]
   course: Course
@@ -37,6 +37,7 @@ export function StudentRail({
   todayRate,
   firstResponse,
   todaysClasses,
+  hasSchedule,
   waitingGroups,
   hotFaqs,
   course,
@@ -78,8 +79,6 @@ export function StudentRail({
           </span>
         </div>
       </div>
-
-      <ChaoxingRailCard />
 
       {todaysClasses.length > 0 && (
         <div className="rail-card class-card">
@@ -129,16 +128,20 @@ export function StudentRail({
           <div className="rail-card-head">
             <div>
               <div className="eyebrow">课程表</div>
-              <h3>还没有课程表</h3>
+              <h3>{hasSchedule ? '今天的课已上完' : '还没有课程表'}</h3>
             </div>
             <CalendarDays size={17} className="rail-head-icon" />
           </div>
-          <p className="rail-footnote">绑定教务或手动添加后，提问会默认选中今天的课。</p>
+          <p className="rail-footnote">
+            {hasSchedule
+              ? '今天没有还没开始的课了；需要时可以查看整周安排。'
+              : '绑定教务或手动添加后，提问会默认选中今天的课。'}
+          </p>
           <button
             className="button button-secondary class-card-cta"
             onClick={() => onOpenAccount?.('schedule')}
           >
-            添加课程
+            {hasSchedule ? '查看整周课程表' : '添加课程'}
           </button>
         </div>
       )}

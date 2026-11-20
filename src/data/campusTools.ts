@@ -31,6 +31,19 @@ export interface CampusLibraryItem {
   publishAt: string
 }
 
+export interface CampusBook {
+  id: string
+  title: string
+  author: string
+  callNo: string
+  location: string
+  available: number
+  total: number
+  summary: string
+  tags: string[]
+  courseIds: string[]
+}
+
 export interface CampusBuilding {
   no: number
   name: string
@@ -700,3 +713,202 @@ export const CAMPUS_MAP = {
   source: "原始手绘地图，全程只读，未修改",
   license: 'MIT · MOKO-TB/yinlu-xuezhang',
 }
+
+/**
+ * 馆藏检索演示数据：索书号与馆藏地按学校 OPAC 的楼层分布整理。
+ * 在架数量是静态示例，真实借阅状态以 OPAC 为准。
+ */
+export const CAMPUS_BOOKS: CampusBook[] = [
+  {
+    id: 'book-ds-yan',
+    title: '数据结构（C语言版）',
+    author: '严蔚敏、吴伟民',
+    callNo: 'TP311.12/3',
+    location: '八楼 805 计算机新书区',
+    available: 3,
+    total: 5,
+    summary: '国内数据结构课程常用教材，线性表、树、图、查找与排序都有完整例题。',
+    tags: ['数据结构', 'C语言', '教材'],
+    courseIds: ['ds'],
+  },
+  {
+    id: 'book-algo-clrs',
+    title: '算法导论（第三版）',
+    author: 'Thomas H. Cormen 等',
+    callNo: 'TP301.6/17',
+    location: '八楼 805 计算机新书区',
+    available: 2,
+    total: 3,
+    summary: '算法设计与分析的系统参考书，适合查证明、复杂度和经典算法。',
+    tags: ['算法', '复杂度', '经典'],
+    courseIds: ['ds', 'algo'],
+  },
+  {
+    id: 'book-ds-fun',
+    title: '大话数据结构',
+    author: '程杰',
+    callNo: 'TP311.12/28',
+    location: '八楼 805 计算机新书区',
+    available: 1,
+    total: 2,
+    summary: '用生活化例子讲数据结构的入门书，适合先建立直觉再回头看教材。',
+    tags: ['数据结构', '入门', '图解'],
+    courseIds: ['ds'],
+  },
+  {
+    id: 'book-math-tongji',
+    title: '高等数学（第七版·上册）',
+    author: '同济大学数学系',
+    callNo: 'O13/112',
+    location: '八楼 802 自然科学新书区',
+    available: 4,
+    total: 6,
+    summary: '高数课程配套教材，极限、导数、微分中值定理和积分章节齐全。',
+    tags: ['高等数学', '微积分', '教材'],
+    courseIds: ['math'],
+  },
+  {
+    id: 'book-linalg-tongji',
+    title: '线性代数（第六版）',
+    author: '同济大学数学系',
+    callNo: 'O151.2/36',
+    location: '八楼 802 自然科学新书区',
+    available: 3,
+    total: 4,
+    summary: '行列式、矩阵、线性方程组和特征值的基础教材，配套习题多。',
+    tags: ['线性代数', '矩阵', '教材'],
+    courseIds: ['linalg'],
+  },
+  {
+    id: 'book-prob-sheng',
+    title: '概率论与数理统计（第四版）',
+    author: '盛骤、谢式千、潘承毅',
+    callNo: 'O21/48',
+    location: '八楼 802 自然科学新书区',
+    available: 2,
+    total: 4,
+    summary: '概率论与数理统计常用教材，覆盖分布、参数估计和假设检验。',
+    tags: ['概率论', '统计', '教材'],
+    courseIds: ['prob'],
+  },
+  {
+    id: 'book-circuit-qiu',
+    title: '电路（第五版）',
+    author: '邱关源',
+    callNo: 'TM13/9',
+    location: '八楼 工业技术新书区（1）',
+    available: 2,
+    total: 3,
+    summary: '电路课程经典教材，戴维南、叠加定理、正弦稳态和三相电路都有详解。',
+    tags: ['电路', '教材', '电路分析'],
+    courseIds: ['circuit'],
+  },
+  {
+    id: 'book-analog-tong',
+    title: '模拟电子技术基础（第五版）',
+    author: '童诗白、华成英',
+    callNo: 'TN710/12',
+    location: '八楼 工业技术新书区（1）',
+    available: 2,
+    total: 2,
+    summary: '模电课程配套教材，放大电路、反馈、运放和电源章节完整。',
+    tags: ['模拟电子', '模电', '教材'],
+    courseIds: ['analog'],
+  },
+  {
+    id: 'book-digital-yan',
+    title: '数字电子技术基础（第六版）',
+    author: '阎石',
+    callNo: 'TN79/8',
+    location: '八楼 工业技术新书区（1）',
+    available: 3,
+    total: 3,
+    summary: '数电课程配套教材，组合逻辑、时序逻辑、计数器和存储器讲解细。',
+    tags: ['数字电子', '数电', '教材'],
+    courseIds: ['digital'],
+  },
+  {
+    id: 'book-c-primer',
+    title: 'C Primer Plus（第6版）',
+    author: 'Stephen Prata',
+    callNo: 'TP312C/331',
+    location: '八楼 805 计算机新书区',
+    available: 2,
+    total: 3,
+    summary: 'C 语言系统入门与进阶，指针、结构体、文件操作示例丰富。',
+    tags: ['C语言', '程序设计', '入门'],
+    courseIds: ['c'],
+  },
+  {
+    id: 'book-co-tang',
+    title: '计算机组成原理（第2版）',
+    author: '唐朔飞',
+    callNo: 'TP303/22',
+    location: '八楼 805 计算机新书区',
+    available: 1,
+    total: 2,
+    summary: '计算机组成原理常用教材，覆盖数据表示、存储系统、指令和流水线。',
+    tags: ['计算机组成', '硬件', '教材'],
+    courseIds: ['co'],
+  },
+  {
+    id: 'book-db-wang',
+    title: '数据库系统概论（第5版）',
+    author: '王珊、萨师煊',
+    callNo: 'TP311.13/45',
+    location: '八楼 805 计算机新书区',
+    available: 2,
+    total: 3,
+    summary: '数据库课程经典教材，关系模型、SQL、范式和事务章节完整。',
+    tags: ['数据库', 'SQL', '教材'],
+    courseIds: ['db'],
+  },
+  {
+    id: 'book-net-xie',
+    title: '计算机网络（第7版）',
+    author: '谢希仁',
+    callNo: 'TP393/56',
+    location: '八楼 805 计算机新书区',
+    available: 3,
+    total: 4,
+    summary: '计算机网络常用教材，按五层模型讲清协议、寻址和传输过程。',
+    tags: ['计算机网络', 'TCP/IP', '教材'],
+    courseIds: ['net'],
+  },
+  {
+    id: 'book-python-crash',
+    title: 'Python编程：从入门到实践（第3版）',
+    author: 'Eric Matthes',
+    callNo: 'TP311.56/208',
+    location: '八楼 805 计算机新书区',
+    available: 4,
+    total: 5,
+    summary: '零基础 Python 入门，前半讲语法，后半用项目练手。',
+    tags: ['Python', '编程入门', '项目'],
+    courseIds: [],
+  },
+  {
+    id: 'book-ask-questions',
+    title: '学会提问（第12版）',
+    author: '尼尔·布朗、斯图尔特·基利',
+    callNo: 'B842.5/12',
+    location: '二楼 212 走廊 心理学新书区',
+    available: 2,
+    total: 3,
+    summary: '训练批判性思维和提问结构，写论文、做汇报都用得上。',
+    tags: ['批判性思维', '提问', '学习方法'],
+    courseIds: [],
+  },
+  {
+    id: 'book-economics-mankiw',
+    title: '经济学原理（第8版）',
+    author: 'N. Gregory Mankiw',
+    callNo: 'F0/67',
+    location: '五楼中庭 经济新书区（2）',
+    available: 2,
+    total: 3,
+    summary: '经济学入门经典，用案例讲供求、市场结构和宏观政策。',
+    tags: ['经济学', '入门', '通识'],
+    courseIds: [],
+  },
+]

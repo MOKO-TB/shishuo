@@ -105,6 +105,10 @@ export function ChaoxingView() {
   const [tab, setTab] = useState<ChaoxingTab>('message')
   const [courseFilter, setCourseFilter] = useState('')
   const [bindOpen, setBindOpen] = useState(false)
+  const mobileLayout = useMemo(() => window.matchMedia('(max-width: 720px)').matches, [])
+  const [bindMethod, setBindMethod] = useState<'qr' | 'password'>(() =>
+    window.matchMedia('(max-width: 720px)').matches ? 'password' : 'qr',
+  )
   const [selectedCourse, setSelectedCourse] = useState('')
   const [chapterCourse, setChapterCourse] = useState<ChaoxingCourseChapters | null>(null)
   const lastSyncRef = useRef(overview?.lastSyncAt ?? 0)
@@ -283,9 +287,15 @@ export function ChaoxingView() {
               </button>
             </>
           ) : (
-            <button className="button button-primary" onClick={() => setBindOpen(true)}>
-              <QrCode size={14} />
-              扫码绑定学习通
+            <button
+              className="button button-primary"
+              onClick={() => {
+                setBindMethod(mobileLayout ? 'password' : 'qr')
+                setBindOpen(true)
+              }}
+            >
+              {mobileLayout ? <LogOut size={14} /> : <QrCode size={14} />}
+              {mobileLayout ? '账号密码绑定学习通' : '扫码绑定学习通'}
             </button>
           )}
         </div>
@@ -316,15 +326,29 @@ export function ChaoxingView() {
           </span>
           <h2>绑定你的学习通</h2>
           <p>
-            用学习通 App 扫码确认后，师说会同步你的课程消息、作业、资料和章节进度。密码不经过师说，登录态按学生账号隔离。
+            {mobileLayout
+              ? '手机端建议用账号密码登录；密码只用于本次登录换取 Cookie，不保存。电脑端可扫码登录。'
+              : '用学习通 App 扫码确认后，师说会同步你的课程消息、作业、资料和章节进度。密码不经过师说，登录态按学生账号隔离。'}
           </p>
           <div className="cx-page-bind-actions">
-            <button className="button button-primary" onClick={() => setBindOpen(true)}>
-              <QrCode size={14} />
-              生成登录二维码
+            <button
+              className="button button-primary"
+              onClick={() => {
+                setBindMethod(mobileLayout ? 'password' : 'qr')
+                setBindOpen(true)
+              }}
+            >
+              {mobileLayout ? <LogOut size={14} /> : <QrCode size={14} />}
+              {mobileLayout ? '用账号密码登录' : '生成登录二维码'}
             </button>
-            <button className="button button-ghost" onClick={() => setBindOpen(true)}>
-              用账号密码登录
+            <button
+              className="button button-ghost"
+              onClick={() => {
+                setBindMethod(mobileLayout ? 'qr' : 'password')
+                setBindOpen(true)
+              }}
+            >
+              {mobileLayout ? '生成二维码' : '用账号密码登录'}
             </button>
           </div>
           <p className="cx-hint">
@@ -514,7 +538,12 @@ export function ChaoxingView() {
         </>
       )}
 
-      <ChaoxingModal open={bindOpen} onClose={() => setBindOpen(false)} onChanged={load} />
+      <ChaoxingModal
+        open={bindOpen}
+        onClose={() => setBindOpen(false)}
+        onChanged={load}
+        initialMethod={bindMethod}
+      />
       <ChapterModal course={chapterCourse} onClose={() => setChapterCourse(null)} />
     </div>
   )

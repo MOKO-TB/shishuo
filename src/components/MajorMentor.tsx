@@ -14,7 +14,11 @@ import {
 } from 'lucide-react'
 import type { AppData } from '../types'
 import type { CourseMentor } from '../data/mentor'
-import { buildMentorPrompt, findMentorTopicByQuestion } from '../data/mentor'
+import {
+  buildMentorPrompt,
+  findMentorTopicByQuestion,
+  mentorTeacherName,
+} from '../data/mentor'
 import { courseById } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
 import {
@@ -111,7 +115,7 @@ function MentorSwitcher({
               }}
             >
               <span>{option.title}</span>
-              <small>{option.name}</small>
+              <small>{mentorTeacherName(option) || option.name}</small>
             </button>
           ))}
         </div>
@@ -215,7 +219,7 @@ function MentorManager({
                   {enabled && <span className="mentor-manager-added">已添加</span>}
                 </div>
                 <em>
-                  {course.name} · {mentor.name}
+                  {course.name} · {mentorTeacherName(mentor) || mentor.name}
                 </em>
                 <p>{mentor.tagline}</p>
               </div>
@@ -344,6 +348,7 @@ export function MajorMentorStrip({
   onEditMajor: () => void
 }) {
   const { mentor, selectMentor, options } = useMentorSelection()
+  const teacher = mentorTeacherName(mentor)
 
   return (
     <section className="mentor-strip" aria-label={`${mentor.title} AI 导师`}>
@@ -353,8 +358,8 @@ export function MajorMentorStrip({
         </span>
         <div className="mentor-strip-copy">
           <div className="mentor-strip-title">
-            <strong>{mentor.name}</strong>
-            <span>{mentor.title}</span>
+            <strong>{teacher ? `${teacher}老师` : mentor.name}</strong>
+            <span>{mentor.title} · AI 导师</span>
             <MentorSwitcher
               mentor={mentor}
               options={options}
@@ -588,6 +593,8 @@ export function MajorMentorDrawer({
     onRoute(mentor.courseId, question)
   }
 
+  const teacher = mentorTeacherName(mentor)
+
   return (
     <Drawer open={open} onClose={onClose} ariaLabel={`${mentor.title} AI 导师`}>
       <div className="mentor-drawer">
@@ -595,7 +602,9 @@ export function MajorMentorDrawer({
           <div className="mentor-drawer-head-main">
             <AiMark size={18} />
             <div>
-              <div className="eyebrow">{mentor.name} · AI</div>
+              <div className="eyebrow">
+                {teacher ? `${teacher}老师 · ` : ''}AI 导师
+              </div>
               <h2>{mentor.title}</h2>
             </div>
           </div>
@@ -635,11 +644,14 @@ export function MajorMentorDrawer({
                 <AiMark size={17} />
               </span>
               <div>
-                <strong>我是你的{mentor.name}</strong>
+                <strong>我是{mentor.title}的 AI 导师</strong>
                 <p>
-                  已把公开课整理成 {mentor.chapters.length} 个章节。先告诉我你卡在哪：
-                  {mentor.chapters.slice(0, 4).map((chapter) => chapter.label).join('、')}
-                  ？我会先定位卡点，再讲关键一步，最后留一道换数字的题。
+                  {mentor.chapters.length > 0
+                    ? `已把公开课整理成 ${mentor.chapters.length} 个章节。先告诉我你卡在哪：${mentor.chapters
+                        .slice(0, 4)
+                        .map((chapter) => chapter.label)
+                        .join('、')}？我会先定位卡点，再讲关键一步，最后留一道换数字的题。`
+                    : `我会按${teacher ? `${teacher}老师的课程口径` : '课程知识库'}，先定位卡点，再讲关键一步；没有把握时建议转交任课老师。先告诉我你卡在哪。`}
                 </p>
                 <div className="mentor-quick">
                   {mentor.quickPrompts.map((prompt) => (

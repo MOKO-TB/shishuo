@@ -165,10 +165,12 @@ export function ChaoxingModal({
   open,
   onClose,
   onChanged,
+  initialMethod = 'qr',
 }: {
   open: boolean
   onClose: () => void
   onChanged: () => void
+  initialMethod?: 'qr' | 'password'
 }) {
   const [overview, setOverview] = useState<ChaoxingOverview | null>(null)
   const [loading, setLoading] = useState(false)
@@ -181,6 +183,7 @@ export function ChaoxingModal({
   const [cxAccount, setCxAccount] = useState('')
   const [cxPassword, setCxPassword] = useState('')
   const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordOpen, setPasswordOpen] = useState(false)
   const [tab, setTab] = useState<ChaoxingKind>('message')
   const [courseFilter, setCourseFilter] = useState('')
 
@@ -204,8 +207,9 @@ export function ChaoxingModal({
     setNotice('')
     setCourseFilter('')
     setTab('message')
+    setPasswordOpen(initialMethod === 'password')
     void load()
-  }, [open, load])
+  }, [open, load, initialMethod])
 
   const syncNow = useCallback(async () => {
     setSyncing(true)
@@ -449,8 +453,19 @@ export function ChaoxingModal({
               </p>
             </div>
           )}
-          <details className="cx-password-box">
-            <summary>扫码不方便？用账号密码登录（备用）</summary>
+          {initialMethod === 'password' && !login && (
+            <p className="cx-hint">
+              手机端建议直接用下方账号密码登录；密码只用于本次登录换取 Cookie，不保存。
+            </p>
+          )}
+          <details
+            className="cx-password-box"
+            open={passwordOpen}
+            onToggle={(event) => setPasswordOpen(event.currentTarget.open)}
+          >
+            <summary>
+              {initialMethod === 'password' ? '账号密码登录（手机端推荐）' : '扫码不方便？用账号密码登录（备用）'}
+            </summary>
             <p className="cx-hint">
               密码只用于本次登录换取学习通 Cookie，不保存；当前 HTTP 演示环境不建议使用真实密码。
             </p>

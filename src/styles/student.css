@@ -418,6 +418,7 @@
 
 .ask-attachment {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 9px;
   margin: 2px 0 8px;
@@ -473,6 +474,34 @@
 .ask-attachment-remove:hover {
   background: var(--line);
   color: var(--ink);
+}
+
+.ask-attachment-privacy {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--line);
+  cursor: pointer;
+}
+
+.ask-attachment-privacy input {
+  margin-top: 2px;
+  accent-color: var(--jade);
+  flex: 0 0 auto;
+}
+
+.ask-attachment-privacy span {
+  display: grid;
+  gap: 1px;
+  font-size: var(--text-meta);
+  color: var(--ink-soft);
+}
+
+.ask-attachment-privacy em {
+  font-style: normal;
+  color: var(--muted);
 }
 
 .ask-suggestions {

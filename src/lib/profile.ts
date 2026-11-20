@@ -514,8 +514,27 @@ export function todayClasses(profile: StudentProfile, ts = Date.now()) {
   return sortSchedule(profile.schedule.filter((entry) => entry.day === day))
 }
 
+function timeToMinutes(value: string | undefined) {
+  const match = /^(\d{1,2}):(\d{2})/.exec(value ?? '')
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null
+}
+
+function entryEndMinutes(entry: ScheduleEntry) {
+  return timeToMinutes(entry.endTime) ?? timeToMinutes(SECTION_BELL[entry.endSection]?.end)
+}
+
+/** 今天还没下课的课程；教务没写时间时按学校节次表推算。 */
+export function upcomingTodayClasses(profile: StudentProfile, ts = Date.now()) {
+  const now = new Date(ts)
+  const minutes = now.getHours() * 60 + now.getMinutes()
+  return todayClasses(profile, ts).filter((entry) => {
+    const end = entryEndMinutes(entry)
+    return end === null || end > minutes
+  })
+}
+
 export function nextClass(profile: StudentProfile, ts = Date.now()) {
-  const upcoming = todayClasses(profile, ts)
+  const upcoming = upcomingTodayClasses(profile, ts)
   if (upcoming.length > 0) return upcoming[0]
   for (let offset = 1; offset <= 7; offset += 1) {
     const day = ((weekdayNumber(ts) - 1 + offset) % 7) + 1
@@ -539,10 +558,6 @@ function gpa5(score: number) {
   return score >= 60 ? Math.max(0, score / 10 - 5) : 0
 }
 
-function gpa4(score: number) {
-  return score >= 60 ? Math.min(4, Math.max(0, (score - 50) / 10)) : 0
-}
-
 export interface ScoreStats {
   counted: number
   skipped: number
@@ -550,7 +565,6 @@ export interface ScoreStats {
   weightedAverage: number | null
   averageScore: number | null
   gpaFive: number | null
-  gpaFour: number | null
   semesters: string[]
 }
 
@@ -576,7 +590,6 @@ export function scoreStats(rows: ScoreRow[]): ScoreStats {
         ? usable.reduce((sum, item) => sum + item.score, 0) / usable.length
         : null,
     gpaFive: weighted(gpa5),
-    gpaFour: weighted(gpa4),
     semesters: Array.from(new Set(rows.map((row) => row.semester).filter(Boolean))),
   }
 }

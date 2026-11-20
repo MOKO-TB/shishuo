@@ -10,7 +10,6 @@ import {
   ImagePlus,
   Layers,
   MessagesSquare,
-  Mic,
   Server,
   Send,
   Sparkles,
@@ -25,7 +24,7 @@ import {
   runsInWeek,
   studentCourses,
   teachingWeek,
-  todayClasses,
+  upcomingTodayClasses,
   useProfile,
 } from '../lib/profile'
 import { findSimilarPendingGroup, groupPendingThreads, retrieve } from '../lib/engine'
@@ -41,7 +40,6 @@ import {
   type AIStatus,
 } from '../lib/ai'
 import { prepareImage, uploadThreadImage } from '../lib/image'
-import { createDictation, speechSupported } from '../lib/speech'
 import type {
   AnswerResult,
   Faq,
@@ -172,7 +170,7 @@ export function StudentView({
   const courses = useMemo(() => studentCourses(profile), [profile])
   const visibleCourseIds = new Set(courses.map((item) => item.id))
   const currentTeachingWeek = teachingWeek(profile.termStart)
-  const classesOnToday = todayClasses(profile)
+  const classesOnToday = upcomingTodayClasses(profile)
   const todaysClasses = (
     currentTeachingWeek
       ? classesOnToday.filter((entry) => runsInWeek(entry.weeks, currentTeachingWeek))
@@ -194,14 +192,11 @@ export function StudentView({
     mode?: 'local' | 'image' | 'external'
   } | null>(null)
   const [streamPreview, setStreamPreview] = useState('')
-  const [dictating, setDictating] = useState(false)
-  const [dictationHint, setDictationHint] = useState('')
-  const dictationRef = useRef<{ stop: () => void } | null>(null)
-  const speechOk = useMemo(() => speechSupported(), [])
   const [aiConfig, setAiConfig] = useState<AIConfig>(() => loadAIConfig())
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
   const [attachment, setAttachment] = useState<ThreadAttachment | null>(null)
+  const [attachmentVisible, setAttachmentVisible] = useState(true)
   const [askPreview, setAskPreview] = useState<{
     faq?: Faq
     group?: ThreadGroup
@@ -448,7 +443,8 @@ export function StudentView({
       const prepared = await prepareImage(file)
       const uploaded = await uploadThreadImage(prepared)
       setAttachment({ ...prepared, url: uploaded.url })
-      notify('图片已上传，会随问题一起给老师看')
+      setAttachmentVisible(true)
+      notify('图片已上传，可设置是否让老师查看原图')
     } catch (error) {
       notify(errorMessage(error), 'danger')
     }
@@ -501,7 +497,8 @@ export function StudentView({
     let storedAttachment: ThreadAttachment | undefined
     if (attachment) {
       try {
-        storedAttachment = await uploadThreadImage(attachment)
+        const uploaded = await uploadThreadImage(attachment)
+        storedAttachment = { ...uploaded, teacherVisible: attachmentVisible }
       } catch (error) {
         notify(`图片上传失败：${errorMessage(error)}`, 'danger')
         return
@@ -534,6 +531,7 @@ export function StudentView({
     })
     setQuestion('')
     setAttachment(null)
+    setAttachmentVisible(true)
     setActiveThreadId(null)
     setActiveResult(null)
     setEscalateOpen(false)
@@ -743,48 +741,6 @@ export function StudentView({
       .catch(() => setAiStatus(null))
   }
 
-  useEffect(
-    () => () => {
-      dictationRef.current?.stop()
-    },
-    [],
-  )
-
-  const toggleDictation = () => {
-    if (dictating) {
-      dictationRef.current?.stop()
-      return
-    }
-    const handle = createDictation({
-      lang: 'zh-CN',
-      onText: (text, isFinal) => {
-        if (isFinal) {
-          const chunk = text.trim()
-          if (chunk) {
-            setQuestion((current) => (current.trim() ? `${current.trimEnd()} ${chunk}` : chunk))
-          }
-          setDictationHint('')
-        } else {
-          setDictationHint(text)
-        }
-      },
-      onEnd: (reason) => {
-        dictationRef.current = null
-        setDictating(false)
-        setDictationHint('')
-        if (reason === 'error') {
-          notify('语音识别不可用，请检查麦克风权限，或改用键盘输入', 'info')
-        }
-      },
-    })
-    if (!handle) {
-      notify('当前浏览器不支持语音输入，请使用 Chrome / Edge', 'info')
-      return
-    }
-    dictationRef.current = handle
-    setDictating(true)
-  }
-
   return (
     <div className="page student-page">
       <header className="student-head">
@@ -890,11 +846,6 @@ export function StudentView({
               disabled={Boolean(thinking)}
               aria-label="输入你的问题"
             />
-            {dictationHint && (
-              <p className="ask-dictation-hint" aria-live="polite">
-                正在听：{dictationHint}
-              </p>
-            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -964,6 +915,21 @@ export function StudentView({
                 >
                   <X size={15} />
                 </button>
+                <label className="ask-attachment-privacy">
+                  <input
+                    type="checkbox"
+                    checked={attachmentVisible}
+                    onChange={(event) => setAttachmentVisible(event.target.checked)}
+                  />
+                  <span>
+                    允许老师查看原图
+                    <em>
+                      {attachmentVisible
+                        ? '老师可在本题里看到这张图'
+                        : '只用于 AI 识别，老师看不到原图'}
+                    </em>
+                  </span>
+                </label>
               </div>
             )}
 
@@ -998,19 +964,6 @@ export function StudentView({
                   <ImagePlus size={15} />
                   图片
                 </button>
-                {speechOk && (
-                  <button
-                    className={`ask-tool-button mic-tool ${dictating ? 'is-dictating' : ''}`}
-                    onClick={toggleDictation}
-                    disabled={Boolean(thinking)}
-                    type="button"
-                    aria-pressed={dictating}
-                    title={dictating ? '停止语音输入' : '语音说出你的问题'}
-                  >
-                    <Mic size={15} />
-                    {dictating ? '停止听写' : '语音'}
-                  </button>
-                )}
                 <button
                   className={`ask-tool-button ai-tool ${aiReady ? 'is-ready' : ''}`}
                   onClick={() => setAiSettingsOpen(true)}
@@ -1272,6 +1225,7 @@ export function StudentView({
           todayRate={todayRate}
           firstResponse={firstResponse}
           todaysClasses={todaysClasses}
+          hasSchedule={profile.schedule.length > 0}
           waitingGroups={waitingGroups}
           hotFaqs={hotFaqs}
           course={course}

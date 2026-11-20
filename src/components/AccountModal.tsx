@@ -1509,10 +1509,6 @@ export function AccountModal({
                 <span>加权平均</span>
               </div>
               <div>
-                <strong>{stats.gpaFour?.toFixed(2) ?? '—'}</strong>
-                <span>GPA（4.0）</span>
-              </div>
-              <div>
                 <strong>{stats.gpaFive?.toFixed(2) ?? '—'}</strong>
                 <span>GPA（5.0）</span>
               </div>

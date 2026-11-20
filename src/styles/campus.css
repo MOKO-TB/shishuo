@@ -345,6 +345,118 @@
   flex: 0 0 auto;
 }
 
+/* 合并后的单一 AI 搜索：输入即筛选，Enter 让 AI 参考作答 */
+.campus-ai-search {
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.campus-ai-search-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.campus-ai-search-head > div {
+  display: grid;
+  gap: 3px;
+}
+
+.campus-ai-search-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campus-ai-search-head strong svg {
+  color: var(--gold);
+}
+
+.campus-ai-search-head span {
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.campus-ai-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 4px 5px 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+}
+
+.campus-ai-search-box:focus-within {
+  border-color: var(--jade);
+  box-shadow: var(--focus-ring);
+}
+
+.campus-ai-search-box > svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.campus-ai-search-box input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+}
+
+.campus-ai-search-box .button {
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.campus-ai-search-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .campus-ai-search-box {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+  }
+
+  .campus-ai-search-box > svg {
+    display: none;
+  }
+
+  .campus-ai-search-box input {
+    flex: 1 0 100%;
+    height: 32px;
+    padding: 0 2px;
+  }
+
+  .campus-ai-search-box .button {
+    width: 100%;
+  }
+
+  .campus-ai-search-foot {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
 .campus-answer {
   padding: 16px 18px;
   margin-bottom: 14px;

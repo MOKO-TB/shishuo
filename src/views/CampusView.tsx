@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   BookOpen,
   Download,
-  MessageCircleQuestion,
   Search,
   Send,
   ShieldCheck,
@@ -199,7 +198,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const [category, setCategory] = useState('all')
   const [credFilter, setCredFilter] = useState<CredFilter>('all')
   const [sort, setSort] = useState<SortMode>(role === 'teacher' ? 'review' : 'verified')
-  const [askText, setAskText] = useState('')
   const [askResult, setAskResult] = useState<AnswerResult | null>(null)
   const [askThread, setAskThread] = useState<Thread | null>(null)
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
@@ -422,9 +420,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
     notify('校园 FAQ 已保存。')
   }
 
-  const handleAsk = async () => {
+  const handleAsk = async (raw?: string) => {
     if (askBusy) return
-    const question = askText.trim()
+    const question = (raw ?? query).trim()
     if (!question) return
 
     const result = retrieve(campusFaqs, question, CAMPUS_COURSE_ID)
@@ -496,7 +494,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
     silent?: boolean
   }) => {
     if (!user) return
-    const question = (options?.question ?? askText).trim()
+    const question = (options?.question ?? query).trim()
     if (!question) return
     const result = options?.result ?? askResult
     const externalAnswer = options?.externalAnswer ?? null
@@ -655,38 +653,53 @@ export function CampusView({ role, notify }: CampusViewProps) {
       </div>
 
       {role === 'student' && (
-        <section className="campus-ask card">
-          <div className="campus-ask-head">
+        <section className="campus-ai-search card">
+          <div className="campus-ai-search-head">
             <div>
               <strong>
-                <MessageCircleQuestion size={16} />
-                问一句校园的事
+                <Sparkles size={16} />
+                AI 搜索校园知识
               </strong>
               <span>
-                先查校园知识库；没有可靠答案时，AI 会给参考答复并自动转交校园主理人。
+                输入问题或关键词：下方先筛出相关卡片；按 Enter 让 AI 参考作答，没把握时转交校园主理人。
               </span>
             </div>
             <Badge tone="gold">引路学长</Badge>
           </div>
-          <div className="campus-ask-box">
+          <div className="campus-ai-search-box">
+            <Search size={16} />
             <input
-              value={askText}
-              onChange={(event) => setAskText(event.target.value)}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') handleAsk()
+                if (event.key === 'Enter') void handleAsk(query)
               }}
-              placeholder="例如：奖学金怎么申请？转专业什么时候能报？"
-              aria-label="问校园问题"
+              placeholder="问一句校园的事，或搜关键词…"
+              aria-label="AI 搜索校园知识"
               disabled={askBusy}
             />
+            {query && (
+              <button
+                className="search-clear"
+                onClick={() => setQuery('')}
+                aria-label="清空搜索"
+                type="button"
+              >
+                <X size={14} />
+              </button>
+            )}
             <button
               className="button button-primary"
-              onClick={handleAsk}
-              disabled={!askText.trim() || askBusy}
+              onClick={() => void handleAsk(query)}
+              disabled={!query.trim() || askBusy}
             >
               {askBusy ? <Sparkles size={15} /> : <Send size={15} />}
-              {askBusy ? 'AI 正在回答…' : '查一查'}
+              {askBusy ? 'AI 正在整理…' : 'AI 搜索'}
             </button>
+          </div>
+          <div className="campus-ai-search-foot">
+            <span>{visibleItems.length} 条相关卡片</span>
+            <span>涉及政策、金额和截止日期时，以学校官方通知为准</span>
           </div>
         </section>
       )}
@@ -969,7 +982,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </section>
       )}
 
-      <section className="knowledge-toolbar card">
+      {role === 'teacher' && (
+        <>
+          <section className="knowledge-toolbar card">
         <div className="knowledge-search">
           <Search size={17} />
           <input
@@ -1077,6 +1092,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </div>
         <span className="knowledge-result">{visibleItems.length} 条结果</span>
       </div>
+        </>
+      )}
 
       {visibleItems.length === 0 ? (
         <div className="card">

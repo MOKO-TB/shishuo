@@ -4,6 +4,8 @@ import { ENG_MENTORS } from './engMentors'
 import { ARTSCI_MENTORS } from './artsciMentors'
 import { LAW_BIOCHEM_MENTORS } from './lawBiochemMentors'
 import { ENG2_MENTORS } from './eng2Mentors'
+import { allCourses, courseById } from './seed'
+import type { Course } from '../types'
 
 export interface MentorMisconception {
   wrong: string
@@ -2577,12 +2579,60 @@ const COURSE_MENTORS: CourseMentor[] = [
   ...ENG2_MENTORS,
 ]
 
+/**
+ * 没有预置导师数据的课程（主要是教务导入的真实课程）按任课教师生成一位
+ * 轻量 AI 导师，保证「一门课 ↔ 一位老师 ↔ 一位导师」一一对应。
+ * 没有视频/逐字稿来源，不做 B 站蒸馏，只对齐课程与教师口径。
+ */
+function mentorFromCourse(course: Course): CourseMentor {
+  const teacher = course.teacher && course.teacher !== '未指定' ? course.teacher : ''
+  return {
+    courseId: course.id,
+    name: teacher ? `${teacher}老师` : `${course.shortName}导师`,
+    title: course.shortName,
+    tagline: teacher
+      ? `按${teacher}老师这门课的进度，先定位卡点，再讲下一步。`
+      : '先定位卡点，再讲关键一步；不确定就建议转交任课老师。',
+    attribution: '基于课程与任课教师信息生成；具体结论以课程知识库和任课老师为准。',
+    principles: [
+      '先问清楚卡在哪一步，再给下一步；不堆通用定义。',
+      '课程口径以课程知识库和任课老师为准，不编“老师说过”。',
+      '讲完留一道换数字或换场景的迁移题，答案默认不展开。',
+    ],
+    foundation: [],
+    quickPrompts: [
+      `${course.shortName}这周讲到哪，我该先补什么？`,
+      `我在${course.shortName}这一步卡住了，下一步怎么走？`,
+      `${course.shortName}作业应该怎么拆步骤？`,
+    ],
+    totalEpisodes: 0,
+    totalHours: 0,
+    chapters: [],
+    styleNotes: [],
+    topics: [],
+  }
+}
+
+const dynamicMentors = new Map<string, CourseMentor>()
+
 export function availableMentors() {
-  return COURSE_MENTORS
+  const known = new Set(COURSE_MENTORS.map((mentor) => mentor.courseId))
+  for (const course of allCourses()) {
+    if (known.has(course.id)) continue
+    const key = `${course.id}::${course.teacher}::${course.shortName}`
+    if (!dynamicMentors.has(key)) dynamicMentors.set(key, mentorFromCourse(course))
+  }
+  return [...COURSE_MENTORS, ...dynamicMentors.values()]
 }
 
 export function mentorForCourse(courseId: string): CourseMentor | undefined {
-  return COURSE_MENTORS.find((mentor) => mentor.courseId === courseId)
+  return availableMentors().find((mentor) => mentor.courseId === courseId)
+}
+
+/** 导师对应的任课教师（用于界面上的一一对应展示）。 */
+export function mentorTeacherName(mentor: CourseMentor) {
+  const teacher = courseById(mentor.courseId).teacher
+  return teacher && teacher !== '未指定' ? teacher : ''
 }
 
 function normalize(text: string) {
@@ -2675,8 +2725,10 @@ ${focus}
 export function mentorBriefForCourse(courseId: string) {
   const mentor = mentorForCourse(courseId)
   if (!mentor) return ''
+  const course = courseById(courseId)
+  const teacher = mentorTeacherName(mentor)
   return [
-    `按${mentor.name}的方式补充回答，不冒充任课老师。${mentor.tagline}`,
+    `你是《${course.name}》课程的 AI 导师${teacher ? `，教学口径对齐${teacher}老师` : ''}，但不冒充老师本人。${mentor.tagline}`,
     '回答顺序：先点明卡点或类型 → 检查一个先修 → 只讲关键一步为什么成立（给条件或反例）→ 留一道换数字的迁移题（不要直接给答案）。',
     '用章节名/主题定位，不要提集数或 P 编号；学生可能没看过公开课视频。',
     '数学公式用 $...$ 包裹（行内），不要用代码块或裸露的 ^{} / _{}。',
