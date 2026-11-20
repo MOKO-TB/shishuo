@@ -145,6 +145,7 @@ export function CampusTools() {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
+  const [liveQuery, setLiveQuery] = useState('')
   const [liveBooks, setLiveBooks] = useState<LibraryBook[] | null>(null)
   const [liveBusy, setLiveBusy] = useState(false)
   const [liveError, setLiveError] = useState('')
@@ -298,10 +299,12 @@ export function CampusTools() {
   const runLibrarySearch = async (rawQuery: string) => {
     const query = rawQuery.trim()
     if (!query) {
+      setLiveQuery('')
       setLiveBooks(null)
       setLiveError('')
       return
     }
+    setLiveQuery(query)
     setLiveBusy(true)
     setLiveError('')
     try {
@@ -579,7 +582,9 @@ export function CampusTools() {
               value={bookQuery}
               onChange={(event) => {
                 setBookQuery(event.target.value)
-                if (!event.target.value.trim()) setLiveBooks(null)
+                setLiveQuery('')
+                setLiveBooks(null)
+                setLiveError('')
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') void runLibrarySearch(bookQuery)
@@ -593,6 +598,7 @@ export function CampusTools() {
                 className="campus-library-clear"
                 onClick={() => {
                   setBookQuery('')
+                  setLiveQuery('')
                   setLiveBooks(null)
                   setLiveError('')
                 }}
@@ -627,26 +633,24 @@ export function CampusTools() {
             </section>
           )}
 
-          {liveBooks !== null ? (
+          {liveQuery ? (
             <section className="campus-book-section">
               <div className="campus-book-head">
                 <BookOpen size={15} />
-                <strong>“{bookQuery}”的馆藏检索</strong>
-                <span>
-                  {liveBusy ? '检索中…' : `${liveBooks.length} 条`}
-                </span>
+                <strong>“{liveQuery}”的馆藏检索</strong>
+                <span>{liveBusy ? '检索中…' : `${liveBooks?.length ?? 0} 条`}</span>
               </div>
               {liveError ? (
                 <p className="campus-tool-empty">{liveError}</p>
               ) : liveBusy ? (
                 <p className="campus-tool-empty">正在查询图书馆 OPAC…</p>
-              ) : liveBooks.length === 0 ? (
+              ) : (liveBooks?.length ?? 0) === 0 ? (
                 <p className="campus-tool-empty">
-                  没有匹配的书目，换个书名或作者试试。
+                  OPAC 里没有查到匹配的书目，换个书名或作者试试。
                 </p>
               ) : (
                 <div className="campus-book-grid">
-                  {liveBooks.map((book) => (
+                  {liveBooks?.map((book) => (
                     <LiveBookCard key={book.recordId} book={book} />
                   ))}
                 </div>
@@ -656,12 +660,16 @@ export function CampusTools() {
             <section className="campus-book-section">
               <div className="campus-book-head">
                 <BookOpen size={15} />
-                <strong>全部书目</strong>
-                <span>{bookResults.length} 本</span>
+                <strong>{bookQuery.trim() ? '书目速览' : '全部书目'}</strong>
+                <span>
+                  {bookQuery.trim() && bookResults.length === 0
+                    ? '待检索'
+                    : `${bookResults.length} 本`}
+                </span>
               </div>
               {bookResults.length === 0 ? (
                 <p className="campus-tool-empty">
-                  没有匹配的书目，换个书名或作者试试；也可以直接到 OPAC 检索全馆。
+                  本地书目里没有直接命中。点右侧「检索馆藏」到学校 OPAC 查全馆，能看到是否在馆、索书号和馆藏地。
                 </p>
               ) : (
                 <div className="campus-book-grid">

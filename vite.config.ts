@@ -10,6 +10,7 @@ const apiProxy = {
   '/api/ai': { target: API_TARGET },
   '/api/jw': { target: API_TARGET },
   '/api/chaoxing': { target: API_TARGET },
+  '/api/library': { target: API_TARGET },
   '/api/admin': { target: API_TARGET },
   '/api/uploads': { target: API_TARGET },
   '/api/health': { target: API_TARGET },
