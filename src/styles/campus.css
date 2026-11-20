@@ -192,6 +192,7 @@
 .campus-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 12px;
 }
 
@@ -270,7 +271,13 @@
 
 .campus-card > p.is-expanded {
   display: block;
-  overflow: visible;
+  max-height: 42vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
 
 .campus-card-toggle {
