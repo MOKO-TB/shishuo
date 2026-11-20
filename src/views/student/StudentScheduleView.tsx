@@ -579,11 +579,6 @@ function EmptyClassroomModal({
             ))}
           </div>
         )}
-
-        <p className="empty-room-note">
-          数据来自「广应科课表」小程序，校区：{data?.campus || '肇庆校区'}；共 {buildings.length} 栋教学楼。
-          {data?.fetchedAt ? ` 同步于 ${new Date(data.fetchedAt).toLocaleString('zh-CN')}。` : ''}
-        </p>
       </div>
     </Modal>
   )
