@@ -727,6 +727,77 @@ export function AccountModal({
       : '课程表'
   const staleSchedule = displayEntries.length > 0 && displayEntries.every((entry) => !entry.startTime && !entry.weeks)
 
+  // 教师端没有学生课表/成绩，设置页只展示账号与退出，避免误改学生资料。
+  if (user?.role === 'teacher') {
+    const TeacherShell = variant === 'page' ? PageSheet : Modal
+    return (
+      <TeacherShell
+        open={open}
+        onClose={onClose}
+        eyebrow="教师账号 · 服务端同步"
+        title="设置"
+        footer={
+          <div className="modal-actions-right">
+            <button className="button button-ghost" onClick={onClose}>
+              关闭
+            </button>
+          </div>
+        }
+      >
+        <div className="settings-sheet">
+          <section className="settings-account" aria-label="当前账号">
+            <span className="settings-account-avatar">
+              <Avatar name={user.name} tone="jade" size="lg" />
+            </span>
+            <div className="settings-account-copy">
+              <strong>{user.name}</strong>
+              <span>{user.email}</span>
+            </div>
+            <Badge tone="neutral">教师账号</Badge>
+          </section>
+
+          <section className="settings-group" aria-labelledby="settings-teacher-notes">
+            <h3 className="settings-group-title" id="settings-teacher-notes">
+              说明
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>教师账号由管理员分配</strong>
+                  <small>课程、学生与共享空间的内容在教师端维护；账号资料如需修改，请联系管理员。</small>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="settings-group is-danger" aria-labelledby="settings-teacher-danger">
+            <h3 className="settings-group-title" id="settings-teacher-danger">
+              账号操作
+            </h3>
+            <div className="settings-row-list">
+              <div className="settings-row is-static">
+                <span className="settings-row-copy">
+                  <strong>退出登录</strong>
+                  <small>退出后需要重新输入邮箱和密码。</small>
+                </span>
+                <button
+                  className="button button-danger-ghost"
+                  onClick={() => {
+                    onClose()
+                    void logoutAccount()
+                  }}
+                >
+                  <LogOut size={14} />
+                  退出
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </TeacherShell>
+    )
+  }
+
   const shellProps =
     variant === 'page'
       ? {
@@ -819,7 +890,7 @@ export function AccountModal({
               <strong>{form.name || profile.name}</strong>
               <span>{user?.email ?? '未登录'}</span>
             </div>
-            <Badge tone="neutral">{user?.role === 'teacher' ? '教师账号' : '学生账号'}</Badge>
+            <Badge tone="neutral">学生账号</Badge>
           </section>
 
           <section className="settings-group" aria-labelledby="settings-identity">
