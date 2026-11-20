@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DoorOpen,
+  Loader2,
   Maximize2,
   SlidersHorizontal,
   X,
@@ -27,6 +28,7 @@ import {
   type ScheduleEntry,
 } from '../../lib/profile'
 import { EmptyState, Modal } from '../../components/ui'
+import { fetchEmptyRooms, type EmptyRoomDay } from '../../lib/emptyRooms'
 import { cn } from '../../lib/utils'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7]
@@ -284,12 +286,7 @@ export function ScheduleView({
 
       <CourseDetailModal entry={detail} onClose={() => setDetail(null)} />
 
-      <EmptyClassroomModal
-        open={emptyOpen}
-        onClose={() => setEmptyOpen(false)}
-        entries={weekEntries}
-        initialDay={weekdayNumber()}
-      />
+      <EmptyClassroomModal open={emptyOpen} onClose={() => setEmptyOpen(false)} />
     </div>
   )
 }
@@ -431,58 +428,68 @@ function CourseDetailModal({
   )
 }
 
-const EMPTY_BLOCKS = [
-  { key: 'morning', label: '上午 · 1-4 节', sections: [1, 2, 3, 4] },
-  { key: 'afternoon', label: '下午 · 5-8 节', sections: [5, 6, 7, 8] },
-  { key: 'evening', label: '晚上 · 9-11 节', sections: [9, 10, 11] },
+const EMPTY_STATUS_COLUMNS = [
+  { key: 'm1', label: '上午 1-2', index: 0 },
+  { key: 'm2', label: '上午 3-4', index: 1 },
+  { key: 'a1', label: '下午 5-6', index: 2 },
+  { key: 'a2', label: '下午 7-8', index: 3 },
+  { key: 'e1', label: '晚上', index: 4 },
 ] as const
+
+function todayIso() {
+  const date = new Date()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+function emptyRoomDateLabel(date: string) {
+  if (date === todayIso()) return '今天'
+  const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(date)
+  return match ? `${Number(match[1])}/${Number(match[2])}` : date
+}
 
 function EmptyClassroomModal({
   open,
   onClose,
-  entries,
-  initialDay,
 }: {
   open: boolean
   onClose: () => void
-  entries: ScheduleEntry[]
-  initialDay: number
 }) {
-  const [day, setDay] = useState(initialDay)
-  const [building, setBuilding] = useState('')
+  const [selectedDate, setSelectedDate] = useState('')
+  const [building, setBuilding] = useState('J1')
+  const [data, setData] = useState<EmptyRoomDay | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-  const rooms = useMemo(
-    () =>
-      Array.from(
-        new Set(entries.map((entry) => entry.room?.trim()).filter((room): room is string => Boolean(room))),
-      ).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN')),
-    [entries],
-  )
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    const date = selectedDate || todayIso()
+    setBusy(true)
+    setError('')
+    fetchEmptyRooms(date)
+      .then((result) => {
+        if (cancelled) return
+        setData(result)
+        if (!selectedDate || !result.matched) setSelectedDate(result.date)
+      })
+      .catch((reason) => {
+        if (cancelled) return
+        setData(null)
+        setError(reason instanceof Error ? reason.message : '空教室数据加载失败。')
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, selectedDate])
 
-  const buildings = useMemo(
-    () =>
-      Array.from(new Set(rooms.map(roomBuilding))).sort((a, b) => {
-        if (a === '其他') return 1
-        if (b === '其他') return -1
-        return a.localeCompare(b, 'zh-Hans-CN')
-      }),
-    [rooms],
-  )
-  const activeBuilding = buildings.includes(building) ? building : buildings[0] ?? ''
-  const dayRooms = rooms.filter((room) => roomBuilding(room) === activeBuilding)
-
-  const statusFor = (room: string, block: (typeof EMPTY_BLOCKS)[number]) =>
-    block.sections.some((section) =>
-      entries.some(
-        (entry) =>
-          entry.day === day &&
-          entry.room?.trim() === room &&
-          section >= entry.startSection &&
-          section <= entry.endSection,
-      ),
-    )
-      ? 'busy'
-      : 'free'
+  const buildings = data?.buildings ?? []
+  const activeBuilding = buildings.find((item) => item.code === building) ?? buildings[0]
+  const rooms = activeBuilding?.rooms ?? []
 
   return (
     <Modal
@@ -490,31 +497,31 @@ function EmptyClassroomModal({
       onClose={onClose}
       eyebrow="课程表 · 找自习室"
       title="空教室"
-      size="md"
+      size="lg"
     >
       <div className="empty-room-modal">
         <div className="empty-room-buildings">
           {buildings.map((item) => (
             <button
-              key={item}
+              key={item.code}
               type="button"
-              className={item === activeBuilding ? 'is-active' : ''}
-              onClick={() => setBuilding(item)}
+              className={item.code === activeBuilding?.code ? 'is-active' : ''}
+              onClick={() => setBuilding(item.code)}
             >
-              {item}
+              {item.code}
             </button>
           ))}
         </div>
 
         <div className="empty-room-days">
-          {DAYS.map((item) => (
+          {(data?.dates ?? [todayIso()]).map((date) => (
             <button
-              key={item}
+              key={date}
               type="button"
-              className={item === day ? 'is-active' : ''}
-              onClick={() => setDay(item)}
+              className={date === selectedDate ? 'is-active' : ''}
+              onClick={() => setSelectedDate(date)}
             >
-              {weekdayLabel(item)}
+              {emptyRoomDateLabel(date)}
             </button>
           ))}
         </div>
@@ -522,31 +529,47 @@ function EmptyClassroomModal({
         <div className="empty-room-legend">
           <span><i className="is-free" />空闲</span>
           <span><i className="is-busy" />占用</span>
-          <em>{dayRooms.length} 间教室</em>
+          <em>{rooms.length} 间教室</em>
         </div>
 
-        {dayRooms.length === 0 ? (
+        {busy ? (
+          <p className="campus-tool-empty">
+            <Loader2 size={16} className="spin-icon" /> 正在同步全校空教室…
+          </p>
+        ) : error ? (
           <EmptyState
             icon={<DoorOpen size={20} />}
-            title="这个教学楼还没有教室记录"
-            description="换一个教学楼看看，或先在账号设置里补全课表教室。"
+            title="空教室数据暂时没拉到"
+            description={error}
+          />
+        ) : rooms.length === 0 ? (
+          <EmptyState
+            icon={<DoorOpen size={20} />}
+            title="这一天还没有教室数据"
+            description="换一个日期或教学楼看看。"
           />
         ) : (
           <div className="empty-room-table">
             <div className="empty-room-head">
               <span>教室</span>
-              {EMPTY_BLOCKS.map((item) => (
-                <span key={item.key}>{item.label.split(' · ')[0]}</span>
+              {EMPTY_STATUS_COLUMNS.map((item) => (
+                <span key={item.key}>{item.label}</span>
               ))}
             </div>
-            {dayRooms.map((room) => (
-              <div className="empty-room-row" key={room}>
-                <strong>{room}</strong>
-                {EMPTY_BLOCKS.map((block) => {
-                  const status = statusFor(room, block)
+            {rooms.map((room) => (
+              <div className="empty-room-row" key={room.name}>
+                <span className="empty-room-name">
+                  <strong>{room.name}</strong>
+                  <small>{room.size ? `${room.size} 座` : ''}</small>
+                </span>
+                {EMPTY_STATUS_COLUMNS.map((item) => {
+                  const busyRoom = room.status[item.index] === 1
                   return (
-                    <span className={`empty-room-status is-${status}`} key={block.key}>
-                      {status === 'free' ? '空闲' : '占用'}
+                    <span
+                      className={`empty-room-status is-${busyRoom ? 'busy' : 'free'}`}
+                      key={item.key}
+                    >
+                      {busyRoom ? '占用' : '空闲'}
                     </span>
                   )
                 })}
@@ -556,14 +579,10 @@ function EmptyClassroomModal({
         )}
 
         <p className="empty-room-note">
-          目前只根据你导入课表里出现过的教室判断；全校空教室需要接入教务处教室课表后才会完整。
+          数据来自「广应科课表」小程序，校区：{data?.campus || '肇庆校区'}；共 {buildings.length} 栋教学楼。
+          {data?.fetchedAt ? ` 同步于 ${new Date(data.fetchedAt).toLocaleString('zh-CN')}。` : ''}
         </p>
       </div>
     </Modal>
   )
-}
-
-function roomBuilding(room: string) {
-  const match = room.match(/^([A-Za-z]+\d)/)
-  return match ? match[1].toUpperCase() : '其他'
 }

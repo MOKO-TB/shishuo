@@ -32,6 +32,7 @@ import { sendMail, sendVerificationCode } from './mail.mjs'
 import { createJwService, JwError } from './jw.mjs'
 import { ChaoxingError, createChaoxingService } from './chaoxing.mjs'
 import { createLibraryService } from './library.mjs'
+import { createEmptyRoomService } from './empty-rooms.mjs'
 import {
   checkSendRate,
   deleteEmailCode,
@@ -476,6 +477,7 @@ export function createApiHandler({ db, config }) {
   const jw = createJwService()
   const chaoxing = createChaoxingService(db)
   const library = createLibraryService()
+  const emptyRooms = createEmptyRoomService()
   /**
    * 工作区响应缓存：连「投影 + 序列化 + gzip」一起缓存，命中时只写 socket。
    * revision 每次成功写入都会递增，因此数据不变时缓存必然安全；
@@ -1128,6 +1130,11 @@ export function createApiHandler({ db, config }) {
 
       if (pathname.startsWith('/api/jw/')) {
         return await handleJw(req, res, pathname)
+      }
+
+      if (pathname === '/api/empty-rooms' && req.method === 'GET') {
+        requireUser(req)
+        return sendJson(res, 200, emptyRooms.get(url.searchParams.get('date')))
       }
 
       if (pathname.startsWith('/api/library/')) {
