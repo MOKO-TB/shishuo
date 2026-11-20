@@ -786,7 +786,8 @@ export function CampusTools() {
               <span>{CAMPUS_BUILDINGS.length} 个地点</span>
             )}
 
-            {suggestOpen && filteredBuildings.length > 0 && (
+            {/* 只有输入了关键词才出候选：点开空输入框不列出全部建筑 */}
+            {suggestOpen && mapQuery.trim() && filteredBuildings.length > 0 && (
               <ul className="campus-map-suggest" id="campus-map-suggest" role="listbox">
                 {filteredBuildings.slice(0, 8).map((building) => (
                   <li key={building.no} role="option" aria-selected={building.no === selectedBuilding}>
@@ -805,7 +806,7 @@ export function CampusTools() {
               </ul>
             )}
 
-            {suggestOpen && mapQuery && filteredBuildings.length === 0 && (
+            {suggestOpen && mapQuery.trim() && filteredBuildings.length === 0 && (
               <div className="campus-map-suggest is-empty">没有匹配的地点，换个关键词试试</div>
             )}
           </div>
