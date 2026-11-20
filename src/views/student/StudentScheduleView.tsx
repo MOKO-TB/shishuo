@@ -429,11 +429,9 @@ function CourseDetailModal({
 }
 
 const EMPTY_STATUS_COLUMNS = [
-  { key: 'm1', label: '上午 1-2', index: 0 },
-  { key: 'm2', label: '上午 3-4', index: 1 },
-  { key: 'a1', label: '下午 5-6', index: 2 },
-  { key: 'a2', label: '下午 7-8', index: 3 },
-  { key: 'e1', label: '晚上', index: 4 },
+  { key: 'morning', label: '上午', indexes: [0, 1] },
+  { key: 'afternoon', label: '下午', indexes: [2, 3] },
+  { key: 'evening', label: '晚上', indexes: [4] },
 ] as const
 
 function todayIso() {
@@ -562,17 +560,21 @@ function EmptyClassroomModal({
                   <strong>{room.name}</strong>
                   <small>{room.size ? `${room.size} 座` : ''}</small>
                 </span>
-                {EMPTY_STATUS_COLUMNS.map((item) => {
-                  const busyRoom = room.status[item.index] === 1
-                  return (
-                    <span
-                      className={`empty-room-status is-${busyRoom ? 'busy' : 'free'}`}
-                      key={item.key}
-                    >
-                      {busyRoom ? '占用' : '空闲'}
-                    </span>
-                  )
-                })}
+                {EMPTY_STATUS_COLUMNS.map((column) => (
+                  <span className="empty-room-dots" key={column.key}>
+                    {column.indexes.map((index) => {
+                      const busyRoom = room.status[index] === 1
+                      return (
+                        <i
+                          key={index}
+                          className={`empty-room-dot is-${busyRoom ? 'busy' : 'free'}`}
+                          title={busyRoom ? '占用' : '空闲'}
+                          aria-label={busyRoom ? '占用' : '空闲'}
+                        />
+                      )
+                    })}
+                  </span>
+                ))}
               </div>
             ))}
           </div>
