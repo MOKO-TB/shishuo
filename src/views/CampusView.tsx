@@ -72,6 +72,16 @@ function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, '')
 }
 
+function seededRank(id: string, seed: number) {
+  let hash = 2166136261
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  hash ^= Math.floor(seed * 1_000_000_000)
+  return hash >>> 0
+}
+
 function credibilityMeta(credibility: string): {
   label: string
   tone: BadgeTone
@@ -223,6 +233,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const { data, dispatch } = useStore()
   const { user } = useAuth()
   const [query, setQuery] = useState('')
+  const [shuffleSeed] = useState(() => Math.random())
   const [visibleLimit, setVisibleLimit] = useState(24)
   const [category, setCategory] = useState('all')
   const [credFilter, setCredFilter] = useState<CredFilter>('all')
@@ -361,9 +372,14 @@ export function CampusView({ role, notify }: CampusViewProps) {
             Number(Boolean(b.card.sourceUrl)) - Number(Boolean(a.card.sourceUrl))
           if (sourceDiff !== 0) return sourceDiff
         }
+        if (tokens.length === 0) {
+          const randomDiff =
+            seededRank(a.card.id, shuffleSeed) - seededRank(b.card.id, shuffleSeed)
+          if (randomDiff !== 0) return randomDiff
+        }
         return a.card.id.localeCompare(b.card.id)
       })
-  }, [category, credFilter, items, sort, tokens])
+  }, [category, credFilter, items, shuffleSeed, sort, tokens])
 
   useEffect(() => {
     setVisibleLimit(24)
@@ -507,11 +523,11 @@ export function CampusView({ role, notify }: CampusViewProps) {
       }
       setAiAnswer(answer)
       escalate({ question, result, externalAnswer: answer, silent: true })
-      notify('知识库没有现成答案：AI 已给出参考答复，并转交校园主理人核实。', 'info')
+      notify('知识库没有现成答案：引路学长已给出参考答复，并转交校园主理人核实。', 'info')
     } catch (error) {
       escalate({ question, result, silent: true })
       notify(
-        `AI 参考答复生成失败（${errorMessage(error)}），已转交校园主理人。`,
+        `引路学长暂时没能回答（${errorMessage(error)}），已转交校园主理人。`,
         'danger',
       )
     } finally {
@@ -553,7 +569,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
       escalation: {
         title: makeEscalationTitle(question),
         note: externalAnswer
-          ? '校园知识库没有可靠答案，AI 已给出参考答复；请校园主理人核实后回复。'
+          ? '校园知识库没有可靠答案，引路学长已给出参考答复；请校园主理人核实后回复。'
           : '校园知识库没有足够可靠的答案，转交校园主理人。',
         anonymous: false,
         urgency: 'week',
@@ -629,11 +645,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
     <div className="page campus-page">
       <header className="campus-head">
         <div className="campus-head-main">
-          <div className="eyebrow">
-            <span className="eyebrow-mark gold" />
-            校园生活
-            <span className="eyebrow-sep">/</span>
-            引路学长知识库
+          <div className="campus-brand">
+            <strong>引路学长</strong>
+            <span>整合了众多上岸学长，学姐真实经历的智能体</span>
           </div>
           <h1 className="display-title">
             课上的问题问老师
@@ -641,49 +655,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <span>课下的事问学长</span>
           </h1>
         </div>
-
-        <aside className="campus-head-card card">
-          <div className="campus-card-head">
-            <span>知识卡概览</span>
-            <span className="demo-tag">{campusFaqs.length > 0 ? '在线' : '只读'}</span>
-          </div>
-          <div className="campus-stats">
-            <div>
-              <strong>{total}</strong>
-              <span>条知识卡</span>
-            </div>
-            <div>
-              <strong>{categories.length}</strong>
-              <span>个分类</span>
-            </div>
-            <div>
-              <strong>{verifiedCount}</strong>
-              <span>条可引用来源</span>
-            </div>
-            <div className="is-warn">
-              <strong>{unverifiedCount}</strong>
-              <span>条待核实</span>
-            </div>
-          </div>
-          <div className="campus-card-foot">
-            <ShieldCheck size={14} />
-            采集于 {CAMPUS_KB_COLLECTED_AT} · 来自引路学长（MIT）
-          </div>
-        </aside>
       </header>
-
-      <div className="campus-notice">
-        <div className="campus-notice-icon">
-          <ShieldCheck size={18} />
-        </div>
-        <div className="campus-notice-copy">
-          <strong>先看可信度，再看结论。</strong>
-          <span>
-            「官方来源」和「教师回复」可直接引用；「待核实」是学长经验整理，涉及政策、金额、截止日期时
-            请以学校官方通知为准。
-          </span>
-        </div>
-      </div>
 
       {role === 'student' && (
         <section className="campus-ai-search card">
@@ -691,13 +663,9 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <div>
               <strong>
                 <Sparkles size={16} />
-                AI 搜索校园知识
+                问引路学长
               </strong>
-              <span>
-                输入问题或关键词：下方先筛出相关卡片；按 Enter 让 AI 参考作答，没把握时转交校园主理人。
-              </span>
             </div>
-            <Badge tone="gold">引路学长</Badge>
           </div>
           <div className="campus-ai-search-box">
             <Search size={16} />
@@ -708,7 +676,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 if (event.key === 'Enter') void handleAsk(query)
               }}
               placeholder="问一句校园的事，或搜关键词…"
-              aria-label="AI 搜索校园知识"
+              aria-label="问引路学长"
               disabled={askBusy}
             />
             {query && (
@@ -727,12 +695,11 @@ export function CampusView({ role, notify }: CampusViewProps) {
               disabled={!query.trim() || askBusy}
             >
               {askBusy ? <Sparkles size={15} /> : <Send size={15} />}
-              {askBusy ? 'AI 正在整理…' : 'AI 搜索'}
+              {askBusy ? '学长正在整理…' : '问引路学长'}
             </button>
           </div>
           <div className="campus-ai-search-foot">
             <span>{visibleItems.length} 条相关卡片</span>
-            <span>涉及政策、金额和截止日期时，以学校官方通知为准</span>
           </div>
         </section>
       )}
@@ -741,9 +708,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
         <section className="campus-answer card is-ai">
           <div className="campus-answer-head">
             <Badge tone="blue" dot>
-              AI 参考答复
+              引路学长
             </Badge>
-            <span>知识库没有现成答案，正在生成参考答复并准备转交校园主理人…</span>
           </div>
           {aiPreview ? (
             <div className="campus-answer-body">
@@ -759,20 +725,11 @@ export function CampusView({ role, notify }: CampusViewProps) {
         <section className="campus-answer card is-ai">
           <div className="campus-answer-head">
             <Badge tone="blue" dot>
-              AI 参考答复
+              引路学长
             </Badge>
-            <span>
-              {aiAnswer.model} · 非知识库原文 · 已转交校园主理人核实
-            </span>
           </div>
           <div className="campus-answer-body">
             <RichText text={aiAnswer.text} />
-          </div>
-          <div className="campus-answer-ai-note">
-            <Sparkles size={13} />
-            <span>
-              AI 生成，仅供参考；涉及政策、金额和截止日期时，请以学校官方通知为准。
-            </span>
           </div>
           {askThread && (
             <div className="campus-answer-actions">
@@ -855,11 +812,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <Badge tone="pending" dot>
               已转交
             </Badge>
-            <span>
-              {askThread.externalAnswer
-                ? 'AI 参考答复仅供参考，校园主理人核实后会回复你。'
-                : '校园主理人回复后会通知你。'}
-            </span>
           </div>
           <h3>{askThread.question}</h3>
         </section>
@@ -914,8 +866,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
                     </p>
                     <span className="campus-thread-ai-note">
                       <Sparkles size={11} />
-                      AI 参考答复 · 等校园主理人核实
-                    </span>
+                      引路学长 · 等校园主理人核实                    </span>
                   </>
                 ) : (
                   <p className="campus-thread-waiting">等校园主理人回复…</p>
@@ -1246,21 +1197,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
           )}
         </>
       )}
-
-      <div className="knowledge-footnote campus-footnote">
-        <BookOpen size={15} />
-        <span>
-          知识卡来自{' '}
-          <a
-            href="https://github.com/MOKO-TB/yinlu-xuezhang"
-            target="_blank"
-            rel="noreferrer"
-          >
-            引路学长
-          </a>
-          （MIT License），采集于 {CAMPUS_KB_COLLECTED_AT}。内容会过期，请以学校官方通知为准。
-        </span>
-      </div>
 
       <Modal
         open={Boolean(editingFaq)}

@@ -177,9 +177,6 @@ export function ThreadDetailModal({
       size="md"
       footer={
         <div className="modal-actions modal-actions-split">
-          <span className="modal-foot-note">
-            AI 的判断、老师接手的上下文，都留在这条记录里。
-          </span>
           <div className="modal-actions-right">
             {canResolve && (
               <button
@@ -326,14 +323,14 @@ export function ThreadDetailModal({
           </div>
         </div>
 
-        {hasAiAttempt && (
+        {hasAiAttempt && !(thread.courseId === 'campus' && thread.externalAnswer) && (
         <div className="thread-row thread-ai">
           <span className="thread-ai-mark">
             <Sparkles size={15} />
           </span>
           <div className="thread-bubble ai-bubble">
             <div className="thread-bubble-head">
-              <strong>AI 助教</strong>
+              <strong>{thread.courseId === 'campus' ? '引路学长' : 'AI 助教'}</strong>
               {thread.confidence && (
                 <Badge
                   tone={
@@ -386,13 +383,15 @@ export function ThreadDetailModal({
             </span>
             <div className="thread-bubble external-bubble">
               <div className="thread-bubble-head">
-                <strong>服务端 AI 补充</strong>
-                <span>{thread.externalAnswer.model}</span>
-                <Badge tone="blue">外部模型</Badge>
+                <strong>{thread.courseId === 'campus' ? '引路学长' : '服务端 AI 补充'}</strong>
+                {thread.courseId !== 'campus' && <span>{thread.externalAnswer.model}</span>}
+                {thread.courseId !== 'campus' && <Badge tone="blue">外部模型</Badge>}
               </div>
-              <p className="thread-external-warning">
-                来自学生配置的外部模型，未经过课程知识库和老师确认。
-              </p>
+              {thread.courseId !== 'campus' && (
+                <p className="thread-external-warning">
+                  来自学生配置的外部模型，未经过课程知识库和老师确认。
+                </p>
+              )}
               <RichText text={thread.externalAnswer.text} />
             </div>
           </div>

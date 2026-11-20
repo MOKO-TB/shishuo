@@ -1,14 +1,31 @@
+.campus-page {
+  padding-top: 24px;
+}
+
 .campus-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(292px, 0.56fr);
-  gap: 40px;
-  align-items: end;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .campus-head-main .display-title {
-  margin: 13px 0 0;
+  margin: 8px 0 0;
   font-size: clamp(36px, 3.8vw, 50px);
+}
+
+.campus-brand {
+  display: grid;
+  gap: 3px;
+}
+
+.campus-brand strong {
+  font-family: var(--serif);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--gold-deep);
+}
+
+.campus-brand span {
+  font-size: var(--text-meta);
+  color: var(--muted);
 }
 
 .campus-head-main .page-lede {
