@@ -188,7 +188,9 @@ function splitMath(text: string): InlinePart[] {
 }
 
 function renderLinks(text: string) {
-  const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s<]+)/g)
+  const parts = text.split(
+    /(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s<]+|(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|cn|net|org|edu\.cn)(?:\/[^\s<，。；、）】]*)?)/gi,
+  )
   return parts.filter(Boolean).map((part, index) => {
     const markdown = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(part)
     if (markdown) {
@@ -204,16 +206,17 @@ function renderLinks(text: string) {
         </a>
       )
     }
-    if (/^https?:\/\//.test(part)) {
+    if (/^(https?:\/\/|www\.|[a-z0-9-]+\.(?:com|cn|net|org))/i.test(part)) {
       let href = part
       let tail = ''
       while (/[),.;，。；、）】]+$/.test(href)) {
         tail = href.slice(-1) + tail
         href = href.slice(0, -1)
       }
+      const url = /^https?:\/\//i.test(href) ? href : `https://${href}`
       return (
         <Fragment key={index}>
-          <a className="rich-link" href={href} target="_blank" rel="noreferrer">
+          <a className="rich-link" href={url} target="_blank" rel="noreferrer">
             {href}
           </a>
           {tail}
