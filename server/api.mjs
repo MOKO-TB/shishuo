@@ -341,6 +341,74 @@ async function sendReplyEmails(db, config, entries) {
   }
 }
 
+/** 账号封禁 / 禁言 / 恢复：尽力给学生写应用内通知并发送邮件提醒；失败不影响风控主流程。 */
+async function notifyAccountStatus(db, config, actor, target, status, until, reason) {
+  const now = Date.now()
+  const kind =
+    status === 'banned' ? 'account-banned' : status === 'muted' ? 'account-muted' : 'account-restored'
+  const untilText = until
+    ? `，至 ${new Date(until).toLocaleString('zh-CN')}`
+    : status === 'banned'
+      ? '（永久封禁）'
+      : ''
+  const bodyText =
+    status === 'active'
+      ? '你的师说账号已恢复正常，可以继续登录与提问。'
+      : `你的师说账号已被${status === 'banned' ? '封禁' : '禁言'}${untilText}。${
+          reason ? `原因：${reason}。` : ''
+        }${
+          status === 'banned'
+            ? '封禁期间无法登录，已有会话已注销；到期后自动恢复。'
+            : '禁言期间不能发布内容。'
+        }如有疑问请联系管理员。`
+  try {
+    mutateWorkspaceAsAdmin(db, {
+      user: actor,
+      action: 'account-status-notify',
+      actions: ['account-status-notify'],
+      summary: `向 ${target.name} 发送账号${status === 'active' ? '恢复' : status === 'banned' ? '封禁' : '禁言'}通知`,
+      courseIds: ['campus'],
+      mutate: (next) => {
+        next.notifications = [
+          {
+            id: newId('n'),
+            audience: 'student',
+            recipientId: target.id,
+            courseId: 'campus',
+            threadId: '',
+            kind,
+            title:
+              status === 'active'
+                ? '账号已恢复正常'
+                : status === 'banned'
+                  ? '账号已被封禁'
+                  : '账号已被禁言',
+            body: bodyText,
+            createdAt: now,
+            read: false,
+          },
+          ...(next.notifications ?? []),
+        ]
+        return true
+      },
+    })
+  } catch {
+    // 通知写入失败不影响状态更新。
+  }
+  try {
+    const row = db.prepare('SELECT email, name FROM users WHERE id = ?').get(target.id)
+    if (row?.email) {
+      await sendMail(config, {
+        to: row.email,
+        subject: `师说：你的账号${status === 'active' ? '已恢复' : status === 'banned' ? '已被封禁' : '已被禁言'}`,
+        text: `${row.name}同学你好：\n\n${bodyText}\n\n登录师说查看完整说明。\n\n——师说 · 账号风控通知`,
+      })
+    }
+  } catch {
+    // 邮件失败只影响提醒，不回滚状态更新。
+  }
+}
+
 function sanitizeMessages(messages) {
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) {
     throw new HttpError(400, '消息列表格式不正确。')
@@ -1088,10 +1156,10 @@ export function createApiHandler({ db, config }) {
           if (target.id === admin.id) return sendError(res, 400, '不能修改自己的账号状态。')
           const reason = String(body.reason ?? '').trim().slice(0, 300)
           let until = null
-          if (status === 'muted' && body.until !== undefined && body.until !== null && body.until !== '') {
+          if (status !== 'active' && body.until !== undefined && body.until !== null && body.until !== '') {
             until = Number(body.until)
             if (!Number.isFinite(until) || until <= Date.now()) {
-              return sendError(res, 400, '禁言结束时间必须晚于现在。')
+              return sendError(res, 400, '结束时间必须晚于现在。')
             }
           }
           db.prepare(
@@ -1101,7 +1169,7 @@ export function createApiHandler({ db, config }) {
           ).run(
             status,
             reason || null,
-            status === 'muted' ? until : null,
+            status === 'active' ? null : until,
             Date.now(),
             target.id,
           )
@@ -1121,9 +1189,12 @@ export function createApiHandler({ db, config }) {
             user: admin,
             action: 'moderation-user-status',
             actions: ['moderation-user-status'],
-            summary: `${label}账号 ${target.name}（${target.email}）${reason ? `：${reason}` : ''}`,
+            summary: `${label}账号 ${target.name}（${target.email}）${
+              until ? `至 ${new Date(until).toISOString()}` : ''
+            }${reason ? `：${reason}` : ''}`,
             courseIds: [],
           })
+          void notifyAccountStatus(db, config, admin, target, status, until, reason)
           return sendJson(res, 200, { user: adminUserView(updated) })
         }
 

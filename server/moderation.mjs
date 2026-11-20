@@ -131,7 +131,8 @@ export function findBlockedTermInThread(thread, terms) {
 export function effectiveUserStatus(row, now = Date.now()) {
   const status = String(row?.status ?? 'active')
   const until = row?.status_until == null ? null : Number(row.status_until)
-  if (status === 'muted' && until && until <= now) {
+  if (status !== 'active' && until && until <= now) {
+    // 禁言 / 封禁到期自动恢复，无需人工干预。
     return { status: 'active', reason: '', until: null }
   }
   if (!['active', 'muted', 'banned'].includes(status)) {

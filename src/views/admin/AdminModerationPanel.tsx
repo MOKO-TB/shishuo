@@ -66,6 +66,7 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [threads, setThreads] = useState<ModerationThread[]>([])
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [newTerm, setNewTerm] = useState('')
   const [newCategory, setNewCategory] = useState('通用')
@@ -207,34 +208,68 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
     }
   }
 
-  const setUserStatus = async (user: AdminUser, status: UserStatus) => {
-    const reason =
-      status === 'active'
-        ? ''
-        : window.prompt(
-            status === 'banned' ? '封禁原因（会写入审计）：' : '禁言原因（会写入审计）：',
-          ) ?? ''
-    if (status !== 'active' && reason.trim().length < 2) {
-      if (reason !== null) notify('请填写原因。', 'info')
+  type StatusAction = { user: AdminUser; status: Exclude<UserStatus, 'active'> }
+  const [statusAction, setStatusAction] = useState<StatusAction | null>(null)
+  const [actionReason, setActionReason] = useState('')
+  const [actionDuration, setActionDuration] = useState('24h')
+
+  const DURATION_OPTIONS: Array<{ value: string; label: string; ms: number }> = [
+    { value: '1h', label: '1 小时', ms: 60 * 60 * 1000 },
+    { value: '24h', label: '24 小时', ms: 24 * 60 * 60 * 1000 },
+    { value: '7d', label: '7 天', ms: 7 * 24 * 60 * 60 * 1000 },
+    { value: '30d', label: '30 天', ms: 30 * 24 * 60 * 60 * 1000 },
+  ]
+
+  const openStatusAction = (user: AdminUser, status: Exclude<UserStatus, 'active'>) => {
+    setStatusAction({ user, status })
+    setActionReason('')
+    setActionDuration('24h')
+  }
+
+  const submitStatusAction = async () => {
+    if (!statusAction || saving) return
+    const { user, status } = statusAction
+    if (actionReason.trim().length < 2) {
+      notify('请填写原因。', 'info')
       return
     }
+    setSaving(true)
     try {
+      const until = Date.now() + DURATION_OPTIONS.find(
+        (item) => item.value === actionDuration,
+      )!.ms
       await apiPost(`/api/admin/users/${user.id}/status`, {
         status,
-        reason,
-        ...(status === 'muted' ? { until: Date.now() + 24 * 60 * 60 * 1000 } : {}),
+        reason: actionReason,
+        until,
       })
+      setStatusAction(null)
       await loadAll()
+      const durationLabel = DURATION_OPTIONS.find((item) => item.value === actionDuration)?.label
       notify(
-        status === 'active'
-          ? `${user.name} 已恢复正常。`
-          : status === 'muted'
-            ? `${user.name} 已禁言 24 小时。`
-            : `${user.name} 已封禁。`,
+        status === 'muted'
+          ? `${user.name} 已禁言${durationLabel ? ` ${durationLabel}` : ''}，已通知学生。`
+          : `${user.name} 已封禁${durationLabel ? ` ${durationLabel}` : ''}，已通知学生。`,
       )
     } catch (err) {
       notify(err instanceof Error ? err.message : '账号风控操作失败。', 'danger')
+    } finally {
+      setSaving(false)
     }
+  }
+
+  const setUserStatus = async (user: AdminUser, status: UserStatus) => {
+    if (status === 'active') {
+      try {
+        await apiPost(`/api/admin/users/${user.id}/status`, { status, reason: '' })
+        await loadAll()
+        notify(`${user.name} 已恢复正常，已通知学生。`)
+      } catch (err) {
+        notify(err instanceof Error ? err.message : '账号风控操作失败。', 'danger')
+      }
+      return
+    }
+    openStatusAction(user, status)
   }
 
   return (
@@ -448,7 +483,7 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
                     disabled={user.isAdmin || user.status === 'muted'}
                     onClick={() => void setUserStatus(user, 'muted')}
                   >
-                    禁言 24h
+                    禁言
                   </button>
                   <button
                     className="button button-danger-ghost"
@@ -465,11 +500,53 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
                     恢复
                   </button>
                 </div>
+                {statusAction?.user.id === user.id && (
+                  <div className="admin-status-form">
+                    <label className="field">
+                      <span className="field-label">
+                        {statusAction.status === 'banned' ? '封禁原因（会写入审计并通知学生）' : '禁言原因（会写入审计并通知学生）'}
+                      </span>
+                      <input
+                        className="input"
+                        value={actionReason}
+                        onChange={(event) => setActionReason(event.target.value)}
+                        placeholder="简要说明违规情况"
+                        autoFocus
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">{statusAction.status === 'banned' ? '封禁时长' : '禁言时长'}</span>
+                      <select
+                        className="input"
+                        value={actionDuration}
+                        onChange={(event) => setActionDuration(event.target.value)}
+                      >
+                        {DURATION_OPTIONS.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="admin-create-actions">
+                      <button className="button button-ghost" onClick={() => setStatusAction(null)}>
+                        取消
+                      </button>
+                      <button
+                        className={`button ${statusAction.status === 'banned' ? 'button-danger' : 'button-primary'}`}
+                        onClick={() => void submitStatusAction()}
+                        disabled={saving}
+                      >
+                        {saving ? '处理中…' : `确认${statusAction.status === 'banned' ? '封禁' : '禁言'}`}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
           <p className="admin-panel-note-inline">
-            管理员账号不能被禁言/封禁，避免把自己锁在后台之外。禁言默认 24 小时，可在后端扩展为更长时间。
+            管理员账号不能被禁言/封禁，避免把自己锁在后台之外。禁言 / 封禁后会自动给学生发送应用内通知与邮件提醒；到期自动恢复。
           </p>
         </section>
       )}

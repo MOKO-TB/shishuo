@@ -1106,6 +1106,42 @@
   font-size: var(--text-meta);
 }
 
+.admin-status-form {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken, var(--surface));
+}
+
+.admin-status-form .field {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-status-form .field-label {
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+.admin-status-form .input {
+  height: 30px;
+  font-size: 11px;
+}
+
+.admin-status-form .admin-create-actions {
+  justify-content: flex-end;
+}
+
+.admin-status-form .button {
+  height: 28px;
+  padding: 0 10px;
+  font-size: var(--text-meta);
+}
+
 .admin-mod-thread-list {
   display: grid;
   gap: 8px;

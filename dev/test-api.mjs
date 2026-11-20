@@ -1026,6 +1026,48 @@ test('风控：禁言学生不能提问，封禁后不能登录', async () => {
   }
 })
 
+test('风控：封禁带时长并通知学生，恢复后通知可见', async () => {
+  const target = session.get('student2').user
+  try {
+    const until = Date.now() + 60 * 60 * 1000
+    const banned = await api(`/api/admin/users/${target.id}/status`, {
+      as: 'admin',
+      method: 'POST',
+      body: { status: 'banned', reason: '测试限时封禁', until },
+    })
+    assert.equal(banned.status, 200)
+    assert.equal(banned.json.user.status, 'banned')
+    assert.equal(banned.json.user.statusUntil, until, '封禁应带结束时间')
+
+    // 封禁会注销会话，被禁学生无法读取工作区；恢复后重新登录再验证通知。
+    const restore = await api(`/api/admin/users/${target.id}/status`, {
+      as: 'admin',
+      method: 'POST',
+      body: { status: 'active', reason: '测试结束恢复' },
+    })
+    assert.equal(restore.status, 200)
+
+    await login('student2', 'student2@shishuo.local', 'student123')
+    const notif = await state('student2')
+    const notices = notif.json.data.notifications ?? []
+    const bannedNotice = notices.find(
+      (item) => item.kind === 'account-banned' && item.recipientId === target.id,
+    )
+    assert.ok(bannedNotice, '封禁后应给学生写入应用内通知')
+    assert.match(bannedNotice.body, /封禁/)
+    const restoredNotice = notices.find(
+      (item) => item.kind === 'account-restored' && item.recipientId === target.id,
+    )
+    assert.ok(restoredNotice, '恢复后应给学生写入恢复通知')
+  } finally {
+    await api(`/api/admin/users/${target.id}/status`, {
+      as: 'admin',
+      method: 'POST',
+      body: { status: 'active', reason: '测试结束恢复' },
+    })
+  }
+})
+
 
 test('独立管理员：教师无管理权限，AI 配置即时生效', async () => {
   const deniedSettings = await api('/api/admin/ai-settings', { as: 'teacherDs' })

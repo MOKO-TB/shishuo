@@ -76,6 +76,11 @@
   color: var(--blue);
 }
 
+.notif-icon.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .notif-copy {
   flex: 1;
   min-width: 0;
