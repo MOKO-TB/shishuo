@@ -1300,3 +1300,179 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ---------- 校园工具：滚动到顶部后吸顶 ----------
+   外层 .campus-tools-sticky 只做定位上下文与占位，
+   内层 .campus-tools 用 sticky 固定；sticky 天然会保留原位置的占位，
+   所以页面布局不会因为吸顶而跳动。 */
+
+.campus-tools-sticky {
+  /* sticky 的活动范围由父容器高度决定：包裹层必须撑到页面底部，
+     否则它与卡片等高，sticky 无处可吸。 */
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.campus-tools {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  /* 吸顶时浮在知识卡上方，需要自己的背景与圆角 */
+  background: var(--bg-card);
+}
+
+/* 吸顶后加一层柔和阴影，让「浮起来」的层次更明确 */
+.campus-tools-sticky::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 10px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--bg-translucent), transparent);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+
+/* tab 条本身也可能吸顶，给它不透明底避免透出内容 */
+.campus-tool-tabs {
+  background: var(--bg-card-alt);
+}
+
+@media (max-width: 700px) {
+  /* 手机上顶栏更高，留白收窄一点，避免工具卡片占掉太多屏幕 */
+  .campus-tools {
+    top: calc(var(--header-h) + 4px);
+  }
+}
+
+/* 尊重减少动态效果：去掉过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .campus-tools-sticky::after {
+    transition: none;
+  }
+}
+
+/* 分类卡片的可点击态 */
+.campus-kb-cat {
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.campus-kb-cat:hover {
+  border-color: var(--accent);
+  background: var(--bg-accent-mist);
+}
+
+.campus-kb-cat.is-active {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+}
+
+/* 分类重置按钮 */
+.campus-kb-reset {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+}
+
+.campus-kb-reset:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+/* ---------- 校园工具：滚动到顶部后吸顶 ----------
+   外层 .campus-tools-sticky 只做定位上下文与占位，
+   内层 .campus-tools 用 sticky 固定；sticky 天然会保留原位置的占位，
+   所以页面布局不会因为吸顶而跳动。 */
+
+.campus-tools-sticky {
+  /* sticky 的活动范围由父容器高度决定：包裹层必须撑到页面底部，
+     否则它与卡片等高，sticky 无处可吸。 */
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.campus-tools {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  /* 吸顶时浮在知识卡上方，需要自己的背景与圆角 */
+  background: var(--bg-card);
+}
+
+/* 吸顶后加一层柔和阴影，让「浮起来」的层次更明确 */
+.campus-tools-sticky::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 10px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--bg-translucent), transparent);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+
+/* tab 条本身也可能吸顶，给它不透明底避免透出内容 */
+.campus-tool-tabs {
+  background: var(--bg-card-alt);
+}
+
+@media (max-width: 700px) {
+  /* 手机上顶栏更高，留白收窄一点，避免工具卡片占掉太多屏幕 */
+  .campus-tools {
+    top: calc(var(--header-h) + 4px);
+  }
+}
+
+/* 尊重减少动态效果：去掉过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .campus-tools-sticky::after {
+    transition: none;
+  }
+}
+
+/* 分类卡片的可点击态 */
+.campus-kb-cat {
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.campus-kb-cat:hover {
+  border-color: var(--accent);
+  background: var(--bg-accent-mist);
+}
+
+.campus-kb-cat.is-active {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+}
+
+/* 分类重置按钮 */
+.campus-kb-reset {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+}
+
+.campus-kb-reset:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}

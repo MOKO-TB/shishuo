@@ -145,19 +145,23 @@ function LiveBookCard({ book }: { book: LibraryBook }) {
 export function CampusTools({
   askCount = 0,
   kbCategories = [],
+  activeCategory = 'all',
+  onPickCategory,
   askSlot,
-  kbSlot,
 }: {
   /** 「我的提问」条数，用于 tab 角标 */
   askCount?: number
   /** 知识分类与条数，用于 tab 内分类入口 */
   kbCategories?: { name: string; count: number }[]
+  /** 当前生效的分类（与下方知识卡列表联动） */
+  activeCategory?: string
+  /** 点分类时回调：由父组件切换筛选并滚到列表 */
+  onPickCategory?: (category: string) => void
   /** 我的提问面板（由父组件注入，避免把提问逻辑搬进工具组件） */
   askSlot?: React.ReactNode
-  /** 知识分类面板 */
-  kbSlot?: (category: string) => React.ReactNode
 } = {}) {
   const [tab, setTab] = useState<ToolTab>('gpa')
+  const stickyHostRef = useRef<HTMLElement>(null)
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
   const [liveQuery, setLiveQuery] = useState('')
@@ -358,8 +362,41 @@ export function CampusTools({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [suggestOpen])
 
+  /*
+   * 吸顶的关键：position:sticky 只能在父容器高度范围内吸附。
+   * 包裹层与卡片等高时没有可吸附空间，所以把包裹层撑到页面底部。
+   */
+  useEffect(() => {
+    const host = stickyHostRef.current
+    const page = host?.parentElement
+    if (!host || !page) return
+
+    const sync = () => {
+      // 用 rect 计算，避免 offsetTop 受定位祖先影响；先清空再量，防止自我叠加
+      host.style.minHeight = ''
+      const hostRect = host.getBoundingClientRect()
+      const pageRect = page.getBoundingClientRect()
+      const remaining = pageRect.bottom - hostRect.top
+      if (remaining > hostRect.height) {
+        host.style.minHeight = `${Math.round(remaining)}px`
+      }
+    }
+
+    sync()
+    // 只观察页面容器（不观察 host 自身，否则撑高会再次触发形成循环）
+    const observer = new ResizeObserver(() => sync())
+    observer.observe(page)
+    window.addEventListener('resize', sync)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', sync)
+      host.style.minHeight = ''
+    }
+  }, [tab])
+
   return (
-    <section className="campus-tools card">
+    <section className="campus-tools-sticky" ref={stickyHostRef}>
+      <section className="campus-tools card">
       <div className="campus-tools-head">
         <div>
           <strong>校园工具</strong>
@@ -451,15 +488,33 @@ export function CampusTools({
 
       {tab === 'kb' && (
         <div className="campus-tool-panel">
-          <p className="campus-tool-hint">按学校官网的数据类型整理，点分类可筛选对应知识卡。</p>
+          <p className="campus-tool-hint">按学校官网的数据类型整理，点分类筛选对应知识卡。</p>
           <div className="campus-kb-cats">
-            {kbCategories.map((item) => (
-              <div className="campus-kb-cat" key={item.name}>
-                <strong>{item.name}</strong>
-                <span>{item.count} 条</span>
-              </div>
-            ))}
+            {kbCategories.map((item) => {
+              const active = activeCategory === item.name
+              return (
+                <button
+                  type="button"
+                  className={`campus-kb-cat ${active ? 'is-active' : ''}`}
+                  key={item.name}
+                  onClick={() => onPickCategory?.(active ? 'all' : item.name)}
+                  aria-pressed={active}
+                >
+                  <strong>{item.name}</strong>
+                  <span>{item.count} 条</span>
+                </button>
+              )
+            })}
           </div>
+          {activeCategory !== 'all' && (
+            <button
+              type="button"
+              className="campus-kb-reset"
+              onClick={() => onPickCategory?.('all')}
+            >
+              查看全部 {kbCategories.reduce((sum, item) => sum + item.count, 0)} 条
+            </button>
+          )}
         </div>
       )}
 
@@ -923,6 +978,7 @@ export function CampusTools({
           </div>
         </div>
       )}
+      </section>
     </section>
   )
 }

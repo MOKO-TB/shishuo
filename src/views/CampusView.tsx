@@ -819,6 +819,18 @@ export function CampusView({ role, notify }: CampusViewProps) {
 <CampusTools
           askCount={role === 'student' ? myCampusThreads.length : 0}
           kbCategories={categories.map((name) => ({ name, count: categoryCounts[name] ?? 0 }))}
+          activeCategory={category}
+          onPickCategory={(next) => {
+            setCategory(next)
+            setCredFilter('all')
+            setQuery('')
+            // 选完分类滚到下方知识卡列表，让用户直接看到过滤结果
+            window.requestAnimationFrame(() => {
+              document
+                .querySelector('.campus-filter-row')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            })
+          }}
           askSlot={
             <div className="campus-thread-list">
               {myCampusThreads.slice(0, 4).map((thread) => (
