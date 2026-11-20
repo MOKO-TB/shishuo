@@ -223,17 +223,15 @@ export function CampusTools() {
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
     if (!normalized) return CAMPUS_BUILDINGS
-    // 名称/别名命中排前面，「区域描述里提到」的排后面
-    const hits = (building: (typeof CAMPUS_BUILDINGS)[number]) => {
-      const primary = [building.name, ...building.aliases].join(' ').toLowerCase()
-      if (primary.includes(normalized)) return 0
-      const secondary = [building.category, building.area].join(' ').toLowerCase()
-      return secondary.includes(normalized) ? 1 : -1
-    }
-    return CAMPUS_BUILDINGS.map((building) => ({ building, rank: hits(building) }))
-      .filter((item) => item.rank >= 0)
-      .sort((a, b) => a.rank - b.rank || a.building.no - b.building.no)
-      .map((item) => item.building)
+    /*
+     * 只匹配「名称 + 别名」。
+     * 不要把 area / category 放进来：area 是给地图看的方位描述，几乎每条都带
+     * 「地图」二字，会让搜索「图」命中全部 36 个地点；「图书馆东侧」这类描述
+     * 也会把无关建筑带进候选。别名已覆盖「A座 / A栋宿舍 / S2 / 博雅楼」等叫法。
+     */
+    return CAMPUS_BUILDINGS.filter((building) =>
+      [building.name, ...building.aliases].join(' ').toLowerCase().includes(normalized),
+    )
   }, [mapQuery])
 
   const requestLibraryCaptcha = async () => {
