@@ -64,6 +64,17 @@ export function createLibraryService() {
   const pending = new Map()
   const sessions = new Map()
   const searchCache = new Map()
+  const MAX_PENDING = 8
+  const PENDING_TTL = 3 * 60_000
+
+  function cleanupPending() {
+    const now = Date.now()
+    for (const [loginId, item] of pending) {
+      if (now - item.createdAt <= PENDING_TTL) continue
+      pending.delete(loginId)
+      void item.context.close().catch(() => undefined)
+    }
+  }
 
   async function getBrowser() {
     if (!browserPromise) {
@@ -167,6 +178,10 @@ export function createLibraryService() {
   }
 
   async function startLogin(userId, account, password) {
+    cleanupPending()
+    if (pending.size >= MAX_PENDING) {
+      throw new HttpError(503, '当前登录图书馆的人数较多，请稍后再试。')
+    }
     const loginId = `lib-${userId}-${Date.now().toString(36)}`
     const browser = await getBrowser()
     const context = await browser.newContext({ locale: 'zh-CN' })
@@ -202,7 +217,7 @@ export function createLibraryService() {
   async function completeLogin(userId, loginId, captchaCode) {
     const item = pending.get(String(loginId || ''))
     if (!item || item.userId !== userId) throw new HttpError(400, '图书馆登录已过期，请重新获取验证码。')
-    if (Date.now() - item.createdAt > 3 * 60_000) {
+    if (Date.now() - item.createdAt > PENDING_TTL) {
       pending.delete(loginId)
       await item.context.close().catch(() => undefined)
       throw new HttpError(400, '图书馆登录已过期，请重新获取验证码。')
@@ -233,6 +248,8 @@ export function createLibraryService() {
         throw new HttpError(400, '验证码或账号密码不正确，请重试。')
       }
       pending.delete(loginId)
+      const previous = sessions.get(userId)
+      if (previous) await previous.context.close().catch(() => undefined)
       sessions.set(userId, { context, page, at: Date.now() })
       return { ok: true }
     } catch (error) {
