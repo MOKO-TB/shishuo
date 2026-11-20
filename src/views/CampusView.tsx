@@ -192,6 +192,33 @@ function splitAliases(value: string) {
   ).slice(0, 12)
 }
 
+function campusContext(matches: AnswerResult['matches']) {
+  const picked: Faq[] = []
+  const seen = new Set<string>()
+  const add = (faq: Faq) => {
+    if (seen.has(faq.id) || picked.length >= 5) return
+    seen.add(faq.id)
+    picked.push(faq)
+  }
+  for (const match of matches.slice(0, 3)) add(match.faq)
+  for (const match of matches) {
+    if (picked.length >= 5) break
+    if (/gzasc\.edu\.cn/i.test(match.faq.sourceUrl || '')) add(match.faq)
+  }
+  return picked
+    .map((faq) => {
+      const source = [
+        faq.sourceChannel ? `来源：${faq.sourceChannel}` : '',
+        faq.credibility ? `可信度：${faq.credibility}` : '',
+        faq.sourceUrl ? `链接：${faq.sourceUrl}` : '',
+      ]
+        .filter(Boolean)
+        .join('；')
+      return `Q: ${faq.question}\nA: ${faq.answer.slice(0, 600)}${source ? `\n${source}` : ''}`
+    })
+    .join('\n\n')
+}
+
 export function CampusView({ role, notify }: CampusViewProps) {
   const { data, dispatch } = useStore()
   const { user } = useAuth()
@@ -470,20 +497,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
     try {
       const external = await answerCampusWithAI({
         question,
-        localContext: result.matches
-          .slice(0, 3)
-          .map((match) => {
-            const faq = match.faq
-            const source = [
-              faq.sourceChannel ? `来源：${faq.sourceChannel}` : '',
-              faq.credibility ? `可信度：${faq.credibility}` : '',
-              faq.sourceUrl ? `链接：${faq.sourceUrl}` : '',
-            ]
-              .filter(Boolean)
-              .join('；')
-            return `Q: ${faq.question}\nA: ${faq.answer.slice(0, 600)}${source ? `\n${source}` : ''}`
-          })
-          .join('\n\n'),
+        localContext: campusContext(result.matches),
         onUpdate: (partial) => setAiPreview(partial),
       })
       const answer: ExternalAnswer = {
@@ -1393,21 +1407,11 @@ export function CampusView({ role, notify }: CampusViewProps) {
         viewer="student"
         onCampusFollowUp={async (_thread, question, history) => {
           const result = retrieve(campusFaqs, question, CAMPUS_COURSE_ID)
-          const localContext = result.matches
-            .slice(0, 3)
-            .map((match) => {
-              const faq = match.faq
-              const source = [
-                faq.sourceChannel ? `来源：${faq.sourceChannel}` : '',
-                faq.credibility ? `可信度：${faq.credibility}` : '',
-                faq.sourceUrl ? `链接：${faq.sourceUrl}` : '',
-              ]
-                .filter(Boolean)
-                .join('；')
-              return `Q: ${faq.question}\nA: ${faq.answer.slice(0, 600)}${source ? `\n${source}` : ''}`
-            })
-            .join('\n\n')
-          return answerCampusWithAI({ question, localContext, history })
+          return answerCampusWithAI({
+            question,
+            localContext: campusContext(result.matches),
+            history,
+          })
         }}
         onOpenFaq={(faqId) => {
           const faq = data.faqs.find((item) => item.id === faqId)
