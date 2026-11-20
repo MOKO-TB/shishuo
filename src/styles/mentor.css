@@ -1078,3 +1078,19 @@
     display: none;
   }
 }
+
+/* 导师横条：手机端把「先诊断 / 问导师」合并成一个按钮
+   两者打开的抽屉相同，手机屏幕窄，只保留一个入口。 */
+.is-mobile-only {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .mentor-strip-actions .is-desktop-only {
+    display: none;
+  }
+
+  .mentor-strip-actions .is-mobile-only {
+    display: inline-flex;
+  }
+}

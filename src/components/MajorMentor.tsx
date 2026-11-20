@@ -389,13 +389,24 @@ export function MajorMentorStrip({
         </div>
       </div>
       <div className="mentor-strip-actions">
+        {/* 桌面端保留「先诊断 / 问导师」两个入口（预填问题 vs 空白输入框） */}
         <button
-          className="button button-primary"
+          className="button button-primary is-desktop-only"
           onClick={() => onOpen(mentor.quickPrompts[0])}
         >
           先诊断
         </button>
-        <button className="button button-ghost" onClick={() => onOpen()}>
+        <button
+          className="button button-ghost is-desktop-only"
+          onClick={() => onOpen()}
+        >
+          问导师
+        </button>
+        {/* 手机端两者跳同一个抽屉，合并为一个按钮 */}
+        <button
+          className="button button-primary is-mobile-only"
+          onClick={() => onOpen()}
+        >
           问导师
         </button>
         <button
