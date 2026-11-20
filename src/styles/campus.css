@@ -638,6 +638,23 @@
   border-radius: var(--radius-md);
 }
 
+.campus-thread[role='button'] {
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+
+.campus-thread[role='button']:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.campus-thread[role='button']:focus-visible {
+  outline: 2px solid var(--jade);
+  outline-offset: 2px;
+}
+
 .campus-thread-top {
   display: flex;
   align-items: center;

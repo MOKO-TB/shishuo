@@ -1,4 +1,5 @@
 import { apiGet } from './api'
+import { CAMPUS_ANSWER_SKILL } from './campusAnswerSkill'
 
 export interface AIConfig {
   enabled: boolean
@@ -404,27 +405,27 @@ export async function answerCampusWithAI({
   onUpdate?: (partial: string) => void
 }) {
   const contextBlock = localContext?.trim()
-    ? `校园知识库里检索到的内容（可能相关，也可能只是相近；不能直接当作官方结论）：\n${localContext.slice(0, 2_400)}`
-    : '校园知识库没有检索到可用内容。'
+    ? `校园知识库检索片段（只作参考，可能不相关）：\n${localContext.slice(0, 3_200)}`
+    : '这次没有检索到直接相关的校园知识库片段。'
+  const today = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
   const result = await callChatStream(
     [
       {
         role: 'system',
-        content: `你是高校“校园生活”答疑助手。请先判断提供的校园知识库内容是否与学生的具体问题直接相关，再围绕学生的问题作答：
-1. 只使用与问题直接相关的知识库信息；不要复述、拼接无关或只是字面相近的内容，更不能用相近问题替代学生真正问的问题；
-2. 先给简短结论或可执行的下一步，再补充办理地点、常见材料、时间节点等；
-3. 如果知识库没有覆盖问题中的关键对象（例如具体物品、具体政策），要明确说明“知识库没有直接说明”，再给通用、谨慎的建议，不得编造校规；
-4. 明确这是 AI 参考答复，不是学校官方通知；涉及政策、金额、截止日期时必须提示以学校官方通知为准；
-5. 不编造具体文件号、网址、电话、办理窗口或“学校规定”；
-6. 控制在 400 字以内，不使用 Markdown 表格；
-7. 最后单独一行以“需要校园主理人确认：”开头，列出仍需核实的信息。`,
+        content: `${CAMPUS_ANSWER_SKILL}
+
+今天是 ${today}。回答控制在 900 字以内；先判断检索片段与问题的关系，再组织答案。不要输出 Markdown 表格。`,
       },
       {
         role: 'user',
         content: `学生的问题：${question}\n\n${contextBlock}`,
       },
     ],
-    900,
+    1_600,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: result.content.slice(0, 4_000), model: result.model }

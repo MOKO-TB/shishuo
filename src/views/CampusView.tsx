@@ -34,6 +34,7 @@ import {
   statusLabel,
 } from '../lib/utils'
 import { Badge, EmptyState, Modal, RichText, type BadgeTone } from '../components/ui'
+import { ThreadDetailModal } from '../components/ThreadDetailModal'
 import type { AnswerResult, ExternalAnswer, Faq, Role, Thread } from '../types'
 import { CampusTools } from './campus/CampusTools'
 
@@ -201,6 +202,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const [sort, setSort] = useState<SortMode>(role === 'teacher' ? 'review' : 'verified')
   const [askResult, setAskResult] = useState<AnswerResult | null>(null)
   const [askThread, setAskThread] = useState<Thread | null>(null)
+  const [detailThreadId, setDetailThreadId] = useState<string | null>(null)
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const [aiAnswer, setAiAnswer] = useState<ExternalAnswer | null>(null)
   const [aiPreview, setAiPreview] = useState('')
@@ -470,10 +472,17 @@ export function CampusView({ role, notify }: CampusViewProps) {
         question,
         localContext: result.matches
           .slice(0, 3)
-          .map(
-            (match) =>
-              `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`,
-          )
+          .map((match) => {
+            const faq = match.faq
+            const source = [
+              faq.sourceChannel ? `来源：${faq.sourceChannel}` : '',
+              faq.credibility ? `可信度：${faq.credibility}` : '',
+              faq.sourceUrl ? `链接：${faq.sourceUrl}` : '',
+            ]
+              .filter(Boolean)
+              .join('；')
+            return `Q: ${faq.question}\nA: ${faq.answer.slice(0, 600)}${source ? `\n${source}` : ''}`
+          })
           .join('\n\n'),
         onUpdate: (partial) => setAiPreview(partial),
       })
@@ -840,7 +849,20 @@ export function CampusView({ role, notify }: CampusViewProps) {
           </div>
           <div className="campus-thread-list">
             {myCampusThreads.slice(0, 4).map((thread) => (
-              <article className="campus-thread card" key={thread.id}>
+              <article
+                className="campus-thread card"
+                key={thread.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`查看提问详情：${thread.question}`}
+                onClick={() => setDetailThreadId(thread.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setDetailThreadId(thread.id)
+                  }
+                }}
+              >
                 <div className="campus-thread-top">
                   <Badge tone={thread.status === 'answered' ? 'answered' : 'pending'}>
                     {thread.status === 'pending'
@@ -1345,6 +1367,17 @@ export function CampusView({ role, notify }: CampusViewProps) {
           </label>
         </div>
       </Modal>
+
+      <ThreadDetailModal
+        threadId={detailThreadId}
+        onClose={() => setDetailThreadId(null)}
+        viewer="student"
+        onOpenFaq={(faqId) => {
+          const faq = data.faqs.find((item) => item.id === faqId)
+          if (faq) setQuery(faq.question)
+          setDetailThreadId(null)
+        }}
+      />
     </div>
   )
 }
