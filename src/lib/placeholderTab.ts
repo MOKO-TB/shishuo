@@ -1,8 +1,21 @@
 import { useEffect } from 'react'
 
+/** 去掉 placeholder 里“例如：”“问一下”这类提示词，只留下可直接发送的问题。 */
+function cleanPlaceholder(text: string) {
+  const prefix =
+    /^(?:例如|比如|譬如|问一下|问一个|问一句|问问|请问|想问一下|想问问|我想问|想问|帮我看看|帮我查查|能不能帮我|可以帮我)[：:，,、\s]*/u
+  let result = text.trim()
+  for (let i = 0; i < 3; i += 1) {
+    const next = result.replace(prefix, '')
+    if (next === result) break
+    result = next
+  }
+  return result.replace(/[.．。…]+$/u, '').trim()
+}
+
 /**
  * 演示快捷键（只增强明确标记的输入框，不劫持普通表单）：
- * - data-tab-fill：输入框为空时，Tab 填入 placeholder，光标停在末尾，可直接改。
+ * - data-tab-fill：输入框为空时，Tab 填入示例问题（去掉“例如：”等提示词），光标停在末尾。
  *   普通输入框仍保留 Tab 切换焦点的标准行为；Ctrl/Cmd + Tab 对所有输入框可用。
  * - data-enter-submit：多行输入框里 Enter 发送，Shift + Enter 换行；
  *   中文输入法组合中（isComposing / keyCode 229）不触发发送。
@@ -21,14 +34,19 @@ export function usePlaceholderTab() {
 
       const withModifier = event.ctrlKey || event.metaKey
       const composing = event.isComposing || event.keyCode === 229
-      const plainTabFill = Boolean(el.closest('[data-tab-fill]'))
+      const fillHost = el.closest('[data-tab-fill]')
+      const fillAttr = fillHost?.getAttribute('data-tab-fill')
+      const plainTabFill = fillAttr !== null && fillAttr !== undefined
+      const fillText =
+        (fillAttr && fillAttr !== 'true' ? fillAttr.trim() : '') ||
+        cleanPlaceholder(el.placeholder || '')
 
       if (
         event.key === 'Tab' &&
         !event.shiftKey &&
         (withModifier || plainTabFill) &&
         !el.value.trim() &&
-        el.placeholder
+        fillText
       ) {
         event.preventDefault()
         const nativeSetter = Object.getOwnPropertyDescriptor(
@@ -38,9 +56,9 @@ export function usePlaceholderTab() {
           'value',
         )?.set
         if (nativeSetter) {
-          nativeSetter.call(el, el.placeholder)
+          nativeSetter.call(el, fillText)
         } else {
-          el.value = el.placeholder
+          el.value = fillText
         }
         el.dispatchEvent(new Event('input', { bubbles: true }))
         el.dispatchEvent(new Event('change', { bubbles: true }))

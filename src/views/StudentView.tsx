@@ -140,10 +140,10 @@ const suggestions: Record<string, string[]> = {
   fluids: ['伯努利方程怎么用？', '雷诺数怎么判流态？', '沿程损失怎么算？'],
 }
 
-const placeholders: Record<string, string> = {
-  ds: '例如：动态规划的状态转移方程怎么找？',
-  math: '例如：洛必达法则什么时候不能用？',
-  net: '例如：TCP 三次握手为什么不是两次？',
+const questionExamples: Record<string, string> = {
+  ds: '动态规划的状态转移方程怎么找？',
+  math: '洛必达法则什么时候不能用？',
+  net: 'TCP 三次握手为什么不是两次？',
 }
 
 function greeting() {
@@ -871,7 +871,7 @@ export function StudentView({
             <textarea
               ref={askInputRef}
               className="ask-input"
-              data-tab-fill
+              data-tab-fill={questionExamples[courseId] ?? `「${course.shortName}」哪里没听懂？`}
               data-enter-submit
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
@@ -881,7 +881,11 @@ export function StudentView({
                   ask()
                 }
               }}
-              placeholder={placeholders[courseId] ?? `问一个「${course.shortName}」的问题…`}
+              placeholder={
+                questionExamples[courseId]
+                  ? `例如：${questionExamples[courseId]}`
+                  : `问一个「${course.shortName}」的问题…`
+              }
               rows={3}
               disabled={Boolean(thinking)}
               aria-label="输入你的问题"

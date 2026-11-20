@@ -101,7 +101,7 @@
 
 - 焦点：全局 `:focus-visible` 在 `fill.css` 统一定义，不要 `outline: none`。
 - 弹窗：`Modal` / `Drawer` 已带 `role="dialog"` + `aria-modal` + 焦点圈定（`useFocusTrap`）+ 关闭归还焦点；新写的浮层必须复用它们。
-- 键盘：普通表单**不要劫持 Tab / Enter**。只有显式标记 `data-tab-fill`（Tab 填入 placeholder）和 `data-enter-submit`（Enter 发送、Shift+Enter 换行）的聊天式输入框例外；中文输入法组合中不触发发送。
+- 键盘：普通表单**不要劫持 Tab / Enter**。只有显式标记 `data-tab-fill`（Tab 填入示例问题，自动去掉「例如 / 问一下」等提示词）和 `data-enter-submit`（Enter 发送、Shift+Enter 换行）的聊天式输入框例外；中文输入法组合中不触发发送。
 - 对比度：正文 ≥ 4.5:1，大字号 ≥ 3:1。`--fg-faint` 只能做装饰分隔，不承载信息。
 - 图标按钮必须有 `aria-label`；纯装饰图形 `aria-hidden`。
 
