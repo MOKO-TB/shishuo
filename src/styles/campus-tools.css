@@ -209,6 +209,7 @@
 .campus-calendar-row {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
   gap: 12px;
   padding: 10px 0;
   border-top: 1px dashed var(--line);
@@ -222,13 +223,20 @@
 .campus-calendar-date {
   display: grid;
   gap: 2px;
-  align-content: start;
+  align-content: center;
+  justify-items: center;
+  min-height: 52px;
+  padding: 6px 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  text-align: center;
 }
 
 .campus-calendar-date strong {
   font-family: var(--serif);
   font-size: 14px;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .campus-calendar-date span {
@@ -1066,6 +1074,13 @@
   box-shadow: var(--shadow-card);
 }
 
+@media (max-width: 700px) {
+  /* 手机端地图较窄，选中详情不再悬浮遮挡地图；列表本身会高亮所选建筑 */
+  .campus-map-info.is-floating {
+    display: none;
+  }
+}
+
 .campus-map-info h3 {
   margin: 0;
   font-family: var(--serif);
@@ -1132,7 +1147,7 @@
   }
 
   .campus-calendar-row {
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 86px minmax(0, 1fr);
     gap: 8px;
   }
 
@@ -1206,7 +1221,7 @@
   }
 
   .campus-calendar-row {
-    grid-template-columns: 74px minmax(0, 1fr);
+    grid-template-columns: 90px minmax(0, 1fr);
   }
 
   .campus-library-grid {

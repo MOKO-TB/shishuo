@@ -393,6 +393,18 @@ export function CampusTools({
     if (building) setMapQuery(building.name)
   }
 
+  /** 切换工具后滚到内容区，避免用户停在知识卡列表、看不到新面板 */
+  const selectTab = (next: ToolTab) => {
+    setTab(next)
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        stickyHostRef.current
+          ?.querySelector<HTMLElement>('.campus-tools-body')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
+  }
+
   // 点搜索框外部时收起候选
   useEffect(() => {
     if (!suggestOpen) return
@@ -451,7 +463,7 @@ export function CampusTools({
               role="tab"
               aria-selected={tab === 'gpa'}
               className={tab === 'gpa' ? 'is-active' : ''}
-              onClick={() => setTab('gpa')}
+              onClick={() => selectTab('gpa')}
             >
               <Calculator size={15} />
               GPA 计算
@@ -460,7 +472,7 @@ export function CampusTools({
               role="tab"
               aria-selected={tab === 'calendar'}
               className={tab === 'calendar' ? 'is-active' : ''}
-              onClick={() => setTab('calendar')}
+              onClick={() => selectTab('calendar')}
             >
               <CalendarDays size={15} />
               校历
@@ -469,7 +481,7 @@ export function CampusTools({
               role="tab"
               aria-selected={tab === 'library'}
               className={tab === 'library' ? 'is-active' : ''}
-              onClick={() => setTab('library')}
+              onClick={() => selectTab('library')}
             >
               <Library size={15} />
               图书馆
@@ -478,7 +490,7 @@ export function CampusTools({
               role="tab"
               aria-selected={tab === 'map'}
               className={tab === 'map' ? 'is-active' : ''}
-              onClick={() => setTab('map')}
+              onClick={() => selectTab('map')}
             >
               <MapPin size={15} />
               校园地图
@@ -487,7 +499,7 @@ export function CampusTools({
               role="tab"
               aria-selected={tab === 'kb'}
               className={tab === 'kb' ? 'is-active' : ''}
-              onClick={() => setTab('kb')}
+              onClick={() => selectTab('kb')}
             >
               <BookOpen size={15} />
               知识分类
@@ -497,7 +509,7 @@ export function CampusTools({
                 role="tab"
                 aria-selected={tab === 'ask'}
                 className={tab === 'ask' ? 'is-active' : ''}
-                onClick={() => setTab('ask')}
+                onClick={() => selectTab('ask')}
               >
                 <MessageCircle size={15} />
                 我的提问
