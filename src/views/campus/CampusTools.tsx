@@ -369,22 +369,38 @@ export function CampusTools({
    * 否则首屏内容会被压住。这里把选项栏高度同步成内容区的 scroll-padding-top。
    */
   useEffect(() => {
+    const host = stickyHostRef.current
     const bar = toolsBarRef.current
     const body = bodyRef.current
-    if (!bar || !body) return
+    const page = host?.parentElement
+    if (!host || !bar || !body || !page) return
 
     const sync = () => {
+      // 1) 选项栏高度 → 内容区让位
       const h = Math.round(bar.getBoundingClientRect().height)
       body.style.setProperty('--tools-bar-h', `${h}px`)
+
+      // 2) 吸顶活动范围 → 包裹层必须撑到页面底部，
+      //    否则 sticky 只在「包裹层自身高度」内滑动，滚过就消失。
+      host.style.minHeight = ''
+      const hostRect = host.getBoundingClientRect()
+      const pageRect = page.getBoundingClientRect()
+      const remaining = pageRect.bottom - hostRect.top
+      if (remaining > hostRect.height) {
+        host.style.minHeight = `${Math.round(remaining)}px`
+      }
     }
 
     sync()
-    const observer = new ResizeObserver(sync)
+    // 只观察 bar 与 page：不观察 host 自身，避免撑高触发自身形成循环
+    const observer = new ResizeObserver(() => sync())
     observer.observe(bar)
+    observer.observe(page)
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', sync)
+      host.style.minHeight = ''
     }
   }, [tab])
 
