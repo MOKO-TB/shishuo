@@ -401,6 +401,9 @@ function normalizeCampusAnswer(text: string) {
     .replace(/[ \t]*#{2,3}[ \t]*/g, '\n\n## ')
     .replace(/(##[^\n]*?)[ \t]*-[ \t]*/g, '$1\n\n- ')
     .replace(/([。；：！？])[ \t]*-[ \t]*/g, '$1\n- ')
+    .replace(/^([一二三四五六七八九十]+、[^\n]{2,50})$/gm, '## $1')
+    .replace(/^([-•])(?=\S)/gm, '$1 ')
+    .replace(/^(\d+\.)(?=\S)/gm, '$1 ')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
