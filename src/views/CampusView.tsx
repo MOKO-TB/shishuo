@@ -740,7 +740,6 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 继续追问
                 <ArrowUpRight size={14} />
               </button>
-              <span>会带着这次回答继续聊，不用从头再问</span>
             </div>
           )}
         </section>
@@ -855,19 +854,14 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 {thread.teacherReply ? (
                   <p>{thread.teacherReply.text}</p>
                 ) : thread.externalAnswer ? (
-                  <>
-                    <p>
-                      {excerpt(
-                        thread.externalAnswer.text
-                          .replace(/^#{1,3}\s+/gm, '')
-                          .replace(/^[•-]\s+/gm, ''),
-                        160,
-                      )}
-                    </p>
-                    <span className="campus-thread-ai-note">
-                      <Sparkles size={11} />
-                      引路学长 · 等校园主理人核实                    </span>
-                  </>
+                  <p>
+                    {excerpt(
+                      thread.externalAnswer.text
+                        .replace(/^#{1,3}\s+/gm, '')
+                        .replace(/^[•-]\s+/gm, ''),
+                      160,
+                    )}
+                  </p>
                 ) : (
                   <p className="campus-thread-waiting">等校园主理人回复…</p>
                 )}
