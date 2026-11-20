@@ -1327,11 +1327,11 @@
   gap: 10px;
 }
 
-/* 内容区：不吸顶，跟随页面滚动 */
-/* 内容区：顶部让出与选项栏等高的空间（--tools-bar-h 由 JS 同步）。
-   吸顶时选项栏浮在上方，内容从它下沿开始，不会被压住。 */
+/* 内容区：不吸顶，跟随页面滚动。
+   选项栏本身仍在文档流内，内容区只需保留普通间距；
+   只有锚点滚动时才用 scroll-margin-top 避开吸顶栏。 */
 .campus-tools-body {
-  margin-top: calc(var(--tools-bar-h, 127px) + 12px);
+  margin-top: 12px;
   background: var(--bg-card);
   scroll-margin-top: calc(var(--header-h) + var(--tools-bar-h, 127px) + 16px);
 }
@@ -1353,8 +1353,7 @@
   }
 
   .campus-tools-body {
-    /* 手机端同样要让出选项栏高度，只是间距略小 */
-    margin-top: calc(var(--tools-bar-h, 127px) + 8px);
+    margin-top: 8px;
   }
 }
 
