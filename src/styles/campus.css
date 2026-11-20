@@ -239,6 +239,11 @@
 
 .campus-card h3 {
   margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(2 * 1.45em);
   font-family: var(--serif);
   font-size: 17px;
   line-height: 1.45;
@@ -246,11 +251,42 @@
   color: var(--ink);
 }
 
+.campus-card.is-expanded h3 {
+  display: block;
+  overflow: visible;
+}
+
 .campus-card > p {
   margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  min-height: calc(4 * 1.75em);
   font-size: 11.5px;
   line-height: 1.75;
   color: var(--ink-soft);
+}
+
+.campus-card > p.is-expanded {
+  display: block;
+  overflow: visible;
+}
+
+.campus-card-toggle {
+  align-self: flex-start;
+  margin-top: -2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--jade-deep);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.campus-card-toggle:hover {
+  text-decoration: underline;
 }
 
 .campus-card .tag-row {

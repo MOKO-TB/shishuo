@@ -68,6 +68,17 @@ function isVerifiedCredibility(credibility: string) {
   return /^[ABV]/.test(credibility)
 }
 
+/** 牌面排序：官方来源 > 教师回复 > 已核实 > 待核实。 */
+function qualityRank(card: CampusCard) {
+  if (card.sourceChannel.includes('AI种子草稿')) return 4
+  if (card.credibility === 'A') return 0
+  if (card.credibility.startsWith('A')) return 1
+  if (card.credibility.startsWith('B')) return 2
+  if (card.credibility.startsWith('V')) return 3
+  if (card.credibility.startsWith('D')) return 4
+  return 5
+}
+
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, '')
 }
@@ -106,16 +117,21 @@ function credibilityMeta(credibility: string): {
 }
 
 function faqToCard(faq: Faq): CampusCard {
+  const sourceChannel = faq.sourceChannel || faq.author
+  const credibility =
+    faq.credibility || (faq.source === 'teacher' ? 'B-教师回复' : '未标注')
   return {
     id: faq.id.startsWith('campus-') ? faq.id.slice('campus-'.length) : faq.id,
     category: faq.chapter || '校园问答',
     title: faq.question,
     content: faq.answer,
     tags: faq.tags,
-    sourceChannel: faq.sourceChannel || faq.author,
+    sourceChannel,
     sourceUrl: faq.sourceUrl || '',
-    credibility:
-      faq.credibility || (faq.source === 'teacher' ? 'B-教师回复' : '未标注'),
+    // AI 种子草稿即使被误标成 A，也不能出现在官方来源牌面。
+    credibility: sourceChannel.includes('AI种子草稿')
+      ? 'D-待核实'
+      : credibility,
     collectedAt: faq.collectedAt || CAMPUS_KB_COLLECTED_AT,
   }
 }
@@ -238,6 +254,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const [category, setCategory] = useState('all')
   const [credFilter, setCredFilter] = useState<CredFilter>('all')
   const [sort, setSort] = useState<SortMode>(role === 'teacher' ? 'review' : 'verified')
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(() => new Set())
   const [askResult, setAskResult] = useState<AnswerResult | null>(null)
   const [askThread, setAskThread] = useState<Thread | null>(null)
   const [detailThreadId, setDetailThreadId] = useState<string | null>(null)
@@ -260,6 +277,15 @@ export function CampusView({ role, notify }: CampusViewProps) {
 
   const isCampusOps = role === 'teacher' && Boolean(user?.isAdmin)
   const aiReady = Boolean(aiStatus?.configured)
+
+  function toggleCard(cardId: string) {
+    setExpandedCards((current) => {
+      const next = new Set(current)
+      if (next.has(cardId)) next.delete(cardId)
+      else next.add(cardId)
+      return next
+    })
+  }
 
   useEffect(() => {
     let alive = true
@@ -364,10 +390,8 @@ export function CampusView({ role, notify }: CampusViewProps) {
             Number(!b.card.sourceUrl) - Number(!a.card.sourceUrl)
           if (sourceDiff !== 0) return sourceDiff
         } else {
-          const verifiedDiff =
-            Number(isVerifiedCredibility(b.card.credibility)) -
-            Number(isVerifiedCredibility(a.card.credibility))
-          if (verifiedDiff !== 0) return verifiedDiff
+          const qualityDiff = qualityRank(a.card) - qualityRank(b.card)
+          if (qualityDiff !== 0) return qualityDiff
           const sourceDiff =
             Number(Boolean(b.card.sourceUrl)) - Number(Boolean(a.card.sourceUrl))
           if (sourceDiff !== 0) return sourceDiff
@@ -1019,7 +1043,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
               className={sort === 'verified' ? 'is-active' : ''}
               onClick={() => setSort('verified')}
             >
-              可信优先
+              优质优先
             </button>
             <button
               className={sort === 'review' ? 'is-active' : ''}
@@ -1130,11 +1154,13 @@ export function CampusView({ role, notify }: CampusViewProps) {
           <div className="campus-grid">
             {shownItems.map(({ card, faq }) => {
             const meta = credibilityMeta(card.credibility)
+            const expanded = expandedCards.has(card.id)
+            const canExpand = card.content.length > 90
             return (
               <article
                 className={`campus-card ${
                   card.credibility.startsWith('D') ? 'is-review' : ''
-                }`}
+                } ${expanded ? 'is-expanded' : ''}`}
                 key={card.id}
               >
                 <div className="campus-card-top">
@@ -1144,7 +1170,17 @@ export function CampusView({ role, notify }: CampusViewProps) {
                   </Badge>
                 </div>
                 <h3>{card.title}</h3>
-                <p>{card.content}</p>
+                <p className={expanded ? 'is-expanded' : ''}>{card.content}</p>
+                {canExpand ? (
+                  <button
+                    type="button"
+                    className="campus-card-toggle"
+                    aria-expanded={expanded}
+                    onClick={() => toggleCard(card.id)}
+                  >
+                    {expanded ? '收起' : '展开全文'}
+                  </button>
+                ) : null}
                 <div className="tag-row">
                   {card.tags.slice(0, 4).map((tag) => (
                     <span className="tag" key={tag}>
