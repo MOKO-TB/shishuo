@@ -207,10 +207,12 @@ export function CampusTools({
   const [captchaImage, setCaptchaImage] = useState('')
   const [libraryLoginId, setLibraryLoginId] = useState('')
   const [libraryBusy, setLibraryBusy] = useState(false)
+  const [libraryRestoring, setLibraryRestoring] = useState(false)
   const [libraryError, setLibraryError] = useState('')
   const [loans, setLoans] = useState<LibraryLoansResult | null>(null)
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
   const [suggestOpen, setSuggestOpen] = useState(false)
+  const libraryCheckedRef = useRef(false)
   const searchWrapRef = useRef<HTMLDivElement>(null)
   const profile = useProfile()
 
@@ -414,6 +416,27 @@ export function CampusTools({
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [suggestOpen])
+
+  // 重新进入网站/刷新后，先尝试恢复服务端保存的图书馆登录态。
+  useEffect(() => {
+    if (tab !== 'library' || loans || libraryCheckedRef.current) return
+    libraryCheckedRef.current = true
+    let alive = true
+    setLibraryRestoring(true)
+    libraryLoans()
+      .then((data) => {
+        if (alive) setLoans(data)
+      })
+      .catch(() => {
+        // 没有可恢复的登录态时保持登录表单，不额外弹错。
+      })
+      .finally(() => {
+        if (alive) setLibraryRestoring(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [tab, loans])
 
   /*
    * 选项栏吸顶后会浮在内容区上方，内容区必须让出与选项栏等高的空间，
@@ -687,6 +710,8 @@ export function CampusTools({
               <p className="campus-tool-empty">当前没有在借书目。</p>
             )}
           </div>
+        ) : libraryRestoring ? (
+          <p className="campus-tool-empty">正在恢复图书馆登录…</p>
         ) : captchaImage ? (
           <div className="library-login-captcha">
             <p>输入验证码完成登录</p>

@@ -476,7 +476,7 @@ export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
   const jw = createJwService()
   const chaoxing = createChaoxingService(db)
-  const library = createLibraryService()
+  const library = createLibraryService({ storageDir: config.librarySessionsDir })
   const emptyRooms = createEmptyRoomService()
   /**
    * 工作区响应缓存：连「投影 + 序列化 + gzip」一起缓存，命中时只写 socket。

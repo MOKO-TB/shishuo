@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './api'
+import { apiPost, apiRequest } from './api'
 
 export interface LibraryBook {
   recordId: number
@@ -51,7 +51,11 @@ export function libraryLoginComplete(loginId: string, captcha: string) {
 }
 
 export function libraryLoans() {
-  return apiGet<LibraryLoansResult>('/api/library/loans')
+  // 图书馆登录态独立于师说账号：这里 401 只表示图书馆需要重新登录，
+  // 不能让全局 auth-expired 把学生从师说账号里登出。
+  return apiRequest<LibraryLoansResult>('/api/library/loans', {
+    suppressAuthEvent: true,
+  })
 }
 
 export function libraryLogout() {

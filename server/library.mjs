@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto'
+import { chmod, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { chromium } from 'playwright-core'
 import { HttpError } from './http-error.mjs'
 import { resolveBrowserPath } from './jw.mjs'
@@ -57,7 +60,7 @@ function searchBody(query, rows = 12) {
   }
 }
 
-export function createLibraryService() {
+export function createLibraryService({ storageDir = '' } = {}) {
   let browserPromise = null
   let routeCookie = ''
   let routeCookieAt = 0
@@ -66,6 +69,75 @@ export function createLibraryService() {
   const searchCache = new Map()
   const MAX_PENDING = 8
   const PENDING_TTL = 3 * 60_000
+  const MEMORY_TTL = 30 * 60_000
+  const SESSION_TTL = 7 * 24 * 60 * 60_000
+  const SESSION_VERSION = 1
+
+  function sessionPath(userId) {
+    if (!storageDir) return ''
+    const key = createHash('sha256').update(String(userId)).digest('hex')
+    return path.join(storageDir, `${key}.json`)
+  }
+
+  async function dropPersistedSession(userId) {
+    const file = sessionPath(userId)
+    if (!file) return
+    await unlink(file).catch(() => undefined)
+  }
+
+  async function persistSession(userId, context, page) {
+    const file = sessionPath(userId)
+    if (!file) return
+    try {
+      const [rawState, sessionData] = await Promise.all([
+        context.storageState(),
+        page.evaluate(() => {
+          // 只保存恢复会话需要的公开标识；userInfo 里可能含密码等敏感字段，绝不能落盘。
+          const values = {}
+          for (const key of ['groupCode', 'codeKey']) {
+            const value = sessionStorage.getItem(key)
+            if (value) values[key] = value
+          }
+          return values
+        }),
+      ])
+      const payload = {
+        version: SESSION_VERSION,
+        savedAt: Date.now(),
+        // 只保留 Cookie；OPAC 的 localStorage 可能包含账号密码字段，不能落盘。
+        storageState: { cookies: rawState.cookies || [], origins: [] },
+        sessionStorage: sessionData,
+      }
+      await mkdir(storageDir, { recursive: true, mode: 0o700 })
+      const temp = `${file}.${process.pid}.tmp`
+      await writeFile(temp, JSON.stringify(payload), { mode: 0o600 })
+      await rename(temp, file)
+      await chmod(file, 0o600).catch(() => undefined)
+    } catch {
+      // 持久化失败不影响本次登录，最坏情况只是下次需要重新登录。
+    }
+  }
+
+  async function readPersistedSession(userId) {
+    const file = sessionPath(userId)
+    if (!file) return null
+    try {
+      const payload = JSON.parse(await readFile(file, 'utf8'))
+      if (payload?.version !== SESSION_VERSION) return null
+      if (!payload.savedAt || Date.now() - payload.savedAt > SESSION_TTL) return null
+      if (!payload.storageState?.cookies?.length) return null
+      return payload
+    } catch {
+      return null
+    }
+  }
+
+  async function closeSession(userId, { drop = true } = {}) {
+    const session = sessions.get(userId)
+    sessions.delete(userId)
+    if (session) await session.context.close().catch(() => undefined)
+    if (drop) await dropPersistedSession(userId)
+  }
 
   function cleanupPending() {
     const now = Date.now()
@@ -95,6 +167,66 @@ export function createLibraryService() {
         })
     }
     return browserPromise
+  }
+
+  async function restoreSession(userId) {
+    const saved = await readPersistedSession(userId)
+    if (!saved) return null
+    let context
+    try {
+      const browser = await getBrowser()
+      context = await browser.newContext({
+        locale: 'zh-CN',
+        storageState: saved.storageState,
+      })
+      if (saved.sessionStorage && Object.keys(saved.sessionStorage).length > 0) {
+        await context.addInitScript((values) => {
+          try {
+            for (const [key, value] of Object.entries(values)) {
+              sessionStorage.setItem(key, value)
+            }
+          } catch {
+            // 某些页面（如 about:blank）不允许写 sessionStorage，忽略即可。
+          }
+        }, saved.sessionStorage)
+      }
+      const page = await context.newPage()
+      await page.goto(`${BASE}/#/personalCenter`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      })
+      await page.waitForTimeout(1200)
+      const cookies = await context.cookies(BASE)
+      const hasJwt = cookies.some((cookie) => cookie.name === 'jwt' && cookie.value)
+      if (!hasJwt || page.url().includes('/login')) {
+        await context.close().catch(() => undefined)
+        context = null
+        await dropPersistedSession(userId)
+        return null
+      }
+      const session = {
+        context,
+        page,
+        at: Date.now(),
+        savedAt: Number(saved.savedAt) || 0,
+      }
+      sessions.set(userId, session)
+      return session
+    } catch {
+      if (context) await context.close().catch(() => undefined)
+      await dropPersistedSession(userId)
+      return null
+    }
+  }
+
+  async function getSession(userId) {
+    const current = sessions.get(userId)
+    if (current) {
+      if (Date.now() - current.at <= MEMORY_TTL) return current
+      // 内存会话过期不代表持久化登录态失效，先关浏览器再尝试恢复。
+      await closeSession(userId, { drop: false })
+    }
+    return restoreSession(userId)
   }
 
   async function getRouteCookie(force = false) {
@@ -250,7 +382,10 @@ export function createLibraryService() {
       pending.delete(loginId)
       const previous = sessions.get(userId)
       if (previous) await previous.context.close().catch(() => undefined)
-      sessions.set(userId, { context, page, at: Date.now() })
+      const session = { context, page, at: Date.now(), savedAt: 0 }
+      sessions.set(userId, session)
+      await persistSession(userId, context, page)
+      session.savedAt = Date.now()
       return { ok: true }
     } catch (error) {
       pending.delete(loginId)
@@ -260,37 +395,47 @@ export function createLibraryService() {
   }
 
   async function loans(userId) {
-    const session = sessions.get(userId)
+    const session = await getSession(userId)
     if (!session) throw new HttpError(401, '请先登录图书馆账号。')
-    if (Date.now() - session.at > 30 * 60_000) {
-      sessions.delete(userId)
-      await session.context.close().catch(() => undefined)
+    let result
+    try {
+      result = await session.page.evaluate(async ({ group }) => {
+        const jwToken = sessionStorage.getItem('jwt') || ''
+        const jwtHeader = sessionStorage.getItem('jwtHeader') || ''
+        const headers = {
+          'Content-Type': 'application/json;charset=utf-8',
+          groupCode: group,
+          mappingPath: '',
+        }
+        if (jwToken && jwtHeader) headers[jwtHeader] = jwToken
+        const call = async (path) => {
+          const res = await fetch(path, {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({ page: 1, rows: 50 }),
+          })
+          const json = await res.json().catch(() => null)
+          return json?.success ? json.data : null
+        }
+        const current = await call('/find/loanInfo/loanList')
+        const history = await call('/find/loanInfo/loanHistoryList')
+        if (current || history) return { current, history, raw: '' }
+        return { current: null, history: null, raw: document.body.innerText.slice(0, 5000) }
+      }, { group: GROUP })
+    } catch {
+      await closeSession(userId)
       throw new HttpError(401, '图书馆登录已过期，请重新登录。')
     }
-    const result = await session.page.evaluate(async ({ group }) => {
-      const jwToken = sessionStorage.getItem('jwt') || ''
-      const jwtHeader = sessionStorage.getItem('jwtHeader') || ''
-      const headers = {
-        'Content-Type': 'application/json;charset=utf-8',
-        groupCode: group,
-        mappingPath: '',
-      }
-      if (jwToken && jwtHeader) headers[jwtHeader] = jwToken
-      const call = async (path) => {
-        const res = await fetch(path, {
-          method: 'POST',
-          credentials: 'include',
-          headers,
-          body: JSON.stringify({ page: 1, rows: 50 }),
-        })
-        const json = await res.json().catch(() => null)
-        return json?.success ? json.data : null
-      }
-      const current = await call('/find/loanInfo/loanList')
-      const history = await call('/find/loanInfo/loanHistoryList')
-      if (current || history) return { current, history, raw: '' }
-      return { current: null, history: null, raw: document.body.innerText.slice(0, 5000) }
-    }, { group: GROUP })
+    if (!result.current && !result.history) {
+      await closeSession(userId)
+      throw new HttpError(401, '图书馆登录已过期，请重新登录。')
+    }
+    session.at = Date.now()
+    if (Date.now() - (session.savedAt || 0) > 5 * 60_000) {
+      await persistSession(userId, session.context, session.page)
+      session.savedAt = Date.now()
+    }
     const current = result.current || {}
     const history = result.history || {}
     const currentList = Array.isArray(current.searchResult)
@@ -326,9 +471,7 @@ export function createLibraryService() {
   }
 
   async function logout(userId) {
-    const session = sessions.get(userId)
-    sessions.delete(userId)
-    if (session) await session.context.close().catch(() => undefined)
+    await closeSession(userId)
   }
 
   return { search, startLogin, completeLogin, loans, logout }

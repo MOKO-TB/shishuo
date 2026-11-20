@@ -35,6 +35,9 @@ export function loadConfig() {
     authSecret: process.env.AUTH_SECRET || randomBytes(32).toString('hex'),
     dbPath: process.env.SHISHUO_DB || path.join(ROOT_DIR, 'data', 'shishuo.db'),
     uploadsDir: process.env.SHISHUO_UPLOADS_DIR || path.join(ROOT_DIR, 'data', 'uploads'),
+    librarySessionsDir:
+      process.env.SHISHUO_LIBRARY_SESSION_DIR ||
+      path.join(ROOT_DIR, 'data', 'library-sessions'),
     cookieSecure: process.env.COOKIE_SECURE === '1' || production,
     demoAccounts,
     demoStudentPassword: process.env.DEMO_STUDENT_PASSWORD || 'student123',

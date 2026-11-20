@@ -2777,6 +2777,7 @@
   align-items: center;
   gap: 11px;
   width: 100%;
+  min-width: 0;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -2826,11 +2827,17 @@
 }
 
 .cx-course-group-top strong {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cx-course-group-top .badge {
+  flex: 0 0 auto;
 }
 
 .cx-course-group-latest {
