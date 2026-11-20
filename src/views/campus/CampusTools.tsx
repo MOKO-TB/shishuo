@@ -162,6 +162,8 @@ export function CampusTools({
 } = {}) {
   const [tab, setTab] = useState<ToolTab>('gpa')
   const stickyHostRef = useRef<HTMLElement>(null)
+  const toolsBarRef = useRef<HTMLElement>(null)
+  const bodyRef = useRef<HTMLElement>(null)
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
   const [liveQuery, setLiveQuery] = useState('')
@@ -363,41 +365,34 @@ export function CampusTools({
   }, [suggestOpen])
 
   /*
-   * 吸顶的关键：position:sticky 只能在父容器高度范围内吸附。
-   * 包裹层与卡片等高时没有可吸附空间，所以把包裹层撑到页面底部。
+   * 选项栏吸顶后会浮在内容区上方，内容区必须让出与选项栏等高的空间，
+   * 否则首屏内容会被压住。这里把选项栏高度同步成内容区的 scroll-padding-top。
    */
   useEffect(() => {
-    const host = stickyHostRef.current
-    const page = host?.parentElement
-    if (!host || !page) return
+    const bar = toolsBarRef.current
+    const body = bodyRef.current
+    if (!bar || !body) return
 
     const sync = () => {
-      // 用 rect 计算，避免 offsetTop 受定位祖先影响；先清空再量，防止自我叠加
-      host.style.minHeight = ''
-      const hostRect = host.getBoundingClientRect()
-      const pageRect = page.getBoundingClientRect()
-      const remaining = pageRect.bottom - hostRect.top
-      if (remaining > hostRect.height) {
-        host.style.minHeight = `${Math.round(remaining)}px`
-      }
+      const h = Math.round(bar.getBoundingClientRect().height)
+      body.style.setProperty('--tools-bar-h', `${h}px`)
     }
 
     sync()
-    // 只观察页面容器（不观察 host 自身，否则撑高会再次触发形成循环）
-    const observer = new ResizeObserver(() => sync())
-    observer.observe(page)
+    const observer = new ResizeObserver(sync)
+    observer.observe(bar)
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', sync)
-      host.style.minHeight = ''
     }
   }, [tab])
+
 
   return (
     <section className="campus-tools-sticky" ref={stickyHostRef}>
       {/* 吸顶区：标题 + 选项栏，只有这部分 sticky */}
-      <section className="campus-tools card">
+      <section className="campus-tools card" ref={toolsBarRef}>
         <div className="campus-tools-bar">
           <div className="campus-tools-head">
             <div>
@@ -470,7 +465,7 @@ export function CampusTools({
       </section>
 
       {/* 内容区：跟随页面滚动，不吸顶 */}
-      <section className="campus-tools-body card">
+      <section className="campus-tools-body card" ref={bodyRef}>
 
 
   {tab === 'gpa' && (
@@ -499,6 +494,16 @@ export function CampusTools({
     <div className="campus-tool-panel">
       <p className="campus-tool-hint">按学校官网的数据类型整理，点分类筛选对应知识卡。</p>
       <div className="campus-kb-cats">
+        {/* 「全部」始终排第一位，与各分类并列，方便随时回到全量视图 */}
+        <button
+          type="button"
+          className={`campus-kb-cat is-all ${activeCategory === 'all' ? 'is-active' : ''}`}
+          onClick={() => onPickCategory?.('all')}
+          aria-pressed={activeCategory === 'all'}
+        >
+          <strong>全部</strong>
+          <span>{kbCategories.reduce((sum, item) => sum + item.count, 0)} 条</span>
+        </button>
         {kbCategories.map((item) => {
           const active = activeCategory === item.name
           return (
@@ -516,13 +521,9 @@ export function CampusTools({
         })}
       </div>
       {activeCategory !== 'all' && (
-        <button
-          type="button"
-          className="campus-kb-reset"
-          onClick={() => onPickCategory?.('all')}
-        >
-          查看全部 {kbCategories.reduce((sum, item) => sum + item.count, 0)} 条
-        </button>
+        <p className="campus-kb-current">
+          正在查看「{activeCategory}」分类
+        </p>
       )}
     </div>
   )}

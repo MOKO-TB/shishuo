@@ -1328,9 +1328,17 @@
 }
 
 /* 内容区：不吸顶，跟随页面滚动 */
+/* 内容区：顶部让出与选项栏等高的空间（--tools-bar-h 由 JS 同步）。
+   吸顶时选项栏浮在上方，内容从它下沿开始，不会被压住。 */
 .campus-tools-body {
-  margin-top: 12px;
+  margin-top: calc(var(--tools-bar-h, 127px) + 12px);
   background: var(--bg-card);
+  scroll-margin-top: calc(var(--header-h) + var(--tools-bar-h, 127px) + 16px);
+}
+
+/* 面板：最小宽度约束，避免子元素撑破 */
+.campus-tool-panel {
+  min-width: 0;
 }
 
 /* tab 条用不透明底，避免吸顶时透出下方内容 */
@@ -1345,7 +1353,8 @@
   }
 
   .campus-tools-body {
-    margin-top: 10px;
+    /* 手机端同样要让出选项栏高度，只是间距略小 */
+    margin-top: calc(var(--tools-bar-h, 127px) + 8px);
   }
 }
 
@@ -1387,4 +1396,84 @@
 .campus-kb-reset:hover {
   border-color: var(--accent);
   color: var(--fg);
+}
+
+/* 「全部」分类：与各分类并列，视觉上稍作区分 */
+.campus-kb-cat.is-all {
+  border-style: dashed;
+}
+
+.campus-kb-cat.is-all.is-active {
+  border-style: solid;
+}
+
+/* 当前筛选提示 */
+.campus-kb-current {
+  margin: 10px 0 0;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 内容区高度约束：超长内容在卡片内部滚动，不把整页撑得过高 */
+.campus-tools-body {
+  max-height: min(72vh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.campus-tools-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.campus-tools-body::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+@media (max-width: 700px) {
+  .campus-tools-body {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+/* 「全部」分类：与各分类并列，视觉上稍作区分 */
+.campus-kb-cat.is-all {
+  border-style: dashed;
+}
+
+.campus-kb-cat.is-all.is-active {
+  border-style: solid;
+}
+
+/* 当前筛选提示 */
+.campus-kb-current {
+  margin: 10px 0 0;
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+
+/* 内容区高度约束：超长内容在卡片内部滚动，不把整页撑得过高 */
+.campus-tools-body {
+  max-height: min(72vh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.campus-tools-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.campus-tools-body::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+@media (max-width: 700px) {
+  .campus-tools-body {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
