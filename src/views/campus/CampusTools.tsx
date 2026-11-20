@@ -280,21 +280,34 @@ export function CampusTools() {
 
       {tab === 'library' && (
         <div className="campus-tool-panel">
-          <a
-            className="campus-library-personal"
-            href="https://mfindgzyykj.libsp.cn/#/personalCenter"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="campus-library-personal-icon">
-              <UserRound size={18} />
-            </span>
-            <span className="campus-library-personal-copy">
-              <strong>个人借阅</strong>
-              <em>登录图书馆账号后查看在借书目、续借和到期提醒</em>
-            </span>
-            <ExternalLink size={14} />
-          </a>
+          <section className="campus-library-personal">
+            <div className="campus-library-personal-head">
+              <span className="campus-library-personal-icon">
+                <UserRound size={18} />
+              </span>
+              <span className="campus-library-personal-copy">
+                <strong>个人借阅</strong>
+                <em>登录图书馆账号后查看在借书目、续借和到期提醒</em>
+              </span>
+              <a
+                href="https://mfindgzyykj.libsp.cn/#/personalCenter"
+                target="_blank"
+                rel="noreferrer"
+              >
+                新窗口打开
+                <ExternalLink size={12} />
+              </a>
+            </div>
+            <iframe
+              className="campus-library-personal-frame"
+              src="https://mfindgzyykj.libsp.cn/#/personalCenter"
+              title="图书馆个人借阅"
+              loading="lazy"
+            />
+            <p className="campus-library-personal-note">
+              首次使用请在下方登录图书馆账号；借阅数据由图书馆 OPAC 提供，登录态只在图书馆站点内。
+            </p>
+          </section>
 
           <div className="campus-library-search">
             <Search size={16} />

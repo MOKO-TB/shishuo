@@ -89,6 +89,123 @@
   color: var(--jade);
 }
 
+.empty-room-buildings,
+.empty-room-days {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.empty-room-buildings button,
+.empty-room-days button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--text-meta);
+}
+
+.empty-room-buildings button.is-active,
+.empty-room-days button.is-active {
+  border-color: var(--jade);
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-weight: 650;
+}
+
+.empty-room-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.empty-room-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty-room-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.empty-room-legend i.is-free {
+  background: var(--jade);
+}
+
+.empty-room-legend i.is-busy {
+  background: var(--clay);
+}
+
+.empty-room-legend em {
+  margin-left: auto;
+  font-style: normal;
+  color: var(--faint);
+}
+
+.empty-room-table {
+  display: grid;
+  gap: 4px;
+}
+
+.empty-room-head,
+.empty-room-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 0.6fr));
+  align-items: center;
+  gap: 6px;
+}
+
+.empty-room-head {
+  padding: 0 8px;
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+.empty-room-head span:not(:first-child) {
+  text-align: center;
+}
+
+.empty-room-row {
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+}
+
+.empty-room-row strong {
+  overflow: hidden;
+  font-size: var(--text-xs);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-room-status {
+  padding: 4px 5px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
+  text-align: center;
+}
+
+.empty-room-status.is-free {
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+.empty-room-status.is-busy {
+  background: var(--clay-soft);
+  color: var(--clay-deep);
+}
+
 .empty-room-note {
   margin: 0;
   padding-top: 10px;

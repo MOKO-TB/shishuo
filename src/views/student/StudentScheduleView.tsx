@@ -249,8 +249,7 @@ function EmptyClassroomModal({
   initialDay: number
 }) {
   const [day, setDay] = useState(initialDay)
-  const [blockKey, setBlockKey] = useState<(typeof EMPTY_BLOCKS)[number]['key']>('morning')
-  const block = EMPTY_BLOCKS.find((item) => item.key === blockKey) ?? EMPTY_BLOCKS[0]
+  const [building, setBuilding] = useState('')
 
   const rooms = useMemo(
     () =>
@@ -260,21 +259,28 @@ function EmptyClassroomModal({
     [entries],
   )
 
-  const occupied = useMemo(
+  const buildings = useMemo(
     () =>
-      entries.filter(
+      Array.from(new Set(rooms.map(roomBuilding))).sort((a, b) =>
+        a.localeCompare(b, 'zh-Hans-CN'),
+      ),
+    [rooms],
+  )
+  const activeBuilding = buildings.includes(building) ? building : buildings[0] ?? ''
+  const dayRooms = rooms.filter((room) => roomBuilding(room) === activeBuilding)
+
+  const statusFor = (room: string, block: (typeof EMPTY_BLOCKS)[number]) =>
+    block.sections.some((section) =>
+      entries.some(
         (entry) =>
           entry.day === day &&
-          entry.room &&
-          block.sections.some(
-            (section) => section >= entry.startSection && section <= entry.endSection,
-          ),
+          entry.room?.trim() === room &&
+          section >= entry.startSection &&
+          section <= entry.endSection,
       ),
-    [block, day, entries],
-  )
-
-  const occupiedRooms = new Set(occupied.map((entry) => entry.room?.trim()))
-  const freeRooms = rooms.filter((room) => !occupiedRooms.has(room))
+    )
+      ? 'busy'
+      : 'free'
 
   return (
     <Modal
@@ -285,52 +291,64 @@ function EmptyClassroomModal({
       size="md"
     >
       <div className="empty-room-modal">
-        <div className="empty-room-filters">
-          <label>
-            <span>星期</span>
-            <select value={day} onChange={(event) => setDay(Number(event.target.value))}>
-              {DAYS.map((item) => (
-                <option key={item} value={item}>
-                  {weekdayLabel(item)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>时段</span>
-            <select
-              value={blockKey}
-              onChange={(event) =>
-                setBlockKey(event.target.value as (typeof EMPTY_BLOCKS)[number]['key'])
-              }
+        <div className="empty-room-buildings">
+          {buildings.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={item === activeBuilding ? 'is-active' : ''}
+              onClick={() => setBuilding(item)}
             >
-              {EMPTY_BLOCKS.map((item) => (
-                <option key={item.key} value={item.key}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              {item}
+            </button>
+          ))}
         </div>
 
-        <p className="empty-room-summary">
-          本周共 {rooms.length} 间教室进入过课表 · 当前时段有课 {occupied.length} 间 · 空闲{' '}
-          {freeRooms.length} 间
-        </p>
+        <div className="empty-room-days">
+          {DAYS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={item === day ? 'is-active' : ''}
+              onClick={() => setDay(item)}
+            >
+              {weekdayLabel(item)}
+            </button>
+          ))}
+        </div>
 
-        {freeRooms.length === 0 ? (
+        <div className="empty-room-legend">
+          <span><i className="is-free" />空闲</span>
+          <span><i className="is-busy" />占用</span>
+          <em>{dayRooms.length} 间教室</em>
+        </div>
+
+        {dayRooms.length === 0 ? (
           <EmptyState
             icon={<DoorOpen size={20} />}
-            title="当前时段没有可判断的空教室"
-            description="这门课的课表里没有更多教室记录，换一天或换个时段看看。"
+            title="这个教学楼还没有教室记录"
+            description="换一个教学楼看看，或先在账号设置里补全课表教室。"
           />
         ) : (
-          <div className="empty-room-grid">
-            {freeRooms.map((room) => (
-              <span className="empty-room-chip" key={room}>
-                <DoorOpen size={13} />
-                {room}
-              </span>
+          <div className="empty-room-table">
+            <div className="empty-room-head">
+              <span>教室</span>
+              {EMPTY_BLOCKS.map((item) => (
+                <span key={item.key}>{item.label.split(' · ')[0]}</span>
+              ))}
+            </div>
+            {dayRooms.map((room) => (
+              <div className="empty-room-row" key={room}>
+                <strong>{room}</strong>
+                {EMPTY_BLOCKS.map((block) => {
+                  const status = statusFor(room, block)
+                  return (
+                    <span className={`empty-room-status is-${status}`} key={block.key}>
+                      {status === 'free' ? '空闲' : '占用'}
+                    </span>
+                  )
+                })}
+              </div>
             ))}
           </div>
         )}
@@ -341,4 +359,9 @@ function EmptyClassroomModal({
       </div>
     </Modal>
   )
+}
+
+function roomBuilding(room: string) {
+  const match = room.match(/^([A-Za-z]+\d)/)
+  return match ? match[1].toUpperCase() : '其他'
 }
