@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, DoorOpen, Plus, SlidersHorizontal } from 'lucide-react'
 import {
   courseToneMap,
   periodTime,
@@ -11,7 +11,7 @@ import {
   weekdayNumber,
   type ScheduleEntry,
 } from '../../lib/profile'
-import { EmptyState } from '../../components/ui'
+import { EmptyState, Modal } from '../../components/ui'
 import { cn } from '../../lib/utils'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7]
@@ -30,6 +30,7 @@ export function ScheduleView({
   const currentWeek = teachingWeek(profile.termStart)
   const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek ?? 1)
   const [selectedDay, setSelectedDay] = useState<number>(() => weekdayNumber())
+  const [emptyOpen, setEmptyOpen] = useState(false)
   const weekFilterable = currentWeek != null
 
   const weekEntries = useMemo(() => {
@@ -143,6 +144,15 @@ export function ScheduleView({
           </div>
         )}
 
+        <button
+          type="button"
+          className="button button-ghost schedule-empty-button"
+          onClick={() => setEmptyOpen(true)}
+        >
+          <DoorOpen size={15} />
+          空教室
+        </button>
+
         <div className="schedule-days" role="tablist" aria-label="按天查看课程">
           {DAYS.map((day) => {
             const count = (byDay.get(day) ?? []).length
@@ -210,6 +220,125 @@ export function ScheduleView({
           课程表不对？去「账号与课表」调整
         </button>
       </div>
+
+      <EmptyClassroomModal
+        open={emptyOpen}
+        onClose={() => setEmptyOpen(false)}
+        entries={weekEntries}
+        initialDay={selectedDay}
+      />
     </div>
+  )
+}
+
+const EMPTY_BLOCKS = [
+  { key: 'morning', label: '上午 · 1-4 节', sections: [1, 2, 3, 4] },
+  { key: 'afternoon', label: '下午 · 5-8 节', sections: [5, 6, 7, 8] },
+  { key: 'evening', label: '晚上 · 9-11 节', sections: [9, 10, 11] },
+] as const
+
+function EmptyClassroomModal({
+  open,
+  onClose,
+  entries,
+  initialDay,
+}: {
+  open: boolean
+  onClose: () => void
+  entries: ScheduleEntry[]
+  initialDay: number
+}) {
+  const [day, setDay] = useState(initialDay)
+  const [blockKey, setBlockKey] = useState<(typeof EMPTY_BLOCKS)[number]['key']>('morning')
+  const block = EMPTY_BLOCKS.find((item) => item.key === blockKey) ?? EMPTY_BLOCKS[0]
+
+  const rooms = useMemo(
+    () =>
+      Array.from(
+        new Set(entries.map((entry) => entry.room?.trim()).filter((room): room is string => Boolean(room))),
+      ).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN')),
+    [entries],
+  )
+
+  const occupied = useMemo(
+    () =>
+      entries.filter(
+        (entry) =>
+          entry.day === day &&
+          entry.room &&
+          block.sections.some(
+            (section) => section >= entry.startSection && section <= entry.endSection,
+          ),
+      ),
+    [block, day, entries],
+  )
+
+  const occupiedRooms = new Set(occupied.map((entry) => entry.room?.trim()))
+  const freeRooms = rooms.filter((room) => !occupiedRooms.has(room))
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      eyebrow="课程表 · 找自习室"
+      title="空教室"
+      size="md"
+    >
+      <div className="empty-room-modal">
+        <div className="empty-room-filters">
+          <label>
+            <span>星期</span>
+            <select value={day} onChange={(event) => setDay(Number(event.target.value))}>
+              {DAYS.map((item) => (
+                <option key={item} value={item}>
+                  {weekdayLabel(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>时段</span>
+            <select
+              value={blockKey}
+              onChange={(event) =>
+                setBlockKey(event.target.value as (typeof EMPTY_BLOCKS)[number]['key'])
+              }
+            >
+              {EMPTY_BLOCKS.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <p className="empty-room-summary">
+          本周共 {rooms.length} 间教室进入过课表 · 当前时段有课 {occupied.length} 间 · 空闲{' '}
+          {freeRooms.length} 间
+        </p>
+
+        {freeRooms.length === 0 ? (
+          <EmptyState
+            icon={<DoorOpen size={20} />}
+            title="当前时段没有可判断的空教室"
+            description="这门课的课表里没有更多教室记录，换一天或换个时段看看。"
+          />
+        ) : (
+          <div className="empty-room-grid">
+            {freeRooms.map((room) => (
+              <span className="empty-room-chip" key={room}>
+                <DoorOpen size={13} />
+                {room}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="empty-room-note">
+          目前只根据你导入课表里出现过的教室判断；全校空教室需要接入教务处教室课表后才会完整。
+        </p>
+      </div>
+    </Modal>
   )
 }

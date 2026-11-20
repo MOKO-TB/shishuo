@@ -2414,6 +2414,28 @@
   background: var(--jade-mist);
 }
 
+/* 软提示：不再列清单/算缺项，只在信息不足时提醒一句 */
+.ask-self-check.is-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-style: dashed;
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.ask-self-check.is-hint.is-clear {
+  display: none;
+}
+
+.ask-self-check-hint {
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .ask-self-check-head {
   display: flex;
   align-items: center;

@@ -333,6 +333,59 @@
   white-space: nowrap;
 }
 
+.campus-library-personal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--jade-mist);
+  color: var(--ink);
+}
+
+.campus-library-personal:hover {
+  border-color: var(--jade);
+}
+
+.campus-library-personal-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  flex: 0 0 auto;
+}
+
+.campus-library-personal-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.campus-library-personal-copy strong {
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.campus-library-personal-copy em {
+  overflow: hidden;
+  font-size: var(--text-meta);
+  font-style: normal;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-library-personal > svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
 .campus-library-search {
   display: flex;
   align-items: center;

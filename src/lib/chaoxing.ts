@@ -134,3 +134,22 @@ export function loginChaoxingPassword(account: string, password: string) {
     password,
   })
 }
+
+/**
+ * 手机端把 PC 版 mooc1/mooc2 链接换到 m.chaoxing.com。
+ * 手机浏览器通常只在移动域下保留学习通登录态，直接开 PC 域会重新要求登录。
+ */
+export function chaoxingExternalUrl(url: string) {
+  if (typeof window === 'undefined') return url
+  if (!window.matchMedia('(max-width: 700px)').matches) return url
+  try {
+    const next = new URL(url)
+    if (/^mooc[0-9a-z-]*\.chaoxing\.com$/i.test(next.hostname)) {
+      next.hostname = 'm.chaoxing.com'
+    }
+    return next.toString()
+  } catch {
+    return url
+  }
+}
+

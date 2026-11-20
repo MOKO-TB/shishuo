@@ -8,6 +8,7 @@ import {
   MapPin,
   Search,
   Sparkles,
+  UserRound,
   X,
 } from 'lucide-react'
 import { Badge } from '../../components/ui'
@@ -279,6 +280,22 @@ export function CampusTools() {
 
       {tab === 'library' && (
         <div className="campus-tool-panel">
+          <a
+            className="campus-library-personal"
+            href="https://mfindgzyykj.libsp.cn/#/personalCenter"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="campus-library-personal-icon">
+              <UserRound size={18} />
+            </span>
+            <span className="campus-library-personal-copy">
+              <strong>个人借阅</strong>
+              <em>登录图书馆账号后查看在借书目、续借和到期提醒</em>
+            </span>
+            <ExternalLink size={14} />
+          </a>
+
           <div className="campus-library-search">
             <Search size={16} />
             <input

@@ -10,24 +10,17 @@ export function QuestionSelfCheckBar({
   onOpen?: () => void
 }) {
   return (
-    <div className={`ask-self-check ${check.ok ? 'is-clear' : 'has-warning'}`}>
-      <div className="ask-self-check-head">
-        <span>提问自检</span>
-        <em>{check.ok ? '信息够用了' : `还差 ${check.warnings} 项`}</em>
-      </div>
-      <div className="ask-self-check-items">
-        {check.items.map((item) => (
-          <span className={item.ok ? 'is-ok' : 'is-missing'} key={item.key}>
-            {item.ok ? <Check size={12} /> : <CircleAlert size={12} />}
-            {item.label}
-          </span>
-        ))}
-        {!check.ok && onOpen && (
-          <button type="button" className="text-button ask-self-check-link" onClick={onOpen}>
-            怎么补
-          </button>
-        )}
-      </div>
+    <div className={`ask-self-check is-hint ${check.ok ? 'is-clear' : 'has-warning'}`}>
+      <span className="ask-self-check-hint">
+        {check.ok
+          ? '信息够用了，直接发送也可以'
+          : '想让回答更准，可以补上题目或你卡住的那一步'}
+      </span>
+      {!check.ok && onOpen && (
+        <button type="button" className="text-button ask-self-check-link" onClick={onOpen}>
+          补充
+        </button>
+      )}
     </div>
   )
 }

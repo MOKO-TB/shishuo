@@ -16,6 +16,7 @@ import {
 import { Badge, Modal } from '../../components/ui'
 import {
   autoSyncChaoxing,
+  chaoxingExternalUrl,
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
@@ -212,7 +213,7 @@ export function ChaoxingView() {
     } catch {
       // 标记已读失败不挡打开原文
     }
-    if (item.url) window.open(item.url, '_blank', 'noopener,noreferrer')
+    if (item.url) window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')
   }
 
   const assignments = useMemo(() => {
@@ -716,7 +717,7 @@ function ChapterModal({
                 <button
                   key={item.id}
                   className="cx-chapter-row"
-                  onClick={() => item.url && window.open(item.url, '_blank', 'noopener,noreferrer')}
+                  onClick={() => item.url && window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')}
                 >
                   <span>
                     <strong>{item.sectionTitle}</strong>

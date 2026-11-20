@@ -23,6 +23,7 @@ import {
   selectChaoxingCourse,
   startChaoxingLogin,
   syncChaoxing,
+  chaoxingExternalUrl,
   type ChaoxingItem,
   type ChaoxingKind,
   type ChaoxingLoginStart,
@@ -330,7 +331,7 @@ export function ChaoxingModal({
     } catch {
       // 标记已读失败不挡打开原文。
     }
-    if (item.url) window.open(item.url, '_blank', 'noopener,noreferrer')
+    if (item.url) window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')
   }
 
   const toggleCourse = async (id: string, selected: boolean) => {

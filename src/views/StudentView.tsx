@@ -937,7 +937,7 @@ export function StudentView({
               </div>
             )}
 
-            {question.trim().length >= 3 && (
+            {!aiReady && question.trim().length >= 3 && (
               <QuestionSelfCheckBar
                 check={questionCheck}
                 onOpen={() => setSelfCheckOpen(true)}
