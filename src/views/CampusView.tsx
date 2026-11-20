@@ -902,6 +902,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
                 <strong>{thread.question}</strong>
                 <textarea
                   rows={3}
+                  data-enter-submit
                   value={replyDrafts[thread.id] ?? ''}
                   onChange={(event) =>
                     setReplyDrafts((current) => ({

@@ -402,6 +402,7 @@ export function ThreadDetailModal({
             <textarea
               className="input textarea"
               rows={4}
+              data-enter-submit
               value={supplementDraft}
               onChange={(event) => setSupplementDraft(event.target.value)}
               placeholder="例如：题目是第 3 题，我算到特征方程这一步就不会了；附上我的草稿……"

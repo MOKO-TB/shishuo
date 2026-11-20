@@ -871,6 +871,8 @@ export function StudentView({
             <textarea
               ref={askInputRef}
               className="ask-input"
+              data-tab-fill
+              data-enter-submit
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               onKeyDown={(event) => {
