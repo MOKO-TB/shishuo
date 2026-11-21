@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1024px;
+        height: 1024px;
+        overflow: hidden;
+        background: transparent;
+      }
+      svg {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Android 12 会把启动图标裁成圆形，这里直接按圆形构图，避免金点被切 -->
+    <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="512" cy="512" r="500" fill="#14211c" />
+      <g transform="translate(512 512) scale(10.5) translate(-32 -32)">
+        <path
+          d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8h-1a6 6 0 0 1-6-6V18Z"
+          fill="#f6f1e5"
+        />
+        <path
+          d="M26 34a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5h-2v6l-7-6H31a5 5 0 0 1-5-5v-9Z"
+          fill="#2f8a70"
+        />
+        <circle cx="50" cy="52" r="5" fill="#d8a52a" />
+      </g>
+    </svg>
+  </body>
+</html>

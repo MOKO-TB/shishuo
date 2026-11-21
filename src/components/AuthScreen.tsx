@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
 import { readRememberedEmail } from '../lib/authStorage'
+import { isNativeApp, setAuthStatusDark } from '../lib/nativeShell'
 import { loadTheme, toggleTheme, type Theme } from '../lib/theme'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
 import { majorOptions } from '../data/major'
@@ -51,6 +52,27 @@ export function AuthScreen() {
   const [registerRole, setRegisterRole] = useState<'student' | 'teacher'>('student')
   const [inviteCode, setInviteCode] = useState('')
   const [teacherCourses, setTeacherCourses] = useState<string[]>([])
+
+  // 登录页顶部是深色 hero：状态栏用浅色图标；滚到表单区后恢复主题色。
+  useEffect(() => {
+    if (!isNativeApp()) return
+    const story = document.querySelector<HTMLElement>('.auth-story')
+    const sync = () => {
+      const inset =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top'),
+        ) || 0
+      setAuthStatusDark(story ? story.getBoundingClientRect().bottom > inset + 1 : true)
+    }
+    sync()
+    window.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => {
+      window.removeEventListener('scroll', sync)
+      window.removeEventListener('resize', sync)
+      setAuthStatusDark(false)
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false

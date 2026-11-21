@@ -6,17 +6,12 @@ import {
   type ScoreRow,
   type StudentProfile,
 } from './profile'
+import { saveOrShareFile } from './nativeShell'
 
 export function downloadText(filename: string, text: string, mime: string) {
   const blob = new Blob([text], { type: mime })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  // Web 走浏览器下载；原生壳走缓存文件 + 系统分享面板。
+  void saveOrShareFile(blob, filename).catch(() => {})
 }
 
 function icsText(value: string) {

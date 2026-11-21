@@ -55,9 +55,13 @@ import {
   ASK_IMAGE_ACCEPT,
   fileExtension,
   formatFileSize,
+  isImageFile,
   prepareAttachment,
 } from '../lib/attachment'
 import { uploadThreadImage } from '../lib/image'
+import { isNativeApp } from '../lib/nativeShell'
+import { useAttachmentConsent } from '../components/AttachmentConsent'
+import { usePhotoAccess } from '../components/PhotoAccess'
 import type {
   AnswerResult,
   Faq,
@@ -187,6 +191,8 @@ export function StudentView({
 }: StudentViewProps) {
   const { data, dispatch } = useStore()
   const { user } = useAuth()
+  const { requestConsent } = useAttachmentConsent()
+  const { pickImages } = usePhotoAccess()
   const studentId = user?.id ?? ''
   const profile = useProfile()
   const courses = useMemo(() => studentCourses(profile), [profile])
@@ -464,9 +470,14 @@ export function StudentView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseRequest, onCourseRequestHandled])
 
-  const chooseImage = () => {
+  const chooseImage = async () => {
     if (thinking || attachmentBusy) return
-    imageInputRef.current?.click()
+    const result = await pickImages({ multiple: false })
+    if (result === 'fallback') {
+      imageInputRef.current?.click()
+      return
+    }
+    if (result?.length) await attachFile(result[0], { skipConsent: true })
   }
 
   const chooseFile = () => {
@@ -474,17 +485,33 @@ export function StudentView({
     fileInputRef.current?.click()
   }
 
-  /** 图片和资料共用：图片压缩上传，文档在本地解析成文字。 */
-  const attachFile = async (file: File) => {
+  /** 图片和资料共用：先过隐私授权门，再压缩上传或本地解析。 */
+  const attachFile = async (file: File, options?: { skipConsent?: boolean }) => {
     if (thinking || attachmentBusy) return
+    const image = isImageFile(file)
+    let teacherVisible = attachmentVisible
+    if (!options?.skipConsent) {
+      const consent = await requestConsent({
+        scene: 'student-ask',
+        kind: image ? 'image' : 'file',
+        fileNames: [file.name],
+        totalBytes: file.size,
+        allowTeacherVisibleToggle: image,
+        defaultTeacherVisible: attachmentVisible,
+      })
+      if (!consent) return
+      teacherVisible = image ? consent.teacherVisible : true
+    }
     setAttachmentBusy(true)
     try {
       const prepared = await prepareAttachment(file)
       setAttachment(prepared)
-      setAttachmentVisible(true)
+      setAttachmentVisible(image ? teacherVisible : true)
       notify(
         prepared.kind === 'image'
-          ? '图片已上传，可设置是否让老师查看原图'
+          ? teacherVisible
+            ? '图片已上传，任课老师可以看到原图'
+            : '图片已上传，仅用于 AI 识别，老师看不到原图'
           : `已读取《${prepared.name}》，发送后会交给 AI 分析`,
       )
     } catch (error) {
@@ -498,7 +525,7 @@ export function StudentView({
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    await attachFile(file)
+    await attachFile(file, { skipConsent: isNativeApp() })
   }
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -1098,11 +1125,13 @@ export function StudentView({
                             ? ` · 已读取 ${attachment.text.length.toLocaleString()} 字`
                             : ''
                         }${aiReady ? '；发送后交给 AI 分析' : '；服务端 AI 就绪后可分析'}`
-                      : aiReady && aiVision
-                        ? '模型会识别题图和题面；图片也会随问题给老师看'
-                        : aiReady
-                          ? '图片会随问题给老师看；当前模型未开启图片识别'
-                          : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
+                      : !attachmentVisible
+                        ? '仅用于 AI 识别，任课老师与同班同学看不到原图'
+                        : aiReady && aiVision
+                          ? '模型会识别题图和题面；图片也会随问题给老师看'
+                          : aiReady
+                            ? '图片会随问题给老师看；当前模型未开启图片识别'
+                            : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
                   </span>
                 </div>
                 <button

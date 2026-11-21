@@ -19,6 +19,9 @@ export function applyTheme(theme: Theme) {
   } catch {
     // 忽略存储失败；当前会话仍然生效。
   }
+  // 浏览器地址栏 / 原生系统栏都跟随页面底色。
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0f1714' : '#f4f0e6')
 }
 
 export function toggleTheme(): Theme {

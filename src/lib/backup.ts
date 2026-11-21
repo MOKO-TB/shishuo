@@ -226,12 +226,27 @@ function sanitizeThread(value: unknown): Thread | null {
       typeof attachment.url === 'string' && /^\/uploads\/img_[a-f0-9]+\.(jpg|jpeg|png|webp)$/i.test(attachment.url)
         ? attachment.url
         : undefined
-    if (dataUrl || url) {
+    const kind =
+      attachment.kind === 'document' ? 'document' : attachment.kind === 'image' ? 'image' : undefined
+    const size =
+      typeof attachment.size === 'number' && Number.isFinite(attachment.size) && attachment.size >= 0
+        ? Math.min(attachment.size, 50 * 1024 * 1024)
+        : undefined
+    const excerpt = optionalString(attachment.excerpt)?.slice(0, 500)
+    // 学生文档只保存在本机解析出的摘要，没有 URL；不能因为缺 URL 就丢掉。
+    if (dataUrl || url || kind === 'document') {
       thread.attachment = {
         ...(dataUrl ? { dataUrl } : {}),
         ...(url ? { url } : {}),
-        name: str(attachment.name, '题目图片'),
-        type: str(attachment.type, 'image/png'),
+        name: str(attachment.name, kind === 'document' ? '课程资料' : '题目图片'),
+        type: str(attachment.type, kind === 'document' ? 'text/plain' : 'image/png'),
+        ...(kind ? { kind } : {}),
+        ...(size !== undefined ? { size } : {}),
+        ...(excerpt ? { excerpt } : {}),
+        // 备份恢复不能把“仅 AI 可见”降级成默认可见。
+        ...(typeof attachment.teacherVisible === 'boolean'
+          ? { teacherVisible: attachment.teacherVisible }
+          : {}),
       }
     }
   }

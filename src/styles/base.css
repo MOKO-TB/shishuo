@@ -191,6 +191,7 @@
 
 html {
   min-width: 320px;
+  background: var(--paper);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -198,6 +199,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
@@ -221,6 +223,7 @@ body::before {
 #root {
   position: relative;
   z-index: 1;
+  min-height: 100dvh;
 }
 
 ::selection {

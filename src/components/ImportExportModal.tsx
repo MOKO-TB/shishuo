@@ -12,6 +12,7 @@ import { useStore } from '../store'
 import { courseById, teacherByName } from '../data/seed'
 import type { Faq, Role } from '../types'
 import { questionSimilarity } from '../lib/engine'
+import { downloadText as downloadFile } from '../lib/export'
 import { makeId } from '../lib/utils'
 import { Badge, Modal } from './ui'
 
@@ -170,16 +171,6 @@ function recordToRow(record: Record<string, unknown>, index: number): ParsedRow 
 
 function csvCell(value: string) {
   return `"${value.replace(/"/g, '""')}"`
-}
-
-function downloadFile(name: string, content: string, type: string) {
-  const blob = new Blob([content], { type })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = name
-  anchor.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
 }
 
 const SAMPLE_CSV = `\uFEFF问题,答案,标签,别名,章节

@@ -41,3 +41,6 @@ __pycache__/
 # 打包产物
 *.tar.gz
 *.zip
+
+# Android 内测 APK（本地产物，不入库）
+dev/builds/

@@ -23,6 +23,7 @@ import { isPilotCourse } from './data/pilot'
 import { studentCourses, useProfile, visibleTeachers } from './lib/profile'
 import { useAuth } from './auth'
 import { usePlaceholderTab } from './lib/placeholderTab'
+import { closeTopOverlay } from './lib/overlayStack'
 import type { FaqPrefill, Role, ViewKey } from './types'
 
 export default function App() {
@@ -293,6 +294,60 @@ export default function App() {
       notification.recipientId === notificationRecipient &&
       scopedCourseIds.has(notification.courseId),
   ).length
+
+  // 安卓返回键：先关最上层弹窗/抽屉，再回首页，最后才让原生退出。
+  const nativeBackRef = useRef<() => boolean>(() => false)
+  useEffect(() => {
+    nativeBackRef.current = () => {
+      if (closeTopOverlay()) return true
+      if (accountOpen) {
+        setAccountOpen(false)
+        return true
+      }
+      if (faqModal) {
+        setFaqModal(null)
+        return true
+      }
+      if (backupOpen) {
+        setBackupOpen(false)
+        return true
+      }
+      if (notificationsOpen) {
+        setNotificationsOpen(false)
+        return true
+      }
+      if (guideOpen) {
+        setGuideOpen(false)
+        return true
+      }
+      if (resetOpen) {
+        setResetOpen(false)
+        return true
+      }
+      if (mentorOpen) {
+        closeMentor()
+        return true
+      }
+      if (focusThread) {
+        setFocusThread(null)
+        return true
+      }
+      const home: ViewKey = accountRole === 'teacher' ? 'teacher' : 'student'
+      if (view !== home) {
+        navigate(home)
+        return true
+      }
+      return false
+    }
+  })
+
+  useEffect(() => {
+    const shellWindow = window as typeof window & { __shishuoNativeBack?: () => boolean }
+    shellWindow.__shishuoNativeBack = () => nativeBackRef.current()
+    return () => {
+      delete shellWindow.__shishuoNativeBack
+    }
+  }, [])
 
   return (
     <>

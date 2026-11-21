@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#14211C</color>
+    <color name="colorPrimaryDark">#14211C</color>
+    <color name="colorAccent">#146C56</color>
+    <!-- 与网页 bg 变量、mark.svg 的底色保持一致，避免启动闪白 -->
+    <color name="appBackground">#F4F0E6</color>
+    <color name="splashBackground">#F4F0E6</color>
+</resources>

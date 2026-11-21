@@ -27,6 +27,11 @@ import { majorOptions } from '../data/major'
 import { useStore } from '../store'
 import { useAuth } from '../auth'
 import {
+  rememberAttachmentConsent,
+  resetAttachmentConsent,
+  shouldAskAttachmentConsent,
+} from '../lib/attachmentConsent'
+import {
   DEFAULT_JW_BASE,
   JW_BROWSER_HELP,
   finishJwLogin,
@@ -312,6 +317,52 @@ function JwLoginFields({
   )
 }
 
+function AttachmentPrivacyGroup({
+  ask,
+  onChange,
+}: {
+  ask: boolean
+  onChange: (next: boolean) => void
+}) {
+  return (
+    <section className="settings-group" aria-labelledby="settings-attachment-privacy">
+      <h3 className="settings-group-title" id="settings-attachment-privacy">
+        隐私与附件
+      </h3>
+      <div className="settings-row-list">
+        <label className="settings-row">
+          <span className="settings-row-copy">
+            <strong>上传前确认</strong>
+            <small>网页版与文件上传前确认；App 内照片由系统相册权限管理。</small>
+          </span>
+          <input
+            className="settings-switch"
+            type="checkbox"
+            checked={ask}
+            onChange={(event) => onChange(event.target.checked)}
+          />
+        </label>
+        <div className="settings-row is-static">
+          <span className="settings-row-copy">
+            <strong>照片走系统权限，文件逐次授权</strong>
+            <small>
+              App 内允许相册权限后可以浏览相册，但只会发送你本次选中的照片；文件由系统选择器逐次授权，安卓没有普通应用的“访问全部文件”权限。
+            </small>
+          </span>
+        </div>
+        <div className="settings-row is-static">
+          <span className="settings-row-copy">
+            <strong>附件可见性</strong>
+            <small>
+              学生题图可选择是否让任课老师查看原图；课程 FAQ 附件对本课程学生可见；管理员可能因内容审核查看附件。
+            </small>
+          </span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function AccountModal({
   open,
   initialTab = 'identity',
@@ -322,6 +373,7 @@ export function AccountModal({
   const profile = useProfile()
   const { user, logout: logoutAccount } = useAuth()
   const { data } = useStore()
+  const [askAttachment, setAskAttachment] = useState(() => shouldAskAttachmentConsent())
   const [tab, setTab] = useState<TabKey>('identity')
   const [teacherQuery, setTeacherQuery] = useState('')
   const tabsRef = useRef<HTMLDivElement>(null)
@@ -765,6 +817,12 @@ export function AccountModal({
       : '课程表'
   const staleSchedule = displayEntries.length > 0 && displayEntries.every((entry) => !entry.startTime && !entry.weeks)
 
+  const updateAttachmentAsking = (next: boolean) => {
+    setAskAttachment(next)
+    if (next) resetAttachmentConsent()
+    else rememberAttachmentConsent()
+  }
+
   // 教师端没有学生课表/成绩，设置页只展示账号与退出，避免误改学生资料。
   if (user?.role === 'teacher') {
     const TeacherShell = variant === 'page' ? PageSheet : Modal
@@ -807,6 +865,8 @@ export function AccountModal({
               </div>
             </div>
           </section>
+
+          <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
 
           <section className="settings-group is-danger" aria-labelledby="settings-teacher-danger">
             <h3 className="settings-group-title" id="settings-teacher-danger">
@@ -1037,6 +1097,8 @@ export function AccountModal({
               </label>
             </div>
           </section>
+
+          <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
 
           <section className="settings-group" aria-labelledby="settings-notes">
             <h3 className="settings-group-title" id="settings-notes">

@@ -17,6 +17,9 @@ import { useStore } from '../store'
 import { answerWithExternalAI, errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
 import { imageUrlToDataUrl, prepareImage, uploadThreadImage } from '../lib/image'
 import { formatFileSize, isDocumentAttachment } from '../lib/attachment'
+import { isNativeApp } from '../lib/nativeShell'
+import { useAttachmentConsent } from './AttachmentConsent'
+import { usePhotoAccess } from './PhotoAccess'
 import { mentorBriefForCourse } from '../data/mentor'
 import { courseById } from '../data/seed'
 import type { Faq, ThreadAttachment, ThreadGroup } from '../types'
@@ -78,6 +81,8 @@ export function TeacherReplyDrawer({
   openFaq,
 }: TeacherReplyDrawerProps) {
   const { data, dispatch } = useStore()
+  const { requestConsent } = useAttachmentConsent()
+  const { pickImages } = usePhotoAccess()
   const [draft, setDraft] = useState('')
   const [sediment, setSediment] = useState(true)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -321,10 +326,17 @@ export function TeacherReplyDrawer({
     onClose()
   }
 
-  const handleReplyImage = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
+  const handleReplyImageFile = async (file: File, options?: { skipConsent?: boolean }) => {
+    if (uploadingAttachment) return
+    if (!options?.skipConsent) {
+      const consent = await requestConsent({
+        scene: 'teacher-reply',
+        kind: 'image',
+        fileNames: [file.name],
+        totalBytes: file.size,
+      })
+      if (!consent) return
+    }
     setUploadingAttachment(true)
     try {
       const prepared = await prepareImage(file)
@@ -340,6 +352,23 @@ export function TeacherReplyDrawer({
     } finally {
       setUploadingAttachment(false)
     }
+  }
+
+  const handleReplyImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    await handleReplyImageFile(file, { skipConsent: isNativeApp() })
+  }
+
+  const chooseReplyImage = async () => {
+    if (uploadingAttachment) return
+    const result = await pickImages({ multiple: false })
+    if (result === 'fallback') {
+      replyFileRef.current?.click()
+      return
+    }
+    if (result?.length) await handleReplyImageFile(result[0], { skipConsent: true })
   }
 
   const rewriteDraft = async (style: 'shorter' | 'clearer') => {
@@ -938,7 +967,7 @@ export function TeacherReplyDrawer({
                   <button
                     type="button"
                     className="text-button reply-image-button"
-                    onClick={() => replyFileRef.current?.click()}
+                    onClick={() => void chooseReplyImage()}
                     disabled={uploadingAttachment}
                   >
                     <ImagePlus size={13} />

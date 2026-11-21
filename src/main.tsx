@@ -6,13 +6,17 @@ import 'katex/dist/katex.min.css'
 import { Loader2 } from 'lucide-react'
 import App from './App'
 import { AuthProvider, useAuth } from './auth'
+import { AttachmentConsentProvider } from './components/AttachmentConsent'
+import { PhotoAccessProvider } from './components/PhotoAccess'
 import { AuthScreen } from './components/AuthScreen'
 import { BrandMark } from './components/ui'
 import { applyTheme, loadTheme } from './lib/theme'
+import { installNativeChrome } from './lib/nativeShell'
 import { StoreProvider } from './store'
 import './styles.css'
 
 applyTheme(loadTheme())
+installNativeChrome()
 
 function Root() {
   const { user, loading, logout } = useAuth()
@@ -63,7 +67,11 @@ function Root() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <Root />
+      <AttachmentConsentProvider>
+        <PhotoAccessProvider>
+          <Root />
+        </PhotoAccessProvider>
+      </AttachmentConsentProvider>
     </AuthProvider>
   </StrictMode>,
 )

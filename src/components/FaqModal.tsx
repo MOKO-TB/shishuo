@@ -33,6 +33,9 @@ import {
 } from '../lib/attachment'
 import { Badge, Modal, RichText, Seal } from './ui'
 import { FaqAttachments } from './FaqAttachments'
+import { useAttachmentConsent } from './AttachmentConsent'
+import { usePhotoAccess } from './PhotoAccess'
+import { isNativeApp } from '../lib/nativeShell'
 
 export interface FaqModalState {
   mode: 'view' | 'edit' | 'create'
@@ -82,6 +85,8 @@ export function FaqModal({
   notify,
 }: FaqModalProps) {
   const { data, dispatch } = useStore()
+  const { requestConsent } = useAttachmentConsent()
+  const { pickImages } = usePhotoAccess()
   const faq = state?.faqId ? data.faqs.find((item) => item.id === state.faqId) : undefined
   const [form, setForm] = useState<FaqForm>(emptyForm)
   const [error, setError] = useState<string | null>(null)
@@ -232,7 +237,7 @@ export function FaqModal({
     setForm({ ...form, tags: [...tags, tag].join('，') })
   }
 
-  const addAttachments = async (files: File[]) => {
+  const addAttachments = async (files: File[], options?: { skipConsent?: boolean }) => {
     if (attachmentBusyRef.current || files.length === 0) return
     const room = MAX_FAQ_ATTACHMENTS - attachments.length
     if (room <= 0) {
@@ -240,6 +245,15 @@ export function FaqModal({
       return
     }
     const selected = files.slice(0, room)
+    if (!options?.skipConsent) {
+      const consent = await requestConsent({
+        scene: 'teacher-faq',
+        kind: selected.every((file) => file.type.startsWith('image/')) ? 'image' : 'file',
+        fileNames: selected.map((file) => file.name),
+        totalBytes: selected.reduce((sum, file) => sum + file.size, 0),
+      })
+      if (!consent) return
+    }
     attachmentBusyRef.current = true
     setAttachmentBusy(true)
     setAttachmentError(
@@ -267,10 +281,23 @@ export function FaqModal({
     if (failed.length > 0) setAttachmentError(failed.join('；'))
   }
 
-  const handleAttachmentInput = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentInput = (
+    event: ChangeEvent<HTMLInputElement>,
+    options?: { skipConsent?: boolean },
+  ) => {
     const files = Array.from(event.target.files ?? [])
     event.target.value = ''
-    if (files.length > 0) void addAttachments(files)
+    if (files.length > 0) void addAttachments(files, options)
+  }
+
+  const chooseFaqImages = async () => {
+    if (attachmentBusyRef.current || attachmentBusy) return
+    const result = await pickImages({ multiple: true })
+    if (result === 'fallback') {
+      imageInputRef.current?.click()
+      return
+    }
+    if (result?.length) await addAttachments(result, { skipConsent: true })
   }
 
   const handleAttachmentDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -548,7 +575,9 @@ export function FaqModal({
                   accept={ASK_IMAGE_ACCEPT}
                   multiple
                   hidden
-                  onChange={handleAttachmentInput}
+                  onChange={(event) =>
+                    handleAttachmentInput(event, { skipConsent: isNativeApp() })
+                  }
                 />
                 <input
                   ref={fileInputRef}
@@ -561,7 +590,7 @@ export function FaqModal({
                 <button
                   type="button"
                   className="button button-ghost"
-                  onClick={() => imageInputRef.current?.click()}
+                  onClick={() => void chooseFaqImages()}
                   disabled={attachmentBusy}
                 >
                   {attachmentBusy ? (

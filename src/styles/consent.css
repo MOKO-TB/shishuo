@@ -1,0 +1,227 @@
+/* 附件隐私授权弹窗：层级高于普通 modal，避免被 FAQ / 回复抽屉盖住。 */
+
+.modal-layer.consent-layer {
+  z-index: 200;
+}
+
+.consent-panel .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.consent-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.consent-scope {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--bg-accent);
+  border-radius: var(--radius-lg);
+  background: var(--bg-accent-mist);
+}
+
+.consent-scope-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-accent);
+  color: var(--accent);
+}
+
+.consent-scope strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.consent-scope p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+}
+
+.consent-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+.consent-fact svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.consent-files {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card-alt);
+}
+
+.consent-files-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--fg-soft);
+}
+
+.consent-files-head small {
+  margin-left: auto;
+  color: var(--fg-muted);
+}
+
+.consent-files ul {
+  margin: 7px 0 0;
+  padding: 0 0 0 22px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.consent-scene-copy {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+.consent-panel .consent-toggle {
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.consent-remember {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.consent-remember input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.consent-remember strong {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.consent-remember small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+.consent-audit {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}
+
+/* ---------- 原生相册权限被拒 ---------- */
+
+.modal-layer.photo-access-layer {
+  z-index: 210;
+}
+
+.photo-access-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.photo-access-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+
+.photo-access-lead {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.photo-access-note {
+  margin: 0;
+  max-width: 34em;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-muted);
+}
+
+.photo-access-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--accent);
+}
+
+.photo-access-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--danger);
+}
+
+.photo-access-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.photo-access-actions .button {
+  width: 100%;
+}
+
+.photo-access-fact {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}

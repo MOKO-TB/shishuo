@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { Confidence } from '../types'
 import { cn } from '../lib/utils'
+import { popOverlay, pushOverlay } from '../lib/overlayStack'
 
 export function BrandMark({ size = 40, className }: { size?: number; className?: string }) {
   return (
@@ -456,6 +457,7 @@ export function Toast({ toast, onClose }: { toast: ToastState | null; onClose: (
 function useOverlay(onClose: () => void, open: boolean) {
   useEffect(() => {
     if (!open) return
+    pushOverlay(onClose)
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
@@ -463,6 +465,7 @@ function useOverlay(onClose: () => void, open: boolean) {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
+      popOverlay(onClose)
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
     }
@@ -528,6 +531,7 @@ interface ModalProps {
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  layerClassName?: string
 }
 
 export function Modal({
@@ -539,6 +543,7 @@ export function Modal({
   footer,
   size = 'md',
   className,
+  layerClassName,
 }: ModalProps) {
   useOverlay(onClose, open)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -555,7 +560,7 @@ export function Modal({
   if (!open) return null
 
   return createPortal(
-    <div className="modal-layer">
+    <div className={cn('modal-layer', layerClassName)}>
       <div className="modal-backdrop" onMouseDown={onClose} />
       <div
         ref={panelRef}
