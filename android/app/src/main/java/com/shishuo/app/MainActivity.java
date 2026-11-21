@@ -10,6 +10,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 import java.util.Locale;
@@ -31,10 +32,11 @@ public class MainActivity extends BridgeActivity {
      * 新版网页带 viewport-fit=cover，自己消费安全区；旧版线上网页没有，
      * 需要回退成原生 padding，否则内容会钻到状态栏/手势条下面。
      */
-    private boolean edgeToEdgeWeb = false;
+    private boolean edgeToEdgeWeb = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         registerPlugin(PhotoAccessPlugin.class);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         super.onCreate(savedInstanceState);
