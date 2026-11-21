@@ -697,6 +697,28 @@ export function StudentView({
     )
   }
 
+  /** 课程问答的连续追问：带着原问题和已给出的回答，再检索一次知识库交给导师。 */
+  const followUpChat = async (
+    thread: Thread,
+    followUp: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) => {
+    if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能继续对话。')
+    const threadCourse = courseById(thread.courseId)
+    const result = retrieve(data.faqs, followUp, thread.courseId)
+    const localContext = result.matches
+      .slice(0, 2)
+      .map((match) => `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`)
+      .join('\n\n')
+    return answerWithExternalAI({
+      question: followUp,
+      courseName: threadCourse.name,
+      localContext,
+      mentorBrief: mentorBriefForCourse(thread.courseId),
+      history,
+    })
+  }
+
   const withdrawThread = (thread: Thread, withdrawn: boolean) => {
     dispatch({ type: 'thread-withdrawn', threadId: thread.id, withdrawn })
     notify(
@@ -1066,6 +1088,7 @@ export function StudentView({
                 onOpenFaq={openFaq}
                 onTeach={() => setTeachOpen(true)}
                 onOpenDetail={() => setDetailThreadId(activeThread.id)}
+                onFollowUpChat={followUpChat}
               />
             </div>
           )}
@@ -1308,22 +1331,7 @@ export function StudentView({
           setDetailThreadId(null)
           setFollowUpThread(thread)
         }}
-        onThreadFollowUp={async (thread, followUp, history) => {
-          if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能连续追问。')
-          const threadCourse = courseById(thread.courseId)
-          const result = retrieve(data.faqs, followUp, thread.courseId)
-          const localContext = result.matches
-            .slice(0, 2)
-            .map((match) => `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`)
-            .join('\n\n')
-          return answerWithExternalAI({
-            question: followUp,
-            courseName: threadCourse.name,
-            localContext,
-            mentorBrief: mentorBriefForCourse(thread.courseId),
-            history,
-          })
-        }}
+        onThreadFollowUp={followUpChat}
         notify={notify}
       />
       <ReviewModal

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   ArrowRight,
   BookOpen,
@@ -7,6 +8,8 @@ import {
   CornerDownRight,
   GraduationCap,
   KeyRound,
+  MessageCircle,
+  Send,
   ShieldCheck,
 } from 'lucide-react'
 import { useStore } from '../store'
@@ -36,6 +39,12 @@ interface AnswerCardProps {
   onOpenFaq: (faqId: string) => void
   onTeach?: () => void
   onOpenDetail?: () => void
+  /** 接着这条回答继续和 AI 聊；带原问题与已给出的回答作为上下文。 */
+  onFollowUpChat?: (
+    thread: Thread,
+    question: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) => Promise<{ text: string; model: string }>
 }
 
 export function AnswerCard({
@@ -48,8 +57,58 @@ export function AnswerCard({
   onOpenFaq,
   onTeach,
   onOpenDetail,
+  onFollowUpChat,
 }: AnswerCardProps) {
   const { data } = useStore()
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatDraft, setChatDraft] = useState('')
+  const [chatBusy, setChatBusy] = useState(false)
+  const [chatError, setChatError] = useState('')
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; text: string }>
+  >([])
+  const chatInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setChatOpen(false)
+    setChatDraft('')
+    setChatBusy(false)
+    setChatError('')
+    setChatMessages([])
+  }, [thread.id])
+
+  const openChat = () => {
+    setChatOpen(true)
+    window.setTimeout(() => chatInputRef.current?.focus(), 40)
+  }
+
+  const submitChat = async (event: FormEvent) => {
+    event.preventDefault()
+    const question = chatDraft.trim()
+    if (!question || chatBusy || !onFollowUpChat) return
+    const initialAnswer =
+      thread.externalAnswer?.text || thread.aiAnswer || thread.teacherReply?.text || ''
+    const history = [
+      { role: 'user' as const, content: thread.question },
+      ...(initialAnswer ? [{ role: 'assistant' as const, content: initialAnswer }] : []),
+      ...chatMessages.map((message) => ({
+        role: message.role,
+        content: message.text,
+      })),
+    ]
+    setChatDraft('')
+    setChatError('')
+    setChatMessages((current) => [...current, { role: 'user', text: question }])
+    setChatBusy(true)
+    try {
+      const answer = await onFollowUpChat(thread, question, history)
+      setChatMessages((current) => [...current, { role: 'assistant', text: answer.text }])
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : '继续对话失败，请稍后再试。')
+    } finally {
+      setChatBusy(false)
+    }
+  }
   const course = courseById(thread.courseId)
   const mentor = mentorForCourse(thread.courseId)
   const sourceFaqs = (thread.sources ?? [])
@@ -319,6 +378,63 @@ export function AnswerCard({
           </>
         )}
       </footer>
+
+      {onFollowUpChat && !thread.withdrawnAt && (
+        <section className={`answer-chat ${chatOpen ? 'is-open' : ''}`}>
+          {chatOpen && (
+            <div className="answer-chat-head">
+              <strong>继续对话</strong>
+              <span>会带着这条回答和上下文</span>
+            </div>
+          )}
+          {chatMessages.length > 0 && (
+            <div className="answer-chat-messages">
+              {chatMessages.map((message, index) => (
+                <div
+                  className={`answer-chat-row is-${message.role}`}
+                  key={`${message.role}-${index}`}
+                >
+                  <strong>{message.role === 'user' ? '你' : 'AI 助教'}</strong>
+                  <RichText text={message.text} />
+                </div>
+              ))}
+              {chatBusy && <p className="answer-chat-typing">AI 正在接着想…</p>}
+            </div>
+          )}
+          {chatError && <p className="answer-chat-error">{chatError}</p>}
+          {chatOpen ? (
+            <form className="answer-chat-form" onSubmit={submitChat}>
+              <input
+                ref={chatInputRef}
+                value={chatDraft}
+                onChange={(event) => setChatDraft(event.target.value)}
+                placeholder="接着问，比如：这一步为什么要先检查先修？"
+                aria-label="继续对话"
+                disabled={chatBusy}
+              />
+              <button
+                className="button button-primary"
+                type="submit"
+                disabled={!chatDraft.trim() || chatBusy}
+              >
+                <Send size={14} />
+                {chatBusy ? '回答中…' : '发送'}
+              </button>
+            </form>
+          ) : (
+            <button type="button" className="answer-chat-entry" onClick={openChat}>
+              <span className="answer-chat-mark">
+                <MessageCircle size={16} />
+              </span>
+              <span className="answer-chat-copy">
+                <strong>继续对话</strong>
+                <span>还有没懂的？接着这条回答问 AI，会带着上下文回答。</span>
+              </span>
+              <ArrowRight size={15} />
+            </button>
+          )}
+        </section>
+      )}
     </article>
   )
 }
