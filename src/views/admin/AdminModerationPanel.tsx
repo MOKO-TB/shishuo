@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CircleAlert,
+  FileText,
   ImageOff,
   RefreshCw,
   ShieldAlert,
@@ -106,7 +107,9 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
     const normalized = threadQuery.trim().toLowerCase()
     return threads.filter((thread) => {
       if (threadFilter === 'flagged' && !thread.matchedTerm) return false
-      if (threadFilter === 'images' && !thread.attachment) return false
+      if (threadFilter === 'images') {
+        if (!thread.attachment || thread.attachment.kind === 'document') return false
+      }
       if (
         threadFilter === 'pending' &&
         thread.review !== 'pending' &&
@@ -599,11 +602,23 @@ export function AdminModerationPanel({ notify }: AdminModerationPanelProps) {
                   <strong>{thread.question}</strong>
                   {thread.attachment && (
                     <div className="admin-mod-attachment">
-                      <a href={thread.attachment.url} target="_blank" rel="noreferrer">
-                        <img src={thread.attachment.url} alt="附件" loading="lazy" />
-                      </a>
+                      {thread.attachment.kind === 'document' ? (
+                        <span className="admin-mod-doc">
+                          <FileText size={16} />
+                          {thread.attachment.name || '文件附件'}
+                        </span>
+                      ) : (
+                        <a href={thread.attachment.url} target="_blank" rel="noreferrer">
+                          <img src={thread.attachment.url} alt="附件" loading="lazy" />
+                        </a>
+                      )}
                       <span>
-                        附件：{thread.attachment.name || '图片'} · {reviewLabel(thread.attachment.review)}
+                        附件：{thread.attachment.name || (thread.attachment.kind === 'document' ? '文件' : '图片')}
+                        {thread.attachment.kind === 'document'
+                          ? thread.attachment.excerpt
+                            ? ` · 摘要：${thread.attachment.excerpt.slice(0, 80)}`
+                            : ' · 文档'
+                          : ` · ${reviewLabel(thread.attachment.review)}`}
                       </span>
                     </div>
                   )}

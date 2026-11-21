@@ -338,6 +338,42 @@
   border-color: var(--jade);
 }
 
+.thread-attachment-doc {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  color: var(--jade);
+}
+
+.thread-attachment-doc > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.thread-attachment-doc strong {
+  font-size: var(--text-meta);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-attachment-doc span {
+  font-size: var(--text-meta);
+  line-height: 1.55;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .thread-external-mark {
   width: 27px;
   height: 27px;

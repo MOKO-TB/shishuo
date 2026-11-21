@@ -7,6 +7,7 @@ import {
   CircleCheck,
   Clock3,
   CornerDownRight,
+  FileText,
   KeyRound,
   Link2,
   Send,
@@ -16,6 +17,7 @@ import {
 import { useStore } from '../store'
 import { courseById } from '../data/seed'
 import type { Thread } from '../types'
+import { formatFileSize, isDocumentAttachment } from '../lib/attachment'
 import {
   confidenceLabel,
   copyText,
@@ -317,19 +319,34 @@ export function ThreadDetailModal({
             </div>
             <p className="student-question">{thread.question}</p>
             {thread.attachment && (
-              <a
-                className="thread-attachment-link"
-                href={thread.attachment.url ?? thread.attachment.dataUrl}
-                target="_blank"
-                rel="noreferrer"
-                title="查看原图"
-              >
-                <img
-                  className="thread-attachment"
-                  src={thread.attachment.url ?? thread.attachment.dataUrl}
-                  alt="学生上传的题目图片"
-                />
-              </a>
+              isDocumentAttachment(thread.attachment) ? (
+                <div className="thread-attachment-doc">
+                  <FileText size={16} />
+                  <div>
+                    <strong>{thread.attachment.name}</strong>
+                    <span>
+                      {formatFileSize(thread.attachment.size)}
+                      {thread.attachment.excerpt
+                        ? `${formatFileSize(thread.attachment.size) ? ' · ' : ''}${thread.attachment.excerpt.slice(0, 120)}`
+                        : '课程资料附件'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  className="thread-attachment-link"
+                  href={thread.attachment.url ?? thread.attachment.dataUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="查看原图"
+                >
+                  <img
+                    className="thread-attachment"
+                    src={thread.attachment.url ?? thread.attachment.dataUrl}
+                    alt="学生上传的题目图片"
+                  />
+                </a>
+              )
             )}
           </div>
         </div>

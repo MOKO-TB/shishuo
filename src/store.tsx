@@ -152,7 +152,7 @@ function reducer(state: AppData, action: Action): AppData {
       const studentName = anonymous ? '匿名同学' : target.student.name
       const extras = [
         action.joinedExistingGroup ? '已并入同题组' : '',
-        target.attachment ? '含题目图片' : '',
+        target.attachment ? '含附件' : '',
         target.externalAnswer ? '已用服务端 AI 补充' : '',
       ]
         .filter(Boolean)

@@ -3,6 +3,7 @@ import { ChevronRight, Download, Search, Star } from 'lucide-react'
 import { useStore } from '../store'
 import { courseById } from '../data/seed'
 import { downloadText } from '../lib/export'
+import { isDocumentAttachment } from '../lib/attachment'
 import { studentCourses, useProfile } from '../lib/profile'
 import { useAuth } from '../auth'
 import { excerpt, formatRelative, statusLabel, statusTone } from '../lib/utils'
@@ -313,7 +314,11 @@ export function QuestionArchive({
                       {thread.kind === 'follow-up' && (
                         <span className="recent-kind is-followup">追问</span>
                       )}
-                      {thread.attachment && <span className="recent-kind is-image">图片</span>}
+                      {thread.attachment && (
+                        <span className="recent-kind is-image">
+                          {isDocumentAttachment(thread.attachment) ? '文件' : '图片'}
+                        </span>
+                      )}
                       {thread.externalAnswer && (
                         <span className="recent-kind is-external">AI补充</span>
                       )}

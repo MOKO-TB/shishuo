@@ -13,6 +13,7 @@ import { useAuth } from '../auth'
 import { allCourses, courseById, dateKey, isSeededCourse, teacherByName } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
 import { computeGaps, groupPendingThreads } from '../lib/engine'
+import { isDocumentAttachment } from '../lib/attachment'
 import { useProfile, visibleTeachers } from '../lib/profile'
 import { downloadText } from '../lib/export'
 import type { KnowledgeGap, Thread, ThreadGroup } from '../types'
@@ -113,7 +114,10 @@ export function TeacherView({
       if (needle && !haystack.includes(needle)) return false
       if (queueFilter === 'today') return group.urgency === 'today'
       if (queueFilter === 'follow-up') return group.primary.kind === 'follow-up'
-      if (queueFilter === 'image') return group.threads.some((thread) => thread.attachment)
+      if (queueFilter === 'image')
+        return group.threads.some(
+          (thread) => thread.attachment && !isDocumentAttachment(thread.attachment),
+        )
       if (queueFilter === 'low') return group.primary.confidence === 'low'
       if (queueFilter === 'aged') return now - group.oldestAt >= 24 * 3_600_000
       return true

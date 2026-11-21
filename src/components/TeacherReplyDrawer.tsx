@@ -5,6 +5,7 @@ import {
   Check,
   CircleAlert,
   CornerDownRight,
+  FileText,
   ImagePlus,
   Loader2,
   Send,
@@ -15,6 +16,7 @@ import {
 import { useStore } from '../store'
 import { answerWithExternalAI, errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
 import { imageUrlToDataUrl, prepareImage, uploadThreadImage } from '../lib/image'
+import { formatFileSize, isDocumentAttachment } from '../lib/attachment'
 import { mentorBriefForCourse } from '../data/mentor'
 import { courseById } from '../data/seed'
 import type { Faq, ThreadAttachment, ThreadGroup } from '../types'
@@ -550,7 +552,11 @@ export function TeacherReplyDrawer({
                       <span>{formatRelative(thread.createdAt)}</span>
                       {thread.kind === 'same' && <Badge tone="gold">同问</Badge>}
                       {thread.kind === 'follow-up' && <Badge tone="blue">追问</Badge>}
-                      {thread.attachment && <Badge tone="outline">图片</Badge>}
+                      {thread.attachment && (
+                        <Badge tone="outline">
+                          {isDocumentAttachment(thread.attachment) ? '文件' : '图片'}
+                        </Badge>
+                      )}
                       {thread.externalAnswer && <Badge tone="blue">AI 补充</Badge>}
                       {thread.escalation?.auto && <Badge tone="clay">AI 自动转交</Badge>}
                       {thread.escalation?.urgency === 'today' && (
@@ -583,19 +589,34 @@ export function TeacherReplyDrawer({
                     </div>
                     <p>{thread.question}</p>
                     {thread.attachment && (
-                      <a
-                        className="teacher-question-image-link"
-                        href={thread.attachment.url ?? thread.attachment.dataUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="查看原图"
-                      >
-                        <img
-                          className="teacher-question-image"
-                          src={thread.attachment.url ?? thread.attachment.dataUrl}
-                          alt="学生上传的题目图片"
-                        />
-                      </a>
+                      isDocumentAttachment(thread.attachment) ? (
+                        <div className="thread-attachment-doc">
+                          <FileText size={16} />
+                          <div>
+                            <strong>{thread.attachment.name}</strong>
+                            <span>
+                              {formatFileSize(thread.attachment.size)}
+                              {thread.attachment.excerpt
+                                ? `${formatFileSize(thread.attachment.size) ? ' · ' : ''}${thread.attachment.excerpt.slice(0, 120)}`
+                                : '课程资料附件'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <a
+                          className="teacher-question-image-link"
+                          href={thread.attachment.url ?? thread.attachment.dataUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="查看原图"
+                        >
+                          <img
+                            className="teacher-question-image"
+                            src={thread.attachment.url ?? thread.attachment.dataUrl}
+                            alt="学生上传的题目图片"
+                          />
+                        </a>
+                      )
                     )}
                     {thread.externalAnswer && (
                       <details className="teacher-question-external">

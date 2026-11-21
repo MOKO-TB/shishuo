@@ -113,6 +113,9 @@ export interface ModerationThread {
     url: string
     name: string
     type: string
+    kind?: 'image' | 'document'
+    size?: number
+    excerpt?: string
     review: ReviewStatus
     reason: string
   } | null

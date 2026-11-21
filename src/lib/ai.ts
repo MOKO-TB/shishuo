@@ -360,6 +360,8 @@ export async function answerWithExternalAI({
   localContext,
   mentorBrief,
   imageDataUrl,
+  documentText,
+  documentName,
   history,
   onUpdate,
 }: {
@@ -368,6 +370,9 @@ export async function answerWithExternalAI({
   localContext: string
   mentorBrief?: string
   imageDataUrl?: string
+  /** 学生上传的 PDF / Word / 文本等资料，已由前端解析成纯文本。 */
+  documentText?: string
+  documentName?: string
   history?: Array<{ role: 'user' | 'assistant'; content: string }>
   onUpdate?: (partial: string) => void
 }) {
@@ -380,7 +385,13 @@ export async function answerWithExternalAI({
   const imageRule = imageDataUrl
     ? '\n6. 学生会同时提供题目图片：先读图和题干，明确题中已知、所求与图中标注，再回答；看不清就指出哪一处看不清，不要猜。'
     : ''
-  const userText = `学生的问题：${question}\n\n${contextBlock}`
+  const documentRule = documentText?.trim()
+    ? '\n7. 学生会同时提供课程资料文件：以文件内容为主要依据做分析，先概括文件在讲什么，再结合学生的问题提炼重点、步骤或易错点；不要编造文件里不存在的内容。'
+    : ''
+  const documentBlock = documentText?.trim()
+    ? `\n\n学生上传的文件《${documentName || '附件'}》内容（已提取纯文本，可能不完整）：\n"""\n${documentText.slice(0, 14_000)}\n"""\n请先通读文件，围绕学生的问题分析；引用文件内容时简要标注出处（如“第 2 页”“第 3 点”），看不清或缺失的部分直接说明。`
+    : ''
+  const userText = `学生的问题：${question}\n\n${contextBlock}${documentBlock}`
   const userContent: string | ContentPart[] = imageDataUrl
     ? [
         { type: 'text', text: userText },
@@ -397,7 +408,7 @@ export async function answerWithExternalAI({
 2. 再给必要步骤或一个具体例子；
 3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；
 4. 最后单独一行以“需要老师确认：”开头，列出仍需核对的地方；
-5. 控制在 500 字以内，不使用 Markdown 表格。${imageRule}${mentorBlock}`,
+5. 控制在 ${documentText?.trim() ? '900' : '500'} 字以内，不使用 Markdown 表格。${imageRule}${documentRule}${mentorBlock}`,
       },
       ...(history ?? []).slice(-8).map((item) => ({
         role: item.role,
@@ -408,7 +419,7 @@ export async function answerWithExternalAI({
         content: userContent,
       },
     ],
-    900,
+    documentText?.trim() ? 1_600 : 900,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: result.content.slice(0, 4_000), model: result.model }

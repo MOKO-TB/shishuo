@@ -6,6 +6,7 @@ export type ViewKey =
   | 'chaoxing'
   | 'campus'
   | 'insights'
+  | 'fandian'
   | 'about'
   | 'schedule'
 export type Confidence = 'high' | 'medium' | 'low'
@@ -96,6 +97,14 @@ export interface ThreadAttachment {
   url?: string
   name: string
   type: string
+  /** image = 题目截图；document = PDF / Word / 文本等资料。 */
+  kind?: 'image' | 'document'
+  /** 原始文件字节数，用于展示大小。 */
+  size?: number
+  /** 文档解析出的纯文本：只在发送时交给 AI，不随线程持久化。 */
+  text?: string
+  /** 文档正文摘要：存进线程，方便老师知道附件大概内容。 */
+  excerpt?: string
   /** false = 只给 AI 识别，任课老师与同班同学看不到原图。 */
   teacherVisible?: boolean
 }

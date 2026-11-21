@@ -14,6 +14,7 @@ import { TeacherView } from './views/TeacherView'
 import { KnowledgeView } from './views/KnowledgeView'
 import { CampusView } from './views/CampusView'
 import { InsightsView } from './views/InsightsView'
+import { FandianView } from './views/FandianView'
 import { AboutView } from './views/AboutView'
 import { useStore } from './store'
 import { groupPendingThreads } from './lib/engine'
@@ -56,10 +57,14 @@ export default function App() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const toastTimer = useRef<number | null>(null)
 
-  const notify = useCallback((message: string, tone: ToastState['tone'] = 'success') => {
+  const notify = useCallback((
+    message: string,
+    tone: ToastState['tone'] = 'success',
+    action?: { label: string; onAction: () => void },
+  ) => {
     if (toastTimer.current) window.clearTimeout(toastTimer.current)
-    setToast({ id: Date.now(), message, tone })
-    toastTimer.current = window.setTimeout(() => setToast(null), 4200)
+    setToast(action ? { id: Date.now(), message, tone, actionLabel: action.label, onAction: action.onAction } : { id: Date.now(), message, tone })
+    toastTimer.current = window.setTimeout(() => setToast(null), action ? 6000 : 4200)
   }, [])
 
   useEffect(
@@ -363,6 +368,7 @@ export default function App() {
         {!accountOpen && view === 'insights' && (
           <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
         )}
+        {!accountOpen && view === 'fandian' && <FandianView notify={notify} />}
         {!accountOpen && view === 'about' && (
           <AboutView
             onEnterStudent={() => switchRole('student')}

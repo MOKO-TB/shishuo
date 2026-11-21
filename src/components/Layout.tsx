@@ -18,6 +18,7 @@ import {
   Sparkles,
   Sun,
   UserCog,
+  UtensilsCrossed,
 } from "lucide-react";
 import type { Role, ViewKey } from "../types";
 import { teacherByName } from "../data/seed";
@@ -70,6 +71,7 @@ const breadcrumbMap: Record<ViewKey, { root: string; current: string }> = {
   chaoxing: { root: "学习空间", current: "学习通" },
   campus: { root: "校园空间", current: "校园生活" },
   insights: { root: "教师端", current: "答疑洞察" },
+  fandian: { root: "校园空间", current: "食堂决策" },
   about: { root: "关于师说", current: "方案说明" },
   schedule: { root: "学习空间", current: "我的课程表" },
 };
@@ -117,10 +119,10 @@ export function Layout({
         { key: "teacher", label: "待办台", icon: Inbox, badge: pendingCount },
         { key: "knowledge", label: "课程知识库", icon: BookOpen },
         {
-          key: "campus",
-          label: "校园知识库",
-          icon: Compass,
-          shortLabel: "校园",
+          key: "fandian",
+          label: "食堂决策",
+          icon: UtensilsCrossed,
+          shortLabel: "食堂",
         },
         { key: "insights", label: "答疑洞察", icon: BarChart3 },
       ]
@@ -372,14 +374,15 @@ export function Layout({
               <span>演示指引</span>
             </button>
             <button
-              className="bell-button"
+              className="theme-toggle"
               onClick={() => setTheme(toggleTheme())}
               aria-label={
                 theme === "dark" ? "切换到浅色模式" : "切换到深色模式"
               }
               title={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+              <span>{theme === "dark" ? "浅色" : "深色"}</span>
             </button>
             <button
               className="bell-button"

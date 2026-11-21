@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
+} from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -7,9 +15,12 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  FileText,
   ImagePlus,
   Layers,
+  Loader2,
   MessagesSquare,
+  Paperclip,
   Server,
   Send,
   Sparkles,
@@ -39,7 +50,14 @@ import {
   type AIConfig,
   type AIStatus,
 } from '../lib/ai'
-import { prepareImage, uploadThreadImage } from '../lib/image'
+import {
+  ASK_FILE_ACCEPT,
+  ASK_IMAGE_ACCEPT,
+  fileExtension,
+  formatFileSize,
+  prepareAttachment,
+} from '../lib/attachment'
+import { uploadThreadImage } from '../lib/image'
 import type {
   AnswerResult,
   Faq,
@@ -193,7 +211,7 @@ export function StudentView({
     question: string
     step: number
     topTitle?: string
-    mode?: 'local' | 'image' | 'external'
+    mode?: 'local' | 'image' | 'document' | 'external'
   } | null>(null)
   const [streamPreview, setStreamPreview] = useState('')
   const [aiConfig, setAiConfig] = useState<AIConfig>(() => loadAIConfig())
@@ -201,11 +219,14 @@ export function StudentView({
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
   const [attachment, setAttachment] = useState<ThreadAttachment | null>(null)
   const [attachmentVisible, setAttachmentVisible] = useState(true)
+  const [attachmentBusy, setAttachmentBusy] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
   const [askPreview, setAskPreview] = useState<{
     faq?: Faq
     group?: ThreadGroup
   } | null>(null)
   const courseStripRef = useRef<HTMLDivElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
   const [activeResult, setActiveResult] = useState<AnswerResult | null>(null)
@@ -444,23 +465,76 @@ export function StudentView({
   }, [courseRequest, onCourseRequestHandled])
 
   const chooseImage = () => {
-    if (thinking) return
+    if (thinking || attachmentBusy) return
+    imageInputRef.current?.click()
+  }
+
+  const chooseFile = () => {
+    if (thinking || attachmentBusy) return
     fileInputRef.current?.click()
+  }
+
+  /** 图片和资料共用：图片压缩上传，文档在本地解析成文字。 */
+  const attachFile = async (file: File) => {
+    if (thinking || attachmentBusy) return
+    setAttachmentBusy(true)
+    try {
+      const prepared = await prepareAttachment(file)
+      setAttachment(prepared)
+      setAttachmentVisible(true)
+      notify(
+        prepared.kind === 'image'
+          ? '图片已上传，可设置是否让老师查看原图'
+          : `已读取《${prepared.name}》，发送后会交给 AI 分析`,
+      )
+    } catch (error) {
+      notify(errorMessage(error), 'danger')
+    } finally {
+      setAttachmentBusy(false)
+    }
   }
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    try {
-      const prepared = await prepareImage(file)
-      const uploaded = await uploadThreadImage(prepared)
-      setAttachment({ ...prepared, url: uploaded.url })
-      setAttachmentVisible(true)
-      notify('图片已上传，可设置是否让老师查看原图')
-    } catch (error) {
-      notify(errorMessage(error), 'danger')
-    }
+    await attachFile(file)
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    await attachFile(file)
+  }
+
+  /** 支持把截图直接粘贴进问题框（Ctrl+V / 右键粘贴）。 */
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    if (thinking || attachmentBusy) return
+    const image = Array.from(event.clipboardData?.files ?? []).find((file) =>
+      file.type.startsWith('image/'),
+    )
+    if (!image) return
+    event.preventDefault()
+    void attachFile(image)
+  }
+
+  const handleAskDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!Array.from(event.dataTransfer.types).includes('Files')) return
+    event.preventDefault()
+    if (!thinking && !attachmentBusy) setDragActive(true)
+  }
+
+  const handleAskDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setDragActive(false)
+  }
+
+  const handleAskDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setDragActive(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) void attachFile(file)
   }
 
   const localContextFor = (result: AnswerResult) =>
@@ -470,11 +544,12 @@ export function StudentView({
       .join('\n\n')
 
   const ask = async () => {
-    if (thinking) return
-    const text = question.trim()
+    if (thinking || attachmentBusy) return
+    const documentAttachment = attachment?.kind === 'document' ? attachment : undefined
+    let text = question.trim()
 
     // Image-only input: let the server vision model extract the question first.
-    if (!text && attachment) {
+    if (!text && attachment && !documentAttachment) {
       if (!aiReady || !aiVision) {
         notify(
           !aiReady
@@ -503,6 +578,18 @@ export function StudentView({
       return
     }
 
+    // File-only input: ask the AI to analyse the document, or hand it to the teacher.
+    if (!text && documentAttachment) {
+      const extracted = documentAttachment.text?.trim()
+      if (!extracted) {
+        notify('没有读到文件内容，请换成 PDF / DOCX / TXT，或把关键页截图粘贴进来', 'danger')
+        return
+      }
+      text = aiReady
+        ? `请分析这份文件《${documentAttachment.name}》，提炼重点、考点和容易出错的地方。`
+        : `请老师帮我看看这份文件《${documentAttachment.name}》。`
+    }
+
     if (!text) return
 
     // AI 就绪时跳过自检，让低置信问题直接走服务端 AI 补充，而不是被自检弹窗拦住。
@@ -513,10 +600,24 @@ export function StudentView({
     selfCheckBypass.current = false
 
     let storedAttachment: ThreadAttachment | undefined
-    if (attachment) {
+    if (documentAttachment) {
+      // 文档正文只用于本轮 AI 分析，线程里只留摘要，避免状态库膨胀。
+      storedAttachment = {
+        name: documentAttachment.name,
+        type: documentAttachment.type,
+        kind: 'document',
+        size: documentAttachment.size,
+        excerpt: documentAttachment.excerpt ?? documentAttachment.text?.slice(0, 1_200),
+      }
+    } else if (attachment) {
       try {
         const uploaded = await uploadThreadImage(attachment)
-        storedAttachment = { ...uploaded, teacherVisible: attachmentVisible }
+        storedAttachment = {
+          ...uploaded,
+          kind: 'image',
+          size: attachment.size,
+          teacherVisible: attachmentVisible,
+        }
       } catch (error) {
         notify(`图片上传失败：${errorMessage(error)}`, 'danger')
         return
@@ -524,6 +625,12 @@ export function StudentView({
     }
 
     const result = retrieve(data.faqs, text, courseId)
+    // 有文件时以文件内容为准，直接走服务端 AI 分析，避免课程库里的相近条目答非所问。
+    if (documentAttachment && aiReady) {
+      result.confidence = 'low'
+      result.score = Math.min(result.score, 0.2)
+      result.reason = '学生上传了文件，交给服务端 AI 结合文件内容分析。'
+    }
     const thread: Thread = {
       id: makeId('t'),
       courseId,
@@ -544,8 +651,12 @@ export function StudentView({
     setThinking({
       question: text,
       step: 0,
-      topTitle: result.confidence === 'low' ? undefined : result.top?.faq.question,
-      mode: 'local',
+      topTitle: documentAttachment
+        ? '文件分析'
+        : result.confidence === 'low'
+          ? undefined
+          : result.top?.faq.question,
+      mode: documentAttachment ? 'document' : 'local',
     })
     setQuestion('')
     setAttachment(null)
@@ -629,7 +740,10 @@ export function StudentView({
               courseName: threadCourse.name,
               localContext: localContextFor(result),
               mentorBrief: mentorBriefForCourse(threadCourse.id),
-              imageDataUrl: aiVision ? attachment?.dataUrl : undefined,
+              imageDataUrl:
+                aiVision && attachment?.kind !== 'document' ? attachment?.dataUrl : undefined,
+              documentText: documentAttachment?.text,
+              documentName: documentAttachment?.name,
               onUpdate: (partial) => setStreamPreview(partial),
             })
             thread.externalAnswer = {
@@ -750,28 +864,38 @@ export function StudentView({
   const thinkingSteps = thinking
     ? thinking.mode === 'image'
       ? ['读取图片', '识别题干与公式（服务端 AI）', '写回问题框等你确认']
-      : [
-          '理解问题，提取课程概念',
-          `检索「${course.shortName}」知识库 · ${courseFaqCount} 条`,
-          thinking.topTitle ? `比对知识：${truncate(thinking.topTitle, 20)}` : '比对同题与历史答疑',
-          '校准置信度，决定是否打扰老师',
-          ...(thinking.mode === 'external' ? ['课程库没把握，调用服务端 AI 补充'] : []),
-        ]
+      : thinking.mode === 'document'
+        ? ['读取文件内容', '整理结构、重点与考点（服务端 AI）', '结合课程要求生成分析']
+        : [
+            '理解问题，提取课程概念',
+            `检索「${course.shortName}」知识库 · ${courseFaqCount} 条`,
+            thinking.topTitle ? `比对知识：${truncate(thinking.topTitle, 20)}` : '比对同题与历史答疑',
+            '校准置信度，决定是否打扰老师',
+            ...(thinking.mode === 'external' ? ['课程库没把握，调用服务端 AI 补充'] : []),
+          ]
     : []
   const thinkingTitle =
     thinking?.mode === 'image'
       ? '正在识别图片里的题目。'
-      : thinking?.mode === 'external'
-        ? '课程知识库没把握，正在用服务端 AI 补充。'
-        : '先查知识库，再决定要不要麻烦老师。'
+      : thinking?.mode === 'document'
+        ? '正在读你上传的文件，准备交给 AI 分析。'
+        : thinking?.mode === 'external'
+          ? '课程知识库没把握，正在用服务端 AI 补充。'
+          : '先查知识库，再决定要不要麻烦老师。'
   const askSubmitLabel = thinking
     ? thinking.mode === 'image'
       ? '识别中'
-      : thinking.mode === 'external'
-        ? 'AI 补充中'
-        : 'AI 正在查'
-    : !question.trim() && attachment && aiReady
-      ? '识别题目'
+      : thinking.mode === 'document'
+        ? '分析中'
+        : thinking.mode === 'external'
+          ? 'AI 补充中'
+          : 'AI 正在查'
+    : !question.trim() && attachment
+      ? attachment.kind === 'document'
+        ? aiReady
+          ? '分析文件'
+          : '交给老师'
+        : '识别题目'
       : '交给 AI'
 
   const handleAiSave = (next: AIConfig) => {
@@ -846,8 +970,21 @@ export function StudentView({
               onEditMajor={() => onOpenAccount?.('identity')}
             />
           </div>
-          <div ref={askCardRef} className="ask-card">
+          <div
+            ref={askCardRef}
+            className={`ask-card${dragActive ? ' is-dragging' : ''}`}
+            onDragOver={handleAskDragOver}
+            onDragLeave={handleAskDragLeave}
+            onDrop={handleAskDrop}
+          >
             <div className="ask-card-glow" aria-hidden="true" />
+            {dragActive && (
+              <div className="ask-drop-hint" aria-hidden="true">
+                <Paperclip size={22} />
+                <strong>松手放入文件或截图</strong>
+                <span>支持 PDF、Word、PPT、Excel、文本和图片</span>
+              </div>
+            )}
             <div className="ask-head">
               <div className="ask-identity">
                 <AiMark size={18} />
@@ -864,6 +1001,7 @@ export function StudentView({
               data-enter-submit
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
+              onPaste={handlePaste}
               onKeyDown={(event) => {
                 if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                   event.preventDefault()
@@ -873,17 +1011,24 @@ export function StudentView({
               placeholder={
                 questionExamples[courseId]
                   ? `例如：${questionExamples[courseId]}`
-                  : `问一个「${course.shortName}」的问题…`
+                  : `问一个「${course.shortName}」的问题… 可直接粘贴截图，或上传课件 / 作业文件`
               }
               rows={3}
-              disabled={Boolean(thinking)}
-              aria-label="输入你的问题"
+              disabled={Boolean(thinking) || attachmentBusy}
+              aria-label="输入你的问题，可粘贴截图"
+            />
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept={ASK_IMAGE_ACCEPT}
+              onChange={handleImageChange}
+              hidden
             />
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleImageChange}
+              accept={ASK_FILE_ACCEPT}
+              onChange={handleFileChange}
               hidden
             />
 
@@ -927,44 +1072,66 @@ export function StudentView({
             )}
 
             {attachment && (
-              <div className="ask-attachment">
-                <img
-                  src={attachment.url ?? attachment.dataUrl ?? ''}
-                  alt="题目图片预览"
-                />
+              <div
+                className={`ask-attachment${attachment.kind === 'document' ? ' is-document' : ''}`}
+              >
+                {attachment.kind === 'document' ? (
+                  <span className="ask-attachment-file" aria-hidden="true">
+                    <FileText size={20} />
+                    <em>{fileExtension(attachment.name).toUpperCase().slice(0, 4) || 'FILE'}</em>
+                  </span>
+                ) : (
+                  <img
+                    src={attachment.url ?? attachment.dataUrl ?? ''}
+                    alt="题目图片预览"
+                  />
+                )}
                 <div className="ask-attachment-copy">
                   <strong>{attachment.name}</strong>
                   <span>
-                    {aiReady && aiVision
-                      ? '模型会识别题图和题面；图片也会随问题给老师看'
-                      : aiReady
-                        ? '图片会随问题给老师看；当前模型未开启图片识别'
-                        : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
+                    {attachment.kind === 'document'
+                      ? `${formatFileSize(attachment.size)}${
+                          attachment.text
+                            ? ` · 已读取 ${attachment.text.length.toLocaleString()} 字`
+                            : ''
+                        }${aiReady ? '；发送后交给 AI 分析' : '；服务端 AI 就绪后可分析'}`
+                      : aiReady && aiVision
+                        ? '模型会识别题图和题面；图片也会随问题给老师看'
+                        : aiReady
+                          ? '图片会随问题给老师看；当前模型未开启图片识别'
+                          : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
                   </span>
                 </div>
                 <button
                   className="ask-attachment-remove"
                   onClick={() => setAttachment(null)}
-                  aria-label="移除图片"
+                  aria-label={attachment.kind === 'document' ? '移除文件' : '移除图片'}
                   type="button"
                 >
                   <X size={15} />
                 </button>
-                <label className="ask-attachment-privacy">
-                  <input
-                    type="checkbox"
-                    checked={attachmentVisible}
-                    onChange={(event) => setAttachmentVisible(event.target.checked)}
-                  />
-                  <span>
-                    允许老师查看原图
-                    <em>
-                      {attachmentVisible
-                        ? '老师可在本题里看到这张图'
-                        : '只用于 AI 识别，老师看不到原图'}
-                    </em>
-                  </span>
-                </label>
+                {attachment.kind === 'document' ? (
+                  <p className="ask-attachment-excerpt">
+                    {attachment.excerpt?.slice(0, 200) ?? ''}
+                    {(attachment.excerpt?.length ?? 0) > 200 ? '…' : ''}
+                  </p>
+                ) : (
+                  <label className="ask-attachment-privacy">
+                    <input
+                      type="checkbox"
+                      checked={attachmentVisible}
+                      onChange={(event) => setAttachmentVisible(event.target.checked)}
+                    />
+                    <span>
+                      允许老师查看原图
+                      <em>
+                        {attachmentVisible
+                          ? '老师可在本题里看到这张图'
+                          : '只用于 AI 识别，老师看不到原图'}
+                      </em>
+                    </span>
+                  </label>
+                )}
               </div>
             )}
 
@@ -993,11 +1160,20 @@ export function StudentView({
                 <button
                   className="ask-tool-button"
                   onClick={chooseImage}
-                  disabled={Boolean(thinking)}
+                  disabled={Boolean(thinking) || attachmentBusy}
                   type="button"
                 >
                   <ImagePlus size={15} />
                   图片
+                </button>
+                <button
+                  className="ask-tool-button"
+                  onClick={chooseFile}
+                  disabled={Boolean(thinking) || attachmentBusy}
+                  type="button"
+                >
+                  {attachmentBusy ? <Loader2 size={15} className="spin-icon" /> : <Paperclip size={15} />}
+                  {attachmentBusy ? '读取中' : '文件'}
                 </button>
                 <button
                   className={`ask-tool-button ai-tool ${aiReady ? 'is-ready' : ''}`}
@@ -1033,7 +1209,7 @@ export function StudentView({
                 <button
                   className="button button-primary ask-submit"
                   onClick={ask}
-                  disabled={(!question.trim() && !attachment) || Boolean(thinking)}
+                  disabled={(!question.trim() && !attachment) || Boolean(thinking) || attachmentBusy}
                 >
                   {askSubmitLabel}
                   <ArrowUpRight size={17} />
@@ -1053,7 +1229,11 @@ export function StudentView({
                 <div className="eyebrow">AI 正在工作</div>
                 <h3>{thinkingTitle}</h3>
                 <p className="thinking-question">
-                  {thinking.mode === 'image' ? `图片：${thinking.question}` : `“${thinking.question}”`}
+                  {thinking.mode === 'image'
+                    ? `图片：${thinking.question}`
+                    : thinking.mode === 'document'
+                      ? `文件：${thinking.question}`
+                      : `“${thinking.question}”`}
                 </p>
                 <div className="thinking-steps">
                   {thinkingSteps.map((step, index) => (

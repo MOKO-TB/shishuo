@@ -420,6 +420,9 @@ export interface ToastState {
   id: number
   message: string
   tone: 'success' | 'info' | 'danger'
+  /** 可选动作按钮（如「撤销」），显示在消息与关闭钮之间；点击后自动关闭 toast */
+  actionLabel?: string
+  onAction?: () => void
 }
 
 export function Toast({ toast, onClose }: { toast: ToastState | null; onClose: () => void }) {
@@ -431,6 +434,17 @@ export function Toast({ toast, onClose }: { toast: ToastState | null; onClose: (
         <Icon size={16} />
       </span>
       <span className="toast-message">{toast.message}</span>
+      {toast.actionLabel && toast.onAction && (
+        <button
+          className="toast-action"
+          onClick={() => {
+            toast.onAction?.()
+            onClose()
+          }}
+        >
+          {toast.actionLabel}
+        </button>
+      )}
       <button className="toast-close" onClick={onClose} aria-label="关闭提示">
         <X size={14} />
       </button>

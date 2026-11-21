@@ -1,0 +1,625 @@
+/* 饭点分流 —— 移植自「饭点·广应科」学生端，按师说设计语言重排 */
+
+.fd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 2px 8px;
+  min-width: 0;
+}
+
+/* 品牌头 */
+.fd-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 180% at 0% 0%, var(--jade-soft) 0%, transparent 55%),
+    var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.fd-hero-main { min-width: 0; }
+.fd-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--jade);
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.fd-hero h1 {
+  margin: 8px 0 6px;
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.fd-hero p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.fd-hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.fd-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+.fd-live i {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--jade);
+  animation: fd-pulse 1.8s ease-in-out infinite;
+}
+@keyframes fd-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.fd-hero-meta { font-size: 11.5px; color: var(--muted); }
+
+/* 类别切换（正餐食堂 / 饮品甜点） */
+.fd-kindtabs {
+  display: flex;
+  gap: 12px;
+}
+.fd-kindtabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: all .16s var(--ease);
+  color: var(--muted);
+}
+.fd-kindtabs button:hover { border-color: var(--jade); color: var(--ink); }
+.fd-kindtabs button.is-active {
+  border-color: var(--jade);
+  background: var(--jade-mist);
+  box-shadow: var(--shadow-card);
+}
+.fd-kindtabs svg { flex: 0 0 auto; color: var(--muted); }
+.fd-kindtabs button.is-active svg { color: var(--jade-deep); }
+.fd-kind-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fd-kind-label b { font-size: 14px; color: var(--ink); }
+.fd-kindtabs button.is-active .fd-kind-label b { color: var(--jade-deep); }
+.fd-kind-label small { font-size: 11px; color: var(--muted); }
+.fd-kind-count {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.fd-kindtabs button.is-active .fd-kind-count {
+  background: var(--jade-soft);
+  border-color: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+/* 主 tab */
+.fd-maintabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.fd-maintabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .16s var(--ease);
+}
+.fd-maintabs > button:hover { color: var(--ink); }
+.fd-maintabs > button.is-active {
+  background: var(--surface-3);
+  color: var(--jade-deep);
+  box-shadow: var(--shadow-card);
+}
+
+/* 栅格 */
+.fd-grid {
+  display: grid;
+  /* 左栏口味偏好（窄），右栏推荐三卡（宽） */
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 16px;
+  align-items: start;
+}
+.fd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* 饮品甜点没有偏好卡，退化为单列，推荐铺四卡 */
+.fd-grid.fd-grid-single { grid-template-columns: minmax(0, 1fr); }
+.fd-grid.fd-grid-single .fd-recs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fd-grid.fd-grid-single .fd-rec.is-extra { display: flex; }
+
+/* 卡片 */
+.fd-card {
+  min-width: 0;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.fd-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.fd-card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.fd-card-head p { margin: 0; font-size: 11.5px; color: var(--muted); }
+
+/* 口味偏好（控件样式对齐饭点原版：全部用 chips） */
+.fd-pref-card { position: relative; }
+/* 首次引导气泡：一次性提示（关闭后 localStorage 记住，不再出现）。
+   教师端设置卡较窄，气泡改为文档流内的一行提示，避免悬浮层压住餐类/预算选项。 */
+.fd-pref-bubble {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--jade);
+  border-radius: 12px;
+  background: var(--jade-mist);
+  box-shadow: var(--shadow-float);
+  animation: fd-bubble-in .22s var(--ease);
+}
+.fd-pref-bubble::before {
+  display: none;
+}
+.fd-pref-bubble b { font-size: 12px; color: var(--jade-deep); line-height: 1.4; }
+.fd-pref-bubble small { font-size: 10.5px; color: var(--ink-soft); }
+.fd-pref-bubble-ok {
+  align-self: flex-end;
+  margin-top: 5px;
+  padding: 3px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--jade);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+@keyframes fd-bubble-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fd-pref-row {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.fd-pref-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+.fd-pref-row > label { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.fd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fd-chips button {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .14s var(--ease);
+}
+.fd-chips button:hover { border-color: var(--jade); color: var(--ink); }
+.fd-chips button.is-on {
+  background: var(--jade-mist);
+  border-color: var(--jade);
+  color: var(--jade-deep);
+  font-weight: 700;
+}
+/* 忌口 chips 选中用警示红（对齐饭点原版 chip danger） */
+.fd-chips-danger button.is-on {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.fd-chips-danger button:hover { border-color: var(--danger); color: var(--danger); }
+.fd-pref-hint { font-size: 10.5px; color: var(--faint); line-height: 1.4; }
+
+/* 推荐 */
+.fd-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--jade);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.fd-link:hover { border-color: var(--jade); }
+.fd-recs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fd-rec {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+}
+.fd-thumb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  margin-bottom: 2px;
+  overflow: hidden;
+}
+.fd-thumb.has-photo { padding: 0; }
+.fd-thumb.has-photo img,
+.fd-rank-art.has-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.fd-stock {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 2px 4px;
+  background: rgba(192, 88, 28, .9);
+  color: #fff;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+.fd-thumb-main { background: var(--clay-soft); color: var(--clay); }
+.fd-thumb-veg { background: var(--jade-soft); color: var(--jade); }
+.fd-thumb-spicy { background: var(--danger-soft); color: var(--danger); }
+.fd-thumb-noodle { background: var(--gold-soft); color: var(--gold); }
+.fd-rec b { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+/* 推荐卡价格行 + 吃过按钮 */
+.fd-rec-priceline { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.fd-rec-price { font-size: 11.5px; color: var(--clay-deep); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 「吃过」按钮：记录真实用餐次数 */
+.fd-eat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s var(--ease);
+}
+.fd-eat-btn:hover { border-color: var(--jade); color: var(--jade-deep); background: var(--jade-mist); }
+.fd-eat-btn.has-count { border-color: var(--jade-soft); background: var(--jade-soft); color: var(--jade-deep); }
+.fd-eat-btn em {
+  font-style: normal;
+  min-width: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--jade);
+  color: #fff;
+  font-size: 9.5px;
+  text-align: center;
+}
+.fd-rec-single {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #fff3e6;
+  color: #c2601c;
+  font-size: 10px;
+  font-style: normal;
+}
+.fd-rec-why { font-size: 11px; color: var(--ink-soft); line-height: 1.45; }
+.fd-rec-stall { font-size: 10.5px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+/* 桌面三卡一排，第 4 张只在手机两列时补齐空位 */
+.fd-rec.is-extra { display: none; }
+
+/* 盲盒（页签内容） */
+.fd-blind-panel {
+  width: min(640px, 100%);
+  margin: 0 auto;
+  padding: 26px;
+}
+.fd-blind-panel h3 {
+  margin: 10px 0 20px;
+  font-family: var(--serif);
+  font-size: 21px;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.fd-blind-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; flex: 0 0 auto;
+  border-radius: 13px; background: var(--gold); color: #fff;
+}
+.fd-blind-note {
+  margin: 14px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.fd-blind-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 10px;
+  text-align: center;
+}
+.fd-blind-empty b { font-size: 15px; color: var(--ink); }
+.fd-blind-empty small { font-size: 12px; color: var(--muted); }
+
+/* 榜单 */
+.fd-rank-wrap { display: flex; flex-direction: column; gap: 16px; }
+.fd-rank-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+/* 饮品甜点没有性价比榜、正餐删了本周新品：按 tab 数自适应列数 */
+.fd-rank-tabs.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fd-rank-tabs.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fd-rank-tabs button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-md);
+  background: var(--surface); text-align: left; cursor: pointer;
+  transition: all .16s var(--ease);
+}
+.fd-rank-tabs button:hover { border-color: var(--jade); }
+.fd-rank-tabs button.is-active { border-color: var(--jade); background: var(--jade-mist); }
+.fd-rank-tabs b { font-size: 13.5px; color: var(--ink); }
+.fd-rank-tabs button.is-active b { color: var(--jade-deep); }
+.fd-rank-tabs small { font-size: 11px; color: var(--muted); }
+.fd-rank-card { min-height: 320px; }
+/* 每榜 20 条，列表内部滚动，页面不被拉长 */
+.fd-rank-list {
+  list-style: none; margin: 0; padding: 0 4px 0 0;
+  display: flex; flex-direction: column;
+  max-height: 520px; overflow-y: auto; overscroll-behavior: contain;
+}
+.fd-rank-list::-webkit-scrollbar { width: 6px; }
+.fd-rank-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
+.fd-rank-item {
+  display: grid; grid-template-columns: 26px 42px minmax(0, 1fr) 64px;
+  align-items: center; gap: 12px; padding: 10px 4px;
+  border-bottom: 1px dashed var(--line);
+}
+.fd-rank-item:last-child { border-bottom: 0; }
+.fd-rank-no { font-size: 14px; font-weight: 700; color: var(--faint); text-align: center; }
+.fd-rank-no.is-top { color: var(--clay); }
+.fd-rank-art {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 10px;
+  background: var(--surface-2); color: var(--faint);
+  overflow: hidden;
+}
+.fd-rank-art.has-photo { padding: 0; }
+.fd-rank-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fd-rank-body b {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fd-rank-body small { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-rank-tag {
+  flex: 0 0 auto; padding: 1px 6px; border-radius: 5px;
+  font-size: 10px; font-style: normal; font-weight: 700;
+}
+.fd-rank-tag.is-new { background: var(--jade-soft); color: var(--jade-deep); }
+.fd-rank-tag.is-single { background: #fff3e6; color: #c2601c; }
+.fd-rank-tag.is-opt { background: var(--surface-3); color: var(--gold-deep); }
+.fd-rank-item.is-clickable, .fd-rec.is-clickable { cursor: pointer; }
+.fd-rank-item.is-clickable:hover { background: var(--jade-mist); }
+.fd-rank-item.is-clickable:hover .fd-rank-body b { color: var(--jade-deep); }
+.fd-rec.is-clickable:hover { border-color: var(--jade-soft); box-shadow: var(--shadow-card); }
+.fd-rank-price { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; text-align: right; font-size: 13px; font-weight: 700; color: var(--clay-deep); }
+.fd-rank-price .fd-eat-btn { font-size: 10px; padding: 3px 8px; }
+.fd-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* 盲盒弹层骨架（菜品详情复用遮罩与关闭钮） */
+.fd-blind-mask {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(10, 18, 14, .55);
+  backdrop-filter: blur(3px);
+}
+.fd-blind-close {
+  position: absolute; top: 14px; right: 14px;
+  display: grid; place-items: center;
+  padding: 0; line-height: 1;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface-2);
+  color: var(--muted); cursor: pointer;
+}
+.fd-blind-close:hover { color: var(--ink); background: var(--surface); }
+.fd-blind-kicker { display: inline-flex; align-items: center; gap: 6px; color: var(--gold); font-size: 12px; font-weight: 700; }
+.fd-blind-items { display: flex; flex-direction: column; gap: 10px; }
+.fd-blind-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: var(--radius-md); background: var(--surface-2); }
+.fd-blind-item > span:nth-child(2) { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fd-blind-item b { font-size: 13px; color: var(--ink); }
+.fd-blind-item small { font-size: 11px; color: var(--muted); }
+.fd-blind-item strong { margin-left: auto; color: var(--clay-deep); font-size: 13px; }
+.fd-blind-facts { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0; padding: 12px 0; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); }
+.fd-blind-facts span { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--ink-soft); }
+.fd-blind-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fd-blind-foot b { font-family: var(--serif); font-size: 24px; color: var(--clay-deep); }
+.fd-blind-foot span { font-size: 11.5px; color: var(--muted); }
+.fd-blind-reroll {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border: 1px solid var(--jade-soft); border-radius: 999px;
+  background: var(--jade-mist); color: var(--jade-deep);
+  font-size: 11.5px; font-weight: 700; cursor: pointer;
+  white-space: nowrap;
+}
+.fd-blind-reroll:hover { border-color: var(--jade); }
+
+/* 菜品明细弹层（组合菜的荤素/加料分组） */
+.fd-detail-modal {
+  position: relative; width: min(520px, 100%);
+  max-height: min(82vh, 640px);
+  display: flex; flex-direction: column;
+  padding: 24px; border-radius: var(--radius-xl);
+  background: var(--surface); border: 1px solid var(--line);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+.fd-detail-head { display: flex; gap: 14px; align-items: center; }
+.fd-detail-photo {
+  flex: 0 0 auto; width: 72px; height: 72px; border-radius: 14px;
+  overflow: hidden;
+}
+.fd-detail-photo img { width: 100%; height: 100%; object-fit: cover; }
+.fd-detail-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fd-detail-info h3 { margin: 0; font-family: var(--serif); font-size: 19px; color: var(--ink); line-height: 1.3; }
+.fd-detail-info small { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-detail-price { font-size: 12.5px; font-weight: 700; color: var(--clay-deep); }
+.fd-detail-groups { margin-top: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 2px; }
+.fd-opt-group header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.fd-opt-group header b { font-size: 13px; color: var(--ink); }
+.fd-opt-group header small { font-size: 10.5px; color: var(--muted); }
+.fd-opt-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fd-opt-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  font-size: 11.5px; color: var(--ink-soft);
+  cursor: pointer;
+  transition: all .14s var(--ease);
+}
+button.fd-opt-chip:hover { border-color: var(--jade); color: var(--ink); }
+button.fd-opt-chip.is-on {
+  background: var(--jade-mist);
+  border-color: var(--jade);
+  color: var(--jade-deep);
+  font-weight: 700;
+}
+.fd-eat-badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+.fd-opt-chip i { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--clay-deep); }
+.fd-detail-plain { margin-top: 16px; padding: 18px; border-radius: var(--radius-md); background: var(--surface-2); color: var(--muted); font-size: 12.5px; text-align: center; }
+.fd-detail-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line);
+}
+.fd-detail-foot span { font-size: 10.5px; color: var(--faint); }
+.fd-detail-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.fd-detail-cancel {
+  flex: 0 0 auto; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.fd-detail-cancel:hover { color: var(--ink); border-color: var(--jade); }
+.fd-detail-ok {
+  flex: 0 0 auto; padding: 8px 18px; border: 0; border-radius: 999px;
+  background: var(--jade); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.fd-detail-ok:hover { filter: brightness(1.05); }
+
+.fd-foot {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 0 2px; font-size: 11px; color: var(--faint); text-align: center;
+}
+
+/* 响应式：手机单列、推荐两列、榜单两列 */
+@media (max-width: 900px) {
+  .fd-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .fd-page { gap: 14px; }
+  .fd-hero { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .fd-hero h1 { font-size: 25px; }
+  .fd-hero-side { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
+  .fd-kindtabs { gap: 8px; }
+  .fd-kindtabs button { padding: 10px 12px; gap: 9px; }
+  .fd-kind-label small { display: none; }
+  .fd-kind-count { display: none; }
+  .fd-maintabs { position: sticky; top: 0; z-index: 5; }
+  .fd-maintabs > button { flex: 1; justify-content: center; padding: 9px 10px; }
+  .fd-card { padding: 15px 13px; }
+  .fd-recs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fd-grid.fd-grid-single .fd-recs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fd-rec.is-extra { display: flex; }
+  .fd-rank-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .fd-rank-tabs.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fd-rank-tabs button { padding: 11px 13px; }
+  .fd-rank-item { grid-template-columns: 20px 36px minmax(0, 1fr) 66px; gap: 8px; }
+  .fd-rank-art { width: 36px; height: 36px; border-radius: 8px; }
+  .fd-rank-price { font-size: 12px; }
+  .fd-blind-item { flex-wrap: wrap; }
+  .fd-blind-item .fd-eat-btn { margin-left: 0; }
+  .fd-pref-bubble { padding: 10px 12px; }
+  .fd-detail-actions { flex-direction: column-reverse; align-items: stretch; width: 100%; }
+  .fd-detail-actions .fd-detail-ok, .fd-detail-actions .fd-detail-cancel { width: 100%; text-align: center; }
+  .fd-detail-foot { flex-direction: column; align-items: stretch; gap: 10px; }
+  .fd-rank-list { max-height: 60vh; }
+  .fd-blind-reroll { padding: 6px 9px; }
+  .fd-detail-modal { padding: 18px 14px; max-height: 86vh; }
+  .fd-detail-photo { width: 58px; height: 58px; border-radius: 12px; }
+  .fd-detail-info h3 { font-size: 16.5px; }
+  .fd-detail-foot span { max-width: 55%; }
+}

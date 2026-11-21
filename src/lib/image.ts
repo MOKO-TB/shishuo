@@ -1,12 +1,12 @@
 import type { ThreadAttachment } from '../types'
 import { apiPost } from './api'
 
-const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
+const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export async function prepareImage(file: File): Promise<ThreadAttachment> {
   if (!ACCEPTED_TYPES.has(file.type)) {
-    throw new Error('请选择 PNG、JPEG 或 WebP 图片。')
+    throw new Error('请选择 PNG、JPEG、WebP 或 GIF 图片。')
   }
   if (file.size > MAX_FILE_BYTES) {
     throw new Error('图片超过 10MB，请压缩后再试。')

@@ -5,13 +5,16 @@ import {
   Database,
   GraduationCap,
   Loader2,
+  Moon,
   Presentation,
   ShieldCheck,
   Sparkles,
+  Sun,
 } from 'lucide-react'
 import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
 import { readRememberedEmail } from '../lib/authStorage'
+import { loadTheme, toggleTheme, type Theme } from '../lib/theme'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
 import { majorOptions } from '../data/major'
 import { BrandMark } from './ui'
@@ -24,6 +27,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function AuthScreen() {
   const { login, register, error: sessionError } = useAuth()
+  const [theme, setTheme] = useState<Theme>(() => loadTheme())
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState(() => readRememberedEmail())
   const [password, setPassword] = useState('')
@@ -232,6 +236,16 @@ export function AuthScreen() {
 
   return (
     <div className="auth-shell">
+      <button
+        className="auth-theme-toggle"
+        onClick={() => setTheme(toggleTheme())}
+        aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+        title={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+        type="button"
+      >
+        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        <span>{theme === 'dark' ? '浅色' : '深色'}</span>
+      </button>
       <section className="auth-story">
         <div className="auth-brand">
           <BrandMark size={46} />

@@ -16,6 +16,7 @@ import { useStore } from '../store'
 import { courseById } from '../data/seed'
 import { findMentorTopic, mentorForCourse } from '../data/mentor'
 import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
+import { isDocumentAttachment } from '../lib/attachment'
 import type { AnswerResult, Thread } from '../types'
 import {
   confidenceDescription,
@@ -159,7 +160,7 @@ export function AnswerCard({
             </div>
             <div className="answer-sub">
               {course.shortName} · {formatRelative(thread.createdAt)}
-              {thread.attachment ? ' · 含图片' : ''}
+              {thread.attachment ? (isDocumentAttachment(thread.attachment) ? ' · 含文件' : ' · 含图片') : ''}
             </div>
           </div>
         </div>

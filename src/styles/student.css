@@ -287,6 +287,37 @@
   background: radial-gradient(circle, rgba(20, 108, 86, 0.11), transparent 68%);
 }
 
+.ask-card.is-dragging {
+  border-color: var(--jade);
+}
+
+.ask-drop-hint {
+  position: absolute;
+  inset: 7px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 2px dashed var(--jade);
+  border-radius: var(--radius-lg);
+  background: var(--jade-mist);
+  color: var(--jade-deep);
+  text-align: center;
+  pointer-events: none;
+}
+
+.ask-drop-hint strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.ask-drop-hint span {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
 .ask-head {
   position: relative;
   display: flex;
@@ -436,6 +467,45 @@
   border: 1px solid var(--line);
   background: var(--surface-3);
   flex: 0 0 auto;
+}
+
+.ask-attachment.is-document {
+  align-items: flex-start;
+}
+
+.ask-attachment-file {
+  width: 58px;
+  height: 52px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--jade);
+}
+
+.ask-attachment-file em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.ask-attachment-excerpt {
+  flex: 1 0 100%;
+  margin: 0;
+  padding-top: 7px;
+  border-top: 1px dashed var(--line);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .ask-attachment-copy {

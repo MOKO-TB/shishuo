@@ -26,6 +26,7 @@ import {
   truncate,
 } from '../../lib/utils'
 import { courseById } from '../../data/seed'
+import { isDocumentAttachment } from '../../lib/attachment'
 import type { TeacherQueueViewState } from './types'
 
 function groupNames(group: ThreadGroup) {
@@ -217,7 +218,12 @@ export function TeacherQueue({
           const isLow = group.primary.confidence === 'low'
           const isFollowUp = group.primary.kind === 'follow-up'
           const hasSame = group.threads.some((thread) => thread.kind === 'same')
-          const hasAttachment = group.threads.some((thread) => thread.attachment)
+          const hasImageAttachment = group.threads.some(
+            (thread) => thread.attachment && !isDocumentAttachment(thread.attachment),
+          )
+          const hasDocAttachment = group.threads.some(
+            (thread) => thread.attachment && isDocumentAttachment(thread.attachment),
+          )
           const score = group.primary.confidenceScore ?? 0
           return (
             <button
@@ -236,7 +242,8 @@ export function TeacherQueue({
                   </Badge>
                   {isFollowUp && <Badge tone="blue">追问</Badge>}
                   {hasSame && <Badge tone="gold">含同问</Badge>}
-                  {hasAttachment && <Badge tone="outline">含图片</Badge>}
+                  {hasImageAttachment && <Badge tone="outline">含图片</Badge>}
+                  {hasDocAttachment && <Badge tone="outline">含文件</Badge>}
                   {group.count > 1 && (
                     <Badge tone="gold">
                       <Users size={12} />

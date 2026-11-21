@@ -1197,6 +1197,17 @@
   color: var(--muted);
 }
 
+.admin-mod-attachment .admin-mod-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  color: var(--jade);
+}
+
 .admin-mod-thread p {
   margin: 0;
   font-size: var(--text-meta);
