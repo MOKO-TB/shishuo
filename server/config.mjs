@@ -65,7 +65,7 @@ export function loadConfig() {
         .split(/[,，\n]/)
         .map((term) => term.trim())
         .filter(Boolean),
-      timeoutMs: numberFromEnv('AI_TIMEOUT_MS', 95_000),
+      timeoutMs: numberFromEnv('AI_TIMEOUT_MS', 240_000),
     },
     mail: {
       smtpConfigured,

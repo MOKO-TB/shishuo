@@ -313,6 +313,8 @@
   line-height: 1.7;
   font-weight: 600;
   color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .thread-attachment-link {

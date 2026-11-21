@@ -170,14 +170,18 @@ type InlinePart = { kind: 'text' | 'math' | 'display'; value: string }
 
 function splitMath(text: string): InlinePart[] {
   const parts: InlinePart[] = []
-  const pattern = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)/g
+  // 兼容模型常见的四种公式写法：$...$、$$...$$、\(...\)、\[...\]。
+  // 显示公式放在前面，避免 $$ 被当成两个行内 $。
+  const pattern = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^$\n]+?\$)/g
   let cursor = 0
   for (const match of text.matchAll(pattern)) {
     const index = match.index ?? 0
     if (index > cursor) parts.push({ kind: 'text', value: text.slice(cursor, index) })
     const token = match[0]
-    if (token.startsWith('$$')) {
+    if (token.startsWith('$$') || token.startsWith('\\[')) {
       parts.push({ kind: 'display', value: token.slice(2, -2) })
+    } else if (token.startsWith('\\(')) {
+      parts.push({ kind: 'math', value: token.slice(2, -2) })
     } else {
       parts.push({ kind: 'math', value: token.slice(1, -1) })
     }

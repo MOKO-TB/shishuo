@@ -248,6 +248,7 @@
 
 .student-main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   min-width: 0;
 }
@@ -371,6 +372,37 @@
 
 .ask-input:disabled {
   opacity: 0.6;
+}
+
+.ask-math-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-height: 160px;
+  margin-top: 7px;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.ask-math-preview-label {
+  flex: 0 0 auto;
+  color: var(--faint);
+}
+
+.ask-math-preview .math-text {
+  min-width: 0;
+  color: var(--ink-soft);
+}
+
+.ask-math-preview .math-span.is-display {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .ask-preview {
@@ -886,11 +918,14 @@
 }
 
 .answer-wrap {
+  min-width: 0;
   animation: fadeUp 0.4s var(--ease);
 }
 
 .answer-card {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
   padding: 20px 21px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
@@ -993,12 +1028,69 @@
 }
 
 .answer-body {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 15px;
 }
 
 .answer-body .rich-text {
   font-size: 13.5px;
   line-height: 1.88;
+}
+
+/* 长回答先收起，避免一条回复把整页或整个弹窗瞬间撑高 */
+.collapsible-rich {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.collapsible-rich-body {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.collapsible-rich-body.is-collapsed {
+  max-height: 420px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    var(--fg) 76%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, var(--fg) 76%, transparent 100%);
+}
+
+.collapsible-rich.is-chat .collapsible-rich-body.is-collapsed {
+  max-height: 260px;
+}
+
+.collapsible-rich.is-expanded .collapsible-rich-body {
+  max-height: none;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.collapsible-rich-toggle {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+}
+
+.collapsible-rich-toggle:hover {
+  border-color: var(--accent);
+  background: var(--bg-accent-mist);
 }
 
 .answer-body .inline-note {
@@ -2470,6 +2562,23 @@
     padding-left: 15px;
     padding-right: 15px;
     border-radius: var(--radius-lg);
+  }
+
+  .collapsible-rich-body.is-collapsed {
+    max-height: 300px;
+  }
+
+  .collapsible-rich.is-chat .collapsible-rich-body.is-collapsed {
+    max-height: 210px;
+  }
+
+  /* 手机端展开后也限制在视口内滚动，避免一条长回答把整页拉到很长 */
+  .collapsible-rich.is-expanded .collapsible-rich-body {
+    max-height: 65vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .ask-input {
