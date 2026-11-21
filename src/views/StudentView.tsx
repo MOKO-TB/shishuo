@@ -744,6 +744,7 @@ export function StudentView({
                 aiVision && attachment?.kind !== 'document' ? attachment?.dataUrl : undefined,
               documentText: documentAttachment?.text,
               documentName: documentAttachment?.name,
+              knowledgeFiles: result.matches[0]?.faq.attachments,
               onUpdate: (partial) => setStreamPreview(partial),
             })
             thread.externalAnswer = {
@@ -820,6 +821,7 @@ export function StudentView({
     if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能继续对话。')
     const threadCourse = courseById(thread.courseId)
     const result = retrieve(data.faqs, followUp, thread.courseId)
+    const sourceFaq = data.faqs.find((faq) => faq.id === thread.sources?.[0])
     const localContext = result.matches
       .slice(0, 2)
       .map((match) => `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`)
@@ -829,6 +831,7 @@ export function StudentView({
       courseName: threadCourse.name,
       localContext,
       mentorBrief: mentorBriefForCourse(thread.courseId),
+      knowledgeFiles: sourceFaq?.attachments,
       history,
     })
   }

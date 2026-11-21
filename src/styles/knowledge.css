@@ -593,6 +593,197 @@
   text-align: right;
 }
 
+/* FAQ 附件：详情展示 + 编辑区上传 */
+
+.faq-attach-block {
+  display: grid;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.faq-attach-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.faq-attach-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+}
+
+.faq-attach-image {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+}
+
+.faq-attach-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s var(--ease);
+}
+
+.faq-attach-image:hover img {
+  transform: scale(1.03);
+}
+
+.faq-attach-file {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s var(--ease);
+}
+
+.faq-attach-file:hover {
+  border-color: var(--jade);
+}
+
+.faq-attach-file-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-xs);
+  background: var(--jade-mist);
+  color: var(--jade);
+}
+
+.faq-attach-file-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.faq-attach-file-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  color: var(--ink);
+}
+
+.faq-attach-file-copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+.faq-attach-file > svg {
+  flex: 0 0 auto;
+  color: var(--faint);
+}
+
+.faq-attachment-drop {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.faq-attachment-drop.is-over {
+  border-color: var(--jade);
+  background: var(--jade-mist);
+}
+
+.faq-attachment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.faq-attachment-actions .field-hint {
+  text-align: left;
+}
+
+.faq-attachment-edit-list {
+  display: grid;
+  gap: 6px;
+}
+
+.faq-attachment-edit-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+.faq-attachment-edit-item img {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+
+.faq-attachment-edit-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--jade-mist);
+  color: var(--jade);
+}
+
+.faq-attachment-edit-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.faq-attachment-edit-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  color: var(--ink);
+}
+
+.faq-attachment-edit-copy em {
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+.faq-attachment-hint {
+  text-align: left !important;
+}
+
+.faq-attachment-error {
+  text-align: left !important;
+  color: var(--danger);
+}
+
 @media (max-width: 1180px) {
   .knowledge-head {
     grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.58fr);

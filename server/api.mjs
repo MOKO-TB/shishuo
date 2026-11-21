@@ -48,6 +48,17 @@ const CHAT_BODY_LIMIT = 12 * 1024 * 1024
 const SMALL_BODY_LIMIT = 256 * 1024
 const UPLOAD_BODY_LIMIT = 3 * 1024 * 1024
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+const FILE_UPLOAD_BODY_LIMIT = 28 * 1024 * 1024
+const MAX_FAQ_FILE_BYTES = 20 * 1024 * 1024
+const FAQ_FILE_MIME = {
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  txt: 'text/plain; charset=utf-8',
+  md: 'text/markdown; charset=utf-8',
+  csv: 'text/csv; charset=utf-8',
+}
 const MAX_MESSAGES = 24
 const AI_DEFAULT_MAX_TOKENS = 1200
 const AI_MAX_TOKENS = 4096
@@ -1472,6 +1483,41 @@ export function createApiHandler({ db, config }) {
         })
       }
 
+      const adminStudentThreadMatch =
+        /^\/api\/admin\/student-threads\/([\w.-]+)$/.exec(pathname)
+      if (adminStudentThreadMatch && req.method === 'DELETE') {
+        const admin = requireAdmin(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const threadId = decodeURIComponent(adminStudentThreadMatch[1])
+        const data = parsedWorkspace(workspaceRow(db)) ?? {}
+        const thread = (data.threads ?? []).find((item) => item.id === threadId)
+        if (!thread) return sendError(res, 404, '这条学生问题不存在或已被删除。')
+        const question = String(thread.question ?? '').slice(0, 60)
+        const result = mutateWorkspaceAsAdmin(db, {
+          user: admin,
+          action: 'admin-thread-delete',
+          summary: `删除学生问题：${question}`,
+          courseIds: [thread.courseId].filter(Boolean),
+          mutate: (next) => {
+            const before = (next.threads ?? []).length
+            next.threads = (next.threads ?? []).filter((item) => item.id !== threadId)
+            if ((next.threads?.length ?? 0) === before) return false
+            // 通知都指向具体问答；问题删除后一并清理，避免留下打不开的链接。
+            next.notifications = (next.notifications ?? []).filter(
+              (item) => item.threadId !== threadId,
+            )
+            return true
+          },
+        })
+        try {
+          db.prepare('DELETE FROM moderation_reviews WHERE thread_id = ?').run(threadId)
+          db.prepare('DELETE FROM archived_threads WHERE id = ?').run(threadId)
+        } catch {
+          // 审核 / 归档记录清理尽力而为，工作区删除已经生效。
+        }
+        return sendJson(res, 200, { ok: true, revision: result.revision })
+      }
+
       const adminCampusReplyMatch =
         /^\/api\/admin\/campus\/threads\/([\w.-]+)\/reply$/.exec(pathname)
       if (adminCampusReplyMatch && req.method === 'POST') {
@@ -1639,7 +1685,10 @@ export function createApiHandler({ db, config }) {
         )
         let items = threads.map((thread) => {
           const attachmentUrl = thread.attachment?.url ?? ''
-          const imageReview = attachmentUrl ? imageReviews.get(attachmentUrl) : null
+          const attachmentKind =
+            thread.attachment?.kind ?? (attachmentUrl ? 'image' : 'document')
+          const isImage = attachmentKind !== 'document'
+          const imageReview = isImage && attachmentUrl ? imageReviews.get(attachmentUrl) : null
           const threadReview = threadReviews.get(thread.id)
           return {
             id: thread.id,
@@ -1655,11 +1704,14 @@ export function createApiHandler({ db, config }) {
             withdrawn: Boolean(thread.withdrawnAt),
             attachment: thread.attachment
               ? {
-                  url: thread.attachment.url,
+                  url: attachmentUrl,
                   name: thread.attachment.name,
                   type: thread.attachment.type,
-                  review: imageReview?.status ?? 'pending',
-                  reason: imageReview?.reason ?? '',
+                  kind: attachmentKind,
+                  size: Number(thread.attachment.size ?? 0),
+                  excerpt: String(thread.attachment.excerpt ?? '').slice(0, 300),
+                  review: isImage ? imageReview?.status ?? 'pending' : 'approved',
+                  reason: isImage ? imageReview?.reason ?? '' : '',
                 }
               : null,
             matchedTerm: findBlockedTermInThread(thread, active),
@@ -1670,7 +1722,9 @@ export function createApiHandler({ db, config }) {
         if (filter === 'flagged') {
           items = items.filter((item) => item.matchedTerm)
         } else if (filter === 'images') {
-          items = items.filter((item) => item.attachment)
+          items = items.filter(
+            (item) => item.attachment && item.attachment.kind !== 'document',
+          )
         } else if (filter === 'pending') {
           items = items.filter(
             (item) =>
@@ -2350,6 +2404,60 @@ export function createApiHandler({ db, config }) {
           storage: stored.storage,
           name: String(body.name ?? '题目图片').slice(0, 200),
           type: mime,
+        })
+      }
+
+      if (pathname === '/api/uploads/file' && req.method === 'POST') {
+        const user = requireUser(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        if (user.role !== 'teacher') return sendError(res, 403, '只有教师可以上传课程资料。')
+        assertUserCanWrite(user, 'post')
+        const body = await readJson(req, FILE_UPLOAD_BODY_LIMIT)
+        const match = /^data:[^,]*;base64,([A-Za-z0-9+/=\s]+)$/i.exec(
+          String(body.dataUrl ?? ''),
+        )
+        if (!match) return sendError(res, 400, '文件内容格式不正确。')
+        const name = String(body.name ?? '')
+          .replace(/[\\/\r\n"]/g, '_')
+          .trim()
+          .slice(0, 200)
+        const dot = name.lastIndexOf('.')
+        const ext = dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''
+        const mime = FAQ_FILE_MIME[ext]
+        if (!name || !mime) {
+          return sendError(res, 400, '只支持 PDF、Word、PPT、Excel、文本或 Markdown 文件。')
+        }
+        const buffer = Buffer.from(match[1].replace(/\s+/g, ''), 'base64')
+        if (buffer.length === 0) return sendError(res, 400, '文件内容为空。')
+        if (buffer.length > MAX_FAQ_FILE_BYTES) {
+          return sendError(res, 413, '文件超过 20MB，请拆分或压缩后再试。')
+        }
+        const isZip = buffer[0] === 0x50 && buffer[1] === 0x4b && buffer[2] === 0x03 && buffer[3] === 0x04
+        const isPdf = buffer.subarray(0, 5).toString('ascii') === '%PDF-'
+        const isText = !buffer.subarray(0, 8192).includes(0)
+        if (
+          (ext === 'pdf' && !isPdf) ||
+          (['docx', 'pptx', 'xlsx'].includes(ext) && !isZip) ||
+          (['txt', 'md', 'csv'].includes(ext) && !isText)
+        ) {
+          return sendError(res, 400, '文件内容与扩展名不一致，请重新导出后再试。')
+        }
+        const id = newId('doc')
+        let stored
+        try {
+          stored = await saveUpload(config, buffer, { id, ext, mime })
+        } catch (error) {
+          return sendError(res, 502, error instanceof Error ? error.message : '文件存储失败。')
+        }
+        db.prepare(
+          'INSERT INTO uploads (id, user_id, mime, size, created_at) VALUES (?, ?, ?, ?, ?)',
+        ).run(id, user.id, mime, buffer.length, Date.now())
+        return sendJson(res, 201, {
+          url: stored.url,
+          storage: stored.storage,
+          name,
+          type: mime,
+          size: buffer.length,
         })
       }
 

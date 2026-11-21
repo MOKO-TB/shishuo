@@ -36,6 +36,7 @@ import {
   RichText,
   Seal,
 } from './ui'
+import { FaqAttachments } from './FaqAttachments'
 
 export function ThreadDetailModal({
   threadId,
@@ -381,6 +382,12 @@ export function ThreadDetailModal({
                 AI 没有找到足够可靠的依据，没有生成答案。
                 {closest && ` 查到的相近内容：${closest.question}`}
               </p>
+            )}
+            {displayAiAnswer && (
+              <FaqAttachments
+                attachments={sources[0]?.attachments}
+                caption="这条知识附带的图片与资料"
+              />
             )}
             {sources.length > 0 && (
               <div className="thread-source-row">

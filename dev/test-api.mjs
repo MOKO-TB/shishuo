@@ -629,6 +629,43 @@ test('归档维护：旧问答移入归档，管理员可查学生不可查', as
   assert.ok(list.json.threads.some((thread) => thread.id === 's1-thread-old'))
 })
 
+test('匿名提问：老师能看到转交说明，保存工作区不 403', async () => {
+  const student1 = session.get('student1').user
+  const created = await runAction('student1', '/api/threads', {
+    thread: {
+      id: 's1-anon-thread',
+      courseId: 'ds',
+      student: { id: student1.id, name: student1.name, anonymous: true },
+      question: '匿名提问：动态规划的边界怎么处理？',
+      createdAt: Date.now(),
+      status: 'ai',
+      kind: 'ask',
+    },
+  })
+  assert.equal(created.status, 200, JSON.stringify(created.json))
+  const escalated = await runAction('student1', '/api/threads/s1-anon-thread/escalate', {
+    escalation: {
+      title: '动态规划边界',
+      note: '作业最后一题要用，麻烦老师今天看一下',
+      anonymous: true,
+      urgency: 'today',
+    },
+  })
+  assert.equal(escalated.status, 200, JSON.stringify(escalated.json))
+
+  const teacherView = await state('teacherDs')
+  const anon = teacherView.json.data.threads.find((thread) => thread.id === 's1-anon-thread')
+  assert.equal(anon.student.name, '匿名同学')
+  assert.equal(
+    anon.escalation.note,
+    '作业最后一题要用，麻烦老师今天看一下',
+    '老师应看到学生写给老师的转交说明',
+  )
+  const revision = (await api('/api/state/revision', { as: 'teacherDs' })).json.revision
+  const saved = await putState('teacherDs', teacherView.json.data, revision)
+  assert.equal(saved.status, 200, JSON.stringify(saved.json))
+})
+
 test('动作 API：学生提问 → 转交 → 老师回复 → 撤回，全链路', async () => {
   // 1. 学生用动作 API 新建一条 AI 问答
   const student1 = session.get('student1').user
@@ -922,6 +959,86 @@ test('S3 对象存储：上传走 SigV4 签名 PUT，URL 指向对象端点', as
   )
 })
 
+test('FAQ 附件：资料文件上传、地址校验与历史快照', async () => {
+  const pdfBytes = Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n')
+  const upload = await api('/api/uploads/file', {
+    method: 'POST',
+    as: 'teacherDs',
+    body: {
+      dataUrl: `data:application/pdf;base64,${pdfBytes.toString('base64')}`,
+      name: '第6章 动态规划课件.pdf',
+    },
+  })
+  assert.equal(upload.status, 201, JSON.stringify(upload.json))
+  assert.equal(upload.json.type, 'application/pdf')
+  assert.equal(upload.json.size, pdfBytes.length)
+  const objectPath = new URL(upload.json.url).pathname
+  assert.ok(s3Objects.has(objectPath), '资料文件应落到对象存储')
+
+  const now = Date.now()
+  const baseFaq = {
+    id: 'faq-with-attachments',
+    courseId: 'ds',
+    question: '动态规划的课件在哪里？',
+    aliases: ['dp 课件'],
+    answer: '看附件里的第 6 章课件，重点看状态转移方程。',
+    tags: ['动态规划'],
+    author: '陈砚',
+    source: 'teacher',
+    createdAt: now,
+    updatedAt: now,
+    citations: 0,
+    helpful: 0,
+    unhelpful: 0,
+    attachments: [
+      {
+        kind: 'document',
+        name: '第6章 动态规划课件.pdf',
+        type: 'application/pdf',
+        url: upload.json.url,
+        size: pdfBytes.length,
+        excerpt: '状态转移方程：dp[i] = max(dp[i - 1], dp[i - 2] + a[i])',
+        text: '状态转移方程：dp[i] = max(dp[i - 1], dp[i - 2] + a[i])',
+      },
+    ],
+  }
+  const added = await runAction('teacherDs', '/api/faqs', { faq: baseFaq })
+  assert.equal(added.status, 200, JSON.stringify(added.json))
+  assert.equal(
+    added.json.data.faqs.find((faq) => faq.id === baseFaq.id)?.attachments?.length,
+    1,
+  )
+
+  const updated = await runAction(
+    'teacherDs',
+    '/api/faqs/faq-with-attachments',
+    { faq: { ...baseFaq, question: '动态规划的课件在哪里下载？', updatedAt: now + 1 } },
+    'PUT',
+  )
+  assert.equal(updated.status, 200, JSON.stringify(updated.json))
+  const updatedFaq = updated.json.data.faqs.find((faq) => faq.id === baseFaq.id)
+  assert.equal(updatedFaq.history?.[0]?.attachments?.[0]?.name, '第6章 动态规划课件.pdf')
+
+  const badUrl = await runAction('teacherDs', '/api/faqs', {
+    faq: {
+      ...baseFaq,
+      id: 'faq-with-bad-attachment',
+      attachments: [{ ...baseFaq.attachments[0], url: 'javascript:alert(1)' }],
+    },
+  })
+  assert.equal(badUrl.status, 400)
+
+  const badFile = await api('/api/uploads/file', {
+    method: 'POST',
+    as: 'teacherDs',
+    body: {
+      dataUrl: `data:application/pdf;base64,${Buffer.from('not a pdf').toString('base64')}`,
+      name: '假课件.pdf',
+    },
+  })
+  assert.equal(badFile.status, 400)
+})
+
 test('对象存储配置：S3 缺凭证时回落本地磁盘', () => {
   const keys = ['STORAGE_DRIVER', 'S3_ENDPOINT', 'S3_BUCKET', 'S3_REGION', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_PUBLIC_BASE']
   const saved = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
@@ -1186,6 +1303,43 @@ test('管理端学生问答：管理员可查看校园提问并以校园主理�
     ),
     '学生应收到校园主理人的回复通知',
   )
+})
+
+test('管理端可以删除学生问题', async () => {
+  const current = await state('student1')
+  const thread = makeThread(
+    's1-thread-admin-delete',
+    session.get('student1').user,
+    '这条问题需要管理员删除',
+  )
+  const created = await putState(
+    'student1',
+    { ...current.json.data, threads: [...current.json.data.threads, thread] },
+    current.json.revision,
+  )
+  assert.equal(created.status, 200)
+
+  const inbox = await api('/api/admin/student-threads?limit=500', { as: 'admin' })
+  assert.equal(inbox.status, 200)
+  assert.ok(inbox.json.threads.some((item) => item.id === thread.id))
+
+  const denied = await api(`/api/admin/student-threads/${thread.id}`, {
+    method: 'DELETE',
+    as: 'student1',
+  })
+  assert.equal(denied.status, 403, '学生不能删除共享空间里的问题')
+
+  const removed = await api(`/api/admin/student-threads/${thread.id}`, {
+    method: 'DELETE',
+    as: 'admin',
+  })
+  assert.equal(removed.status, 200)
+  assert.equal(removed.json.ok, true)
+
+  const afterInbox = await api('/api/admin/student-threads?limit=500', { as: 'admin' })
+  assert.ok(!afterInbox.json.threads.some((item) => item.id === thread.id))
+  const afterState = await state('student1')
+  assert.ok(!afterState.json.data.threads.some((item) => item.id === thread.id))
 })
 
 test('教务接口：必须登录，状态接口返回未连接', async () => {

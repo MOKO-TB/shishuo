@@ -1,4 +1,5 @@
-import type { ThreadAttachment } from '../types'
+import type { FaqAttachment, ThreadAttachment } from '../types'
+import { apiPost } from './api'
 import { prepareImage, uploadThreadImage } from './image'
 
 /** 单个资料文件上限；图片另有 10MB 压缩上限。 */
@@ -89,6 +90,30 @@ export const ASK_FILE_ACCEPT = [
 ].join(',')
 
 export const ASK_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+
+/** 老师发知识时可附的资料：解析成正文给 AI，同时保留原文件给学生下载。 */
+export const FAQ_FILE_ACCEPT = [
+  '.pdf',
+  '.docx',
+  '.pptx',
+  '.xlsx',
+  '.txt',
+  '.md',
+  '.csv',
+].join(',')
+
+const FAQ_FILE_EXTENSIONS = new Set([
+  'pdf',
+  'docx',
+  'pptx',
+  'xlsx',
+  'txt',
+  'md',
+  'csv',
+])
+
+/** FAQ 附件的正文最多保留这么多字符，避免一条知识把整份课件塞进状态。 */
+const MAX_FAQ_TEXT_CHARS = 20_000
 
 export function fileExtension(name: string) {
   const index = name.lastIndexOf('.')
@@ -399,5 +424,73 @@ export async function prepareAttachment(file: File): Promise<ThreadAttachment> {
     size: file.size,
     text,
     excerpt: text.slice(0, 1_200),
+  }
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('文件读取失败，请重新选择。'))
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * 老师发知识时用的附件：
+ * - 图片压缩上传，直接展示在答案下方；
+ * - 资料先解析正文（AI 可引用），再把原文件上传，学生可下载。
+ */
+export async function prepareFaqAttachment(file: File): Promise<FaqAttachment> {
+  const extension = fileExtension(file.name)
+  if (isImageFile(file)) {
+    const normalized = file.type
+      ? file
+      : new File([file], file.name, {
+          type: MIME_BY_EXTENSION[extension] ?? 'application/octet-stream',
+        })
+    const prepared = await prepareImage(normalized)
+    const uploaded = await uploadThreadImage(prepared)
+    return {
+      kind: 'image',
+      url: uploaded.url,
+      name: uploaded.name || normalized.name,
+      type: uploaded.type || prepared.type,
+      size: file.size,
+    }
+  }
+
+  if (!FAQ_FILE_EXTENSIONS.has(extension)) {
+    throw new Error('暂不支持这种文件，请上传 PDF、Word、PPT、Excel、文本或图片。')
+  }
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    throw new Error('文件超过 20MB，请拆分或压缩后再试。')
+  }
+
+  // 扫描版 PDF 可能提不出文字；文件本身仍然值得发给学生，所以解析失败不阻塞上传。
+  let text = ''
+  try {
+    text = normalizeText(await extractDocumentText(file, extension))
+  } catch {
+    text = ''
+  }
+
+  const dataUrl = await readFileAsDataUrl(file)
+  const uploaded = await apiPost<{ url: string; name?: string; type?: string }>(
+    '/api/uploads/file',
+    { dataUrl, name: file.name },
+  )
+  return {
+    kind: 'document',
+    url: uploaded.url,
+    name: uploaded.name || file.name,
+    type: uploaded.type || MIME_BY_EXTENSION[extension] || 'application/octet-stream',
+    size: file.size,
+    ...(text
+      ? {
+          text: text.slice(0, MAX_FAQ_TEXT_CHARS),
+          excerpt: text.slice(0, 1_200),
+        }
+      : {}),
   }
 }

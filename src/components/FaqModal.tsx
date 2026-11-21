@@ -1,12 +1,38 @@
-import { useEffect, useState } from 'react'
-import { BookOpen, Link2, Loader2, Pencil, Save, Sparkles, Trash2 } from 'lucide-react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
+} from 'react'
+import {
+  BookOpen,
+  FileText,
+  ImagePlus,
+  Link2,
+  Loader2,
+  Paperclip,
+  Pencil,
+  Save,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useStore } from '../store'
 import { allCourses, courseById, isSeededCourse, teacherByName } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
-import type { Faq, FaqPrefill, Role } from '../types'
+import type { Faq, FaqAttachment, FaqPrefill, Role } from '../types'
 import { copyText, formatRelative, makeId, percent, shareLink, truncate } from '../lib/utils'
 import { errorMessage, suggestFaqMeta, type FaqMetaSuggestion } from '../lib/ai'
+import {
+  ASK_IMAGE_ACCEPT,
+  FAQ_FILE_ACCEPT,
+  formatFileSize,
+  prepareFaqAttachment,
+} from '../lib/attachment'
 import { Badge, Modal, RichText, Seal } from './ui'
+import { FaqAttachments } from './FaqAttachments'
 
 export interface FaqModalState {
   mode: 'view' | 'edit' | 'create'
@@ -41,6 +67,8 @@ const emptyForm: FaqForm = {
   chapter: '',
 }
 
+const MAX_FAQ_ATTACHMENTS = 6
+
 function normalizeAliasText(value: string) {
   return value.toLowerCase().replace(/[\s\p{P}\p{S}]/gu, '')
 }
@@ -62,6 +90,13 @@ export function FaqModal({
   const [aiSuggest, setAiSuggest] = useState<FaqMetaSuggestion | null>(null)
   const [aiSuggestBusy, setAiSuggestBusy] = useState(false)
   const [aiSuggestError, setAiSuggestError] = useState<string | null>(null)
+  const [attachments, setAttachments] = useState<FaqAttachment[]>([])
+  const [attachmentBusy, setAttachmentBusy] = useState(false)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const [attachmentDrag, setAttachmentDrag] = useState(false)
+  const attachmentBusyRef = useRef(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const teacher = teacherByName(teacherName)
   const inPilot = (courseId: string) => isPilotCourse(courseId) || !isSeededCourse(courseId)
   const editableCourses =
@@ -77,6 +112,10 @@ export function FaqModal({
     setRestoreArm(null)
     setAiSuggest(null)
     setAiSuggestError(null)
+    setAttachments([])
+    setAttachmentBusy(false)
+    setAttachmentError(null)
+    setAttachmentDrag(false)
     if (state.mode === 'create') {
       setForm(
         state.prefill
@@ -101,6 +140,7 @@ export function FaqModal({
         aliases: faq.aliases.join('，'),
         chapter: faq.chapter ?? '',
       })
+      setAttachments(faq.attachments ?? [])
     }
   }, [state?.mode, state?.faqId, state?.prefill?.question, defaultCreateCourseId, faq?.id, faq?.updatedAt])
 
@@ -192,6 +232,68 @@ export function FaqModal({
     setForm({ ...form, tags: [...tags, tag].join('，') })
   }
 
+  const addAttachments = async (files: File[]) => {
+    if (attachmentBusyRef.current || files.length === 0) return
+    const room = MAX_FAQ_ATTACHMENTS - attachments.length
+    if (room <= 0) {
+      setAttachmentError(`最多附 ${MAX_FAQ_ATTACHMENTS} 个文件，先删掉一个再加。`)
+      return
+    }
+    const selected = files.slice(0, room)
+    attachmentBusyRef.current = true
+    setAttachmentBusy(true)
+    setAttachmentError(
+      files.length > room ? `最多附 ${MAX_FAQ_ATTACHMENTS} 个文件，这次只处理前 ${room} 个。` : null,
+    )
+    const accepted: FaqAttachment[] = []
+    const failed: string[] = []
+    try {
+      for (const file of selected) {
+        try {
+          accepted.push(await prepareFaqAttachment(file))
+        } catch (err) {
+          failed.push(`${file.name}：${errorMessage(err)}`)
+        }
+      }
+    } finally {
+      attachmentBusyRef.current = false
+      setAttachmentBusy(false)
+    }
+    if (accepted.length > 0) {
+      setAttachments((current) =>
+        [...current, ...accepted].slice(0, MAX_FAQ_ATTACHMENTS),
+      )
+    }
+    if (failed.length > 0) setAttachmentError(failed.join('；'))
+  }
+
+  const handleAttachmentInput = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (files.length > 0) void addAttachments(files)
+  }
+
+  const handleAttachmentDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setAttachmentDrag(false)
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (files.length > 0) void addAttachments(files)
+  }
+
+  const handleAnswerPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(event.clipboardData.files ?? []).filter((file) =>
+      file.type.startsWith('image/'),
+    )
+    if (files.length === 0) return
+    event.preventDefault()
+    void addAttachments(files)
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))
+    setAttachmentError(null)
+  }
+
   const runAiSuggest = async () => {
     if (aiSuggestBusy) return
     setAiSuggestBusy(true)
@@ -216,6 +318,10 @@ export function FaqModal({
   const save = () => {
     const question = form.question.trim()
     const answer = form.answer.trim()
+    if (attachmentBusy) {
+      setError('图片或文件还在上传，请稍候再保存。')
+      return
+    }
     if (!question || !answer) {
       setError('问题和答案都不能为空。')
       return
@@ -243,6 +349,7 @@ export function FaqModal({
         unhelpful: 0,
         recentUnhelpful: 0,
         chapter: form.chapter.trim() || undefined,
+        ...(attachments.length > 0 ? { attachments } : {}),
       }
       dispatch({ type: 'faq-added', faq: created })
       notify('已加入课程知识库，AI 下一次就能引用')
@@ -260,6 +367,7 @@ export function FaqModal({
           tags: parseTags(form.tags),
           aliases: parseAliases(form.aliases),
           chapter: form.chapter.trim() || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
           reviewNeeded: false,
           reviewNote: undefined,
         },
@@ -298,6 +406,7 @@ export function FaqModal({
         tags: version.tags,
         aliases: version.aliases,
         chapter: version.chapter,
+        attachments: version.attachments,
         reviewNeeded: false,
         reviewNote: undefined,
       },
@@ -416,10 +525,111 @@ export function FaqModal({
               className="input textarea faq-answer-input"
               value={form.answer}
               onChange={(event) => setForm({ ...form, answer: event.target.value })}
-              placeholder="写清楚适用条件、关键步骤和常见误区。支持换行、• 列表和 **加粗**。"
+              onPaste={handleAnswerPaste}
+              placeholder="写清楚适用条件、关键步骤和常见误区。支持换行、• 列表和 **加粗**；也可以直接粘贴截图。"
             />
             <span className="field-hint">{form.answer.length} 字 · 答案会直接作为 AI 的作答依据</span>
           </label>
+          <div className="field faq-attachment-field">
+            <span className="field-label">图片与文件（可选）</span>
+            <div
+              className={`faq-attachment-drop ${attachmentDrag ? 'is-over' : ''}`}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setAttachmentDrag(true)
+              }}
+              onDragLeave={() => setAttachmentDrag(false)}
+              onDrop={handleAttachmentDrop}
+            >
+              <div className="faq-attachment-actions">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept={ASK_IMAGE_ACCEPT}
+                  multiple
+                  hidden
+                  onChange={handleAttachmentInput}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={FAQ_FILE_ACCEPT}
+                  multiple
+                  hidden
+                  onChange={handleAttachmentInput}
+                />
+                <button
+                  type="button"
+                  className="button button-ghost"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={attachmentBusy}
+                >
+                  {attachmentBusy ? (
+                    <Loader2 size={15} className="spin-icon" />
+                  ) : (
+                    <ImagePlus size={15} />
+                  )}
+                  添加图片
+                </button>
+                <button
+                  type="button"
+                  className="button button-ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={attachmentBusy}
+                >
+                  <Paperclip size={15} />
+                  添加文件
+                </button>
+                <span className="field-hint">
+                  {attachmentBusy
+                    ? '正在解析并上传，请稍候…'
+                    : `也可以拖拽到这里，最多 ${MAX_FAQ_ATTACHMENTS} 个`}
+                </span>
+              </div>
+              {attachments.length > 0 && (
+                <div className="faq-attachment-edit-list">
+                  {attachments.map((attachment, index) => (
+                    <div className="faq-attachment-edit-item" key={`${attachment.url}-${index}`}>
+                      {attachment.kind === 'image' ? (
+                        <img src={attachment.url} alt={attachment.name} />
+                      ) : (
+                        <span className="faq-attachment-edit-icon">
+                          <FileText size={18} />
+                        </span>
+                      )}
+                      <span className="faq-attachment-edit-copy">
+                        <strong>{attachment.name}</strong>
+                        <em>
+                          {[
+                            attachment.kind === 'image' ? '图片' : '文件',
+                            formatFileSize(attachment.size),
+                            attachment.text ? '已提取正文' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </em>
+                      </span>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => removeAttachment(index)}
+                        aria-label={`移除 ${attachment.name}`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <span className="field-hint faq-attachment-hint">
+              图片会直接展示在答案下方；PDF、Word、PPT 等文件可下载，能读出的正文也会作为 AI
+              的作答依据。
+            </span>
+            {attachmentError && (
+              <span className="field-hint faq-attachment-error">{attachmentError}</span>
+            )}
+          </div>
           <label className="field">
             <span className="field-label">标签（用逗号分隔）</span>
             <input
@@ -602,6 +812,7 @@ export function FaqModal({
             </div>
           )}
           <RichText text={faq.answer} className="faq-detail-answer" />
+          <FaqAttachments attachments={faq.attachments} caption="老师附带的图片与资料" />
 
           <div className="tag-row">
             {faq.tags.map((tag) => (

@@ -30,6 +30,7 @@ import {
   FeedbackButtons,
   RichText,
 } from './ui'
+import { FaqAttachments } from './FaqAttachments'
 
 interface AnswerCardProps {
   thread: Thread
@@ -223,6 +224,10 @@ export function AnswerCard({
             </div>
           )}
           {displayAnswer && <RichText text={displayAnswer} />}
+          <FaqAttachments
+            attachments={sourceFaqs[0]?.attachments}
+            caption="这条知识附带的图片与资料"
+          />
         </div>
       )}
 

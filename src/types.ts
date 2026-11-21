@@ -35,6 +35,21 @@ export interface FaqPrefill {
   chapter?: string
 }
 
+/** 老师发知识时附带的图片或资料文件。 */
+export interface FaqAttachment {
+  name: string
+  type: string
+  kind: 'image' | 'document'
+  /** 图片预览地址或资料原文件的下载地址。 */
+  url: string
+  /** 原始文件字节数，用于展示大小。 */
+  size?: number
+  /** 文档解析出的正文摘要，展示在附件卡片里。 */
+  excerpt?: string
+  /** 文档解析出的纯文本，只作为 AI 作答依据，不在页面上展开。 */
+  text?: string
+}
+
 export interface FaqVersion {
   question: string
   answer: string
@@ -43,6 +58,7 @@ export interface FaqVersion {
   chapter?: string
   author: string
   updatedAt: number
+  attachments?: FaqAttachment[]
 }
 
 export interface Faq {
@@ -80,6 +96,8 @@ export interface Faq {
   nextReviewAt?: number
   /** 最近一次核实人。 */
   verifiedBy?: string
+  /** 老师随答案一起发布的图片与资料。 */
+  attachments?: FaqAttachment[]
   /** Last few snapshots before teacher edits; newest first. */
   history?: FaqVersion[]
 }

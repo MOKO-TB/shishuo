@@ -104,6 +104,10 @@ function buildDocument(faq: Faq) {
   faq.aliases.forEach((alias) => addTerms(terms, alias, 1.6))
   faq.tags.forEach((tag) => addTerms(terms, tag, 1.4))
   if (faq.chapter) addTerms(terms, faq.chapter, 0.4)
+  // 老师附的资料也参与检索：学生问课件里的名词时更容易命中这条知识。
+  faq.attachments?.forEach((attachment) => {
+    addTerms(terms, `${attachment.name} ${attachment.excerpt ?? ''}`, 0.5)
+  })
   return terms
 }
 
@@ -129,8 +133,11 @@ function cosine(query: Map<string, number>, doc: Map<string, number>, idf: Map<s
 
 function uncoveredTerms(question: string, faq: Faq) {
   const asked = domainTerms(question, faq.courseId)
+  const attachmentText = (faq.attachments ?? [])
+    .map((attachment) => `${attachment.name} ${attachment.excerpt ?? ''}`)
+    .join(' ')
   const covered = domainTerms(
-    `${faq.question} ${faq.answer} ${faq.tags.join(' ')}`,
+    `${faq.question} ${faq.answer} ${faq.tags.join(' ')} ${attachmentText}`,
     faq.courseId,
   )
   return Array.from(asked).filter((term) => !covered.has(term))

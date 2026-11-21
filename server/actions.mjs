@@ -80,6 +80,7 @@ function upsertFaq(data, faq) {
     tags: existing.tags,
     aliases: existing.aliases,
     ...(existing.chapter ? { chapter: existing.chapter } : {}),
+    ...(existing.attachments ? { attachments: existing.attachments } : {}),
     author: existing.author,
     updatedAt: existing.updatedAt,
   }

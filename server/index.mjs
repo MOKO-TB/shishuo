@@ -57,6 +57,7 @@ campusReviewTimer.unref?.()
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
@@ -64,6 +65,13 @@ const MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.pdf': 'application/pdf',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.txt': 'text/plain; charset=utf-8',
+  '.md': 'text/markdown; charset=utf-8',
+  '.csv': 'text/csv; charset=utf-8',
   '.ico': 'image/x-icon',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
@@ -72,7 +80,7 @@ const MIME_TYPES = {
 }
 
 // 可压缩的文本类资源；图片/字体已是压缩格式，再压反而变大
-const COMPRESSIBLE_EXT = new Set(['.html', '.js', '.css', '.json', '.svg', '.map', '.txt'])
+const COMPRESSIBLE_EXT = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.map', '.txt'])
 const COMPRESS_MIN_BYTES = 1024
 
 function acceptsGzip(req) {
@@ -125,7 +133,11 @@ async function serveUpload(req, res, pathname) {
     return
   }
   const name = pathname.slice('/uploads/'.length)
-  if (!/^img_[a-f0-9]+\.(jpg|jpeg|png|webp)$/i.test(name)) {
+  if (
+    !/^(?:img_[a-f0-9]+\.(?:jpg|jpeg|png|webp)|doc_[a-f0-9]+\.(?:pdf|docx|pptx|xlsx|txt|md|csv))$/i.test(
+      name,
+    )
+  ) {
     res.statusCode = 404
     res.end('Not found')
     return
@@ -137,6 +149,10 @@ async function serveUpload(req, res, pathname) {
     res.statusCode = 200
     res.setHeader('Content-Type', MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream')
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    // 资料文件按附件下载，避免浏览器把上传内容当页面执行；图片仍然内联展示。
+    if (name.startsWith('doc_')) {
+      res.setHeader('Content-Disposition', 'attachment')
+    }
     securityHeaders(res, req)
     if (req.method === 'HEAD') {
       res.end()

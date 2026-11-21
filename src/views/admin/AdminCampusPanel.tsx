@@ -7,8 +7,9 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  Trash2,
 } from 'lucide-react'
-import { ApiError, apiGet, apiPost } from '../../lib/api'
+import { ApiError, apiDelete, apiGet, apiPost } from '../../lib/api'
 import { Badge } from '../../components/ui'
 import type {
   AdminStudentThread,
@@ -63,6 +64,8 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
   const [replyText, setReplyText] = useState('')
   const [replySediment, setReplySediment] = useState(true)
   const [sending, setSending] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<AdminStudentThread | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadInbox = useCallback(async () => {
     setLoading(true)
@@ -164,13 +167,34 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
     }
   }
 
+  const removeThread = async () => {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      await apiDelete(
+        `/api/admin/student-threads/${encodeURIComponent(deleteTarget.id)}`,
+      )
+      notify('学生问题已删除。', 'success')
+      if (selectedId === deleteTarget.id) setSelectedId(null)
+      setDeleteTarget(null)
+      await loadInbox()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        await loadInbox()
+      }
+      notify(err instanceof Error ? err.message : '删除失败，请稍后重试。', 'danger')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="admin-panel admin-campus-inbox">
       <div className="admin-panel-toolbar">
         <div>
           <strong>学生问答 · 校园主理人</strong>
           <span>
-            查看学生提交的问题；校园生活问题由管理员以「校园主理人」身份回复，回复会通知学生，超过 40 字可沉淀为 FAQ
+            查看学生提交的问题；校园生活问题由管理员以「校园主理人」身份回复，回复会通知学生，超过 40 字可沉淀为 FAQ；无效或违规问题可直接删除
           </span>
         </div>
         <div className="admin-panel-actions">
@@ -259,21 +283,31 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
               visibleThreads.map((thread) => {
                 const status = threadStatus(thread)
                 return (
-                  <button
-                    key={thread.id}
-                    className={`admin-thread-row ${thread.id === selectedId ? 'is-active' : ''}`}
-                    onClick={() => setSelectedId(thread.id)}
-                  >
-                    <span className="admin-thread-row-top">
-                      <Badge tone={status.tone}>{status.label}</Badge>
-                      <span>{shortTime(thread.createdAt)}</span>
-                    </span>
-                    <strong>{thread.question}</strong>
-                    <span className="admin-thread-row-meta">
-                      <span>{thread.student.name || '匿名学生'}</span>
-                      <span>{courseLabel(thread.courseId)}</span>
-                    </span>
-                  </button>
+                  <div className="admin-thread-item" key={thread.id}>
+                    <button
+                      className={`admin-thread-row ${thread.id === selectedId ? 'is-active' : ''}`}
+                      onClick={() => setSelectedId(thread.id)}
+                    >
+                      <span className="admin-thread-row-top">
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                        <span>{shortTime(thread.createdAt)}</span>
+                      </span>
+                      <strong>{thread.question}</strong>
+                      <span className="admin-thread-row-meta">
+                        <span>{thread.student.name || '匿名学生'}</span>
+                        <span>{courseLabel(thread.courseId)}</span>
+                      </span>
+                    </button>
+                    <button
+                      className="admin-thread-delete"
+                      type="button"
+                      title="删除这条问题"
+                      aria-label={`删除问题：${thread.question}`}
+                      onClick={() => setDeleteTarget(thread)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 )
               })
             )}
@@ -299,7 +333,19 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
                     {courseLabel(selected.courseId)} · {timeLabel(selected.createdAt)}
                   </p>
                 </div>
-                {selectedStatus && <Badge tone={selectedStatus.tone}>{selectedStatus.label}</Badge>}
+                <div className="admin-thread-head-actions">
+                  {selectedStatus && (
+                    <Badge tone={selectedStatus.tone}>{selectedStatus.label}</Badge>
+                  )}
+                  <button
+                    className="button button-danger-ghost admin-thread-delete-detail"
+                    type="button"
+                    onClick={() => setDeleteTarget(selected)}
+                  >
+                    <Trash2 size={14} />
+                    删除问题
+                  </button>
+                </div>
               </div>
 
               <div className="admin-thread-question">{selected.question}</div>
@@ -402,6 +448,52 @@ export function AdminCampusPanel({ notify }: AdminCampusPanelProps) {
           )}
         </section>
       </div>
+
+      {deleteTarget && (
+        <div
+          className="admin-confirm-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!deleting) setDeleteTarget(null)
+          }}
+        >
+          <div
+            className="admin-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-delete-thread-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="admin-confirm-head">
+              <Trash2 size={18} />
+              <strong id="admin-delete-thread-title">删除这条学生问题？</strong>
+            </div>
+            <p className="admin-confirm-question">{deleteTarget.question}</p>
+            <span className="admin-confirm-note">
+              删除后学生端、教师端和管理端都不再显示这条问答，且无法恢复。已沉淀的
+              FAQ 和已上传的附件文件会保留。
+            </span>
+            <div className="admin-confirm-actions">
+              <button
+                className="button button-ghost"
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+              >
+                取消
+              </button>
+              <button
+                className="button button-danger"
+                type="button"
+                disabled={deleting}
+                onClick={() => void removeThread()}
+              >
+                {deleting ? '删除中…' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

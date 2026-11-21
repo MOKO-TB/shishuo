@@ -2219,6 +2219,131 @@
   font-size: var(--text-meta);
 }
 
+.admin-thread-item {
+  position: relative;
+}
+
+.admin-thread-item .admin-thread-row {
+  padding-right: 36px;
+}
+
+.admin-thread-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--faint);
+  opacity: 0.55;
+  transition:
+    opacity 0.15s var(--ease),
+    color 0.15s var(--ease),
+    background 0.15s var(--ease);
+}
+
+.admin-thread-item:hover .admin-thread-delete,
+.admin-thread-delete:focus-visible {
+  opacity: 1;
+}
+
+.admin-thread-delete:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+@media (hover: none) {
+  .admin-thread-delete {
+    opacity: 1;
+  }
+}
+
+.admin-thread-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-thread-delete-detail {
+  height: 30px;
+  padding: 0 10px;
+  font-size: var(--text-meta);
+}
+
+.admin-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.admin-confirm-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--sidebar);
+  opacity: 0.55;
+  backdrop-filter: blur(5px);
+}
+
+.admin-confirm-card {
+  position: relative;
+  z-index: 1;
+  width: min(460px, 100%);
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+
+.admin-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger);
+}
+
+.admin-confirm-head strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.admin-confirm-question {
+  margin: 12px 0 8px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--danger);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--danger-soft);
+  color: var(--ink);
+  font-size: var(--text-meta);
+  line-height: 1.7;
+  max-height: 132px;
+  overflow: auto;
+  word-break: break-word;
+}
+
+.admin-confirm-note {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-meta);
+  line-height: 1.7;
+}
+
+.admin-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .admin-thread-detail {
   display: flex;
   flex-direction: column;

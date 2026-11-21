@@ -114,6 +114,7 @@ function faqSnapshot(faq: Faq) {
     tags: faq.tags,
     aliases: faq.aliases,
     chapter: faq.chapter,
+    attachments: faq.attachments,
     author: faq.author,
     updatedAt: faq.updatedAt,
   }

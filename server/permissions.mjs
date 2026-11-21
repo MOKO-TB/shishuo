@@ -417,6 +417,40 @@ function validateStudentFaqChange(prev, next, allowance) {
   }
 }
 
+function assertFaqAttachments(attachments) {
+  if (attachments === undefined) return
+  if (!Array.isArray(attachments) || attachments.length > 6) {
+    bad('FAQ 附件数量不合法。')
+  }
+  let textChars = 0
+  for (const attachment of attachments) {
+    if (!isObject(attachment)) bad('FAQ 附件格式不正确。')
+    if (attachment.kind !== 'image' && attachment.kind !== 'document') {
+      bad('FAQ 附件类型不合法。')
+    }
+    if (!isString(attachment.name, 200)) bad('FAQ 附件名称不合法。')
+    if (!isString(attachment.type, 200)) bad('FAQ 附件格式不合法。')
+    const urlPattern =
+      attachment.kind === 'image'
+        ? /^(?:\/uploads\/|https?:\/\/[^\s"'<>]+\/shishuo\/)img_[a-f0-9]+\.(?:jpg|jpeg|png|webp)$/i
+        : /^(?:\/uploads\/|https?:\/\/[^\s"'<>]+\/shishuo\/)doc_[a-f0-9]+\.(?:pdf|docx|pptx|xlsx|txt|md|csv)$/i
+    if (typeof attachment.url !== 'string' || !urlPattern.test(attachment.url)) {
+      bad('FAQ 附件地址不合法。')
+    }
+    if (attachment.size !== undefined && !isNumber(attachment.size, { max: 25 * 1024 * 1024 })) {
+      bad('FAQ 附件大小不合法。')
+    }
+    if (attachment.excerpt !== undefined && !isString(attachment.excerpt, 2_000, true)) {
+      bad('FAQ 附件摘要过长。')
+    }
+    if (attachment.text !== undefined) {
+      if (!isString(attachment.text, 30_000, true)) bad('FAQ 附件正文过长。')
+      textChars += attachment.text.length
+    }
+  }
+  if (textChars > 120_000) bad('FAQ 附件正文总量超过限制。')
+}
+
 function validateFaqVersion(version) {
   if (!isObject(version)) bad('FAQ 历史版本格式不正确。')
   if (!isString(version.question, 4_000)) bad('FAQ 历史问题不合法。')
@@ -429,6 +463,7 @@ function validateFaqVersion(version) {
   if (version.chapter !== undefined && !isString(version.chapter, 200, true)) {
     bad('FAQ 历史章节不合法。')
   }
+  assertFaqAttachments(version.attachments)
 }
 
 function assertCourseNote(note) {
@@ -492,6 +527,7 @@ function validateFaqShape(faq) {
       bad('FAQ 复核字段不合法。')
     }
   }
+  assertFaqAttachments(faq.attachments)
   if (faq.history !== undefined) {
     if (!Array.isArray(faq.history) || faq.history.length > 5) {
       bad('FAQ 历史版本数量不合法。')
@@ -641,8 +677,8 @@ function isAnonymousThread(thread) {
   return Boolean(thread?.student?.anonymous || thread?.escalation?.anonymous)
 }
 
-function redactThread(thread) {
-  const redacted = {
+function maskAnonymousStudent(thread) {
+  return {
     ...thread,
     student: {
       ...thread.student,
@@ -650,6 +686,10 @@ function redactThread(thread) {
       name: '匿名同学',
     },
   }
+}
+
+function redactThread(thread) {
+  const redacted = maskAnonymousStudent(thread)
   // 转交说明是学生写给老师的私密补充（如「作业最后一题要用」），同班同学不需要看到。
   if (redacted.escalation && typeof redacted.escalation === 'object') {
     const { note, ...rest } = redacted.escalation
@@ -720,7 +760,8 @@ export function projectWorkspace(data, user) {
     const threads = (data.threads ?? [])
       .filter((thread) => courses.has(thread.courseId))
       .map((thread) => {
-        const view = isAnonymousThread(thread) ? redactThread(thread) : thread
+        // 老师看到匿名提问的转交说明（学生写给老师），但不需要学生的真实身份。
+        const view = isAnonymousThread(thread) ? maskAnonymousStudent(thread) : thread
         if (thread.attachment?.teacherVisible === false) {
           const { attachment: _privateImage, ...rest } = view
           return rest

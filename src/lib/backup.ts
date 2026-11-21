@@ -5,6 +5,7 @@ import type {
   CourseNote,
   DailyMetric,
   Faq,
+  FaqAttachment,
   FaqVersion,
   NotificationKind,
   Thread,
@@ -84,6 +85,35 @@ function optionalString(value: unknown) {
   return typeof value === 'string' ? value : undefined
 }
 
+function sanitizeFaqAttachments(value: unknown): FaqAttachment[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const attachments = value
+    .slice(0, 6)
+    .flatMap((item): FaqAttachment[] => {
+      if (!isRecord(item)) return []
+      const name = str(item.name).slice(0, 200)
+      const kind = item.kind === 'image' ? 'image' : item.kind === 'document' ? 'document' : null
+      const url = typeof item.url === 'string' ? item.url : ''
+      const urlPattern =
+        kind === 'image'
+          ? /^(?:\/uploads\/|https?:\/\/[^\s"'<>]+\/shishuo\/)img_[a-f0-9]+\.(?:jpg|jpeg|png|webp)$/i
+          : /^(?:\/uploads\/|https?:\/\/[^\s"'<>]+\/shishuo\/)doc_[a-f0-9]+\.(?:pdf|docx|pptx|xlsx|txt|md|csv)$/i
+      if (!name || !kind || !urlPattern.test(url)) return []
+      return [
+        {
+          name,
+          kind,
+          url,
+          type: str(item.type, 'application/octet-stream').slice(0, 200),
+          size: typeof item.size === 'number' && item.size >= 0 ? item.size : undefined,
+          excerpt: optionalString(item.excerpt)?.slice(0, 2_000),
+          text: optionalString(item.text)?.slice(0, 30_000),
+        },
+      ]
+    })
+  return attachments.length > 0 ? attachments : undefined
+}
+
 function sanitizeFaqVersion(value: unknown): FaqVersion | null {
   if (!isRecord(value)) return null
   const question = str(value.question)
@@ -97,6 +127,7 @@ function sanitizeFaqVersion(value: unknown): FaqVersion | null {
     chapter: optionalString(value.chapter),
     author: str(value.author, '老师'),
     updatedAt: num(value.updatedAt),
+    attachments: sanitizeFaqAttachments(value.attachments),
   }
 }
 
@@ -146,6 +177,7 @@ function sanitizeFaq(value: unknown): Faq | null {
     nextReviewAt:
       typeof value.nextReviewAt === 'number' ? value.nextReviewAt : undefined,
     verifiedBy: optionalString(value.verifiedBy),
+    attachments: sanitizeFaqAttachments(value.attachments),
     history: sanitizeFaqHistory(value.history),
   }
 }
