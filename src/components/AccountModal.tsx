@@ -4,6 +4,8 @@ import {
   CircleAlert,
   Download,
   ExternalLink,
+  Eye,
+  EyeOff,
   GraduationCap,
   Loader2,
   LogOut,
@@ -239,6 +241,7 @@ function JwLoginFields({
   onCaptcha: (value: string) => void
   onRefresh: () => void
 }) {
+  const [showPassword, setShowPassword] = useState(false)
   return (
     <div className="account-jw-login">
       <div className="account-jw-login-head">
@@ -258,14 +261,25 @@ function JwLoginFields({
         </label>
         <label className="field">
           <span className="field-label">密码</span>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={(event) => onPassword(event.target.value)}
-            placeholder="教务密码"
-            autoComplete="current-password"
-          />
+          <div className="account-password-wrap">
+            <input
+              className="input"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => onPassword(event.target.value)}
+              placeholder="教务密码"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              className="account-password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? '隐藏密码' : '显示密码'}
+              title={showPassword ? '隐藏密码' : '显示密码'}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </label>
         <label className="field account-jw-captcha">
           <span className="field-label">验证码</span>

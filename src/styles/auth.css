@@ -278,6 +278,8 @@
 
 .auth-info-grid .field {
   min-width: 0;
+  /* 右列多了“学号仅自己可见”的说明时，避免左列输入框被行高拉伸。 */
+  align-content: start;
 }
 
 @media (max-width: 560px) {
@@ -501,6 +503,84 @@
 
 .app-gate-spinner {
   color: var(--jade);
+}
+
+/* ---------- 登录页入场与极光氛围 ---------- */
+.auth-story::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 28% 32%,
+      color-mix(in srgb, var(--clay) 32%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 72% 68%,
+      color-mix(in srgb, var(--jade) 28%, transparent),
+      transparent 46%
+    );
+  filter: blur(18px);
+  opacity: 0.75;
+  animation: authAurora 18s ease-in-out infinite alternate;
+}
+
+.auth-brand {
+  animation: authRise 0.7s var(--ease) both;
+}
+
+.auth-story-main {
+  animation: authRise 0.9s 0.08s var(--ease) both;
+}
+
+.auth-story-foot {
+  animation: authFade 1s 0.24s var(--ease) both;
+}
+
+.auth-card {
+  animation: authRise 0.75s 0.12s var(--ease) both;
+}
+
+@keyframes authAurora {
+  from {
+    transform: translate3d(-2%, -1%, 0) rotate(-4deg) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) rotate(4deg) scale(1.08);
+  }
+}
+
+@keyframes authRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes authFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-story::before,
+  .auth-brand,
+  .auth-story-main,
+  .auth-story-foot,
+  .auth-card {
+    animation: none;
+  }
 }
 
 @media (max-width: 920px) {

@@ -75,6 +75,8 @@ export function AuthScreen() {
     setCode('')
     setDevCode(null)
     setCooldown(0)
+    // 注册页不自动带入上次登录邮箱，避免覆盖新账号；回到登录仍保留记忆邮箱。
+    setEmail(next === 'register' ? '' : readRememberedEmail())
     setRegisterRole('student')
     setInviteCode('')
     setTeacherCourses([])
@@ -417,7 +419,7 @@ export function AuthScreen() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@school.edu.cn"
-                autoComplete="username"
+                autoComplete={mode === 'register' ? 'off' : 'username'}
                 required
               />
             </label>

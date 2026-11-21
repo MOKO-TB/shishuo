@@ -45,6 +45,7 @@ export function ThreadDetailModal({
   onWithdraw,
   onSupplement,
   onCampusFollowUp,
+  onThreadFollowUp,
   viewer = 'student',
   notify,
 }: {
@@ -58,6 +59,12 @@ export function ThreadDetailModal({
   onWithdraw?: (thread: Thread, withdrawn: boolean) => void
   onSupplement?: (thread: Thread, text: string) => void
   onCampusFollowUp?: (
+    thread: Thread,
+    question: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) => Promise<{ text: string; model: string }>
+  /** 课程问答的连续追问；带上下文调用同一门课的导师。 */
+  onThreadFollowUp?: (
     thread: Thread,
     question: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
@@ -132,12 +139,17 @@ export function ThreadDetailModal({
     /\^\{|_\{/.test(thread.aiAnswer)
       ? sources[0].answer
       : thread.aiAnswer
-  const canCampusChat = thread.courseId === 'campus' && Boolean(onCampusFollowUp)
+  const chatHandler =
+    thread.courseId === 'campus' ? onCampusFollowUp : onThreadFollowUp
+  const canChat =
+    viewer === 'student' && Boolean(chatHandler) && !thread.withdrawnAt
+  const chatAssistantName =
+    thread.courseId === 'campus' ? '学长' : `${course.shortName}导师`
 
-  const submitCampusChat = async (event: FormEvent) => {
+  const submitChat = async (event: FormEvent) => {
     event.preventDefault()
     const question = chatDraft.trim()
-    if (!question || chatBusy || !onCampusFollowUp) return
+    if (!question || chatBusy || !chatHandler) return
     const initialAnswer =
       thread.externalAnswer?.text || thread.aiAnswer || thread.teacherReply?.text || ''
     const history = [
@@ -156,7 +168,7 @@ export function ThreadDetailModal({
     setChatMessages(nextMessages)
     setChatBusy(true)
     try {
-      const result = await onCampusFollowUp(thread, question, history)
+      const result = await chatHandler(thread, question, history)
       setChatMessages((current) => [
         ...current,
         { role: 'assistant', text: result.text },
@@ -397,40 +409,6 @@ export function ThreadDetailModal({
           </div>
         )}
 
-        {canCampusChat && (
-          <section className="campus-chat">
-            <div className="campus-chat-head">
-              <strong>继续追问</strong>
-            </div>
-            {chatMessages.map((message, index) => (
-              <div
-                className={`campus-chat-row is-${message.role}`}
-                key={`${message.role}-${index}`}
-              >
-                <strong>{message.role === 'user' ? '你' : '学长'}</strong>
-                <RichText text={message.text} />
-              </div>
-            ))}
-            {chatError && <p className="campus-chat-error">{chatError}</p>}
-            <form className="campus-chat-form" onSubmit={submitCampusChat}>
-              <input
-                value={chatDraft}
-                onChange={(event) => setChatDraft(event.target.value)}
-                placeholder="接着问，比如：那计算机专业具体先考哪个证？"
-                aria-label="继续追问校园 AI"
-              />
-              <button
-                className="button button-primary"
-                type="submit"
-                disabled={!chatDraft.trim() || chatBusy}
-              >
-                <Send size={14} />
-                {chatBusy ? '回答中…' : '发送'}
-              </button>
-            </form>
-          </section>
-        )}
-
         {thread.escalation && (
           <div className="thread-event">
             <Clock3 size={14} />
@@ -579,6 +557,45 @@ export function ThreadDetailModal({
             </div>
           </div>
         ) : null}
+
+        {canChat && (
+          <section className="campus-chat">
+            <div className="campus-chat-head">
+              <strong>继续追问</strong>
+              <span>会带着这条问题和上面的回答继续聊</span>
+            </div>
+            {chatMessages.map((message, index) => (
+              <div
+                className={`campus-chat-row is-${message.role}`}
+                key={`${message.role}-${index}`}
+              >
+                <strong>{message.role === 'user' ? '你' : chatAssistantName}</strong>
+                <RichText text={message.text} />
+              </div>
+            ))}
+            {chatError && <p className="campus-chat-error">{chatError}</p>}
+            <form className="campus-chat-form" onSubmit={submitChat}>
+              <input
+                value={chatDraft}
+                onChange={(event) => setChatDraft(event.target.value)}
+                placeholder={
+                  thread.courseId === 'campus'
+                    ? '接着问，比如：那计算机专业具体先考哪个证？'
+                    : '接着问，比如：这一步为什么要先检查先修？'
+                }
+                aria-label={`继续追问${chatAssistantName}`}
+              />
+              <button
+                className="button button-primary"
+                type="submit"
+                disabled={!chatDraft.trim() || chatBusy}
+              >
+                <Send size={14} />
+                {chatBusy ? '回答中…' : '发送'}
+              </button>
+            </form>
+          </section>
+        )}
 
         {thread.resolvedAt && (
           <div className="thread-event is-resolved">

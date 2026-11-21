@@ -360,6 +360,7 @@ export async function answerWithExternalAI({
   localContext,
   mentorBrief,
   imageDataUrl,
+  history,
   onUpdate,
 }: {
   question: string
@@ -367,6 +368,7 @@ export async function answerWithExternalAI({
   localContext: string
   mentorBrief?: string
   imageDataUrl?: string
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
   onUpdate?: (partial: string) => void
 }) {
   const contextBlock = localContext.trim()
@@ -397,6 +399,10 @@ export async function answerWithExternalAI({
 4. 最后单独一行以“需要老师确认：”开头，列出仍需核对的地方；
 5. 控制在 500 字以内，不使用 Markdown 表格。${imageRule}${mentorBlock}`,
       },
+      ...(history ?? []).slice(-8).map((item) => ({
+        role: item.role,
+        content: item.content.slice(0, 2_000),
+      })),
       {
         role: 'user',
         content: userContent,

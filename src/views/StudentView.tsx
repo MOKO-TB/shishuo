@@ -1308,6 +1308,22 @@ export function StudentView({
           setDetailThreadId(null)
           setFollowUpThread(thread)
         }}
+        onThreadFollowUp={async (thread, followUp, history) => {
+          if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能连续追问。')
+          const threadCourse = courseById(thread.courseId)
+          const result = retrieve(data.faqs, followUp, thread.courseId)
+          const localContext = result.matches
+            .slice(0, 2)
+            .map((match) => `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`)
+            .join('\n\n')
+          return answerWithExternalAI({
+            question: followUp,
+            courseName: threadCourse.name,
+            localContext,
+            mentorBrief: mentorBriefForCourse(thread.courseId),
+            history,
+          })
+        }}
         notify={notify}
       />
       <ReviewModal

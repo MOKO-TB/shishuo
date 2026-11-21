@@ -845,6 +845,34 @@
   gap: 10px;
 }
 
+.account-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.account-password-wrap .input {
+  width: 100%;
+  padding-right: 38px;
+}
+
+.account-password-toggle {
+  position: absolute;
+  right: 6px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.account-password-toggle:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
 .account-jw-captcha {
   grid-column: 1 / -1;
 }
