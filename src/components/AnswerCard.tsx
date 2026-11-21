@@ -15,6 +15,7 @@ import {
 import { useStore } from '../store'
 import { courseById } from '../data/seed'
 import { findMentorTopic, mentorForCourse } from '../data/mentor'
+import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
 import type { AnswerResult, Thread } from '../types'
 import {
   confidenceDescription,
@@ -64,17 +65,16 @@ export function AnswerCard({
   const [chatDraft, setChatDraft] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatError, setChatError] = useState('')
-  const [chatMessages, setChatMessages] = useState<
-    Array<{ role: 'user' | 'assistant'; text: string }>
-  >([])
+  const [chatMessages, setChatMessages] = useState<ThreadChatMessage[]>([])
   const chatInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setChatOpen(false)
+    const saved = loadThreadChat(thread.id)
+    setChatOpen(saved.length > 0)
     setChatDraft('')
     setChatBusy(false)
     setChatError('')
-    setChatMessages([])
+    setChatMessages(saved)
   }, [thread.id])
 
   const openChat = () => {
@@ -96,13 +96,17 @@ export function AnswerCard({
         content: message.text,
       })),
     ]
+    const nextMessages = [...chatMessages, { role: 'user' as const, text: question }]
     setChatDraft('')
     setChatError('')
-    setChatMessages((current) => [...current, { role: 'user', text: question }])
+    setChatMessages(nextMessages)
+    saveThreadChat(thread.id, nextMessages)
     setChatBusy(true)
     try {
       const answer = await onFollowUpChat(thread, question, history)
-      setChatMessages((current) => [...current, { role: 'assistant', text: answer.text }])
+      const finished = [...nextMessages, { role: 'assistant' as const, text: answer.text }]
+      setChatMessages(finished)
+      saveThreadChat(thread.id, finished)
     } catch (error) {
       setChatError(error instanceof Error ? error.message : '继续对话失败，请稍后再试。')
     } finally {

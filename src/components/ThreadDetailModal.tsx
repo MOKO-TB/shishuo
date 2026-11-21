@@ -25,6 +25,7 @@ import {
   shareLink,
   urgencyLabel,
 } from '../lib/utils'
+import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
 import {
   Avatar,
   Badge,
@@ -79,9 +80,7 @@ export function ThreadDetailModal({
   const [chatDraft, setChatDraft] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatError, setChatError] = useState('')
-  const [chatMessages, setChatMessages] = useState<
-    Array<{ role: 'user' | 'assistant'; text: string }>
-  >([])
+  const [chatMessages, setChatMessages] = useState<ThreadChatMessage[]>([])
   const thread = threadId ? data.threads.find((item) => item.id === threadId) : undefined
 
   useEffect(() => {
@@ -91,7 +90,7 @@ export function ThreadDetailModal({
     setChatDraft('')
     setChatBusy(false)
     setChatError('')
-    setChatMessages([])
+    setChatMessages(threadId ? loadThreadChat(threadId) : [])
   }, [threadId])
 
   if (!thread) return null
@@ -166,13 +165,13 @@ export function ThreadDetailModal({
     setChatDraft('')
     setChatError('')
     setChatMessages(nextMessages)
+    saveThreadChat(thread.id, nextMessages)
     setChatBusy(true)
     try {
       const result = await chatHandler(thread, question, history)
-      setChatMessages((current) => [
-        ...current,
-        { role: 'assistant', text: result.text },
-      ])
+      const finished = [...nextMessages, { role: 'assistant' as const, text: result.text }]
+      setChatMessages(finished)
+      saveThreadChat(thread.id, finished)
     } catch (error) {
       setChatError(error instanceof Error ? error.message : '继续追问失败，请稍后再试。')
     } finally {
