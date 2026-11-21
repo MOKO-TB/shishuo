@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import {
   ArrowRight,
   BookOpen,
@@ -16,12 +16,13 @@ import {
 } from 'lucide-react'
 import { useStore } from '../store'
 import { courseById } from '../data/seed'
-import type { Thread } from '../types'
+import type { FeedbackReason, Thread } from '../types'
 import { formatFileSize, isDocumentAttachment } from '../lib/attachment'
 import {
   confidenceLabel,
   copyText,
   displayStudentName,
+  feedbackReasonLabel,
   formatDateTime,
   formatRelative,
   shareLink,
@@ -47,6 +48,7 @@ export function ThreadDetailModal({
   onFollowUp,
   onResolve,
   onFeedback,
+  onFeedbackReason,
   onUndoReply,
   onWithdraw,
   onSupplement,
@@ -61,6 +63,7 @@ export function ThreadDetailModal({
   onFollowUp?: (thread: Thread) => void
   onResolve?: (thread: Thread, resolved: boolean) => void
   onFeedback?: (thread: Thread, feedback: 'helpful' | 'unhelpful') => void
+  onFeedbackReason?: (thread: Thread, reason: FeedbackReason | null) => void
   onUndoReply?: (thread: Thread) => void
   onWithdraw?: (thread: Thread, withdrawn: boolean) => void
   onSupplement?: (thread: Thread, text: string) => void
@@ -86,7 +89,13 @@ export function ThreadDetailModal({
   const [chatBusy, setChatBusy] = useState(false)
   const [chatError, setChatError] = useState('')
   const [chatMessages, setChatMessages] = useState<ThreadChatMessage[]>([])
-  const thread = threadId ? data.threads.find((item) => item.id === threadId) : undefined
+  const resolvedThread = threadId
+    ? data.threads.find((item) => item.id === threadId)
+    : undefined
+  // 关闭时 threadId 先变 null：留住最后一条线程，让 Modal 有时间播完退场。
+  const lastThreadRef = useRef<Thread | null>(null)
+  if (resolvedThread) lastThreadRef.current = resolvedThread
+  const thread = resolvedThread ?? lastThreadRef.current
 
   useEffect(() => {
     setConfirmUndo(false)
@@ -186,7 +195,7 @@ export function ThreadDetailModal({
 
   return (
     <Modal
-      open
+      open={Boolean(resolvedThread)}
       onClose={onClose}
       eyebrow={`${course.name} · ${formatDateTime(thread.createdAt)}`}
       title="这次答疑的完整记录"
@@ -551,6 +560,13 @@ export function ThreadDetailModal({
                   </button>
                 )}
               </div>
+              {viewer === 'teacher' && thread.feedback === 'unhelpful' && (
+                <div className="inline-note warning">
+                  学生反馈不够清楚
+                  {thread.feedbackReason ? `（${feedbackReasonLabel(thread.feedbackReason)}）` : ''}
+                  {thread.feedbackNote ? `：${thread.feedbackNote}` : ''}
+                </div>
+              )}
             </div>
           </div>
         ) : thread.status === 'pending' ? (
@@ -644,6 +660,12 @@ export function ThreadDetailModal({
             <FeedbackButtons
               value={thread.feedback ?? null}
               onChange={(feedback) => onFeedback?.(thread, feedback)}
+              reason={thread.feedbackReason}
+              onReasonChange={
+                onFeedbackReason
+                  ? (reason) => onFeedbackReason(thread, reason)
+                  : undefined
+              }
             />
           </div>
         )}

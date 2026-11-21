@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { ArrowRight, BookOpen, CalendarDays } from "lucide-react"
 import type { Course, CourseNote, ThreadGroup } from '../../types'
 import type { TeacherProfile } from '../../data/seed'
@@ -7,6 +8,7 @@ import { sectionLabel, weekdayLabel } from '../../lib/profile'
 import { courseById } from '../../data/seed'
 import { Avatar, Badge } from '../../components/ui'
 import { Donut } from '../../components/charts'
+import { FaqAttachments } from '../../components/FaqAttachments'
 
 export interface StudentRailProps {
   todayAi: number
@@ -52,6 +54,36 @@ export function StudentRail({
   onOpenFaq,
   onNavigate,
 }: StudentRailProps) {
+  const noteActive =
+    courseNote && (!courseNote.expiresAt || courseNote.expiresAt > Date.now())
+      ? courseNote
+      : undefined
+  const seenKey = `shishuo.course-note.seen.${studentId}.${courseId}`
+  const [seenAt, setSeenAt] = useState(() => {
+    try {
+      return Number(localStorage.getItem(seenKey)) || 0
+    } catch {
+      return 0
+    }
+  })
+
+  useEffect(() => {
+    if (!noteActive?.publishedAt || noteActive.publishedAt <= seenAt) return
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(seenKey, String(noteActive.publishedAt))
+      } catch {
+        // 本地存储不可用时只影响“新公告”角标，不影响公告本身。
+      }
+      setSeenAt(noteActive.publishedAt ?? 0)
+    }, 2_500)
+    return () => window.clearTimeout(timer)
+  }, [noteActive?.publishedAt, seenAt, seenKey])
+
+  const isNewAnnouncement = Boolean(
+    noteActive?.publishedAt && noteActive.publishedAt > seenAt,
+  )
+
   return (
     <aside className="student-rail">
       <div className="rail-card daily-card">
@@ -226,18 +258,29 @@ export function StudentRail({
         <div className="teacher-slots">
           <span>课程知识库 · {courseFaqCount} 条 FAQ</span>
           <span>
-            {courseNote?.officeHours
-              ? `答疑：${courseNote.officeHours}`
+            {noteActive?.officeHours
+              ? `答疑：${noteActive.officeHours}`
               : `由 ${course.teacher} 老师维护`}
           </span>
+          {noteActive?.currentChapter && (
+            <span>本周进度 · {noteActive.currentChapter}</span>
+          )}
         </div>
-        {courseNote?.announcement && (
+        {noteActive?.announcement && (
           <div className="course-announcement">
             <div className="course-announcement-head">
-              <span>课程公告</span>
-              <span>{formatRelative(courseNote.updatedAt)}</span>
+              <span>
+                课程公告
+                {isNewAnnouncement && <Badge tone="gold">新</Badge>}
+              </span>
+              <span>{formatRelative(noteActive.updatedAt)}</span>
             </div>
-            <p>{courseNote.announcement}</p>
+            <p>{noteActive.announcement}</p>
+            <FaqAttachments
+              attachments={noteActive.attachments}
+              caption="公告附件"
+              className="course-announcement-attachments"
+            />
           </div>
         )}
         <button className="rail-link" onClick={() => onNavigate('knowledge')}>

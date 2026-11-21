@@ -139,7 +139,32 @@ export function buildActionNext(action, payload, prev, user, now) {
     case 'thread-feedback': {
       if (!p.threadId) bad('缺少问答 ID。')
       if (!['helpful', 'unhelpful', null].includes(p.feedback)) bad('反馈标记不合法。')
-      return withThread(prev, p.threadId, (thread) => ({ ...thread, feedback: p.feedback }))
+      if (
+        p.reason !== undefined &&
+        p.reason !== null &&
+        !['too-vague', 'mismatch', 'skipped-steps', 'unreadable', 'other'].includes(p.reason)
+      ) {
+        bad('反馈原因不合法。')
+      }
+      if (p.note !== undefined && (typeof p.note !== 'string' || p.note.length > 500)) {
+        bad('反馈说明过长。')
+      }
+      return withThread(prev, p.threadId, (thread) => ({
+        ...thread,
+        feedback: p.feedback,
+        feedbackReason:
+          p.feedback === 'helpful'
+            ? undefined
+            : p.reason === undefined
+              ? thread.feedbackReason
+              : p.reason,
+        feedbackNote:
+          p.feedback === 'helpful'
+            ? undefined
+            : p.note === undefined
+              ? thread.feedbackNote
+              : p.note,
+      }))
     }
     case 'thread-resolve': {
       if (!p.threadId) bad('缺少问答 ID。')

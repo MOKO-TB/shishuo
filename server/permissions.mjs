@@ -41,6 +41,8 @@ const TEACHER_REPLY_NOTIFICATION_KINDS = new Set([
 ])
 const STUDENT_THREAD_FIELDS = new Set([
   'feedback',
+  'feedbackReason',
+  'feedbackNote',
   'resolvedAt',
   'withdrawnAt',
   'favorite',
@@ -48,6 +50,13 @@ const STUDENT_THREAD_FIELDS = new Set([
   'clusterId',
   'status',
   'studentSupplement',
+])
+const FEEDBACK_REASONS = new Set([
+  'too-vague',
+  'mismatch',
+  'skipped-steps',
+  'unreadable',
+  'other',
 ])
 const STUDENT_FAQ_FIELDS = new Set([
   'citations',
@@ -209,6 +218,16 @@ function assertThreadBasics(thread) {
   if (thread.feedback !== undefined && ![null, 'helpful', 'unhelpful'].includes(thread.feedback)) {
     bad('反馈标记不合法。')
   }
+  if (
+    thread.feedbackReason !== undefined &&
+    thread.feedbackReason !== null &&
+    !FEEDBACK_REASONS.has(thread.feedbackReason)
+  ) {
+    bad('反馈原因不合法。')
+  }
+  if (thread.feedbackNote !== undefined && !isString(thread.feedbackNote, 500, true)) {
+    bad('反馈说明过长。')
+  }
 }
 
 function assertNewStudentThread(thread, user, allowedCourses, prevFaqMap, prevThreadMap, nextThreadMap) {
@@ -287,6 +306,19 @@ function mergeStudentThread(prev, next, user, allowedCourses) {
   if (next.feedback !== undefined && ![null, 'helpful', 'unhelpful'].includes(next.feedback)) {
     fail('反馈标记不合法。')
   }
+  if (
+    next.feedbackReason !== undefined &&
+    next.feedbackReason !== null &&
+    !FEEDBACK_REASONS.has(next.feedbackReason)
+  ) {
+    fail('反馈原因不合法。')
+  }
+  if (next.feedbackNote !== undefined && !isString(next.feedbackNote, 500, true)) {
+    fail('反馈说明过长。')
+  }
+  if (next.feedbackReason && next.feedback !== 'unhelpful') {
+    fail('只有负反馈才能填写原因。')
+  }
   if (next.resolvedAt !== undefined && !isNumber(next.resolvedAt)) fail('已解决时间不合法。')
   if (next.withdrawnAt !== undefined && !isNumber(next.withdrawnAt)) fail('撤下时间不合法。')
   if (next.favorite !== undefined && typeof next.favorite !== 'boolean') fail('收藏标记不合法。')
@@ -313,6 +345,8 @@ function mergeStudentThread(prev, next, user, allowedCourses) {
   return {
     ...prev,
     feedback: next.feedback,
+    feedbackReason: next.feedbackReason,
+    feedbackNote: next.feedbackNote,
     resolvedAt: next.resolvedAt,
     withdrawnAt: next.withdrawnAt,
     favorite: next.favorite,
@@ -473,6 +507,16 @@ function assertCourseNote(note) {
   if (!isString(note.announcement, 2_000, true)) bad('课程公告内容过长。')
   if (!isString(note.officeHours, 500, true)) bad('答疑时段过长。')
   if (!isNumber(note.updatedAt)) bad('课程公告时间不合法。')
+  if (note.expiresAt !== undefined && !isNumber(note.expiresAt)) {
+    bad('课程公告过期时间不合法。')
+  }
+  if (note.publishedAt !== undefined && !isNumber(note.publishedAt)) {
+    bad('课程公告发布时间不合法。')
+  }
+  if (note.currentChapter !== undefined && !isString(note.currentChapter, 200, true)) {
+    bad('教学进度章节不合法。')
+  }
+  assertFaqAttachments(note.attachments)
 }
 
 function courseNoteMap(list) {

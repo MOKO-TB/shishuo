@@ -374,6 +374,30 @@ test('学生不能修改课程公告', async () => {
   assert.equal(result.status, 403)
 })
 
+test('教师可以发布带教学进度和有效期的课程公告', async () => {
+  const current = await state('teacherDs')
+  const courseNotes = current.json.data.courseNotes.map((note) =>
+    note.courseId === 'ds'
+      ? {
+          ...note,
+          currentChapter: '第 6 章 · 树与二叉树',
+          expiresAt: Date.now() + 7 * 86_400_000,
+          publishedAt: Date.now(),
+        }
+      : note,
+  )
+  const result = await putState(
+    'teacherDs',
+    { ...current.json.data, courseNotes },
+    current.json.revision,
+  )
+  assert.equal(result.status, 200)
+  const note = result.json.data.courseNotes.find((item) => item.courseId === 'ds')
+  assert.equal(note.currentChapter, '第 6 章 · 树与二叉树')
+  assert.ok(note.expiresAt > Date.now())
+  assert.ok(note.publishedAt > 0)
+})
+
 test('学生不能重置共享空间', async () => {
   const current = await state('student1')
   const result = await putState('student1', current.json.data, current.json.revision, {
@@ -510,6 +534,50 @@ test('教师不能直接改写已发送的回复', async () => {
   assert.equal(result.status, 403)
 })
 
+test('教师可以更正 AI 直接回答的问题', async () => {
+  const studentCurrent = await state('student1')
+  const aiThread = makeThread(
+    's1-ai-review-thread',
+    session.get('student1').user,
+    'AI 直接答掉、没有转老师的问题',
+    'ds',
+    'ai',
+  )
+  aiThread.aiAnswer = 'AI 给出的原答案'
+  aiThread.confidence = 'medium'
+  const created = await putState(
+    'student1',
+    { ...studentCurrent.json.data, threads: [...studentCurrent.json.data.threads, aiThread] },
+    studentCurrent.json.revision,
+  )
+  assert.equal(created.status, 200)
+
+  const teacherCurrent = await state('teacherDs')
+  const threads = teacherCurrent.json.data.threads.map((thread) =>
+    thread.id === 's1-ai-review-thread'
+      ? {
+          ...thread,
+          status: 'answered',
+          teacherReply: {
+            text: '更正：这里还要补上边界条件。',
+            at: Date.now(),
+            by: '陈砚',
+            recipientCount: 1,
+          },
+        }
+      : thread,
+  )
+  const result = await putState(
+    'teacherDs',
+    { ...teacherCurrent.json.data, threads },
+    teacherCurrent.json.revision,
+  )
+  assert.equal(result.status, 200)
+  const answered = result.json.data.threads.find((thread) => thread.id === 's1-ai-review-thread')
+  assert.equal(answered.status, 'answered')
+  assert.equal(answered.teacherReply.by, '陈砚')
+})
+
 test('落后的 baseRevision 返回 409 和最新数据', async () => {
   const current = await state('student1')
   const result = await putState(
@@ -595,7 +663,7 @@ test('实体表镜像：工作区写入同步到 workspace_entities', async () =
         "SELECT COUNT(*) AS n FROM workspace_entities WHERE workspace_id = ? AND entity_type = 'thread'",
       )
       .get(WORKSPACE_ID)
-    assert.equal(Number(threads.n), 3, '三条问答（含种子旧问答）都应镜像成行')
+    assert.equal(Number(threads.n), 4, '四条问答（含种子旧问答与 AI 抽查用例）都应镜像成行')
     const faqs = db
       .prepare(
         "SELECT COUNT(*) AS n FROM workspace_entities WHERE workspace_id = ? AND entity_type = 'faq'",
@@ -733,9 +801,24 @@ test('动作 API：学生提问 → 转交 → 老师回复 → 撤回，全链�
 
 test('动作 API：学生反馈 / 收藏 / 已解决 / 标记通知已读', async () => {
   const feedback = await runAction('student1', '/api/threads/s1-thread-1/feedback', {
-    feedback: 'helpful',
+    feedback: 'unhelpful',
+    reason: 'skipped-steps',
   })
   assert.equal(feedback.status, 200)
+  const feedbackThread = feedback.json.data.threads.find(
+    (thread) => thread.id === 's1-thread-1',
+  )
+  assert.equal(feedbackThread.feedback, 'unhelpful')
+  assert.equal(feedbackThread.feedbackReason, 'skipped-steps')
+
+  const clearReason = await runAction('student1', '/api/threads/s1-thread-1/feedback', {
+    feedback: 'helpful',
+  })
+  assert.equal(clearReason.status, 200)
+  const clearThread = clearReason.json.data.threads.find(
+    (thread) => thread.id === 's1-thread-1',
+  )
+  assert.equal(clearThread.feedbackReason, undefined)
 
   const favorite = await runAction('student1', '/api/threads/s1-thread-1/favorite', {
     favorite: true,

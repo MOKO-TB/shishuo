@@ -2195,3 +2195,248 @@
     padding: var(--space-3);
   }
 }
+
+/* AI 已答抽查与新增筛选 */
+.teacher-export-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.teacher-export-range select {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-meta);
+  padding: 5px 8px;
+}
+
+.ai-answer-source {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.answered-check.is-ai {
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+}
+
+.answered-check.is-ai.is-low {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.ai-review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-review-head h2 {
+  margin: 6px 0 0;
+  font-size: 22px;
+}
+
+.ai-review-student {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--fill-inset);
+}
+
+.ai-review-student > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-review-student span {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.ai-review-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-meta);
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.ai-review-question,
+.ai-review-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--fill-card);
+  border: 1px solid var(--line);
+}
+
+.ai-review-question .rich-text {
+  font-weight: 600;
+}
+
+.ai-review-image {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.ai-review-answer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ai-review-feedback {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--fill-inset);
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.ai-review-feedback.is-negative {
+  background: var(--clay-soft);
+  color: var(--clay-deep);
+}
+
+.ai-review-feedback em {
+  font-style: normal;
+  opacity: 0.8;
+}
+
+.ai-review-sync {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--jade-line, var(--line));
+  border-radius: var(--radius-md);
+  background: var(--jade-soft);
+  cursor: pointer;
+}
+
+.ai-review-sync input {
+  margin-top: 3px;
+}
+
+.ai-review-sync span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ai-review-sync strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-body);
+  color: var(--jade-deep);
+}
+
+.ai-review-sync em {
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.ai-review-compose .field {
+  margin: 0;
+}
+
+.ai-review-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .ai-review-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ai-review-foot-left .button {
+    width: 100%;
+  }
+}
+
+/* 待办超时提醒 */
+.teacher-followup-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--gold-line, var(--line));
+  border-radius: var(--radius-md);
+  background: var(--gold-soft);
+}
+
+.teacher-followup-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--gold-deep);
+}
+
+.teacher-followup-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-followup-copy strong {
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+.teacher-followup-copy span {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.teacher-followup-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .teacher-followup-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .teacher-followup-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

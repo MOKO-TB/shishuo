@@ -1,46 +1,56 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  BellRing,
   CircleAlert,
-  Compass,
+  Copy,
   Database,
   Inbox,
   Megaphone,
   Sparkles,
   Timer,
+  X,
 } from 'lucide-react'
 import { useStore } from '../store'
-import { useAuth } from '../auth'
-import { allCourses, courseById, dateKey, isSeededCourse, teacherByName } from '../data/seed'
+import { allCourses, courseById, isSeededCourse, teacherByName } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
 import { computeGaps, groupPendingThreads } from '../lib/engine'
+import { courseMetrics } from '../lib/metrics'
 import { isDocumentAttachment } from '../lib/attachment'
-import { useProfile, visibleTeachers } from '../lib/profile'
+import { useProfile } from '../lib/profile'
 import { downloadText } from '../lib/export'
 import type { KnowledgeGap, Thread, ThreadGroup } from '../types'
 import {
   confidenceLabel,
+  copyText,
   displayStudentName,
+  feedbackReasonLabel,
   formatDateTime,
   percent,
   statusLabel,
+  truncate,
 } from '../lib/utils'
 import { TeacherReplyDrawer } from '../components/TeacherReplyDrawer'
+import { AIAnswerReviewDrawer } from '../components/AIAnswerReviewDrawer'
 import { CourseNoteModal } from '../components/CourseNoteModal'
 import { ThreadDetailModal } from '../components/ThreadDetailModal'
 import { MiniBars } from '../components/charts'
 import { TeacherQueue } from './teacher/TeacherQueue'
 import { TeacherRail } from './teacher/TeacherRail'
-import type { WorkTab, QueueFilter } from './teacher/types'
+import type {
+  AiAnsweredFilter,
+  AnsweredFilter,
+  ExportRange,
+  NeedsInfoFilter,
+  QueueFilter,
+  WorkTab,
+} from './teacher/types'
 import { AiMark } from '../components/ui'
 
 interface TeacherViewProps {
   teacherName: string
-  onChangeTeacher: (name: string) => void
-  onManageTeachers: () => void
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
   openFaq: (faqId: string) => void
   openFaqEditor: (faqId?: string) => void
-  onOpenGuide: () => void
   onOpenBackup: () => void
   focusThreadId?: string | null
   onFocusHandled?: () => void
@@ -49,39 +59,39 @@ interface TeacherViewProps {
 
 export function TeacherView({
   teacherName,
-  onChangeTeacher,
-  onManageTeachers,
   notify,
   openFaq,
   openFaqEditor,
-  onOpenGuide,
   onOpenBackup,
   focusThreadId,
   onFocusHandled,
 }: TeacherViewProps) {
   const { data, dispatch } = useStore()
-  const { user } = useAuth()
   const profile = useProfile()
   const [tab, setTab] = useState<WorkTab>('pending')
   const [courseFilter, setCourseFilter] = useState<string>('all')
   const [query, setQuery] = useState('')
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('all')
+  const [answeredFilter, setAnsweredFilter] = useState<AnsweredFilter>('all')
+  const [needsInfoFilter, setNeedsInfoFilter] = useState<NeedsInfoFilter>('all')
+  const [aiFilter, setAiFilter] = useState<AiAnsweredFilter>('all')
+  const [exportRange, setExportRange] = useState<ExportRange>(7)
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null)
   const [answeredThreadId, setAnsweredThreadId] = useState<string | null>(null)
   const [needsInfoThreadId, setNeedsInfoThreadId] = useState<string | null>(null)
+  const [selectedAiThreadId, setSelectedAiThreadId] = useState<string | null>(null)
   const [noteOpen, setNoteOpen] = useState(false)
+  const [followUpDismissed, setFollowUpDismissed] = useState(false)
+  const [reviewedAiIds, setReviewedAiIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(`shishuo.ai-reviewed.v1.${teacherName}`)
+      const parsed = raw ? JSON.parse(raw) : []
+      return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'string') : [])
+    } catch {
+      return new Set()
+    }
+  })
 
-  const teachers = useMemo(() => {
-    const all = visibleTeachers(profile)
-    if (user?.role !== 'teacher') return all
-    const assigned = new Set(user.courses ?? [])
-    const byCourse = all.filter((teacher) =>
-      teacher.courses.some((courseId) => assigned.has(courseId)),
-    )
-    const byName = all.filter((teacher) => teacher.name === user.name)
-    const own = byCourse.length > 0 ? byCourse : byName
-    return own.length > 0 ? own : all
-  }, [profile, user])
   const teacherCourses = useMemo(() => {
     const ids = new Set(teacherByName(teacherName).courses)
     return allCourses().filter(
@@ -139,11 +149,189 @@ export function TeacherView({
       ),
     [teacherThreads],
   )
-  const answered = useMemo(
-    () => {
-      const needle = query.trim().toLowerCase()
-      return answeredAll.filter((thread) => {
+  const answered = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return answeredAll.filter((thread) => {
+      if (courseFilter !== 'all' && thread.courseId !== courseFilter) return false
+      if (answeredFilter === 'no-feedback') {
+        if (thread.feedback || thread.resolvedAt) return false
+      } else if (answeredFilter === 'unhelpful') {
+        if (thread.feedback !== 'unhelpful') return false
+      } else if (answeredFilter === 'unsealed') {
+        if (thread.teacherReply?.faqId) return false
+      } else if (answeredFilter === 'resolved') {
+        if (!thread.resolvedAt) return false
+      }
+      if (!needle) return true
+      const course = courseById(thread.courseId)
+      return [
+        thread.question,
+        thread.teacherReply?.text ?? '',
+        thread.student.name,
+        course.name,
+        course.shortName,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle)
+    })
+  }, [answeredAll, answeredFilter, courseFilter, query])
+  const needsInfoAll = useMemo(
+    () =>
+      teacherThreads
+        .filter((thread) => thread.status === 'needs-info' && !thread.withdrawnAt)
+        .sort((a, b) => (b.teacherRequest?.at ?? b.createdAt) - (a.teacherRequest?.at ?? a.createdAt)),
+    [teacherThreads],
+  )
+  const needsInfo = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    const now = Date.now()
+    return needsInfoAll.filter((thread) => {
+      if (courseFilter !== 'all' && thread.courseId !== courseFilter) return false
+      const askedAt = thread.teacherRequest?.at ?? thread.createdAt
+      const waited = now - askedAt
+      if (needsInfoFilter === 'aged24' && waited < 24 * 3_600_000) return false
+      if (needsInfoFilter === 'aged48' && waited < 48 * 3_600_000) return false
+      if (!needle) return true
+      const course = courseById(thread.courseId)
+      return [
+        thread.question,
+        thread.teacherRequest?.text ?? '',
+        thread.studentSupplement?.text ?? '',
+        thread.student.name,
+        course.name,
+        course.shortName,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle)
+    })
+  }, [needsInfoAll, courseFilter, needsInfoFilter, query])
+  const aiAnsweredAll = useMemo(
+    () =>
+      teacherThreads
+        .filter(
+          (thread) =>
+            thread.status === 'ai' &&
+            !thread.withdrawnAt &&
+            (!reviewedAiIds.has(thread.id) || thread.feedback === 'unhelpful'),
+        )
+        .sort((a, b) => b.createdAt - a.createdAt),
+    [reviewedAiIds, teacherThreads],
+  )
+  const aiAnswered = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    const weekAgo = Date.now() - 7 * 24 * 3_600_000
+    const faqById = new Map(data.faqs.map((faq) => [faq.id, faq]))
+    return aiAnsweredAll.filter((thread) => {
+      if (courseFilter !== 'all' && thread.courseId !== courseFilter) return false
+      if (aiFilter === 'medium' && thread.confidence !== 'medium') return false
+      if (aiFilter === 'low' && thread.confidence !== 'low') return false
+      if (aiFilter === 'unhelpful' && thread.feedback !== 'unhelpful') return false
+      if (aiFilter === 'image') {
+        if (!thread.attachment || isDocumentAttachment(thread.attachment)) return false
+      }
+      if (aiFilter === 'week' && thread.createdAt < weekAgo) return false
+      if (!needle) return true
+      const course = courseById(thread.courseId)
+      const source = thread.sources?.[0] ? faqById.get(thread.sources[0]) : undefined
+      return [
+        thread.question,
+        thread.aiAnswer ?? '',
+        thread.student.name,
+        course.name,
+        course.shortName,
+        source?.question ?? '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle)
+    })
+  }, [aiAnsweredAll, aiFilter, courseFilter, data.faqs, query])
+  const selectedGroup = groupsAll.find((group) => group.key === selectedGroupKey) ?? null
+  const selectedAiThread =
+    aiAnsweredAll.find((thread) => thread.id === selectedAiThreadId) ?? null
+
+  const metrics = useMemo(() => courseMetrics(teacherThreads), [teacherThreads])
+  const { weekly, todayAi, aiSolved: ai7, humanHandled: human7, aiRate: rate7, savedHours } = metrics
+  const pendingQuestions = groupsAll.reduce((sum, group) => sum + group.count, 0)
+  const teacherFaqs = data.faqs.filter((faq) => teacherCourseIds.includes(faq.courseId))
+  const reviewFaqs = teacherFaqs.filter((faq) => faq.reviewNeeded)
+  const totalCitations = teacherFaqs.reduce((sum, faq) => sum + faq.citations, 0)
+  const stalePendingCount = groupsAll.filter(
+    (group) => Date.now() - group.oldestAt >= 24 * 3_600_000,
+  ).length
+  const staleInfoCount = needsInfoAll.filter(
+    (thread) => Date.now() - (thread.teacherRequest?.at ?? thread.createdAt) >= 48 * 3_600_000,
+  ).length
+
+  const acknowledgeAiThread = (threadId: string) => {
+    const next = new Set(reviewedAiIds).add(threadId)
+    setReviewedAiIds(next)
+    try {
+      localStorage.setItem(
+        `shishuo.ai-reviewed.v1.${teacherName}`,
+        JSON.stringify(Array.from(next)),
+      )
+    } catch {
+      // 本机标记失败不影响抽查本身。
+    }
+    setSelectedAiThreadId(null)
+    notify('已标记为核对无误，本机不再显示这条 AI 回答', 'success')
+  }
+
+  const copyFollowUpSummary = async () => {
+    const lines = [
+      `师说 · ${teacherName}老师跟进摘要`,
+      `生成时间：${formatDateTime(Date.now())}`,
+      '',
+      `待处理：${groupsAll.length} 组 / ${pendingQuestions} 个问题，其中超 24h ${stalePendingCount} 组`,
+      `等补充：${needsInfoAll.length} 个，其中超 48h ${staleInfoCount} 个`,
+      `AI 已答待抽查：${aiAnsweredAll.length} 个`,
+      `今天 AI 自动解决：${todayAi} 个`,
+      `待完善 FAQ：${reviewFaqs.length} 条`,
+      `知识缺口：${gapsAll.length} 个`,
+    ]
+    if (gapsAll.length > 0) {
+      lines.push('', '优先处理的缺口：')
+      gapsAll.slice(0, 5).forEach((gap, index) => {
+        lines.push(`${index + 1}. ${truncate(gap.topic, 40)}（${gap.count} 人等待）`)
+      })
+    }
+    const copied = await copyText(lines.join('\n'))
+    notify(
+      copied ? '跟进摘要已复制，可直接发到群里或贴进周报' : '复制失败，请检查浏览器权限',
+      copied ? 'success' : 'info',
+    )
+  }
+
+  const changeTab = (next: WorkTab) => {
+    setTab(next)
+    setSelectedGroupKey(null)
+    setNeedsInfoThreadId(null)
+    setAnsweredThreadId(null)
+    setSelectedAiThreadId(null)
+  }
+
+  const changeCourse = (next: string) => {
+    setCourseFilter(next)
+    setSelectedGroupKey(null)
+    setNeedsInfoThreadId(null)
+  }
+
+  const exportWeeklyReport = () => {
+    const cutoff = Date.now() - exportRange * 24 * 3_600_000
+    const needle = query.trim().toLowerCase()
+    const rowsInRange = teacherThreads
+      .filter((thread) => {
         if (courseFilter !== 'all' && thread.courseId !== courseFilter) return false
+        if (
+          thread.createdAt < cutoff &&
+          (thread.teacherReply?.at ?? 0) < cutoff &&
+          (thread.resolvedAt ?? 0) < cutoff
+        ) {
+          return false
+        }
         if (!needle) return true
         const course = courseById(thread.courseId)
         return [
@@ -157,76 +345,9 @@ export function TeacherView({
           .toLowerCase()
           .includes(needle)
       })
-    },
-    [answeredAll, courseFilter, query],
-  )
-  const needsInfoAll = useMemo(
-    () =>
-      teacherThreads
-        .filter((thread) => thread.status === 'needs-info' && !thread.withdrawnAt)
-        .sort((a, b) => (b.teacherRequest?.at ?? b.createdAt) - (a.teacherRequest?.at ?? a.createdAt)),
-    [teacherThreads],
-  )
-  const needsInfo = useMemo(
-    () => {
-      const needle = query.trim().toLowerCase()
-      return needsInfoAll.filter((thread) => {
-        if (courseFilter !== 'all' && thread.courseId !== courseFilter) return false
-        if (!needle) return true
-        const course = courseById(thread.courseId)
-        return [
-          thread.question,
-          thread.teacherRequest?.text ?? '',
-          thread.studentSupplement?.text ?? '',
-          thread.student.name,
-          course.name,
-          course.shortName,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(needle)
-      })
-    },
-    [needsInfoAll, courseFilter, query],
-  )
-  const selectedGroup = groupsAll.find((group) => group.key === selectedGroupKey) ?? null
-
-  const weekly = data.daily.slice(-7)
-  const today = data.daily.find((entry) => entry.date === dateKey(Date.now()))
-  const todayAi = today?.ai ?? 0
-  const ai7 = weekly.reduce((sum, entry) => sum + entry.ai, 0)
-  const human7 = weekly.reduce((sum, entry) => sum + entry.human, 0)
-  const rate7 = ai7 + human7 > 0 ? ai7 / (ai7 + human7) : 0
-  const savedHours = (ai7 * 4) / 60
-  const pendingQuestions = groupsAll.reduce((sum, group) => sum + group.count, 0)
-  const teacherFaqs = data.faqs.filter((faq) => teacherCourseIds.includes(faq.courseId))
-  const reviewFaqs = teacherFaqs.filter((faq) => faq.reviewNeeded)
-  const totalCitations = teacherFaqs.reduce((sum, faq) => sum + faq.citations, 0)
-
-  const changeTab = (next: WorkTab) => {
-    setTab(next)
-    setSelectedGroupKey(null)
-    setNeedsInfoThreadId(null)
-  }
-
-  const changeCourse = (next: string) => {
-    setCourseFilter(next)
-    setSelectedGroupKey(null)
-    setNeedsInfoThreadId(null)
-  }
-
-  const exportWeeklyReport = () => {
-    const cutoff = Date.now() - 7 * 24 * 3_600_000
-    const weekly = teacherThreads
-      .filter(
-        (thread) =>
-          thread.createdAt >= cutoff ||
-          (thread.teacherReply?.at ?? 0) >= cutoff ||
-          (thread.resolvedAt ?? 0) >= cutoff,
-      )
       .sort((a, b) => (b.teacherReply?.at ?? b.createdAt) - (a.teacherReply?.at ?? a.createdAt))
-    if (weekly.length === 0) {
-      notify('近 7 天没有可导出的答疑记录', 'info')
+    if (rowsInRange.length === 0) {
+      notify(`近 ${exportRange} 天没有可导出的答疑记录`, 'info')
       return
     }
     const cell = (value: string) => `"${value.replace(/"/g, '""')}"`
@@ -242,9 +363,10 @@ export function TeacherView({
       '首响分钟',
       '是否确认解决',
       '学生反馈',
+      '反馈原因',
       '老师回复',
     ]
-    const rows = weekly.map((thread) => {
+    const rows = rowsInRange.map((thread) => {
       const course = courseById(thread.courseId)
       const firstResponse =
         thread.escalation?.at && thread.teacherReply?.at
@@ -271,6 +393,7 @@ export function TeacherView({
         firstResponse,
         thread.resolvedAt ? '是' : '否',
         feedback,
+        thread.feedbackReason ? feedbackReasonLabel(thread.feedbackReason) : '',
         thread.teacherReply?.text ?? '',
       ]
     })
@@ -278,8 +401,8 @@ export function TeacherView({
       .map((row) => row.map(cell).join(','))
       .join('\r\n')}\r\n`
     const date = new Date().toISOString().slice(0, 10)
-    downloadText(`师说-教师周报-${date}.csv`, content, 'text/csv;charset=utf-8')
-    notify(`已导出近 7 天 ${weekly.length} 条答疑记录`, 'success')
+    downloadText(`师说-教师答疑-近${exportRange}天-${date}.csv`, content, 'text/csv;charset=utf-8')
+    notify(`已导出近 ${exportRange} 天 ${rowsInRange.length} 条答疑记录`, 'success')
   }
 
   const openGap = (gap: KnowledgeGap) => {
@@ -346,42 +469,12 @@ export function TeacherView({
         </div>
 
         <div className="teacher-head-side">
-          <div className="teacher-switch-wrap">
-            <label className="teacher-switch">
-              <span className="teacher-switch-label">当前教师</span>
-              <select
-                value={teacherName}
-                onChange={(event) => onChangeTeacher(event.target.value)}
-                aria-label="切换教师身份"
-              >
-                {teachers.map((teacher) => {
-                  const waiting = data.threads.filter(
-                    (thread) =>
-                      thread.status === 'pending' &&
-                      !thread.withdrawnAt &&
-                      teacher.courses.includes(thread.courseId),
-                  ).length
-                  return (
-                    <option key={teacher.id} value={teacher.name}>
-                      {teacher.name} · {teacher.title}
-                      {waiting > 0 ? ` · ${waiting} 个待办` : ''}
-                    </option>
-                  )
-                })}
-              </select>
-            </label>
-            {profile.customCourses.length > 0 && (
-              <button className="text-button teacher-manage-link" onClick={onManageTeachers}>
-                管理老师
-                {profile.hiddenTeacherNames.length > 0
-                  ? ` · 已隐藏 ${profile.hiddenTeacherNames.length} 位`
-                  : ''}
-              </button>
-            )}
-          </div>
-          <button className="button button-ghost teacher-guide-button" onClick={onOpenGuide}>
-            <Compass size={16} />
-            看演示指引
+          <button
+            className="button button-ghost teacher-guide-button"
+            onClick={() => void copyFollowUpSummary()}
+          >
+            <Copy size={16} />
+            复制跟进摘要
           </button>
           <button
             className="button button-ghost teacher-guide-button"
@@ -396,6 +489,53 @@ export function TeacherView({
           </button>
         </div>
       </header>
+
+      {!followUpDismissed && (stalePendingCount > 0 || staleInfoCount > 0) && (
+        <div className="teacher-followup-banner">
+          <span className="teacher-followup-icon">
+            <BellRing size={16} />
+          </span>
+          <div className="teacher-followup-copy">
+            <strong>有需要跟进的问题</strong>
+            <span>
+              {stalePendingCount > 0 && `待处理超 24h ${stalePendingCount} 组`}
+              {stalePendingCount > 0 && staleInfoCount > 0 && ' · '}
+              {staleInfoCount > 0 && `等补充超 48h ${staleInfoCount} 个`}
+            </span>
+          </div>
+          <div className="teacher-followup-actions">
+            {stalePendingCount > 0 && (
+              <button
+                className="text-button"
+                onClick={() => {
+                  changeTab('pending')
+                  setQueueFilter('aged')
+                }}
+              >
+                看待处理
+              </button>
+            )}
+            {staleInfoCount > 0 && (
+              <button
+                className="text-button"
+                onClick={() => {
+                  changeTab('needs-info')
+                  setNeedsInfoFilter('aged48')
+                }}
+              >
+                看待补充
+              </button>
+            )}
+            <button
+              className="icon-button"
+              onClick={() => setFollowUpDismissed(true)}
+              aria-label="收起跟进提醒"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="teacher-stats">
         <div className="stat-card stat-card-primary">
@@ -416,12 +556,12 @@ export function TeacherView({
             <Sparkles size={19} />
           </div>
           <div className="stat-copy">
-            <span className="stat-label">试点 AI 自动解决</span>
+            <span className="stat-label">我的课程 AI 自动解决</span>
             <strong>
               {todayAi}
               <em>个</em>
             </strong>
-            
+            <p>今天 · 我的课程</p>
           </div>
         </div>
         <div className="stat-card">
@@ -429,7 +569,7 @@ export function TeacherView({
             <Timer size={19} />
           </div>
           <div className="stat-copy">
-            <span className="stat-label">试点 AI 解决率</span>
+            <span className="stat-label">我的课程 AI 解决率</span>
             <strong>
               {percent(rate7)}
               <em></em>
@@ -460,6 +600,7 @@ export function TeacherView({
           groupsAll={groupsAll}
           needsInfoAll={needsInfoAll}
           answeredAll={answeredAll}
+          aiAnsweredAll={aiAnsweredAll}
           teacherCourses={teacherCourses}
           courseFilter={courseFilter}
           changeCourse={changeCourse}
@@ -467,14 +608,24 @@ export function TeacherView({
           setQuery={setQuery}
           queueFilter={queueFilter}
           setQueueFilter={setQueueFilter}
+          answeredFilter={answeredFilter}
+          setAnsweredFilter={setAnsweredFilter}
+          needsInfoFilter={needsInfoFilter}
+          setNeedsInfoFilter={setNeedsInfoFilter}
+          aiFilter={aiFilter}
+          setAiFilter={setAiFilter}
+          exportRange={exportRange}
+          setExportRange={setExportRange}
           filteredGroups={filteredGroups}
           needsInfo={needsInfo}
           answered={answered}
+          aiAnswered={aiAnswered}
           followUpParentIds={followUpParentIds}
           exportWeeklyReport={exportWeeklyReport}
           setSelectedGroupKey={setSelectedGroupKey}
           setNeedsInfoThreadId={setNeedsInfoThreadId}
           setAnsweredThreadId={setAnsweredThreadId}
+          setSelectedAiThreadId={setSelectedAiThreadId}
         />
 
         <TeacherRail
@@ -495,6 +646,13 @@ export function TeacherView({
       <TeacherReplyDrawer
         group={selectedGroup}
         onClose={() => setSelectedGroupKey(null)}
+        notify={notify}
+        openFaq={openFaq}
+      />
+      <AIAnswerReviewDrawer
+        thread={selectedAiThread}
+        onClose={() => setSelectedAiThreadId(null)}
+        onAcknowledge={acknowledgeAiThread}
         notify={notify}
         openFaq={openFaq}
       />

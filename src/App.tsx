@@ -147,15 +147,6 @@ export default function App() {
     [accountRole, data.threads, notify, profile],
   )
 
-  const changeTeacher = useCallback(
-    (name: string) => {
-      setTeacherName(name)
-      setView('teacher')
-      notify(`已切换到${name}老师的待办台`)
-    },
-    [notify],
-  )
-
   const openFaq = useCallback((faqId: string) => {
     setFaqModal({ mode: 'view', faqId })
   }, [])
@@ -395,12 +386,9 @@ export default function App() {
           <TeacherView
             key={selectedTeacher.name}
             teacherName={selectedTeacher.name}
-            onChangeTeacher={changeTeacher}
-            onManageTeachers={() => openAccount('teachers')}
             notify={notify}
             openFaq={openFaq}
             openFaqEditor={openFaqEditor}
-            onOpenGuide={openGuide}
             onOpenBackup={() => setBackupOpen(true)}
             focusThreadId={focusThread}
             onFocusHandled={focusHandled}
@@ -421,7 +409,11 @@ export default function App() {
         )}
         {!accountOpen && view === 'campus' && <CampusView role={role} notify={notify} />}
         {!accountOpen && view === 'insights' && (
-          <InsightsView openFaq={openFaq} onGoTeacher={() => navigate('teacher')} />
+          <InsightsView
+            openFaq={openFaq}
+            onGoTeacher={() => navigate('teacher')}
+            teacherName={accountRole === 'teacher' ? selectedTeacher.name : undefined}
+          />
         )}
         {!accountOpen && view === 'fandian' && <FandianView notify={notify} />}
         {!accountOpen && view === 'about' && (

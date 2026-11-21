@@ -78,6 +78,7 @@ export function AttachmentConsentProvider({ children }: { children: ReactNode })
   const scene = pending?.scene
   const isStudentAsk = scene === 'student-ask'
   const isFaq = scene === 'teacher-faq'
+  const isAnnouncement = scene === 'teacher-announcement'
   const fileNames = pending?.fileNames ?? []
   const fileCount = fileNames.length
   const isImage = pending?.kind === 'image'
@@ -89,11 +90,13 @@ export function AttachmentConsentProvider({ children }: { children: ReactNode })
       : '发送文件前的隐私确认'
     : isFaq
       ? '添加课程 FAQ 附件'
-      : '发送回复附图'
+      : isAnnouncement
+        ? '添加课程公告附件'
+        : '发送回复附图'
 
   const scopeTitle = isStudentAsk
     ? '仅本次在系统选择器里勾选的内容'
-    : isFaq
+    : isFaq || isAnnouncement
       ? '仅本次选中的附件'
       : '仅这张回复附图'
 
@@ -101,7 +104,7 @@ export function AttachmentConsentProvider({ children }: { children: ReactNode })
     ? isImage
       ? '网页无法读取你相册里的其他内容；系统选择器只会交出你勾选的照片。'
       : '文件由系统选择器逐次授权，师说只能读取你本次选中的文件。'
-    : isFaq
+    : isFaq || isAnnouncement
       ? '系统选择器只会把本次勾选的附件交给师说，不会读取其他文件。'
       : '系统选择器只会把这张图片交给师说，不会读取其他照片。'
 
@@ -111,7 +114,9 @@ export function AttachmentConsentProvider({ children }: { children: ReactNode })
       : '文档只在本机解析成文字摘要，原文件不会上传；问答记录只保存摘要。'
     : isFaq
       ? '附件会保存到课程 FAQ，本课程学生可查看和下载；文档正文会被提取，作为 AI 作答依据。'
-      : '附图会随本次回复发送给已勾选的学生，发送后不能单张撤回。'
+      : isAnnouncement
+        ? '附件会随课程公告展示给本课程学生；文档正文不会进入 AI 检索，只作为公告资料下载。'
+        : '附图会随本次回复发送给已勾选的学生，发送后不能单张撤回。'
 
   return (
     <ConsentContext.Provider value={{ requestConsent }}>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ArrowRight,
   BookOpen,
@@ -10,9 +10,10 @@ import {
   Users,
 } from 'lucide-react'
 import { useStore } from '../store'
-import { allCourses, courseById, dateKey, isSeededCourse } from '../data/seed'
+import { allCourses, courseById, dateKey, isSeededCourse, teacherByName } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
 import { computeGaps, groupPendingThreads } from '../lib/engine'
+import { courseMetrics } from '../lib/metrics'
 import {
   averageFirstResponseMinutes,
   durationLabel,
@@ -25,24 +26,34 @@ import { Badge, EmptyState } from '../components/ui'
 interface InsightsViewProps {
   openFaq: (faqId: string) => void
   onGoTeacher: () => void
+  /** 教师登录时默认只看自己的课程；不传则保持全域试点口径。 */
+  teacherName?: string
 }
 
-export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
+export function InsightsView({ openFaq, onGoTeacher, teacherName }: InsightsViewProps) {
   const { data } = useStore()
-  const weekly = data.daily.slice(-7)
-  const ai7 = weekly.reduce((sum, entry) => sum + entry.ai, 0)
-  const human7 = weekly.reduce((sum, entry) => sum + entry.human, 0)
-  const rate7 = ai7 + human7 > 0 ? ai7 / (ai7 + human7) : 0
-  const savedHours = (ai7 * 4) / 60
-  const scopedCourseIds = useMemo(
+  const [scope, setScope] = useState<'mine' | 'all'>(teacherName ? 'mine' : 'all')
+  const teacherCourseIds = useMemo(
     () =>
-      new Set(
-        allCourses()
-          .filter((course) => isPilotCourse(course.id) || !isSeededCourse(course.id))
-          .map((course) => course.id),
-      ),
-    [],
+      teacherName
+        ? new Set(
+            teacherByName(teacherName).courses.filter(
+              (courseId) => isPilotCourse(courseId) || !isSeededCourse(courseId),
+            ),
+          )
+        : null,
+    [teacherName],
   )
+  const scopedCourseIds = useMemo(() => {
+    const courses = allCourses().filter(
+      (course) => isPilotCourse(course.id) || !isSeededCourse(course.id),
+    )
+    const scoped =
+      scope === 'mine' && teacherCourseIds
+        ? courses.filter((course) => teacherCourseIds.has(course.id))
+        : courses
+    return new Set(scoped.map((course) => course.id))
+  }, [scope, teacherCourseIds])
   const threads = useMemo(
     () => data.threads.filter((thread) => scopedCourseIds.has(thread.courseId)),
     [data.threads, scopedCourseIds],
@@ -51,10 +62,23 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
     () => data.faqs.filter((faq) => scopedCourseIds.has(faq.courseId)),
     [data.faqs, scopedCourseIds],
   )
+  const metrics = useMemo(() => courseMetrics(threads), [threads])
+  const mine = scope === 'mine' && Boolean(teacherCourseIds)
+  const weekly = mine ? metrics.weekly : data.daily.slice(-7)
+  const ai7 = mine
+    ? metrics.aiSolved
+    : weekly.reduce((sum, entry) => sum + entry.ai, 0)
+  const human7 = mine
+    ? metrics.humanHandled
+    : weekly.reduce((sum, entry) => sum + entry.human, 0)
+  const rate7 = ai7 + human7 > 0 ? ai7 / (ai7 + human7) : 0
+  const savedHours = (ai7 * 4) / 60
+  const duplicatesMerged = mine ? metrics.duplicatesMerged : data.duplicatesMerged
   const pendingGroups = groupPendingThreads(threads)
   const gaps = computeGaps(threads, faqs)
   const gapWaiting = gaps.reduce((sum, gap) => sum + gap.count, 0)
   const today = data.daily.find((entry) => entry.date === dateKey(Date.now()))
+  const todayAi = mine ? metrics.todayAi : today?.ai ?? 0
   const topFaqs = useMemo(
     () => [...faqs].sort((a, b) => b.citations - a.citations).slice(0, 5),
     [faqs],
@@ -131,13 +155,31 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
             <span className="eyebrow-mark jade" />
             答疑洞察
             <span className="eyebrow-sep">/</span>
-            近 7 天 · 全域试点
+            近 7 天 · {mine ? '我的课程' : '全域试点'}
           </div>
           <h1 className="display-title">
             每一个被接住的问题
             <br />
             <span>都在把老师的时间还回去</span>
           </h1>
+          {teacherCourseIds && (
+            <div className="sort-switch insights-scope-switch" role="group" aria-label="统计范围">
+              <button
+                type="button"
+                className={scope === 'mine' ? 'is-active' : ''}
+                onClick={() => setScope('mine')}
+              >
+                我的课程
+              </button>
+              <button
+                type="button"
+                className={scope === 'all' ? 'is-active' : ''}
+                onClick={() => setScope('all')}
+              >
+                全域试点
+              </button>
+            </div>
+          )}
         </div>
 
         <aside className="insights-head-card">
@@ -159,7 +201,7 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
           </div>
           <div className="insights-head-foot">
             <TrendingUp size={14} />
-            今天已有 {today?.ai ?? 0} 个问题被 AI 接住
+            今天已有 {todayAi} 个问题被 AI 接住
           </div>
         </aside>
       </header>
@@ -176,7 +218,7 @@ export function InsightsView({ openFaq, onGoTeacher }: InsightsViewProps) {
               <em>个</em>
             </strong>
             <p>
-              其中 {data.duplicatesMerged} 个重复问题被合并 · {resolvedCount} 个被学生确认已解决
+              其中 {duplicatesMerged} 个重复问题被合并 · {resolvedCount} 个被学生确认已解决
             </p>
           </div>
         </div>

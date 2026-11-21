@@ -10,7 +10,7 @@ import {
   ThumbsUp,
   X,
 } from 'lucide-react'
-import type { Confidence } from '../types'
+import type { Confidence, FeedbackReason } from '../types'
 import { cn } from '../lib/utils'
 import { popOverlay, pushOverlay } from '../lib/overlayStack'
 
@@ -626,32 +626,64 @@ export function Drawer({
   )
 }
 
+const FEEDBACK_REASONS: ReadonlyArray<readonly [FeedbackReason, string]> = [
+  ['too-vague', '太笼统'],
+  ['mismatch', '和课本不一致'],
+  ['skipped-steps', '跳步骤'],
+  ['unreadable', '图片/题面看不清'],
+  ['other', '其他'],
+]
+
 export function FeedbackButtons({
   value,
   onChange,
+  reason,
+  onReasonChange,
 }: {
   value?: 'helpful' | 'unhelpful' | null
   onChange: (next: 'helpful' | 'unhelpful') => void
+  reason?: FeedbackReason | null
+  onReasonChange?: (next: FeedbackReason | null) => void
 }) {
   return (
-    <div className="feedback-buttons">
-      <span className="feedback-label">这条回答有帮助吗？</span>
-      <button
-        className={cn('feedback-button', value === 'helpful' && 'is-active')}
-        onClick={() => onChange('helpful')}
-        aria-pressed={value === 'helpful'}
-      >
-        <ThumbsUp size={14} />
-        有帮助
-      </button>
-      <button
-        className={cn('feedback-button', value === 'unhelpful' && 'is-active is-negative')}
-        onClick={() => onChange('unhelpful')}
-        aria-pressed={value === 'unhelpful'}
-      >
-        <ThumbsDown size={14} />
-        还不够
-      </button>
+    <div className={cn('feedback-block', value === 'unhelpful' && 'is-negative')}>
+      <div className="feedback-buttons">
+        <span className="feedback-label">这条回答有帮助吗？</span>
+        <button
+          type="button"
+          className={cn('feedback-button', value === 'helpful' && 'is-active')}
+          onClick={() => onChange('helpful')}
+          aria-pressed={value === 'helpful'}
+        >
+          <ThumbsUp size={14} />
+          有帮助
+        </button>
+        <button
+          type="button"
+          className={cn('feedback-button', value === 'unhelpful' && 'is-active is-negative')}
+          onClick={() => onChange('unhelpful')}
+          aria-pressed={value === 'unhelpful'}
+        >
+          <ThumbsDown size={14} />
+          还不够
+        </button>
+      </div>
+      {value === 'unhelpful' && onReasonChange && (
+        <div className="feedback-reasons" role="group" aria-label="不够清楚的原因">
+          <span>哪里不够清楚？</span>
+          {FEEDBACK_REASONS.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={cn('feedback-reason-chip', reason === key && 'is-active')}
+              onClick={() => onReasonChange(reason === key ? null : key)}
+              aria-pressed={reason === key}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

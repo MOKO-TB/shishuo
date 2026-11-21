@@ -65,6 +65,7 @@ import { usePhotoAccess } from '../components/PhotoAccess'
 import type {
   AnswerResult,
   Faq,
+  FeedbackReason,
   Thread,
   ThreadAttachment,
   ThreadGroup,
@@ -404,14 +405,14 @@ export function StudentView({
       return
     }
     const timer = window.setTimeout(() => {
-      const result = retrieve(data.faqs, text, courseId)
+      const result = retrieve(data.faqs, text, courseId, courseNote?.currentChapter)
       const faq = result.matches.find((match) => match.score >= 0.26)?.faq
       const similar = findSimilarPendingGroup(data.threads, text, courseId)
       const group = similar?.primary.kind === 'follow-up' ? undefined : similar
       setAskPreview(faq || group ? { faq, group } : null)
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [question, thinking, courseId, data.faqs, data.threads])
+  }, [question, thinking, courseId, courseNote?.currentChapter, data.faqs, data.threads])
 
   const changeCourse = (nextId: string) => {
     if (thinking) {
@@ -652,7 +653,7 @@ export function StudentView({
       }
     }
 
-    const result = retrieve(data.faqs, text, courseId)
+    const result = retrieve(data.faqs, text, courseId, courseNote?.currentChapter)
     // 有文件时以文件内容为准，直接走服务端 AI 分析，避免课程库里的相近条目答非所问。
     if (documentAttachment && aiReady) {
       result.confidence = 'low'
@@ -817,8 +818,12 @@ export function StudentView({
     )
   }
 
-  const feedbackThread = (thread: Thread, feedback: 'helpful' | 'unhelpful') => {
-    dispatch({ type: 'feedback', threadId: thread.id, feedback })
+  const feedbackThread = (
+    thread: Thread,
+    feedback: 'helpful' | 'unhelpful',
+    reason?: FeedbackReason | null,
+  ) => {
+    dispatch({ type: 'feedback', threadId: thread.id, feedback, reason })
     notify(
       feedback === 'helpful'
         ? '已记录，这条知识会更有信心被 AI 引用'
@@ -830,6 +835,11 @@ export function StudentView({
   const giveFeedback = (feedback: 'helpful' | 'unhelpful') => {
     if (!activeThread) return
     feedbackThread(activeThread, feedback)
+  }
+
+  const giveFeedbackReason = (reason: FeedbackReason | null) => {
+    if (!activeThread) return
+    feedbackThread(activeThread, 'unhelpful', reason)
   }
 
   const resolveThread = (thread: Thread, resolved: boolean) => {
@@ -848,7 +858,12 @@ export function StudentView({
   ) => {
     if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能继续对话。')
     const threadCourse = courseById(thread.courseId)
-    const result = retrieve(data.faqs, followUp, thread.courseId)
+    const result = retrieve(
+      data.faqs,
+      followUp,
+      thread.courseId,
+      data.courseNotes?.find((note) => note.courseId === thread.courseId)?.currentChapter,
+    )
     const sourceFaq = data.faqs.find((faq) => faq.id === thread.sources?.[0])
     const localContext = result.matches
       .slice(0, 2)
@@ -1023,6 +1038,11 @@ export function StudentView({
                   <strong>问 AI 助教</strong>
                 </div>
               </div>
+              {courseNote?.currentChapter && (
+                <span className="ask-progress-hint">
+                  本周进度 · {courseNote.currentChapter}
+                </span>
+              )}
             </div>
 
             <textarea
@@ -1303,6 +1323,7 @@ export function StudentView({
                 onEscalate={() => setEscalateOpen(true)}
                 onSupplement={() => setEscalateOpen(true)}
                 onFeedback={giveFeedback}
+                onFeedbackReason={giveFeedbackReason}
                 onResolve={(resolved) => resolveThread(activeThread, resolved)}
                 onOpenFaq={openFaq}
                 onTeach={() => setTeachOpen(true)}
@@ -1544,6 +1565,7 @@ export function StudentView({
         onOpenFaq={openFaq}
         onResolve={(thread, resolved) => resolveThread(thread, resolved)}
         onFeedback={(thread, feedback) => feedbackThread(thread, feedback)}
+        onFeedbackReason={(thread, reason) => feedbackThread(thread, 'unhelpful', reason)}
         onWithdraw={(thread, withdrawn) => withdrawThread(thread, withdrawn)}
         onSupplement={supplementThread}
         onFollowUp={(thread) => {
