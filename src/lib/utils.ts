@@ -131,9 +131,30 @@ export function shareLink(kind: 'faq' | 'thread', id: string) {
 }
 
 export async function copyText(text: string) {
+  // HTTP 部署下 navigator.clipboard 不可用，保留 execCommand 兜底。
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      // 浏览器拒绝权限时继续尝试旧接口。
+    }
+  }
   try {
-    await navigator.clipboard.writeText(text)
-    return true
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.top = '0'
+    textarea.style.left = '-9999px'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.focus()
+    textarea.select()
+    textarea.setSelectionRange(0, text.length)
+    const copied = document.execCommand('copy')
+    document.body.removeChild(textarea)
+    return copied
   } catch {
     return false
   }
