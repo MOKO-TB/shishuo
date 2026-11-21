@@ -552,6 +552,132 @@
   color: var(--accent);
 }
 
+/* 日历上方的「当天安排」：手机端不再只靠小圆点猜今天有什么 */
+.campus-month-agenda {
+  display: grid;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-card-alt);
+}
+
+.campus-month-agenda.is-busy {
+  border-color: var(--border-strong);
+  background: var(--bg-accent-mist);
+}
+
+.campus-month-agenda-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.campus-month-agenda-title {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.campus-month-agenda-meta {
+  margin-left: auto;
+  font-size: var(--text-meta);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.campus-month-agenda-head > svg {
+  flex: 0 0 auto;
+  color: var(--faint);
+}
+
+.campus-month-agenda-list {
+  display: grid;
+  gap: 5px;
+}
+
+.campus-month-agenda-event {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+}
+
+.campus-month-agenda-event:hover {
+  border-color: var(--accent);
+}
+
+.campus-month-agenda-kind {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-accent-mist);
+  color: var(--accent-deep);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+}
+
+.campus-month-agenda-event.is-exam .campus-month-agenda-kind {
+  background: var(--bg-card-alt);
+  color: var(--accent-clay);
+}
+
+.campus-month-agenda-event.is-term .campus-month-agenda-kind {
+  background: var(--bg-soft);
+  color: var(--accent-deep);
+}
+
+.campus-month-agenda-event.is-event .campus-month-agenda-kind {
+  background: var(--bg-card-alt);
+  color: var(--accent-blue);
+}
+
+.campus-month-agenda-event.is-deadline .campus-month-agenda-kind {
+  background: var(--bg-card-alt);
+  color: var(--danger);
+}
+
+.campus-month-agenda-event strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campus-month-agenda-event em {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.campus-month-agenda-more {
+  font-size: var(--text-meta);
+  color: var(--faint);
+}
+
+.campus-month-agenda-empty {
+  margin: 1px 0 0;
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
 .campus-month-weekdays,
 .campus-month-grid {
   display: grid;
@@ -1873,8 +1999,41 @@
     grid-template-columns: 90px minmax(0, 1fr);
   }
 
+  .campus-month-agenda {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .campus-month-agenda-head {
+    flex-wrap: wrap;
+    gap: 3px 7px;
+  }
+
+  .campus-month-agenda-meta {
+    margin-left: 0;
+  }
+
+  .campus-month-agenda-head > svg {
+    margin-left: auto;
+  }
+
+  .campus-month-agenda-event {
+    flex-wrap: wrap;
+    gap: 3px 7px;
+  }
+
+  .campus-month-agenda-event strong {
+    flex: 1 1 55%;
+    white-space: normal;
+  }
+
+  .campus-month-agenda-event em {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
   .campus-month-day {
-    min-height: 52px;
+    min-height: 48px;
     padding: 4px;
   }
 

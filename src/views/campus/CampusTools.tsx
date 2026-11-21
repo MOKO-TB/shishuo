@@ -108,12 +108,17 @@ function shortSemesterName(name: string) {
 
 /** 日期格的读屏标签：长假期中间日期也要报出「进行中」的事件，而不是「暂无安排」。 */
 function calendarDayLabel(cell: MonthCell) {
-  const names = cell.allEvents
-    .filter((event) => event.kind !== 'term' || eventSpanDays(event) <= 14)
-    .map((event) => event.name)
+  const names = calendarDetailEvents(cell).map((event) => event.name)
   return `${cell.date.getMonth() + 1} 月 ${cell.date.getDate()} 日 ${weekdayLabel(
     cell.date,
   )}${names.length > 0 ? `，${names.join('、')}` : '，暂无收录安排'}`
+}
+
+/** 当天详情里真正要列的事件：学期本身放副标题，长学期中间日期不重复列。 */
+function calendarDetailEvents(cell: MonthCell) {
+  return cell.allEvents.filter(
+    (event) => event.kind !== 'term' || eventSpanDays(event) <= 14,
+  )
 }
 
 /** 来源里已经带了完整 URL 时，正文只展示来源名称，链接交给「查看原文」按钮。 */
@@ -413,6 +418,10 @@ export function CampusTools({
   )
   const [calendarDay, setCalendarDay] = useState<string | null>(null)
   const closeCalendarDay = () => setCalendarDay(null)
+  const changeCalendarMonth = (next: Date) => {
+    setCalendarMonth(next)
+    setCalendarDay(null)
+  }
 
   const monthCalendar = useMemo(() => {
     const year = calendarMonth.getFullYear()
@@ -507,12 +516,38 @@ export function CampusTools({
       ...cell,
       term,
       // 学期本身放进副标题，不占事件卡；长假期等仍作为事件展示。
-      detailEvents: cell.allEvents.filter((event) => {
-        if (event.kind !== 'term') return true
-        return eventSpanDays(event) <= 14
-      }),
+      detailEvents: calendarDetailEvents(cell),
     }
   }, [calendarDay, monthCalendar])
+
+  /**
+   * 日历上方常驻的「当天安排」：
+   * - 当前月默认今天，其他月份默认第一个有事件的日子；
+   * - 点到哪一天就切到哪一天，手机端不用再靠小圆点猜今天有什么。
+   */
+  const agendaCalendarDay = useMemo(() => {
+    const cells = monthCalendar.cells
+    const selected =
+      calendarDay && cells.some((cell) => cell.key === calendarDay)
+        ? cells.find((cell) => cell.key === calendarDay)
+        : undefined
+    const isCurrentMonth =
+      calendarMonth.getFullYear() === today.getFullYear() &&
+      calendarMonth.getMonth() === today.getMonth()
+    const fallback = isCurrentMonth
+      ? cells.find((cell) => cell.isToday)
+      : cells.find(
+          (cell) => cell.inMonth && calendarDetailEvents(cell).length > 0,
+        ) ?? cells.find((cell) => cell.inMonth)
+    const cell = selected ?? fallback
+    if (!cell) return null
+    return {
+      ...cell,
+      term: semesterWeekOf(cell.date),
+      detailEvents: calendarDetailEvents(cell),
+      isToday: cell.key === dateKey(today),
+    }
+  }, [calendarDay, calendarMonth, monthCalendar, today])
 
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
@@ -919,7 +954,7 @@ export function CampusTools({
               className="campus-month-arrow"
               aria-label="上个月"
               onClick={() =>
-                setCalendarMonth(
+                changeCalendarMonth(
                   new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1),
                 )
               }
@@ -932,7 +967,7 @@ export function CampusTools({
               className="campus-month-arrow"
               aria-label="下个月"
               onClick={() =>
-                setCalendarMonth(
+                changeCalendarMonth(
                   new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1),
                 )
               }
@@ -943,11 +978,78 @@ export function CampusTools({
           <button
             type="button"
             className="text-button campus-month-today"
-            onClick={() => setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
+            onClick={() => changeCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
           >
             回到本月
           </button>
         </div>
+        {agendaCalendarDay && (
+          <div
+            className={`campus-month-agenda ${
+              agendaCalendarDay.detailEvents.length > 0 ? 'is-busy' : ''
+            }`}
+            role="region"
+            aria-label="当天安排"
+            aria-live="polite"
+          >
+            <button
+              type="button"
+              className="campus-month-agenda-head"
+              onClick={() => setCalendarDay(agendaCalendarDay.key)}
+              aria-label={`查看 ${agendaCalendarDay.date.getMonth() + 1} 月 ${agendaCalendarDay.date.getDate()} 日的完整安排`}
+            >
+              <span className="campus-month-agenda-title">
+                {agendaCalendarDay.isToday ? '今天 · ' : ''}
+                {agendaCalendarDay.date.getMonth() + 1} 月{' '}
+                {agendaCalendarDay.date.getDate()} 日 ·{' '}
+                {weekdayLabel(agendaCalendarDay.date)}
+              </span>
+              <span className="campus-month-agenda-meta">
+                {agendaCalendarDay.term && `第 ${agendaCalendarDay.term.week} 周`}
+                {agendaCalendarDay.term &&
+                  agendaCalendarDay.detailEvents.length > 0 &&
+                  ' · '}
+                {agendaCalendarDay.detailEvents.length > 0
+                  ? `${agendaCalendarDay.detailEvents.length} 项安排`
+                  : '暂无收录安排'}
+              </span>
+              <ChevronRight size={14} />
+            </button>
+            {agendaCalendarDay.detailEvents.length > 0 ? (
+              <div className="campus-month-agenda-list">
+                {agendaCalendarDay.detailEvents.slice(0, 3).map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    className={`campus-month-agenda-event is-${event.kind}`}
+                    onClick={() => setCalendarDay(agendaCalendarDay.key)}
+                  >
+                    <span className="campus-month-agenda-kind">
+                      {eventKindLabel(event.kind)}
+                    </span>
+                    <strong>{event.name}</strong>
+                    <em>
+                      {formatEventRange(
+                        event,
+                        agendaCalendarDay.date.getFullYear(),
+                      )}
+                    </em>
+                  </button>
+                ))}
+                {agendaCalendarDay.detailEvents.length > 3 && (
+                  <span className="campus-month-agenda-more">
+                    还有 {agendaCalendarDay.detailEvents.length - 3} 项，点日期查看全部
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="campus-month-agenda-empty">
+                {agendaCalendarDay.isToday ? '今天' : '这一天'}没有收录的放假、考试或活动；
+                课程安排以课表为准。
+              </p>
+            )}
+          </div>
+        )}
         <div className="campus-month-weekdays">
           {['一', '二', '三', '四', '五', '六', '日'].map((day) => (
             <span key={day}>{day}</span>
