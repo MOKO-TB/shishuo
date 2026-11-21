@@ -3,6 +3,8 @@ import {
   BookOpen,
   CalendarDays,
   Calculator,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Library,
   Loader2,
@@ -39,12 +41,12 @@ import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
 type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'ask' | 'kb'
 
-type CalendarItem = {
-  event: CampusCalendarEvent
-  start: Date
-  end: Date | null
-  days: number
-  sortDate: number
+type MonthCell = {
+  date: Date
+  key: string
+  inMonth: boolean
+  isToday: boolean
+  events: CampusCalendarEvent[]
 }
 
 function parseDate(value: string) {
@@ -53,27 +55,24 @@ function parseDate(value: string) {
   return new Date(year, month - 1, day)
 }
 
-function dateLabel(date: Date) {
-  return `${date.getMonth() + 1} 月 ${date.getDate()} 日`
+function dateKey(date: Date) {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
-function daysBetween(from: Date, to: Date) {
-  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()
-  const end = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()
-  return Math.round((end - start) / 86_400_000)
+function semesterLabel(value: string) {
+  const match = /^(\d{4})-(\d{4})-([12])$/.exec(value.trim())
+  if (!match) return value || '未标注学期'
+  return `${match[1]}-${match[2]} 第${match[3] === '1' ? '一' : '二'}学期`
 }
 
-function nextOccurrence(event: CampusCalendarEvent, today: Date) {
-  const start = parseDate(event.start)
-  if (!start) return null
-  if (event.repeat === 'yearly') {
-    const candidate = new Date(today.getFullYear(), start.getMonth(), start.getDate())
-    if (candidate.getTime() < today.getTime()) {
-      candidate.setFullYear(today.getFullYear() + 1)
-    }
-    return candidate
-  }
-  return start
+function shortEventName(name: string) {
+  const cleaned = name
+    .replace(/[（(].*?[)）]/g, '')
+    .replace(/^20\d{2}-20\d{2}学年/, '')
+    .trim()
+  return cleaned.length > 7 ? `${cleaned.slice(0, 7)}…` : cleaned
 }
 
 function eventKindLabel(kind: string) {
@@ -82,34 +81,6 @@ function eventKindLabel(kind: string) {
   if (kind === 'term') return '学期'
   if (kind === 'deadline') return '截止'
   return '活动'
-}
-
-function eventKindTone(kind: string) {
-  if (kind === 'holiday') return 'jade' as const
-  if (kind === 'exam') return 'medium' as const
-  if (kind === 'deadline') return 'danger' as const
-  return 'gold' as const
-}
-
-function CalendarRow({ event, start, end, days }: CalendarItem) {
-  return (
-    <article className="campus-calendar-row">
-      <div className="campus-calendar-date">
-        <strong>{dateLabel(start)}</strong>
-        <span>
-          {days === 0 ? '今天' : days > 0 ? `${days} 天后` : `${Math.abs(days)} 天前`}
-        </span>
-      </div>
-      <div className="campus-calendar-main">
-        <div className="campus-calendar-top">
-          <Badge tone={eventKindTone(event.kind)}>{eventKindLabel(event.kind)}</Badge>
-          {end && <em>{dateLabel(end)} 结束</em>}
-        </div>
-        <strong>{event.name}</strong>
-        {event.note && <p>{excerpt(event.note, 130)}</p>}
-      </div>
-    </article>
-  )
 }
 
 function BookCard({ book, recommended }: { book: CampusBook; recommended?: boolean }) {
@@ -212,13 +183,28 @@ export function CampusTools({
   const [loans, setLoans] = useState<LibraryLoansResult | null>(null)
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null)
   const [suggestOpen, setSuggestOpen] = useState(false)
+  const [scoreSemester, setScoreSemester] = useState('all')
   const libraryCheckedRef = useRef(false)
   const searchWrapRef = useRef<HTMLDivElement>(null)
   const profile = useProfile()
 
-  const autoStats = useMemo(
-    () => (profile.scores.length > 0 ? scoreStats(profile.scores) : null),
+  const scoreSemesters = useMemo(
+    () =>
+      Array.from(new Set(profile.scores.map((row) => row.semester).filter(Boolean))).sort(
+        (a, b) => b.localeCompare(a),
+      ),
     [profile.scores],
+  )
+  const scoringRows = useMemo(
+    () =>
+      scoreSemester === 'all'
+        ? profile.scores
+        : profile.scores.filter((row) => row.semester === scoreSemester),
+    [profile.scores, scoreSemester],
+  )
+  const scoreSummary = useMemo(
+    () => (scoringRows.length > 0 ? scoreStats(scoringRows) : null),
+    [scoringRows],
   )
 
   const myCourseIds = useMemo(() => {
@@ -253,29 +239,78 @@ export function CampusTools({
     value.setHours(0, 0, 0, 0)
     return value
   }, [])
+  const [calendarMonth, setCalendarMonth] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  )
 
-  const calendarEvents = useMemo<CalendarItem[]>(() => {
-    return CAMPUS_CALENDAR_EVENTS.map((event) => {
-      const start = nextOccurrence(event, today)
-      if (!start) return null
-      const end = event.end ? parseDate(event.end) : null
-      const sortDate = start.getTime()
+  const monthCalendar = useMemo(() => {
+    const year = calendarMonth.getFullYear()
+    const month = calendarMonth.getMonth()
+    const first = new Date(year, month, 1)
+    const offset = (first.getDay() + 6) % 7
+    const gridStart = new Date(year, month, 1 - offset)
+    const todayKey = dateKey(today)
+    const cells: MonthCell[] = Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(gridStart)
+      date.setDate(gridStart.getDate() + index)
       return {
-        event,
-        start,
-        end,
-        days: daysBetween(today, start),
-        sortDate,
+        date,
+        key: dateKey(date),
+        inMonth: date.getMonth() === month,
+        isToday: dateKey(date) === todayKey,
+        events: [],
       }
     })
-      .filter((item): item is CalendarItem => Boolean(item))
-      .sort((a, b) => a.sortDate - b.sortDate)
-  }, [today])
+    const byKey = new Map(cells.map((cell) => [cell.key, cell]))
+    const kindOrder: Record<string, number> = {
+      holiday: 0,
+      exam: 1,
+      term: 2,
+      deadline: 3,
+      event: 4,
+    }
 
-  const upcomingEvents = calendarEvents.filter((item) => item.days >= 0)
-  const pastEvents = calendarEvents
-    .filter((item) => item.days < 0)
-    .sort((a, b) => b.sortDate - a.sortDate)
+    for (const event of CAMPUS_CALENDAR_EVENTS) {
+      const rawStart = parseDate(event.start)
+      if (!rawStart) continue
+      const start =
+        event.repeat === 'yearly'
+          ? new Date(year, rawStart.getMonth(), rawStart.getDate())
+          : rawStart
+      const rawEnd = parseDate(event.end)
+      const end =
+        event.repeat === 'yearly'
+          ? rawEnd
+            ? new Date(year, rawEnd.getMonth(), rawEnd.getDate())
+            : start
+          : (rawEnd ?? start)
+      if (end.getTime() < start.getTime()) continue
+      const spanDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
+      for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+        // 长学期/长假期只在首尾两天标注，避免日历每格都被同一标签占满。
+        if (
+          spanDays > 14 &&
+          cursor.getTime() !== start.getTime() &&
+          cursor.getTime() !== end.getTime()
+        ) {
+          continue
+        }
+        const cell = byKey.get(dateKey(cursor))
+        if (cell && !cell.events.some((item) => item.id === event.id)) {
+          cell.events.push(event)
+        }
+      }
+    }
+    for (const cell of cells) {
+      cell.events.sort(
+        (a, b) => (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9),
+      )
+    }
+    return {
+      label: `${year} 年 ${month + 1} 月`,
+      cells,
+    }
+  }, [calendarMonth, today])
 
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
@@ -549,23 +584,78 @@ export function CampusTools({
 
   {tab === 'gpa' && (
     <div className="campus-tool-panel">
+      {scoreSemesters.length > 0 && (
+        <div className="campus-gpa-toolbar">
+          <label>
+            <span>学期</span>
+            <select
+              value={scoreSemester}
+              onChange={(event) => setScoreSemester(event.target.value)}
+              aria-label="选择成绩学期"
+            >
+              <option value="all">全部学期</option>
+              {scoreSemesters.map((semester) => (
+                <option key={semester} value={semester}>
+                  {semesterLabel(semester)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span>{scoringRows.length} 门课程</span>
+        </div>
+      )}
       <div className="campus-gpa-summary">
         <div>
           <span>教务成绩</span>
-          <strong>{autoStats ? `${autoStats.counted} 门` : '未同步'}</strong>
-          <em>{autoStats ? `${autoStats.credits} 学分` : '在「账号与课表 → 成绩」同步'}</em>
+          <strong>
+            {scoreSummary
+              ? `${scoreSummary.counted} 门`
+              : scoringRows.length > 0
+                ? `${scoringRows.length} 门`
+                : '未同步'}
+          </strong>
+          <em>
+            {scoreSummary
+              ? `${scoreSummary.credits} 学分`
+              : '在「账号与课表 → 成绩」同步'}
+          </em>
         </div>
         <div>
           <span>加权平均</span>
-          <strong>{autoStats?.weightedAverage != null ? autoStats.weightedAverage.toFixed(2) : '—'}</strong>
+          <strong>
+            {scoreSummary?.weightedAverage != null
+              ? scoreSummary.weightedAverage.toFixed(2)
+              : '—'}
+          </strong>
           <em>按学分加权</em>
         </div>
         <div>
           <span>GPA（5.0）</span>
-          <strong>{autoStats?.gpaFive != null ? autoStats.gpaFive.toFixed(2) : '—'}</strong>
+          <strong>{scoreSummary?.gpaFive != null ? scoreSummary.gpaFive.toFixed(2) : '—'}</strong>
           <em>本校按 5.0 制计算</em>
         </div>
       </div>
+      {scoringRows.length > 0 ? (
+        <div className="campus-score-list">
+          {scoringRows.map((row) => (
+            <div className="campus-score-row" key={row.id}>
+              <div>
+                <strong>{row.course}</strong>
+                <em>
+                  {semesterLabel(row.semester)}
+                  {row.kind ? ` · ${row.kind}` : ''}
+                </em>
+              </div>
+              <span>{row.credit != null ? `${row.credit} 学分` : '—'}</span>
+              <strong className="campus-score-value">{row.score || '—'}</strong>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="campus-tool-empty">
+          还没有成绩记录；在「账号与课表 → 成绩」同步后，这里会按学期列出每门课成绩。
+        </p>
+      )}
     </div>
   )}
 
@@ -611,27 +701,93 @@ export function CampusTools({
 
   {tab === 'calendar' && (
     <div className="campus-tool-panel">
-      <div className="campus-calendar-list">
-        {upcomingEvents.length === 0 ? (
-          <p className="campus-tool-empty">近期没有已录入的校历事件，请以教务处通知为准。</p>
-        ) : (
-          upcomingEvents.map((item) => (
-            <CalendarRow {...item} key={item.event.id} />
-          ))
-        )}
-      </div>
-      {pastEvents.length > 0 && (
-        <details className="campus-calendar-history">
-          <summary>查看已过的校历节点（{pastEvents.length} 条）</summary>
-          <div className="campus-calendar-list">
-            {pastEvents.map((item) => (
-              <CalendarRow {...item} key={item.event.id} />
-            ))}
+      <div className="campus-month-calendar">
+        <div className="campus-month-head">
+          <div className="campus-month-nav">
+            <button
+              type="button"
+              className="campus-month-arrow"
+              aria-label="上个月"
+              onClick={() =>
+                setCalendarMonth(
+                  new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1),
+                )
+              }
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <strong>{monthCalendar.label}</strong>
+            <button
+              type="button"
+              className="campus-month-arrow"
+              aria-label="下个月"
+              onClick={() =>
+                setCalendarMonth(
+                  new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1),
+                )
+              }
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
-        </details>
-      )}
+          <button
+            type="button"
+            className="text-button campus-month-today"
+            onClick={() => setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
+          >
+            回到本月
+          </button>
+        </div>
+        <div className="campus-month-weekdays">
+          {['一', '二', '三', '四', '五', '六', '日'].map((day) => (
+            <span key={day}>{day}</span>
+          ))}
+        </div>
+        <div className="campus-month-grid">
+          {monthCalendar.cells.map((cell) => (
+            <div
+              className={`campus-month-day ${cell.inMonth ? '' : 'is-outside'} ${
+                cell.isToday ? 'is-today' : ''
+              }`}
+              key={cell.key}
+            >
+              <span className="campus-month-day-num">{cell.date.getDate()}</span>
+              <div className="campus-month-events">
+                {cell.events.slice(0, 2).map((event) => (
+                  <span
+                    className={`campus-month-event is-${event.kind}`}
+                    key={event.id}
+                    title={`${event.name} · ${eventKindLabel(event.kind)}${
+                      event.note ? `\n${event.note}` : ''
+                    }`}
+                  >
+                    {shortEventName(event.name)}
+                  </span>
+                ))}
+                {cell.events.length > 2 && (
+                  <span className="campus-month-more">+{cell.events.length - 2}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="campus-month-legend">
+          {[
+            ['holiday', '放假'],
+            ['exam', '考试'],
+            ['term', '学期'],
+            ['event', '活动'],
+            ['deadline', '截止'],
+          ].map(([kind, label]) => (
+            <span key={kind}>
+              <i className={`is-${kind}`} />
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
       <p className="campus-tool-note">
-        校历来自学校官方/公开来源；「每年例行」条目是按往年日期投影，具体以当学期教务处通知为准。
+        校历来自学校官方/公开来源；长学期和长假期只在首尾两天标注，具体以当学期教务处通知为准。
       </p>
     </div>
   )}

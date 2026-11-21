@@ -69,6 +69,91 @@
   gap: 9px;
 }
 
+.campus-gpa-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.campus-gpa-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+}
+
+.campus-gpa-toolbar select {
+  height: 32px;
+  max-width: 220px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}
+
+.campus-gpa-toolbar > span {
+  color: var(--fg-faint);
+  font-size: var(--text-meta);
+}
+
+.campus-score-list {
+  display: grid;
+  gap: 4px;
+  max-height: 360px;
+  margin-top: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.campus-score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 46px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+.campus-score-row > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.campus-score-row > div strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-score-row > div em,
+.campus-score-row > span {
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+  font-style: normal;
+}
+
+.campus-score-row > span {
+  text-align: right;
+}
+
+.campus-score-value {
+  color: var(--accent-clay);
+  font-family: var(--serif);
+  font-size: 17px;
+  text-align: right;
+}
+
 .campus-gpa-summary > div {
   display: grid;
   gap: 2px;
@@ -273,6 +358,178 @@
   font-size: var(--text-meta);
   line-height: 1.65;
   color: var(--muted);
+}
+
+/* 校历：按月份展示的日历 */
+.campus-month-calendar {
+  display: grid;
+  gap: 10px;
+}
+
+.campus-month-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.campus-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.campus-month-nav strong {
+  min-width: 112px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campus-month-arrow {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.campus-month-arrow:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.campus-month-today {
+  font-size: var(--text-meta);
+  color: var(--accent);
+}
+
+.campus-month-weekdays,
+.campus-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.campus-month-weekdays {
+  color: var(--fg-faint);
+  font-size: var(--text-meta);
+  text-align: center;
+}
+
+.campus-month-day {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+.campus-month-day.is-outside {
+  opacity: 0.42;
+  background: var(--surface-2);
+}
+
+.campus-month-day.is-today {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.campus-month-day-num {
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.campus-month-events {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.campus-month-event {
+  overflow: hidden;
+  padding: 2px 4px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-meta);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--bg-accent-mist);
+  color: var(--accent-deep);
+}
+
+.campus-month-event.is-exam {
+  background: var(--bg-card-alt);
+  color: var(--accent-clay);
+}
+
+.campus-month-event.is-term {
+  background: var(--bg-soft);
+  color: var(--accent-deep);
+}
+
+.campus-month-event.is-event {
+  background: var(--bg-card-alt);
+  color: var(--accent-blue);
+}
+
+.campus-month-event.is-deadline {
+  background: var(--bg-card-alt);
+  color: var(--danger);
+}
+
+.campus-month-more {
+  padding: 0 4px;
+  color: var(--fg-faint);
+  font-size: var(--text-meta);
+}
+
+.campus-month-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+}
+
+.campus-month-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.campus-month-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.campus-month-legend i.is-exam {
+  background: var(--accent-clay);
+}
+
+.campus-month-legend i.is-term {
+  background: var(--accent-gold);
+}
+
+.campus-month-legend i.is-event {
+  background: var(--accent-blue);
+}
+
+.campus-month-legend i.is-deadline {
+  background: var(--danger);
 }
 
 .campus-tool-note {
@@ -1222,6 +1479,26 @@
 
   .campus-calendar-row {
     grid-template-columns: 90px minmax(0, 1fr);
+  }
+
+  .campus-month-day {
+    min-height: 58px;
+    padding: 4px;
+  }
+
+  .campus-month-grid,
+  .campus-month-weekdays {
+    gap: 3px;
+  }
+
+  .campus-month-nav strong {
+    min-width: 92px;
+    font-size: 15px;
+  }
+
+  .campus-month-arrow {
+    width: 28px;
+    height: 28px;
   }
 
   .campus-library-grid {

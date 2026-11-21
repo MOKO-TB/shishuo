@@ -2083,6 +2083,48 @@
   color: var(--jade-deep);
 }
 
+.cx-assignment-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cx-assignment-filters {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.cx-assignment-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  white-space: nowrap;
+}
+
+.cx-assignment-filters button span {
+  color: var(--faint);
+  font-size: var(--text-meta);
+}
+
+.cx-assignment-filters button.is-active {
+  background: var(--surface);
+  color: var(--jade-deep);
+  box-shadow: var(--shadow-switch);
+}
+
+.cx-page-item-top .badge {
+  flex: 0 0 auto;
+}
+
 .cx-course-filter {
   height: 32px;
   max-width: 220px;
@@ -3109,6 +3151,17 @@
   .cx-page-tabs button {
     flex: 0 0 auto;
     padding: 8px 10px;
+  }
+
+  .cx-assignment-tools {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cx-assignment-filters {
+    width: 100%;
+    overflow-x: auto;
   }
 
   .cx-course-filter {

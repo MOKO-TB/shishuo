@@ -39,6 +39,22 @@ const KIND_META: Record<
 }
 
 type ChaoxingTab = ChaoxingKind | 'chapter'
+type AssignmentFilter = 'all' | 'todo' | 'pending' | 'done'
+
+function assignmentStatus(item: ChaoxingItem): Exclude<AssignmentFilter, 'all'> {
+  const body = item.body || ''
+  if (/已完成|已批阅|已评分/.test(body)) return 'done'
+  if (/待批阅|批阅中|已提交|已交/.test(body)) return 'pending'
+  if (/未提交|未交|待交|未完成/.test(body)) return 'todo'
+  return 'todo'
+}
+
+function assignmentStatusMeta(item: ChaoxingItem) {
+  const status = assignmentStatus(item)
+  if (status === 'pending') return { label: '待批阅', tone: 'blue' as const }
+  if (status === 'done') return { label: '已完成', tone: 'jade' as const }
+  return { label: '未提交', tone: 'medium' as const }
+}
 
 function fmt(ts: number | null | undefined) {
   if (!ts) return ''
@@ -105,6 +121,7 @@ export function ChaoxingView() {
   const [notice, setNotice] = useState('')
   const [tab, setTab] = useState<ChaoxingTab>('message')
   const [courseFilter, setCourseFilter] = useState('')
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all')
   const [bindOpen, setBindOpen] = useState(false)
   const mobileLayout = useMemo(() => window.matchMedia('(max-width: 720px)').matches, [])
   const [bindMethod, setBindMethod] = useState<'qr' | 'password'>(() =>
@@ -216,12 +233,29 @@ export function ChaoxingView() {
     if (item.url) window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')
   }
 
-  const assignments = useMemo(() => {
-    return (overview?.items ?? [])
-      .filter(
+  const courseAssignments = useMemo(
+    () =>
+      (overview?.items ?? []).filter(
         (item) =>
           item.kind === 'assignment' &&
           (!courseFilter || item.course_id === courseFilter),
+      ),
+    [overview?.items, courseFilter],
+  )
+
+  const assignmentCounts = useMemo(() => {
+    const counts = { all: courseAssignments.length, todo: 0, pending: 0, done: 0 }
+    for (const item of courseAssignments) {
+      const status = assignmentStatus(item)
+      counts[status] += 1
+    }
+    return counts
+  }, [courseAssignments])
+
+  const assignments = useMemo(() => {
+    return courseAssignments
+      .filter(
+        (item) => assignmentFilter === 'all' || assignmentStatus(item) === assignmentFilter,
       )
       .sort(
         (a, b) =>
@@ -229,7 +263,7 @@ export function ChaoxingView() {
           Number(b.published_at || b.created_at || 0) -
             Number(a.published_at || a.created_at || 0),
       )
-  }, [overview?.items, courseFilter])
+  }, [assignmentFilter, courseAssignments])
 
   const messageGroups = useMemo(
     () => groupByCourse((overview?.items ?? []).filter((item) => item.kind === 'message')),
@@ -428,19 +462,42 @@ export function ChaoxingView() {
               </button>
             </div>
             {tab === 'assignment' && (
-              <select
-                className="cx-course-filter"
-                value={courseFilter}
-                onChange={(event) => setCourseFilter(event.target.value)}
-                aria-label="按课程筛选"
-              >
-                <option value="">全部课程</option>
-                {(overview?.courses ?? []).map((course) => (
-                  <option key={course.id} value={course.course_id}>
-                    {course.name}
-                  </option>
-                ))}
-              </select>
+              <div className="cx-assignment-tools">
+                <div className="cx-assignment-filters" role="group" aria-label="作业状态筛选">
+                  {(
+                    [
+                      ['all', '全部', assignmentCounts.all],
+                      ['todo', '未提交', assignmentCounts.todo],
+                      ['pending', '待批阅', assignmentCounts.pending],
+                      ['done', '已完成', assignmentCounts.done],
+                    ] as const
+                  ).map(([value, label, count]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={assignmentFilter === value ? 'is-active' : ''}
+                      aria-pressed={assignmentFilter === value}
+                      onClick={() => setAssignmentFilter(value)}
+                    >
+                      {label}
+                      <span>{count}</span>
+                    </button>
+                  ))}
+                </div>
+                <select
+                  className="cx-course-filter"
+                  value={courseFilter}
+                  onChange={(event) => setCourseFilter(event.target.value)}
+                  aria-label="按课程筛选"
+                >
+                  <option value="">全部课程</option>
+                  {(overview?.courses ?? []).map((course) => (
+                    <option key={course.id} value={course.course_id}>
+                      {course.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
             {tab !== 'assignment' && selectedCourse && (
               <button className="text-button cx-back-inline" onClick={() => setSelectedCourse('')}>
@@ -500,11 +557,15 @@ export function ChaoxingView() {
           ) : tab === 'assignment' ? (
             <div className="cx-page-list">
               {assignments.length === 0 ? (
-                <EmptyBlock
-                  kind="assignment"
-                  syncing={syncing}
-                  onSync={() => void syncNow()}
-                />
+                courseAssignments.length > 0 && assignmentFilter !== 'all' ? (
+                  <p className="cx-page-empty-line">当前筛选下没有作业。</p>
+                ) : (
+                  <EmptyBlock
+                    kind="assignment"
+                    syncing={syncing}
+                    onSync={() => void syncNow()}
+                  />
+                )
               ) : (
                 assignments.map((item) => (
                   <ItemCard key={item.id} item={item} onOpen={() => void openItem(item)} />
@@ -560,6 +621,11 @@ function ItemCard({ item, onOpen }: { item: ChaoxingItem; onOpen: () => void }) 
       <span className="cx-page-item-body">
         <span className="cx-page-item-top">
           <strong>{item.title}</strong>
+          {item.kind === 'assignment' && (
+            <Badge tone={assignmentStatusMeta(item).tone}>
+              {assignmentStatusMeta(item).label}
+            </Badge>
+          )}
           {!item.read_at && <i className="cx-unread-dot" />}
         </span>
         <span className="cx-page-item-meta">
