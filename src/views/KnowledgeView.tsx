@@ -4,6 +4,7 @@ import {
   ArrowUpDown,
   BookOpen,
   CircleAlert,
+  HeartPulse,
   Plus,
   Search,
   Sparkles,
@@ -19,6 +20,7 @@ import type { FaqPrefill, KnowledgeGap, Role } from '../types'
 import { excerpt, formatRelative, percent } from '../lib/utils'
 import { Donut } from '../components/charts'
 import { ImportExportModal } from '../components/ImportExportModal'
+import { KnowledgeHealthModal } from '../components/KnowledgeHealthModal'
 import { Badge, EmptyState, Seal } from '../components/ui'
 
 interface KnowledgeViewProps {
@@ -57,6 +59,7 @@ export function KnowledgeView({
   const [sort, setSort] = useState<SortMode>('recent')
   const [reviewOnly, setReviewOnly] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [healthOpen, setHealthOpen] = useState(false)
 
   const allGaps = useMemo(() => computeGaps(data.threads, data.faqs), [data.threads, data.faqs])
   const teacherCourseIds = useMemo(
@@ -311,6 +314,13 @@ export function KnowledgeView({
             <>
               <button
                 className="button button-ghost"
+                onClick={() => setHealthOpen(true)}
+              >
+                <HeartPulse size={15} />
+                知识库体检
+              </button>
+              <button
+                className="button button-ghost"
                 onClick={() => setTransferOpen(true)}
               >
                 <ArrowUpDown size={15} />
@@ -460,6 +470,13 @@ export function KnowledgeView({
         </span>
       </div>
 
+      <KnowledgeHealthModal
+        open={healthOpen}
+        onClose={() => setHealthOpen(false)}
+        faqs={baseFaqs}
+        courses={courseOptions}
+        openFaq={openFaq}
+      />
       <ImportExportModal
         open={transferOpen}
         onClose={() => setTransferOpen(false)}

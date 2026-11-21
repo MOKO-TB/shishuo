@@ -270,6 +270,17 @@ function sanitizeThread(value: unknown): Thread | null {
   if (value.feedback === 'helpful' || value.feedback === 'unhelpful' || value.feedback === null) {
     thread.feedback = value.feedback
   }
+  if (
+    value.feedbackReason === 'too-vague' ||
+    value.feedbackReason === 'mismatch' ||
+    value.feedbackReason === 'skipped-steps' ||
+    value.feedbackReason === 'unreadable' ||
+    value.feedbackReason === 'other'
+  ) {
+    thread.feedbackReason = value.feedbackReason
+  }
+  const feedbackNote = optionalString(value.feedbackNote)
+  if (feedbackNote) thread.feedbackNote = feedbackNote.slice(0, 500)
   const escalation = isRecord(value.escalation) ? value.escalation : null
   if (escalation) {
     thread.escalation = {
@@ -447,12 +458,26 @@ function sanitizeCourseNote(value: unknown): CourseNote | null {
   if (!isRecord(value)) return null
   const courseId = str(value.courseId)
   if (!courseId) return null
+  const expiresAt =
+    typeof value.expiresAt === 'number' && Number.isFinite(value.expiresAt)
+      ? value.expiresAt
+      : undefined
+  const publishedAt =
+    typeof value.publishedAt === 'number' && Number.isFinite(value.publishedAt)
+      ? value.publishedAt
+      : undefined
   return {
     courseId,
     teacher: str(value.teacher, '任课教师'),
     announcement: str(value.announcement),
     officeHours: str(value.officeHours),
     updatedAt: num(value.updatedAt),
+    attachments: sanitizeFaqAttachments(value.attachments),
+    ...(expiresAt !== undefined ? { expiresAt } : {}),
+    ...(publishedAt !== undefined ? { publishedAt } : {}),
+    ...(optionalString(value.currentChapter)
+      ? { currentChapter: optionalString(value.currentChapter)?.slice(0, 200) }
+      : {}),
   }
 }
 

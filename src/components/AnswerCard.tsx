@@ -17,7 +17,7 @@ import { courseById } from '../data/seed'
 import { findMentorTopic, mentorForCourse } from '../data/mentor'
 import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
 import { isDocumentAttachment } from '../lib/attachment'
-import type { AnswerResult, Thread } from '../types'
+import type { AnswerResult, FeedbackReason, Thread } from '../types'
 import {
   confidenceDescription,
   confidenceLabel,
@@ -39,6 +39,7 @@ interface AnswerCardProps {
   onEscalate: () => void
   onSupplement?: () => void
   onFeedback: (feedback: 'helpful' | 'unhelpful') => void
+  onFeedbackReason?: (reason: FeedbackReason | null) => void
   onResolve?: (resolved: boolean) => void
   onOpenFaq: (faqId: string) => void
   onTeach?: () => void
@@ -57,6 +58,7 @@ export function AnswerCard({
   onEscalate,
   onSupplement,
   onFeedback,
+  onFeedbackReason,
   onResolve,
   onOpenFaq,
   onTeach,
@@ -359,7 +361,12 @@ export function AnswerCard({
           </div>
         ) : (
           <>
-            <FeedbackButtons value={thread.feedback} onChange={onFeedback} />
+            <FeedbackButtons
+              value={thread.feedback}
+              onChange={onFeedback}
+              reason={thread.feedbackReason}
+              onReasonChange={onFeedbackReason}
+            />
             <div className="answer-actions">
               {confidence === 'medium' ? (
                 <button className="button button-secondary" onClick={onEscalate}>

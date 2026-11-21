@@ -161,7 +161,24 @@ function aliasMatch(query: string, faq: Faq): 'exact' | 'partial' | null {
   return partial ? 'partial' : null
 }
 
-export function retrieve(faqs: Faq[], question: string, courseId: string): AnswerResult {
+function chapterKey(value: string) {
+  return value.toLowerCase().replace(/[\s\p{P}\p{S}]/gu, '')
+}
+
+function chapterMatches(faqChapter: string | undefined, preferred: string | undefined) {
+  const left = chapterKey(faqChapter ?? '')
+  const right = chapterKey(preferred ?? '')
+  if (!left || !right) return false
+  if (left === right) return true
+  return left.length >= 4 && right.length >= 4 && (left.includes(right) || right.includes(left))
+}
+
+export function retrieve(
+  faqs: Faq[],
+  question: string,
+  courseId: string,
+  preferredChapter?: string,
+): AnswerResult {
   const pool = faqs.filter((faq) => faq.courseId === courseId)
   if (pool.length === 0) {
     return {
@@ -196,6 +213,10 @@ export function retrieve(faqs: Faq[], question: string, courseId: string): Answe
       const alias = aliasMatch(question, faq)
       if (alias === 'exact') score = Math.min(1, score + 0.32)
       else if (alias === 'partial') score = Math.min(1, score + 0.2)
+      // 老师标记的当前教学进度只做轻微加权，不能盖过问题本身的匹配度。
+      if (preferredChapter && chapterMatches(faq.chapter, preferredChapter)) {
+        score = Math.min(1, score + 0.05)
+      }
       return { faq, score }
     })
     .filter((match) => match.score > 0.035)

@@ -7,7 +7,11 @@
 
 const CONSENT_KEY = 'shishuo.attachment.consent.v1'
 
-export type AttachmentScene = 'student-ask' | 'teacher-faq' | 'teacher-reply'
+export type AttachmentScene =
+  | 'student-ask'
+  | 'teacher-faq'
+  | 'teacher-reply'
+  | 'teacher-announcement'
 export type AttachmentKind = 'image' | 'file'
 
 export interface AttachmentConsentOptions {

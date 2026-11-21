@@ -21,6 +21,7 @@ import type {
   DailyMetric,
   Escalation,
   Faq,
+  FeedbackReason,
   NotificationAudience,
   StudentSupplement,
   TeacherInfoRequest,
@@ -44,7 +45,12 @@ type Action =
     }
   | { type: 'group-joined'; thread: Thread }
   | { type: 'follow-up-created'; thread: Thread }
-  | { type: 'feedback'; threadId: string; feedback: 'helpful' | 'unhelpful' }
+  | {
+      type: 'feedback'
+      threadId: string
+      feedback: 'helpful' | 'unhelpful'
+      reason?: FeedbackReason | null
+    }
   | { type: 'thread-resolved'; threadId: string; resolved: boolean }
   | { type: 'thread-withdrawn'; threadId: string; withdrawn: boolean }
   | {
@@ -298,7 +304,15 @@ function reducer(state: AppData, action: Action): AppData {
     case 'feedback': {
       const thread = state.threads.find((item) => item.id === action.threadId)
       if (!thread) return state
-      if (thread.feedback === action.feedback) return state
+      const nextReason =
+        action.feedback === 'helpful'
+          ? undefined
+          : action.reason === undefined
+            ? thread.feedbackReason
+            : action.reason
+      if (thread.feedback === action.feedback && thread.feedbackReason === nextReason) {
+        return state
+      }
       const adjustedFaqs = adjustFeedbackCounts(
         state.faqs,
         thread.sources ?? [],
@@ -353,7 +367,18 @@ function reducer(state: AppData, action: Action): AppData {
       return {
         ...state,
         threads: state.threads.map((item) =>
-          item.id === action.threadId ? { ...item, feedback: action.feedback } : item,
+          item.id === action.threadId
+            ? {
+                ...item,
+                feedback: action.feedback,
+                feedbackReason:
+                  action.feedback === 'helpful'
+                    ? undefined
+                    : action.reason === undefined
+                      ? item.feedbackReason
+                      : action.reason,
+              }
+            : item,
         ),
         faqs,
         notifications: notification
@@ -907,6 +932,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // and must be saved.
     if (remoteSnapshotRef.current === data) {
       remoteSnapshotRef.current = null
+      return
+    }
+    // 正在保存时又产生了本地操作：直接排队最新快照，避免上一次保存的响应
+    // 把这次操作覆盖掉（例如刚提问完马上点反馈）。
+    if (savingRef.current) {
+      queuedRef.current = { snapshot: data, mode: writeModeRef.current }
       return
     }
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current)

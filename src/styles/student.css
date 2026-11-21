@@ -2920,3 +2920,23 @@
     display: none;
   }
 }
+
+.ask-progress-hint {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-size: var(--text-meta);
+  white-space: nowrap;
+}
+
+.course-announcement-head > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.course-announcement-attachments {
+  margin-top: 8px;
+}

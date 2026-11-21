@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import {
   ArrowRight,
+  BookmarkPlus,
   BookOpen,
   Check,
   CircleAlert,
@@ -17,6 +18,12 @@ import { useStore } from '../store'
 import { answerWithExternalAI, errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
 import { imageUrlToDataUrl, prepareImage, uploadThreadImage } from '../lib/image'
 import { formatFileSize, isDocumentAttachment } from '../lib/attachment'
+import {
+  addReplyTemplate,
+  loadReplyTemplates,
+  removeReplyTemplate,
+  type ReplyTemplate,
+} from '../lib/replyTemplates'
 import { isNativeApp } from '../lib/nativeShell'
 import { useAttachmentConsent } from './AttachmentConsent'
 import { usePhotoAccess } from './PhotoAccess'
@@ -95,6 +102,9 @@ export function TeacherReplyDrawer({
   const [aiVision, setAiVision] = useState(false)
   const [rewriting, setRewriting] = useState<'shorter' | 'clearer' | null>(null)
   const [readingImage, setReadingImage] = useState(false)
+  const [templates, setTemplates] = useState<ReplyTemplate[]>([])
+  const [templateLabel, setTemplateLabel] = useState('')
+  const [templateFormOpen, setTemplateFormOpen] = useState(false)
   const replyFileRef = useRef<HTMLInputElement>(null)
   const previousAutoDraft = useRef('')
 
@@ -153,6 +163,13 @@ export function TeacherReplyDrawer({
     setUploadingAttachment(false)
     previousAutoDraft.current = aiDraft
   }, [group?.key])
+
+  useEffect(() => {
+    if (!course) return
+    setTemplates(loadReplyTemplates(course.teacher))
+    setTemplateFormOpen(false)
+    setTemplateLabel('')
+  }, [course?.teacher, group?.key])
 
   useEffect(() => {
     if (!group) return
@@ -238,6 +255,27 @@ export function TeacherReplyDrawer({
   const reviewFaq = group.sourceFaqIds
     .map((id) => data.faqs.find((faq) => faq.id === id))
     .find((faq): faq is Faq => Boolean(faq?.reviewNeeded))
+
+  const insertTemplate = (template: ReplyTemplate) => {
+    setDraft((current) =>
+      current.trim() ? `${current.trim()}\n\n${template.text}` : template.text,
+    )
+  }
+
+  const saveTemplate = () => {
+    if (!draft.trim()) {
+      notify('先在回复框里写内容，再存为模板', 'info')
+      return
+    }
+    setTemplates(addReplyTemplate(course.teacher, draft, templateLabel))
+    setTemplateLabel('')
+    setTemplateFormOpen(false)
+    notify('已存为常用回复，只保存在当前浏览器', 'success')
+  }
+
+  const deleteTemplate = (id: string) => {
+    setTemplates(removeReplyTemplate(course.teacher, id))
+  }
 
   const send = () => {
     const text = draft.trim()
@@ -916,6 +954,57 @@ export function TeacherReplyDrawer({
                   </button>
                 </div>
               </div>
+              <div className="reply-template-bar">
+                <span className="reply-template-label">
+                  <BookmarkPlus size={13} />
+                  常用回复
+                </span>
+                {templates.map((template) => (
+                  <span className="reply-template-chip" key={template.id}>
+                    <button
+                      type="button"
+                      className="reply-template-insert"
+                      onClick={() => insertTemplate(template)}
+                      title={template.text}
+                    >
+                      {template.label}
+                    </button>
+                    <button
+                      type="button"
+                      className="reply-template-remove"
+                      onClick={() => deleteTemplate(template.id)}
+                      aria-label={`删除模板 ${template.label}`}
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+                {templates.length === 0 && (
+                  <span className="reply-template-empty">把反复讲的步骤存成模板，下次一点就插入</span>
+                )}
+                <button
+                  type="button"
+                  className="text-button reply-template-save-trigger"
+                  onClick={() => setTemplateFormOpen((current) => !current)}
+                >
+                  {templateFormOpen ? '收起' : '+ 存为模板'}
+                </button>
+              </div>
+              {templateFormOpen && (
+                <div className="reply-template-save">
+                  <input
+                    className="input"
+                    value={templateLabel}
+                    onChange={(event) => setTemplateLabel(event.target.value)}
+                    placeholder="模板名称，例如：先画图再写递推"
+                    maxLength={30}
+                    aria-label="模板名称"
+                  />
+                  <button type="button" className="button button-ghost" onClick={saveTemplate}>
+                    保存当前回复
+                  </button>
+                </div>
+              )}
               <textarea
                 className="input textarea reply-draft"
                 value={draft}

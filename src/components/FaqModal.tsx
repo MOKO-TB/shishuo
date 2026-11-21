@@ -23,7 +23,17 @@ import { useStore } from '../store'
 import { allCourses, courseById, isSeededCourse, teacherByName } from '../data/seed'
 import { isPilotCourse } from '../data/pilot'
 import type { Faq, FaqAttachment, FaqPrefill, Role } from '../types'
-import { copyText, formatRelative, makeId, percent, shareLink, truncate } from '../lib/utils'
+import {
+  confidenceLabel,
+  copyText,
+  displayStudentName,
+  feedbackReasonLabel,
+  formatRelative,
+  makeId,
+  percent,
+  shareLink,
+  truncate,
+} from '../lib/utils'
 import { errorMessage, suggestFaqMeta, type FaqMetaSuggestion } from '../lib/ai'
 import {
   ASK_IMAGE_ACCEPT,
@@ -214,6 +224,16 @@ export function FaqModal({
         )
         .sort((a, b) => b.createdAt - a.createdAt)
         .slice(0, 4)
+    : []
+  const citationThreads = faq
+    ? data.threads
+        .filter(
+          (thread) =>
+            thread.courseId === faq.courseId &&
+            (thread.sources ?? []).includes(faq.id),
+        )
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 10)
     : []
 
   const addAlias = (text: string) => {
@@ -772,6 +792,9 @@ export function FaqModal({
                           : thread.student.name}
                         {' · '}
                         {formatRelative(thread.createdAt)}
+                        {thread.feedbackReason
+                          ? ` · ${feedbackReasonLabel(thread.feedbackReason)}`
+                          : ''}
                       </em>
                     </li>
                   ))}
@@ -887,6 +910,41 @@ export function FaqModal({
               <span>最后由老师维护</span>
             </div>
           </div>
+
+          {role === 'teacher' && citationThreads.length > 0 && (
+            <section className="faq-citation-trace">
+              <div className="faq-citation-head">
+                <strong>最近引用过这条答案的问题</strong>
+                <span>共 {faq.citations} 次引用 · 显示最近 {citationThreads.length} 条</span>
+              </div>
+              <div className="faq-citation-list">
+                {citationThreads.map((thread) => (
+                  <div className="faq-citation-row" key={thread.id}>
+                    <div>
+                      <strong>{truncate(thread.question, 58)}</strong>
+                      <span>
+                        {displayStudentName(thread, true)} ·{' '}
+                        {formatRelative(thread.createdAt)} ·{' '}
+                        {confidenceLabel(thread.confidence)}
+                      </span>
+                    </div>
+                    <div className="faq-citation-flags">
+                      {thread.feedback === 'helpful' && <Badge tone="jade">有帮助</Badge>}
+                      {thread.feedback === 'unhelpful' && (
+                        <Badge tone="danger">
+                          不够清楚
+                          {thread.feedbackReason
+                            ? ` · ${feedbackReasonLabel(thread.feedbackReason)}`
+                            : ''}
+                        </Badge>
+                      )}
+                      {thread.resolvedAt && <Badge tone="high">已解决</Badge>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </article>
       ) : (
         <div className="empty-state">

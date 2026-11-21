@@ -1,4 +1,4 @@
-import type { Confidence, Thread, Urgency } from '../types'
+import type { Confidence, FeedbackReason, Thread, Urgency } from '../types'
 
 export function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ')
@@ -71,6 +71,15 @@ export function confidenceLabel(confidence?: Confidence) {
   if (confidence === 'medium') return '中置信'
   if (confidence === 'low') return '低置信'
   return '待判断'
+}
+
+export function feedbackReasonLabel(reason?: FeedbackReason | null) {
+  if (reason === 'too-vague') return '太笼统'
+  if (reason === 'mismatch') return '和课本不一致'
+  if (reason === 'skipped-steps') return '跳步骤'
+  if (reason === 'unreadable') return '图片/题面看不清'
+  if (reason === 'other') return '其他原因'
+  return ''
 }
 
 export function confidenceDescription(confidence?: Confidence) {

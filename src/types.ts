@@ -13,6 +13,13 @@ export type Confidence = 'high' | 'medium' | 'low'
 export type ThreadStatus = 'ai' | 'pending' | 'needs-info' | 'answered'
 export type ThreadKind = 'ask' | 'same' | 'follow-up'
 export type Urgency = 'today' | 'week' | 'later'
+/** 学生点「还不够」时选择的具体原因，方便老师定向改答案。 */
+export type FeedbackReason =
+  | 'too-vague'
+  | 'mismatch'
+  | 'skipped-steps'
+  | 'unreadable'
+  | 'other'
 export type CourseAccent = 'jade' | 'clay' | 'blue' | 'gold'
 
 export interface Course {
@@ -212,6 +219,10 @@ export interface Thread {
   sources?: string[]
   closestSource?: string
   feedback?: 'helpful' | 'unhelpful' | null
+  /** 负反馈原因；正反馈或未反馈时为空。 */
+  feedbackReason?: FeedbackReason | null
+  /** 学生补充的负反馈说明。 */
+  feedbackNote?: string
   escalation?: Escalation
   teacherReply?: TeacherReply
   /** Teacher asked the student for more context before answering. */
@@ -241,6 +252,14 @@ export interface CourseNote {
   announcement: string
   officeHours: string
   updatedAt: number
+  /** 公告附带的图片/讲义，复用 FAQ 附件结构。 */
+  attachments?: FaqAttachment[]
+  /** 公告过期时间；过期后学生端不再展示。 */
+  expiresAt?: number
+  /** 当前教学进度（章节），用于学生端提示与 AI 检索加权。 */
+  currentChapter?: string
+  /** 公告发布时间；学生端用它与本地已读时间比较，显示「新」标记。 */
+  publishedAt?: number
 }
 
 export interface AppData {

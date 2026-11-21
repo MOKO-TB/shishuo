@@ -14,6 +14,7 @@ import {
   CornerDownRight,
   Download,
   Search,
+  Sparkles,
   Users,
   X,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ import {
   confidenceLabel,
   displayStudentName,
   excerpt,
+  feedbackReasonLabel,
   formatRelative,
   urgencyLabel,
   truncate,
@@ -41,6 +43,34 @@ export interface TeacherQueueProps extends TeacherQueueViewState {
   setSelectedGroupKey: (key: string | null) => void
   setNeedsInfoThreadId: (id: string | null) => void
   setAnsweredThreadId: (id: string | null) => void
+  setSelectedAiThreadId: (id: string | null) => void
+}
+
+function FilterChips<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T
+  options: ReadonlyArray<readonly [T, string]>
+  onChange: (next: T) => void
+  label: string
+}) {
+  return (
+    <div className="queue-filter-chips" role="group" aria-label={label}>
+      {options.map(([key, text]) => (
+        <button
+          key={key}
+          type="button"
+          className={value === key ? 'is-active' : ''}
+          onClick={() => onChange(key)}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 /** 教师端待办台主区域：筛选工具栏 + 待处理/等补充/已处理列表。纯展示 + 回调，状态由视图注入。 */
@@ -50,6 +80,7 @@ export function TeacherQueue({
   setSelectedGroupKey,
   setNeedsInfoThreadId,
   setAnsweredThreadId,
+  setSelectedAiThreadId,
   ...queue
 }: TeacherQueueProps) {
   const {
@@ -58,6 +89,7 @@ export function TeacherQueue({
     groupsAll,
     needsInfoAll,
     answeredAll,
+    aiAnsweredAll,
     teacherCourses,
     courseFilter,
     changeCourse,
@@ -65,9 +97,18 @@ export function TeacherQueue({
     setQuery,
     queueFilter,
     setQueueFilter,
+    answeredFilter,
+    setAnsweredFilter,
+    needsInfoFilter,
+    setNeedsInfoFilter,
+    aiFilter,
+    setAiFilter,
+    exportRange,
+    setExportRange,
     filteredGroups,
     needsInfo,
     answered,
+    aiAnswered,
     followUpParentIds,
   } = queue
   return (
@@ -101,6 +142,15 @@ export function TeacherQueue({
       >
         已处理
         <span>{answeredAll.length}</span>
+      </button>
+      <button
+        className={tab === 'ai-answered' ? 'is-active' : ''}
+        onClick={() => changeTab('ai-answered')}
+        role="tab"
+        aria-selected={tab === 'ai-answered'}
+      >
+        AI 已答
+        <span>{aiAnsweredAll.length}</span>
       </button>
     </div>
 
@@ -145,35 +195,82 @@ export function TeacherQueue({
       )}
     </label>
     {tab === 'pending' && (
-      <div className="queue-filter-chips" role="group" aria-label="待办筛选">
-        {(
-          [
-            ['all', '全部'],
-            ['today', '今天要用'],
-            ['follow-up', '追问'],
-            ['image', '含图片'],
-            ['low', '低置信'],
-            ['aged', '超 24h'],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            className={queueFilter === key ? 'is-active' : ''}
-            onClick={() => setQueueFilter(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <FilterChips
+        value={queueFilter}
+        onChange={setQueueFilter}
+        label="待办筛选"
+        options={[
+          ['all', '全部'],
+          ['today', '今天要用'],
+          ['follow-up', '追问'],
+          ['image', '含图片'],
+          ['low', '低置信'],
+          ['aged', '超 24h'],
+        ] as const}
+      />
     )}
+    {tab === 'needs-info' && (
+      <FilterChips
+        value={needsInfoFilter}
+        onChange={setNeedsInfoFilter}
+        label="等补充筛选"
+        options={[
+          ['all', '全部'],
+          ['aged24', '超 24h'],
+          ['aged48', '超 48h'],
+        ] as const}
+      />
+    )}
+    {tab === 'answered' && (
+      <FilterChips
+        value={answeredFilter}
+        onChange={setAnsweredFilter}
+        label="已处理筛选"
+        options={[
+          ['all', '全部'],
+          ['no-feedback', '未反馈'],
+          ['unhelpful', '负反馈'],
+          ['unsealed', '未沉淀'],
+          ['resolved', '已解决'],
+        ] as const}
+      />
+    )}
+    {tab === 'ai-answered' && (
+      <FilterChips
+        value={aiFilter}
+        onChange={setAiFilter}
+        label="AI 已答筛选"
+        options={[
+          ['all', '全部'],
+          ['medium', '中置信'],
+          ['low', '低置信'],
+          ['unhelpful', '有负反馈'],
+          ['image', '含图片'],
+          ['week', '近 7 天'],
+        ] as const}
+      />
+    )}
+    <label className="teacher-export-range">
+      <span>导出</span>
+      <select
+        value={exportRange}
+        onChange={(event) =>
+          setExportRange(Number(event.target.value) as typeof exportRange)
+        }
+        aria-label="导出时间范围"
+      >
+        <option value={7}>近 7 天</option>
+        <option value={30}>近 30 天</option>
+        <option value={90}>近 90 天</option>
+      </select>
+    </label>
     <button
       type="button"
       className="button button-ghost teacher-export"
       onClick={exportWeeklyReport}
     >
       <Download size={14} />
-      导出周报
+      导出记录
     </button>
   </div>
   </div>
@@ -367,8 +464,82 @@ export function TeacherQueue({
                 <p>{thread.teacherRequest?.text ?? '已请学生补充信息'}</p>
               </div>
               <div className="answered-right">
+                {Date.now() - (thread.teacherRequest?.at ?? thread.createdAt) >=
+                  48 * 3_600_000 && <Badge tone="danger">超 48h</Badge>}
                 <Badge tone="blue" dot>
                   等补充
+                </Badge>
+                <ChevronRight size={16} />
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    )
+  ) : tab === 'ai-answered' ? (
+    aiAnswered.length === 0 ? (
+      <div className="card">
+        <EmptyState
+          icon={<Sparkles size={20} />}
+          title={query || aiFilter !== 'all' ? '没有匹配的 AI 回答' : '没有待抽查的 AI 回答'}
+          description={
+            query || aiFilter !== 'all'
+              ? '换个关键词或筛选条件；清空后可以看到全部 AI 直接回答的问题。'
+              : 'AI 直接答掉、没有转给老师的问题会出现在这里。抽查中低置信答案，发现错误就一次更正给所有同题同学。'
+          }
+          action={
+            query || aiFilter !== 'all' ? (
+              <button
+                className="text-button"
+                onClick={() => {
+                  setQuery('')
+                  setAiFilter('all')
+                }}
+              >
+                清空筛选
+              </button>
+            ) : undefined
+          }
+        />
+      </div>
+    ) : (
+      <div className="answered-list ai-answer-list">
+        {aiAnswered.map((thread) => {
+          const course = courseById(thread.courseId)
+          const source = thread.sources?.[0]
+            ? data.faqs.find((faq) => faq.id === thread.sources?.[0])
+            : undefined
+          return (
+            <button
+              className="answered-row ai-answer-row"
+              key={thread.id}
+              onClick={() => setSelectedAiThreadId(thread.id)}
+            >
+              <span className={`answered-check is-ai ${thread.confidence === 'low' ? 'is-low' : ''}`}>
+                <Sparkles size={17} />
+              </span>
+              <div className="answered-main">
+                <div className="answered-meta">
+                  <span className={`course-dot accent-${course.accent}`} />
+                  {course.shortName}
+                  <span>·</span>
+                  {formatRelative(thread.createdAt)}
+                  <span>·</span>
+                  {displayStudentName(thread, true)}
+                </div>
+                <strong>{thread.question}</strong>
+                <p>{excerpt(thread.aiAnswer ?? thread.externalAnswer?.text ?? '', 92)}</p>
+                {source && (
+                  <em className="ai-answer-source">AI 依据《{truncate(source.question, 34)}》</em>
+                )}
+              </div>
+              <div className="answered-right">
+                {thread.attachment && !isDocumentAttachment(thread.attachment) && (
+                  <Badge tone="outline">含图片</Badge>
+                )}
+                {thread.feedback === 'unhelpful' && <Badge tone="danger">不够清楚</Badge>}
+                <Badge tone={thread.confidence === 'low' ? 'low' : thread.confidence === 'medium' ? 'medium' : 'high'} dot>
+                  {confidenceLabel(thread.confidence)}
                 </Badge>
                 <ChevronRight size={16} />
               </div>
@@ -433,6 +604,9 @@ export function TeacherQueue({
                 {thread.feedback === 'helpful' && <Badge tone="jade">有帮助</Badge>}
                 {thread.feedback === 'unhelpful' && (
                   <Badge tone="danger">不够清楚</Badge>
+                )}
+                {thread.feedback === 'unhelpful' && thread.feedbackReason && (
+                  <Badge tone="outline">{feedbackReasonLabel(thread.feedbackReason)}</Badge>
                 )}
                 {followUpParentIds.has(thread.id) && (
                   <Badge tone="blue">学生追问</Badge>

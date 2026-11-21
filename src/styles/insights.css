@@ -825,3 +825,8 @@
     justify-content: flex-start;
   }
 }
+
+.insights-scope-switch {
+  margin-top: 14px;
+  width: fit-content;
+}
