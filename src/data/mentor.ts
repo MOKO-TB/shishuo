@@ -2631,7 +2631,21 @@ export function availableMentors() {
 }
 
 export function mentorForCourse(courseId: string): CourseMentor | undefined {
-  return availableMentors().find((mentor) => mentor.courseId === courseId)
+  const mentor = availableMentors().find((item) => item.courseId === courseId)
+  if (!mentor) return undefined
+  const course = courseById(courseId)
+  const distilled = distilledMentorFor(course.name, course.shortName)
+  if (!distilled) return mentor
+  // 预置导师保留原有知识地图，只叠加 B 站蒸馏出的讲法与语气。
+  return {
+    ...mentor,
+    styleNotes: Array.from(
+      new Set([...mentor.styleNotes, ...distilled.styleNotes]),
+    ).slice(0, 6),
+    voice: mentor.voice ?? distilled.voice,
+    quickPrompts:
+      mentor.quickPrompts.length > 0 ? mentor.quickPrompts : distilled.quickPrompts,
+  }
 }
 
 /** 导师对应的任课教师（用于界面上的一一对应展示）。 */
