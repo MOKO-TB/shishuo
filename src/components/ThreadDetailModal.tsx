@@ -32,11 +32,13 @@ import {
   Avatar,
   Badge,
   FeedbackButtons,
+  MathText,
   Modal,
   RichText,
   Seal,
 } from './ui'
 import { FaqAttachments } from './FaqAttachments'
+import { CollapsibleRichText } from './CollapsibleRichText'
 
 export function ThreadDetailModal({
   threadId,
@@ -318,7 +320,9 @@ export function ThreadDetailModal({
               {thread.kind === 'same' && <Badge tone="gold">同问</Badge>}
               {thread.kind === 'follow-up' && <Badge tone="blue">追问</Badge>}
             </div>
-            <p className="student-question">{thread.question}</p>
+            <div className="student-question">
+              <MathText text={thread.question} />
+            </div>
             {thread.attachment && (
               isDocumentAttachment(thread.attachment) ? (
                 <div className="thread-attachment-doc">
@@ -376,7 +380,7 @@ export function ThreadDetailModal({
               )}
             </div>
             {displayAiAnswer ? (
-              <RichText text={displayAiAnswer} />
+              <CollapsibleRichText text={displayAiAnswer} />
             ) : (
               <p className="thread-ai-empty">
                 AI 没有找到足够可靠的依据，没有生成答案。
@@ -427,7 +431,7 @@ export function ThreadDetailModal({
                   来自学生配置的外部模型，未经过课程知识库和老师确认。
                 </p>
               )}
-              <RichText text={thread.externalAnswer.text} />
+              <CollapsibleRichText text={thread.externalAnswer.text} />
             </div>
           </div>
         )}
@@ -520,7 +524,7 @@ export function ThreadDetailModal({
                 <span>{formatRelative(thread.teacherReply.at)}</span>
                 {thread.teacherReply.faqId && <Seal className="seal-tiny">已沉淀</Seal>}
               </div>
-              <RichText text={thread.teacherReply.text} />
+              <CollapsibleRichText text={thread.teacherReply.text} />
               {thread.teacherReply.attachment && (
                 <a
                   className="thread-attachment-link teacher-reply-attachment"
@@ -593,7 +597,11 @@ export function ThreadDetailModal({
                 key={`${message.role}-${index}`}
               >
                 <strong>{message.role === 'user' ? '你' : chatAssistantName}</strong>
-                <RichText text={message.text} />
+                {message.role === 'assistant' ? (
+                  <CollapsibleRichText text={message.text} variant="chat" />
+                ) : (
+                  <RichText text={message.text} />
+                )}
               </div>
             ))}
             {chatError && <p className="campus-chat-error">{chatError}</p>}

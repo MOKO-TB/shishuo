@@ -2644,7 +2644,14 @@ export function createApiHandler({ db, config }) {
           }
           streamRaw += decoder.decode()
         } catch {
-          // 上游中断：直接收尾，客户端按未完成内容处理。
+          // 上游中断时给客户端一个明确的 SSE 错误，避免把半截回答当完整答案保存。
+          if (!res.writableEnded) {
+            res.write(
+              `data: ${JSON.stringify({
+                error: { message: '模型连接中断，回答可能不完整，请重试。' },
+              })}\n\n`,
+            )
+          }
         } finally {
           clearTimeout(timeout)
           if (!res.writableEnded) res.end()

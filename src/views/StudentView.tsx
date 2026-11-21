@@ -101,6 +101,7 @@ import {
   Badge,
   BrandMark,
   EmptyState,
+  MathText,
   RichText,
 } from '../components/ui'
 
@@ -1047,6 +1048,12 @@ export function StudentView({
               disabled={Boolean(thinking) || attachmentBusy}
               aria-label="输入你的问题，可粘贴截图"
             />
+            {question.trim() && /\\\(|\\\[|\$/.test(question) && (
+              <div className="ask-math-preview">
+                <span className="ask-math-preview-label">公式预览</span>
+                <MathText text={question} />
+              </div>
+            )}
             <input
               ref={imageInputRef}
               type="file"

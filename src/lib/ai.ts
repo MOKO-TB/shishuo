@@ -202,7 +202,12 @@ async function requestChatStream(
   }
   if (!response.ok) throw new Error(pickErrorMessage(response.status, await response.text()))
 
-  const result = { content: '', model: '' }
+  const result = {
+    content: '',
+    model: '',
+    finishReason: '',
+    streamError: '',
+  }
   const consumeLine = (line: string) => {
     const trimmed = line.trim()
     if (!trimmed.startsWith('data:')) return
@@ -211,10 +216,19 @@ async function requestChatStream(
     try {
       const json = JSON.parse(payload) as {
         model?: string
-        choices?: Array<{ delta?: { content?: unknown } }>
+        error?: { message?: unknown }
+        choices?: Array<{
+          delta?: { content?: unknown }
+          finish_reason?: string | null
+        }>
       }
       if (typeof json.model === 'string' && json.model) result.model = json.model
-      const delta = readText(json.choices?.[0]?.delta?.content)
+      if (typeof json.error?.message === 'string' && json.error.message) {
+        result.streamError = json.error.message
+      }
+      const choice = json.choices?.[0]
+      if (choice?.finish_reason) result.finishReason = choice.finish_reason
+      const delta = readText(choice?.delta?.content)
       if (delta) {
         result.content += delta
         onUpdate?.(result.content)
@@ -281,20 +295,73 @@ async function callChat(messages: ChatMessage[], maxTokens = 1_200) {
   }
 }
 
+const STREAM_TIMEOUT_MS = 250_000
+
+async function streamOnce(
+  messages: ChatMessage[],
+  maxTokens: number,
+  disableThinking: boolean,
+  onUpdate?: (partial: string) => void,
+) {
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS)
+  try {
+    return await requestChatStream(
+      messages,
+      maxTokens,
+      disableThinking,
+      controller.signal,
+      onUpdate,
+    )
+  } finally {
+    window.clearTimeout(timeout)
+  }
+}
+
 async function callChatStream(
   messages: ChatMessage[],
   maxTokens: number,
   onUpdate?: (partial: string) => void,
 ) {
-  const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), 100_000)
   try {
-    let result = await requestChatStream(messages, maxTokens, false, controller.signal, onUpdate)
+    let result = await streamOnce(messages, maxTokens, false, onUpdate)
     if (!result.content && isQwenModel(result.model)) {
-      result = await requestChatStream(messages, maxTokens, true, controller.signal, onUpdate)
+      result = await streamOnce(messages, maxTokens, true, onUpdate)
     }
-    if (result.content) return result
-    throw new Error('模型没有返回文字内容。请联系管理员检查网关模型配置。')
+    if (!result.content) {
+      throw new Error('模型没有返回文字内容。请联系管理员检查网关模型配置。')
+    }
+
+    // 模型因 token 上限或上游连接中断停在半句话时，自动接着写完一次。
+    if ((result.finishReason === 'length' || result.streamError) && result.content.trim()) {
+      const prefix = result.content
+      try {
+        const continued = await streamOnce(
+          [
+            ...messages,
+            { role: 'assistant', content: prefix },
+            {
+              role: 'user',
+              content:
+                '上一条回答没有写完。请从断点处继续写完，直接接着写，不要重复已经输出的内容。',
+            },
+          ],
+          maxTokens,
+          false,
+          onUpdate ? (partial) => onUpdate((prefix + partial).slice(0, 4_000)) : undefined,
+        )
+        if (continued.content.trim()) {
+          result = { ...continued, content: prefix + continued.content }
+        }
+      } catch {
+        // 续写失败时保留已生成内容，下面补一条明确提示。
+      }
+    }
+
+    if ((result.finishReason === 'length' || result.streamError) && result.content.trim()) {
+      result.content = `${result.content.trimEnd()}\n\n（回答未完整生成，请重新发送或点「继续追问」接着问。）`
+    }
+    return result
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error('请求超时，请检查服务端网络或稍后重试。')
@@ -303,8 +370,6 @@ async function callChatStream(
       throw new Error('无法连接 AI 网关，请确认师说服务端正在运行。')
     }
     throw error instanceof Error ? error : new Error('模型调用失败。')
-  } finally {
-    window.clearTimeout(timeout)
   }
 }
 
@@ -424,7 +489,7 @@ export async function answerWithExternalAI({
         content: `你是高校课程「${courseName}」的答疑辅助。课程知识库没有足够可靠的答案，请用中文补充回答：
 1. 先给简短结论或解题思路；
 2. 再给必要步骤或一个具体例子；
-3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；
+3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；数学公式统一用 $...$ 或 $$...$$ 包裹，不要使用 \(...\) 或 \[...\]；
 4. 最后单独一行以“需要老师确认：”开头，列出仍需核对的地方；
 5. 控制在 ${hasLongContext ? '900' : '500'} 字以内，不使用 Markdown 表格。${imageRule}${documentRule}${knowledgeRule}${mentorBlock}`,
       },
@@ -437,7 +502,7 @@ export async function answerWithExternalAI({
         content: userContent,
       },
     ],
-    hasLongContext ? 1_600 : 900,
+    hasLongContext ? 4_096 : 3_000,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: result.content.slice(0, 4_000), model: result.model }
@@ -500,7 +565,7 @@ ${officialLinkBlock}`,
         content: `学生的问题：${question}\n\n${contextBlock}`,
       },
     ],
-    1_600,
+    3_000,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: normalizeCampusAnswer(result.content.slice(0, 4_000)), model: result.model }
@@ -520,7 +585,7 @@ export async function answerMentorWithAI({
       { role: 'system', content: mentorPrompt },
       { role: 'user', content: `学生的问题：${question}` },
     ],
-    1_200,
+    3_000,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: result.content.slice(0, 4_000), model: result.model }

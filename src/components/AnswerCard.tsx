@@ -31,6 +31,7 @@ import {
   RichText,
 } from './ui'
 import { FaqAttachments } from './FaqAttachments'
+import { CollapsibleRichText } from './CollapsibleRichText'
 
 interface AnswerCardProps {
   thread: Thread
@@ -197,7 +198,9 @@ export function AnswerCard({
             <div className="inline-note warning">
               这条补充来自你配置的外部模型，未经过课程知识库和老师确认。需要权威结论时请转交老师。
             </div>
-            {thread.externalAnswer && <RichText text={thread.externalAnswer.text} />}
+            {thread.externalAnswer && (
+              <CollapsibleRichText text={thread.externalAnswer.text} />
+            )}
             <div className="external-answer-foot">
               由服务端 AI 网关调用 · 建议核对后再使用
             </div>
@@ -223,7 +226,7 @@ export function AnswerCard({
               <span>这条知识正在被老师完善：{result.reviewNote}</span>
             </div>
           )}
-          {displayAnswer && <RichText text={displayAnswer} />}
+          {displayAnswer && <CollapsibleRichText text={displayAnswer} />}
           <FaqAttachments
             attachments={sourceFaqs[0]?.attachments}
             caption="这条知识附带的图片与资料"
@@ -405,7 +408,11 @@ export function AnswerCard({
                   key={`${message.role}-${index}`}
                 >
                   <strong>{message.role === 'user' ? '你' : 'AI 助教'}</strong>
-                  <RichText text={message.text} />
+                  {message.role === 'assistant' ? (
+                    <CollapsibleRichText text={message.text} variant="chat" />
+                  ) : (
+                    <RichText text={message.text} />
+                  )}
                 </div>
               ))}
               {chatBusy && <p className="answer-chat-typing">AI 正在接着想…</p>}
