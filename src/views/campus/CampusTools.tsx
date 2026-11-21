@@ -20,7 +20,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { Badge } from '../../components/ui'
+import { Badge, Modal } from '../../components/ui'
 import { useProfile, scoreStats } from '../../lib/profile'
 import { excerpt } from '../../lib/utils'
 import {
@@ -39,6 +39,7 @@ import {
   CAMPUS_MAP,
   type CampusCalendarEvent,
 } from '../../data/campusTools'
+import { resolveCalendarDetail } from '../../data/campusCalendarDetails'
 import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
 type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'ask' | 'kb'
@@ -48,7 +49,14 @@ type MonthCell = {
   key: string
   inMonth: boolean
   isToday: boolean
+  /** 格子里展示的标签：长学期/长假期只在首尾两天出现 */
   events: CampusCalendarEvent[]
+  /** 覆盖当天的全部事件：点开当天详情时用，包含长假期的中间日期 */
+  allEvents: CampusCalendarEvent[]
+  /** 所在学期周次（不在学期内为 null） */
+  week: number | null
+  /** 当天是否被长假期覆盖（用于格子底色提示） */
+  hasSpan: boolean
 }
 
 function parseDate(value: string) {
@@ -61,6 +69,83 @@ function dateKey(date: Date) {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${date.getFullYear()}-${month}-${day}`
+}
+
+const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+function weekdayLabel(date: Date) {
+  return WEEKDAY_LABELS[date.getDay()]
+}
+
+function eventSpanDays(event: CampusCalendarEvent) {
+  const start = parseDate(event.start)
+  if (!start) return 0
+  const end = parseDate(event.end) ?? start
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
+}
+
+/** 长学期（超过两周）用来给日期格标「第 N 周」。 */
+function semesterWeekOf(date: Date) {
+  for (const event of CAMPUS_CALENDAR_EVENTS) {
+    if (event.kind !== 'term' || !event.start || !event.end) continue
+    const start = parseDate(event.start)
+    const end = parseDate(event.end)
+    if (!start || !end || eventSpanDays(event) <= 14) continue
+    if (date.getTime() < start.getTime() || date.getTime() > end.getTime()) continue
+    return {
+      event,
+      week: Math.floor((date.getTime() - start.getTime()) / 86_400_000 / 7) + 1,
+    }
+  }
+  return null
+}
+
+function shortSemesterName(name: string) {
+  return name.replace(/^20\d{2}-20\d{2}学年/, '')
+}
+
+/** 日期格的读屏标签：长假期中间日期也要报出「进行中」的事件，而不是「暂无安排」。 */
+function calendarDayLabel(cell: MonthCell) {
+  const names = cell.allEvents
+    .filter((event) => event.kind !== 'term' || eventSpanDays(event) <= 14)
+    .map((event) => event.name)
+  return `${cell.date.getMonth() + 1} 月 ${cell.date.getDate()} 日 ${weekdayLabel(
+    cell.date,
+  )}${names.length > 0 ? `，${names.join('、')}` : '，暂无收录安排'}`
+}
+
+/** 来源里已经带了完整 URL 时，正文只展示来源名称，链接交给「查看原文」按钮。 */
+function calendarSourceLabel(source: string) {
+  return source
+    .replace(/https?:\/\/[^\s)）]+/g, '')
+    .replace(/[\s,;，。；]+$/, '')
+    .trim()
+}
+
+/** 事件日期区间；每年重复的事件按当前查看的年份投影。 */
+function formatEventRange(event: CampusCalendarEvent, projectionYear: number) {
+  const rawStart = parseDate(event.start)
+  if (!rawStart) return '日期待定'
+  const start =
+    event.repeat === 'yearly'
+      ? new Date(projectionYear, rawStart.getMonth(), rawStart.getDate())
+      : rawStart
+  const rawEnd = parseDate(event.end)
+  const end = rawEnd
+    ? event.repeat === 'yearly'
+      ? new Date(projectionYear, rawEnd.getMonth(), rawEnd.getDate())
+      : rawEnd
+    : start
+  const startLabel = `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日`
+  if (end.getTime() <= start.getTime()) return `${startLabel} · 1 天`
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
+  const endLabel =
+    start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()
+      ? `${end.getDate()}日`
+      : start.getFullYear() === end.getFullYear()
+        ? `${end.getMonth() + 1}月${end.getDate()}日`
+        : `${end.getFullYear()}年${end.getMonth() + 1}月${end.getDate()}日`
+  return `${startLabel} - ${endLabel} · ${days} 天`
 }
 
 function semesterLabel(value: string) {
@@ -151,11 +236,10 @@ function SemesterPicker({
 }
 
 function shortEventName(name: string) {
-  const cleaned = name
+  return name
     .replace(/[（(].*?[)）]/g, '')
     .replace(/^20\d{2}-20\d{2}学年/, '')
     .trim()
-  return cleaned.length > 7 ? `${cleaned.slice(0, 7)}…` : cleaned
 }
 
 function eventKindLabel(kind: string) {
@@ -325,15 +409,20 @@ export function CampusTools({
   const [calendarMonth, setCalendarMonth] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   )
+  const [calendarDay, setCalendarDay] = useState<string | null>(null)
+  const closeCalendarDay = () => setCalendarDay(null)
 
   const monthCalendar = useMemo(() => {
     const year = calendarMonth.getFullYear()
     const month = calendarMonth.getMonth()
     const first = new Date(year, month, 1)
     const offset = (first.getDay() + 6) % 7
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    // 按实际周数渲染（28/35/42 格），不再固定 42 格留一整行空白。
+    const cellCount = Math.ceil((offset + daysInMonth) / 7) * 7
     const gridStart = new Date(year, month, 1 - offset)
     const todayKey = dateKey(today)
-    const cells: MonthCell[] = Array.from({ length: 42 }, (_, index) => {
+    const cells: MonthCell[] = Array.from({ length: cellCount }, (_, index) => {
       const date = new Date(gridStart)
       date.setDate(gridStart.getDate() + index)
       return {
@@ -342,6 +431,9 @@ export function CampusTools({
         inMonth: date.getMonth() === month,
         isToday: dateKey(date) === todayKey,
         events: [],
+        allEvents: [],
+        week: semesterWeekOf(date)?.week ?? null,
+        hasSpan: false,
       }
     })
     const byKey = new Map(cells.map((cell) => [cell.key, cell]))
@@ -370,7 +462,13 @@ export function CampusTools({
       if (end.getTime() < start.getTime()) continue
       const spanDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
       for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
-        // 长学期/长假期只在首尾两天标注，避免日历每格都被同一标签占满。
+        const cell = byKey.get(dateKey(cursor))
+        if (!cell) continue
+        if (!cell.allEvents.some((item) => item.id === event.id)) {
+          cell.allEvents.push(event)
+        }
+        // 长学期/长假期只在首尾两天标注，避免日历每格都被同一标签占满；
+        // 但中间日期仍会进入 allEvents，点开当天详情时能看到「进行中」。
         if (
           spanDays > 14 &&
           cursor.getTime() !== start.getTime() &&
@@ -378,15 +476,18 @@ export function CampusTools({
         ) {
           continue
         }
-        const cell = byKey.get(dateKey(cursor))
-        if (cell && !cell.events.some((item) => item.id === event.id)) {
+        if (!cell.events.some((item) => item.id === event.id)) {
           cell.events.push(event)
         }
       }
     }
     for (const cell of cells) {
-      cell.events.sort(
-        (a, b) => (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9),
+      const byKind = (a: CampusCalendarEvent, b: CampusCalendarEvent) =>
+        (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9)
+      cell.events.sort(byKind)
+      cell.allEvents.sort(byKind)
+      cell.hasSpan = cell.allEvents.some(
+        (event) => event.kind !== 'term' && eventSpanDays(event) > 14,
       )
     }
     return {
@@ -394,6 +495,22 @@ export function CampusTools({
       cells,
     }
   }, [calendarMonth, today])
+
+  const selectedCalendarDay = useMemo(() => {
+    if (!calendarDay) return null
+    const cell = monthCalendar.cells.find((item) => item.key === calendarDay)
+    if (!cell) return null
+    const term = semesterWeekOf(cell.date)
+    return {
+      ...cell,
+      term,
+      // 学期本身放进副标题，不占事件卡；长假期等仍作为事件展示。
+      detailEvents: cell.allEvents.filter((event) => {
+        if (event.kind !== 'term') return true
+        return eventSpanDays(event) <= 14
+      }),
+    }
+  }, [calendarDay, monthCalendar])
 
   const filteredBuildings = useMemo(() => {
     const normalized = mapQuery.trim().toLowerCase()
@@ -827,30 +944,37 @@ export function CampusTools({
         </div>
         <div className="campus-month-grid">
           {monthCalendar.cells.map((cell) => (
-            <div
+            <button
+              type="button"
               className={`campus-month-day ${cell.inMonth ? '' : 'is-outside'} ${
                 cell.isToday ? 'is-today' : ''
+              } ${cell.events.length > 0 ? 'is-has-events' : ''} ${
+                cell.hasSpan ? 'is-span' : ''
               }`}
               key={cell.key}
+              onClick={() => setCalendarDay(cell.key)}
+              aria-haspopup="dialog"
+              aria-label={calendarDayLabel(cell)}
             >
               <span className="campus-month-day-num">{cell.date.getDate()}</span>
-              <div className="campus-month-events">
+              <span className="campus-month-events">
                 {cell.events.slice(0, 2).map((event) => (
                   <span
                     className={`campus-month-event is-${event.kind}`}
                     key={event.id}
-                    title={`${event.name} · ${eventKindLabel(event.kind)}${
-                      event.note ? `\n${event.note}` : ''
-                    }`}
+                    title={`${event.name} · ${eventKindLabel(event.kind)}`}
                   >
                     {shortEventName(event.name)}
                   </span>
                 ))}
                 {cell.events.length > 2 && (
-                  <span className="campus-month-more">+{cell.events.length - 2}</span>
+                  <span className="campus-month-more">还有 {cell.events.length - 2} 项</span>
                 )}
-              </div>
-            </div>
+              </span>
+              {cell.inMonth && cell.week && (
+                <span className="campus-month-week">第{cell.week}周</span>
+              )}
+            </button>
           ))}
         </div>
         <div className="campus-month-legend">
@@ -869,8 +993,89 @@ export function CampusTools({
         </div>
       </div>
       <p className="campus-tool-note">
-        校历来自学校官方/公开来源；长学期和长假期只在首尾两天标注，具体以当学期教务处通知为准。
+        点击日期可查看当天安排、来源与官网链接；长学期和长假期只在首尾两天标注，具体以当学期教务处通知为准。
       </p>
+
+      {selectedCalendarDay && (
+        <Modal
+          open
+          onClose={closeCalendarDay}
+          eyebrow="校历详情"
+          title={`${selectedCalendarDay.date.getMonth() + 1} 月 ${selectedCalendarDay.date.getDate()} 日 · ${weekdayLabel(
+            selectedCalendarDay.date,
+          )}`}
+        >
+          <div className="campus-cal-meta">
+            <span>{selectedCalendarDay.date.getFullYear()} 年</span>
+            {selectedCalendarDay.term && (
+              <span>
+                {shortSemesterName(selectedCalendarDay.term.event.name)} · 第{' '}
+                {selectedCalendarDay.term.week} 周
+              </span>
+            )}
+            <span>
+              {selectedCalendarDay.detailEvents.length > 0
+                ? `${selectedCalendarDay.detailEvents.length} 项安排`
+                : '暂无收录安排'}
+            </span>
+          </div>
+
+          {selectedCalendarDay.detailEvents.length > 0 ? (
+            <div className="campus-cal-event-list">
+              {selectedCalendarDay.detailEvents.map((event) => {
+                const detail = resolveCalendarDetail(event)
+                return (
+                  <article className="campus-cal-event" key={event.id}>
+                    <div className="campus-cal-event-top">
+                      <span className="campus-cal-tags">
+                        <span className={`campus-cal-kind is-${event.kind}`}>
+                          {eventKindLabel(event.kind)}
+                        </span>
+                        {event.credibility === 'A' ? (
+                          <Badge tone="jade">官方来源</Badge>
+                        ) : (
+                          event.credibility && <Badge tone="outline">待核实</Badge>
+                        )}
+                        {event.repeat === 'yearly' && <Badge tone="outline">每年</Badge>}
+                      </span>
+                      <span className="campus-cal-range">
+                        {formatEventRange(event, selectedCalendarDay.date.getFullYear())}
+                      </span>
+                    </div>
+                    <strong>{event.name}</strong>
+                    <p>{detail.summary ?? event.note}</p>
+                    <div className="campus-cal-event-foot">
+                      <span className="campus-cal-source">
+                        {calendarSourceLabel(event.source)}
+                      </span>
+                      {detail.url && (
+                        <a
+                          className="campus-cal-link"
+                          href={detail.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {detail.linkLabel ?? (event.kind === 'exam' ? '查看官网' : '查看原文')}
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="campus-cal-empty">
+              <strong>当天暂无收录安排</strong>
+              <p>校历只收录开学、考试、放假等关键节点，课程与调课以教务处通知为准。</p>
+            </div>
+          )}
+
+          <p className="campus-cal-note">
+            校历数据来自学校官方/公开来源，可能滞后；具体安排以教务处通知为准。
+          </p>
+        </Modal>
+      )}
     </div>
   )}
 
