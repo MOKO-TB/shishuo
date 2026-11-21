@@ -172,6 +172,7 @@ export interface AiSettingsView {
   source: 'database' | 'env' | 'none'
   dailyLimitStudent: number
   dailyLimitTeacher: number
+  vision: boolean
   updatedAt: number | null
   updatedBy: string
 }

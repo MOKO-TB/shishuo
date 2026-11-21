@@ -34,6 +34,7 @@ export function readStoredAiSettings(db) {
     dailyLimitStudent: positiveNumber(value.dailyLimitStudent),
     dailyLimitTeacher: positiveNumber(value.dailyLimitTeacher),
     enabled: value.enabled !== false,
+    vision: value.vision !== false,
     updatedAt: row?.updated_at == null ? null : Number(row.updated_at),
     updatedBy: typeof row?.updated_by === 'string' ? row.updated_by : '',
   }
@@ -53,6 +54,7 @@ export function resolveAiConfig(db, baseConfig) {
     dailyLimitStudent: stored.dailyLimitStudent || baseConfig.dailyLimitStudent,
     dailyLimitTeacher: stored.dailyLimitTeacher || baseConfig.dailyLimitTeacher,
     enabled: stored.enabled,
+    vision: stored.vision,
     configured: Boolean(apiKey) && stored.enabled,
     source: stored.apiKey ? 'database' : baseConfig.apiKey ? 'env' : 'none',
     stored,
@@ -68,6 +70,7 @@ export function saveAiSettings(
     dailyLimitStudent,
     dailyLimitTeacher,
     enabled,
+    vision,
     clearKey = false,
     updatedBy = '',
   },
@@ -93,6 +96,7 @@ export function saveAiSettings(
         ? current.dailyLimitTeacher
         : positiveNumber(dailyLimitTeacher),
     enabled: typeof enabled === 'boolean' ? enabled : current.enabled,
+    vision: typeof vision === 'boolean' ? vision : current.vision,
   }
   db.prepare(
     `INSERT INTO app_settings (key, value_json, updated_at, updated_by)

@@ -82,6 +82,9 @@ function isFootnoteEntry(entry: ScheduleEntry) {
   )
 }
 
+/** 2026-2027 学年第一学期第 1 周周一；学生仍可在账号设置里改。 */
+export const DEFAULT_TERM_START = new Date(2026, 7, 31).getTime()
+
 export const DEFAULT_PROFILE: StudentProfile = {
   name: '林晓',
   college: '计算机学院 · 2024 级',
@@ -91,7 +94,7 @@ export const DEFAULT_PROFILE: StudentProfile = {
   schedule: [],
   scheduleSource: null,
   scheduleSyncedAt: null,
-  termStart: null,
+  termStart: DEFAULT_TERM_START,
   scores: [],
   scoresSyncedAt: null,
   customCourses: [],
@@ -230,6 +233,7 @@ export function normalizeProfile(next: StudentProfile): StudentProfile {
     customCourses: bound.customCourses,
     defaultCourseId,
     hiddenTeacherNames,
+    termStart: next.termStart ?? DEFAULT_TERM_START,
     emailOnTeacherReply: next.emailOnTeacherReply === true,
     reviewLapses: normalizeReviewLapses(next.reviewLapses),
   }

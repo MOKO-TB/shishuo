@@ -8,7 +8,10 @@ import type { CourseMentor } from './mentor'
 type Distilled = Pick<
   CourseMentor,
   'tagline' | 'principles' | 'foundation' | 'quickPrompts' | 'chapters' | 'styleNotes'
->
+> & {
+  /** 从公开课讲法归纳出的说话方式；缺省时按课程类型生成。 */
+  voice?: CourseMentor['voice']
+}
 
 const chapter = (label: string, advice: string, topics: string[]) => ({
   label,
@@ -934,14 +937,79 @@ export const BILI_MENTORS: Record<string, Distilled> = {
   },
 }
 
+const DEFAULT_VOICE = {
+  exampleLead: '看一个具体例子：',
+  warningLead: '这里最容易错的是：',
+  closing: '换一道题，你先说第一步。',
+}
+
+/**
+ * 把公开课的 styleNotes 转成可执行的讲课语气。
+ * 目标不是模仿某位 UP 主，而是让回答有“老师现场讲题”的判断、例子和停顿。
+ */
+function distilledVoice(
+  name: string,
+  styleNotes: string[],
+): CourseMentor['voice'] {
+  const notes = styleNotes.join('；')
+  if (/英语|大学英语/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像英语老师当面改作业：先给表达框架，再指出一个高频错误，最后给可替换句。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '看一个替换句：',
+      warningLead: '最容易写错的是：',
+      closing: '换一个语境，你先造一句。',
+    }
+  }
+  if (/思政|毛泽东|习近平|形势|劳动|体育/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像思政/通识课老师：先给框架和关键词，再联系一个现实案例，最后回到答题结构。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '结合一个具体场景：',
+      warningLead: '答题时最容易空泛的是：',
+      closing: '换一个材料，你先列答题框架。',
+    }
+  }
+  if (/数据|人工智能|智能体|建模|采集/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像数据/AI 课老师：先判断任务和输入，再给最小可运行方案，立刻指出一个失败场景。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '看一个最小例子：',
+      warningLead: '实际跑的时候最容易出问题的是：',
+      closing: '换一份数据，你先说第一步怎么验。',
+    }
+  }
+  if (/数学|离散|线性|概率|统计/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像数学老师板书：先判断题型，再写关键一步，用一个数字例子验证，最后点出边界。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '代一组数字看：',
+      warningLead: '这一步最容易漏掉的条件是：',
+      closing: '换一组数字，你先写第一步。',
+    }
+  }
+  return {
+    ...DEFAULT_VOICE,
+    prompt: `像公开课老师：先给判断，再用一个具体例子讲关键一步，最后指出一个易错点。${notes ? `公开课讲法：${notes}。` : ''}`,
+  }
+}
+
 /** 课程名归一化：去掉末尾 A/B/Ⅰ/Ⅱ/Ⅲ 和空格，便于匹配教务课程名。 */
 export function distilledMentorFor(name: string, shortName?: string) {
   const candidates = [name, shortName].filter(Boolean) as string[]
   for (const raw of candidates) {
     const trimmed = raw.trim()
-    if (BILI_MENTORS[trimmed]) return BILI_MENTORS[trimmed]
+    const exact = BILI_MENTORS[trimmed]
+    if (exact) {
+      return exact.voice ? exact : { ...exact, voice: distilledVoice(trimmed, exact.styleNotes) }
+    }
     const normalized = trimmed.replace(/[A-Za-z]$/u, '').replace(/[ⅠⅡⅢⅣ]$/u, '').trim()
-    if (BILI_MENTORS[normalized]) return BILI_MENTORS[normalized]
+    const matched = BILI_MENTORS[normalized]
+    if (matched) {
+      return matched.voice
+        ? matched
+        : { ...matched, voice: distilledVoice(normalized, matched.styleNotes) }
+    }
   }
   return undefined
 }

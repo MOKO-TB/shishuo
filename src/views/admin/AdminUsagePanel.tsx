@@ -16,6 +16,7 @@ interface AiForm {
   dailyLimitStudent: string
   dailyLimitTeacher: string
   enabled: boolean
+  vision: boolean
 }
 
 const emptyForm: AiForm = {
@@ -25,6 +26,7 @@ const emptyForm: AiForm = {
   dailyLimitStudent: '120',
   dailyLimitTeacher: '120',
   enabled: true,
+  vision: true,
 }
 
 export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
@@ -44,6 +46,7 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
       dailyLimitStudent: String(next.dailyLimitStudent || 120),
       dailyLimitTeacher: String(next.dailyLimitTeacher || 120),
       enabled: next.enabled,
+      vision: next.vision !== false,
     }))
   }
 
@@ -81,6 +84,7 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
         dailyLimitStudent: Number(form.dailyLimitStudent),
         dailyLimitTeacher: Number(form.dailyLimitTeacher),
         enabled: form.enabled,
+        vision: form.vision,
       })
       setSettings(result.settings)
       fillForm(result.settings)
@@ -153,6 +157,7 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
               {settings?.configured ? '已配置' : '未配置'}
             </Badge>
             {settings?.source && <Badge tone="neutral">来源：{settings.source === 'database' ? '管理台' : settings.source === 'env' ? '环境变量' : '无'}</Badge>}
+            {settings?.vision && <Badge tone="jade">图片识别</Badge>}
             {settings && !settings.enabled && <Badge tone="danger">已停用</Badge>}
           </div>
         </div>
@@ -221,6 +226,18 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
               }
             />
             <span>启用 AI 网关（关闭后保留 Key，但学生/教师端不会调用）</span>
+          </label>
+          <label className="admin-ai-enabled">
+            <input
+              type="checkbox"
+              checked={form.vision}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, vision: event.target.checked }))
+              }
+            />
+            <span>
+              模型支持图片识别（图片题会随问题发给模型；学生端和教师端共用此能力）
+            </span>
           </label>
         </div>
 

@@ -473,6 +473,21 @@ export function AccountModal({
     }
   }
 
+  const refreshCaptcha = async () => {
+    setBusy('open')
+    setError(null)
+    try {
+      const session = await startJwLogin(baseUrl)
+      setLoginSession(session)
+      if (session.base) setBaseUrl(session.base)
+      setJwCaptcha('')
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const completeLogin = async () => {
     if (!loginSession) {
       setError('验证码已失效，请重新登录教务。')
@@ -501,6 +516,15 @@ export function AccountModal({
       await readScores()
     } catch (err) {
       setError(errorMessage(err))
+      setJwCaptcha('')
+      // 教务登录失败后旧验证码会话已失效，自动换一张，避免用户只能手动刷新。
+      try {
+        const next = await startJwLogin(baseUrl)
+        setLoginSession(next)
+        if (next.base) setBaseUrl(next.base)
+      } catch {
+        // 换验证码失败时保留原错误，用户可以手动点「换一张」。
+      }
     } finally {
       setBusy(null)
     }
@@ -1096,7 +1120,7 @@ export function AccountModal({
                 onAccount={setJwAccount}
                 onPassword={setJwPassword}
                 onCaptcha={setJwCaptcha}
-                onRefresh={startLogin}
+                onRefresh={refreshCaptcha}
               />
             )}
             {isLocalMock && (
@@ -1443,7 +1467,7 @@ export function AccountModal({
                 onAccount={setJwAccount}
                 onPassword={setJwPassword}
                 onCaptcha={setJwCaptcha}
-                onRefresh={startLogin}
+                onRefresh={refreshCaptcha}
               />
             )}
             {isLocalMock && (

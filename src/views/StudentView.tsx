@@ -229,6 +229,7 @@ export function StudentView({
   const courseTeacher = teacherByName(course.teacher)
   const courseNote = data.courseNotes?.find((note) => note.courseId === courseId)
   const aiReady = isAIConfigReady(aiConfig) && Boolean(aiStatus?.configured)
+  const aiVision = Boolean(aiStatus?.vision)
   const questionCheck = useMemo(
     () => checkQuestionClarity(question, Boolean(attachment)),
     [question, attachment],
@@ -474,8 +475,13 @@ export function StudentView({
 
     // Image-only input: let the server vision model extract the question first.
     if (!text && attachment) {
-      if (!aiReady) {
-        notify('请先输入题目；服务端 AI 就绪后可以直接识别图片', 'info')
+      if (!aiReady || !aiVision) {
+        notify(
+          !aiReady
+            ? '请先输入题目；服务端 AI 就绪后可以直接识别图片'
+            : '当前模型未开启图片识别，请管理员在管理端打开「模型支持图片识别」',
+          'info',
+        )
         return
       }
       setThinking({
@@ -623,6 +629,7 @@ export function StudentView({
               courseName: threadCourse.name,
               localContext: localContextFor(result),
               mentorBrief: mentorBriefForCourse(threadCourse.id),
+              imageDataUrl: aiVision ? attachment?.dataUrl : undefined,
               onUpdate: (partial) => setStreamPreview(partial),
             })
             thread.externalAnswer = {
@@ -906,9 +913,11 @@ export function StudentView({
                 <div className="ask-attachment-copy">
                   <strong>{attachment.name}</strong>
                   <span>
-                    {aiReady
-                      ? '可以直接识别题面；图片也会随问题给老师看'
-                      : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
+                    {aiReady && aiVision
+                      ? '模型会识别题图和题面；图片也会随问题给老师看'
+                      : aiReady
+                        ? '图片会随问题给老师看；当前模型未开启图片识别'
+                        : '图片会随问题给老师看；服务端 AI 就绪后可自动识别'}
                   </span>
                 </div>
                 <button

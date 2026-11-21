@@ -51,6 +51,22 @@ export async function prepareImage(file: File): Promise<ThreadAttachment> {
   }
 }
 
+/** 把已上传的题目图片读回 Data URL，供服务端视觉模型使用。 */
+export async function imageUrlToDataUrl(url?: string) {
+  if (!url) throw new Error('这张问题没有可读取的图片。')
+  if (url.startsWith('data:image/')) return url
+  const response = await fetch(url, { credentials: 'same-origin' })
+  if (!response.ok) throw new Error('读取学生图片失败，请刷新后重试。')
+  const blob = await response.blob()
+  if (!blob.type.startsWith('image/')) throw new Error('附件不是可识别的图片。')
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('读取学生图片失败。'))
+    reader.readAsDataURL(blob)
+  })
+}
+
 /** Store the compressed image once; threads keep only the returned URL. */
 export async function uploadThreadImage(attachment: ThreadAttachment) {
   if (attachment.url) {

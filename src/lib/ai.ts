@@ -12,6 +12,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
 export interface AIStatus {
   configured: boolean
   model: string | null
+  vision?: boolean
   usedToday: number
   dailyLimit: number
 }
@@ -358,12 +359,14 @@ export async function answerWithExternalAI({
   courseName,
   localContext,
   mentorBrief,
+  imageDataUrl,
   onUpdate,
 }: {
   question: string
   courseName: string
   localContext: string
   mentorBrief?: string
+  imageDataUrl?: string
   onUpdate?: (partial: string) => void
 }) {
   const contextBlock = localContext.trim()
@@ -372,6 +375,16 @@ export async function answerWithExternalAI({
   const mentorBlock = mentorBrief?.trim()
     ? `\n\n课程导师要求：\n${mentorBrief.trim()}`
     : ''
+  const imageRule = imageDataUrl
+    ? '\n6. 学生会同时提供题目图片：先读图和题干，明确题中已知、所求与图中标注，再回答；看不清就指出哪一处看不清，不要猜。'
+    : ''
+  const userText = `学生的问题：${question}\n\n${contextBlock}`
+  const userContent: string | ContentPart[] = imageDataUrl
+    ? [
+        { type: 'text', text: userText },
+        { type: 'image_url', image_url: { url: imageDataUrl, detail: 'auto' } },
+      ]
+    : userText
 
   const result = await callChatStream(
     [
@@ -382,11 +395,11 @@ export async function answerWithExternalAI({
 2. 再给必要步骤或一个具体例子；
 3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；
 4. 最后单独一行以“需要老师确认：”开头，列出仍需核对的地方；
-5. 控制在 500 字以内，不使用 Markdown 表格。${mentorBlock}`,
+5. 控制在 500 字以内，不使用 Markdown 表格。${imageRule}${mentorBlock}`,
       },
       {
         role: 'user',
-        content: `学生的问题：${question}\n\n${contextBlock}`,
+        content: userContent,
       },
     ],
     900,

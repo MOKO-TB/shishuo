@@ -13,8 +13,9 @@ import {
   X,
 } from 'lucide-react'
 import { useStore } from '../store'
-import { errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
-import { prepareImage, uploadThreadImage } from '../lib/image'
+import { answerWithExternalAI, errorMessage, fetchAIStatus, rewriteTeacherReply } from '../lib/ai'
+import { imageUrlToDataUrl, prepareImage, uploadThreadImage } from '../lib/image'
+import { mentorBriefForCourse } from '../data/mentor'
 import { courseById } from '../data/seed'
 import type { Faq, ThreadAttachment, ThreadGroup } from '../types'
 import {
@@ -84,7 +85,9 @@ export function TeacherReplyDrawer({
   const [replyAttachment, setReplyAttachment] = useState<ThreadAttachment | null>(null)
   const [uploadingAttachment, setUploadingAttachment] = useState(false)
   const [aiReady, setAiReady] = useState(false)
+  const [aiVision, setAiVision] = useState(false)
   const [rewriting, setRewriting] = useState<'shorter' | 'clearer' | null>(null)
+  const [readingImage, setReadingImage] = useState(false)
   const replyFileRef = useRef<HTMLInputElement>(null)
   const previousAutoDraft = useRef('')
 
@@ -93,6 +96,12 @@ export function TeacherReplyDrawer({
   const selectedThreads = useMemo(
     () => group?.threads.filter((thread) => selectedIds.includes(thread.id)) ?? [],
     [group, selectedIds],
+  )
+  const selectedAttachment = useMemo(
+    () =>
+      selectedThreads.find((thread) => thread.attachment?.url || thread.attachment?.dataUrl)
+        ?.attachment ?? null,
+    [selectedThreads],
   )
   const parentThread = useMemo(
     () =>
@@ -143,10 +152,16 @@ export function TeacherReplyDrawer({
     let cancelled = false
     void fetchAIStatus()
       .then((status) => {
-        if (!cancelled) setAiReady(status.configured)
+        if (!cancelled) {
+          setAiReady(status.configured)
+          setAiVision(Boolean(status.vision))
+        }
       })
       .catch(() => {
-        if (!cancelled) setAiReady(false)
+        if (!cancelled) {
+          setAiReady(false)
+          setAiVision(false)
+        }
       })
     return () => {
       cancelled = true
@@ -341,6 +356,33 @@ export function TeacherReplyDrawer({
       notify(errorMessage(error), 'danger')
     } finally {
       setRewriting(null)
+    }
+  }
+
+  const draftFromAttachment = async () => {
+    if (!group || !course || !selectedAttachment || readingImage) return
+    if (!aiReady || !aiVision) {
+      notify('当前模型未开启图片识别，请管理员在管理端打开', 'info')
+      return
+    }
+    setReadingImage(true)
+    try {
+      const imageDataUrl = await imageUrlToDataUrl(
+        selectedAttachment.url ?? selectedAttachment.dataUrl,
+      )
+      const ai = await answerWithExternalAI({
+        question: group.primary.question || '请根据学生上传的题图解答',
+        courseName: course.name,
+        localContext: '',
+        mentorBrief: mentorBriefForCourse(course.id),
+        imageDataUrl,
+      })
+      if (ai.text) setDraft(ai.text)
+      notify('已根据学生题图生成 AI 草稿，请核对后发送', 'success')
+    } catch (error) {
+      notify(errorMessage(error), 'danger')
+    } finally {
+      setReadingImage(false)
     }
   }
 
@@ -793,6 +835,17 @@ export function TeacherReplyDrawer({
                   <button className="text-button" onClick={() => setDraft(aiDraft)}>
                     {isFollowUp ? '恢复追问框架' : '恢复 AI 草稿'}
                   </button>
+                  {aiVision && selectedAttachment && (
+                    <button
+                      className="text-button draft-variant"
+                      onClick={() => void draftFromAttachment()}
+                      disabled={readingImage || rewriting !== null}
+                      title="读取学生题图并生成 AI 草稿"
+                    >
+                      {readingImage ? <Loader2 size={12} className="spin-icon" /> : <ImagePlus size={12} />}
+                      看图起草
+                    </button>
+                  )}
                   <button
                     className="text-button draft-variant"
                     onClick={() => void rewriteDraft('shorter')}

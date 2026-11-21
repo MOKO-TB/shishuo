@@ -1930,6 +1930,7 @@ export function createApiHandler({ db, config }) {
             source: ai.source,
             dailyLimitStudent: ai.dailyLimitStudent,
             dailyLimitTeacher: ai.dailyLimitTeacher,
+            vision: ai.vision,
             updatedAt: ai.stored.updatedAt,
             updatedBy: ai.stored.updatedBy,
           },
@@ -1985,6 +1986,7 @@ export function createApiHandler({ db, config }) {
         }
         const clearKey = body.clearKey === true
         const enabled = typeof body.enabled === 'boolean' ? body.enabled : undefined
+        const vision = typeof body.vision === 'boolean' ? body.vision : undefined
         saveAiSettings(db, {
           apiKey,
           baseUrl,
@@ -1992,6 +1994,7 @@ export function createApiHandler({ db, config }) {
           dailyLimitStudent,
           dailyLimitTeacher,
           enabled,
+          vision,
           clearKey,
           updatedBy: admin.name,
         })
@@ -2013,6 +2016,7 @@ export function createApiHandler({ db, config }) {
             source: ai.source,
             dailyLimitStudent: ai.dailyLimitStudent,
             dailyLimitTeacher: ai.dailyLimitTeacher,
+            vision: ai.vision,
             updatedAt: ai.stored.updatedAt,
             updatedBy: ai.stored.updatedBy,
           },
@@ -2339,6 +2343,7 @@ export function createApiHandler({ db, config }) {
         return sendJson(res, 200, {
           configured: ai.configured,
           model: ai.configured ? ai.model : null,
+          vision: Boolean(ai.configured && ai.vision),
           usedToday: usageToday(db, user.id),
           dailyLimit: aiDailyLimitFor(ai, user.role),
         })

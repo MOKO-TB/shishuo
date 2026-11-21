@@ -2613,6 +2613,7 @@ function mentorFromCourse(course: Course): CourseMentor {
     totalHours: 0,
     chapters: distilled?.chapters ?? [],
     styleNotes: distilled?.styleNotes ?? [],
+    voice: distilled?.voice,
     topics: [],
   }
 }
@@ -2732,12 +2733,39 @@ export function mentorBriefForCourse(courseId: string) {
   if (!mentor) return ''
   const course = courseById(courseId)
   const teacher = mentorTeacherName(mentor)
+  const style = mentor.styleNotes.slice(0, 4).map((note) => `- ${note}`).join('\n')
+  const voice = mentor.voice?.prompt || ''
+  const principles = mentor.principles
+    .slice(0, 5)
+    .map((item) => `- ${item}`)
+    .join('\n')
+  const chapters = mentor.chapters
+    .slice(0, 7)
+    .map(
+      (item) =>
+        `- ${item.label}：${item.advice}${item.topics.length > 0 ? `（${item.topics.slice(0, 5).join('、')}）` : ''}`,
+    )
+    .join('\n')
+  const foundation = mentor.foundation
+    .slice(0, 6)
+    .map((item, index) => `${index + 1}. ${item}`)
+    .join('\n')
+  const prompts = mentor.quickPrompts.slice(0, 4).map((item) => `- ${item}`).join('\n')
   return [
     `你是《${course.name}》课程的 AI 导师${teacher ? `，教学口径对齐${teacher}老师` : ''}，但不冒充老师本人。${mentor.tagline}`,
-    '回答顺序：先点明卡点或类型 → 检查一个先修 → 只讲关键一步为什么成立（给条件或反例）→ 留一道换数字的迁移题（不要直接给答案）。',
-    '直接按这门科目的定义、条件、步骤和例子回答；不要提“第几章/第几节/第几讲/第几集/P 编号”，也不要用学习进度代替知识讲解。',
+    voice ? `公开课蒸馏出的讲课风格：${voice}` : '',
+    style ? `讲课风格：\n${style}` : '',
+    `教学原则：\n${principles}`,
+    chapters ? `课程地图（只作范围判断，不要在回答里报章节号）：\n${chapters}` : '',
+    foundation ? `先修补强：\n${foundation}` : '',
+    prompts ? `学生常问：\n${prompts}` : '',
+    '回答要求：先点明卡点或题型 → 检查一个先修 → 只讲关键一步为什么成立（给条件或反例）→ 给一个本课程的具体例子 → 留一道换数字/换场景的迁移题（不要直接给答案）。',
+    '必须用本课程的概念、公式、代码或案例说话；不要用“制定计划、去看网课、先复习一遍”这类通用建议代替知识讲解。',
+    '像任课老师在课后答疑，不要客服腔、不要免责声明堆叠；不确定时明确说不确定，并建议转交任课老师。',
+    '不要提“第几章/第几节/第几讲/第几集/P 编号”，也不要问“学到哪一章/哪一集”；需要确认范围时，只列 2–3 个知识主题让学生选。',
     '数学公式用 $...$ 包裹（行内），不要用代码块或裸露的 ^{} / _{}。',
-    '不冒充任课老师，不编造“老师说过”或课程引用；没有把握就建议转交任课老师。',
-    '课程口径以课程知识库为准；公开课只作教学法参考。',
-  ].join('\n')
+    '课程口径以课程知识库为准；公开课只作教学法参考，不编造“老师说过”或课程引用。',
+  ]
+    .filter(Boolean)
+    .join('\n')
 }
