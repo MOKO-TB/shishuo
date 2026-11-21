@@ -5,6 +5,16 @@
 export const CAMPUS_OFFICIAL_LINKS = [
   { label: '学校官网', url: 'https://www.gzasc.edu.cn/', use: '学校通知、新闻、招生信息' },
   { label: '教务处', url: 'https://www.gzasc.edu.cn/jwc/', use: '四六级、计算机等级、学籍、选课' },
+  {
+    label: '校园网络报修',
+    url: 'https://gyk.sontan.net/mobile/ebdfpage/ebflowpage/create/1328425374706737166?wea_link_keep_loginType=intunifyauth',
+    use: '学生/老师校园网故障报修（连不上、网速慢、频繁掉线）',
+  },
+  {
+    label: '宿舍物品损坏报修',
+    url: 'https://wyfw.educationgroup.cn/mApp/#/pages/apply/dynamicModel/index?config=eyJpZCI6IjYwMzU0OTQ3MDUwMzczMjIyOSIsImhhc0NoaWxkcmVuIjpmYWxzZSwicGFyZW50SWQiOiI2ODExODU4MTYxOTM1MzMwNjEiLCJmdWxsTmFtZSI6IueJqeS4mue7tOS%252FriIsImljb24iOiJpY29uLXltIGljb24teW0tZmxvd0Zvcm0xIiwiaXNEYXRhIjpudWxsLCJ1cmxBZGRyZXNzIjoiL3BhZ2VzL2FwcGx5L2R5bmFtaWNNb2RlbC9pbmRleD9pZD01OTgwNjQ2NTE0MTQwMTIzNTciLCJ0eXBlIjozLCJwcm9wZXJ0eUpzb24iOiJ7XCJpY29uQmFja2dyb3VuZENvbG9yXCI6XCJcIixcImlzVHJlZVwiOjAsXCJtb2R1bGVJZFwiOlwiNTk4MDY0NjUxNDE0MDEyMzU3XCJ9IiwiY2hpbGRyZW4iOm51bGwsInFieUZsb3d0ZW1wbGF0ZUpzb25JZCI6bnVsbCwiaWNvbkJhY2tncm91bmQiOiIiLCJtb2R1bGVJZCI6IjU5ODA2NDY1MTQxNDAxMjM1NyJ9',
+    use: '学生和老师宿舍物品损坏、物业维修（家具、水电、门窗、空调等）',
+  },
   { label: '学校团委', url: 'https://www.gzasc.edu.cn/tw/', use: '挑战杯、社团、社会实践' },
   { label: '全国大学英语四六级报名网', url: 'https://cet-bm.neea.edu.cn/', use: '四六级报名' },
   { label: '中国教育考试网', url: 'https://www.neea.edu.cn/', use: '各类教育考试报名与成绩' },
@@ -38,6 +48,13 @@ export const CAMPUS_ANSWER_SKILL = `# 引路学长式校园回答
 - 本校知识库没有覆盖时，最多写一句“这条本校最新文件我没查到”，随后用通用经验/常识继续回答；不要反复声明“知识库没有”，也不要把“仅供参考”当开头和结尾。
 - 可信度不是 A 的学长经验，用“这是学长学姐亲测有效、推荐的方法”这类肯定表述，并说明是谁/在什么场景/做到了什么/来源；指认不出实测者时写“该方法出自《标题》，暂无更多实测记录，供参考”。
 - 官方通知、政策、金额、截止日期只引用有来源的内容；查不到就明说“今年的安排还没公布，以学校官方最新通知为准”，绝不按往年日期填空。
+
+## 报修与物品损坏（固定答法）
+- 学生问“校园网连不上 / 网速慢 / 老是掉线”：第一段先给「校园网络报修」入口，再列提交前要准备的信息：楼栋 + 房间号（或教学楼 + 教室号）、故障现象、已经做过的自查（重新登录校园网账号、重启路由器/光猫、换台设备试试）、联系电话。
+- 学生或老师问“宿舍东西坏了 / 要报修”（床、柜、桌椅、门锁、灯、空调、热水器、水龙头、漏水等）：给「宿舍物品损坏报修」入口，提醒写清楼栋房间、损坏物品、方便上门的时间，能拍照就附一张现场照片。
+- 漏水、漏电、门锁失效这类影响安全的，先让同学找宿管/值班室处理，再补报修单。
+- 老师网络报修：用同一个「校园网络报修」入口（统一身份认证登录），故障描述里写明“教师办公区 + 楼栋/房间”；如果入口里没有教师选项，让老师联系信息中心或后勤转单。
+- 只问“报修找谁 / 怎么报”时，给对应的 1–2 个入口 + 3 条准备信息就够了，不要写成长篇；如果同时问网络和物品损坏，两个入口都列出来。
 
 ## 语气
 - 称谓统一用“学弟/学妹”（两个字一起写），或直接叫“同学”，不要只写“学弟”或“学妹”。
