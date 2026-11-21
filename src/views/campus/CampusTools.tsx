@@ -3,6 +3,8 @@ import {
   BookOpen,
   CalendarDays,
   Calculator,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -65,6 +67,87 @@ function semesterLabel(value: string) {
   const match = /^(\d{4})-(\d{4})-([12])$/.exec(value.trim())
   if (!match) return value || '未标注学期'
   return `${match[1]}-${match[2]} 第${match[3] === '1' ? '一' : '二'}学期`
+}
+
+/** 成绩色阶：90+ 用主色，60 以下用警示色，其余保持中性。 */
+function scoreTone(score: string) {
+  const value = Number.parseFloat(score)
+  if (!Number.isFinite(value)) return ''
+  if (value >= 90) return 'is-high'
+  if (value < 60) return 'is-low'
+  return ''
+}
+
+/** 成绩学期选择：自定义下拉，避免原生 select 的样式和层级与页面违和。 */
+function SemesterPicker({
+  value,
+  options,
+  onChange,
+}: {
+  value: string
+  options: string[]
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const items = [
+    { value: 'all', label: '全部学期' },
+    ...options.map((semester) => ({ value: semester, label: semesterLabel(semester) })),
+  ]
+
+  return (
+    <div className="campus-gpa-picker" ref={rootRef}>
+      <button
+        type="button"
+        className="campus-gpa-picker-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="选择成绩学期"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <CalendarDays size={14} />
+        <span>{value === 'all' ? '全部学期' : semesterLabel(value)}</span>
+        <ChevronDown size={14} className={open ? 'is-open' : ''} />
+      </button>
+      {open && (
+        <div className="campus-gpa-menu" role="listbox" aria-label="选择成绩学期">
+          {items.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              role="option"
+              aria-selected={item.value === value}
+              className={item.value === value ? 'is-active' : ''}
+              onClick={() => {
+                onChange(item.value)
+                setOpen(false)
+              }}
+            >
+              <span>{item.label}</span>
+              {item.value === value && <Check size={13} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function shortEventName(name: string) {
@@ -583,42 +666,30 @@ export function CampusTools({
 
 
   {tab === 'gpa' && (
-    <div className="campus-tool-panel">
-      {scoreSemesters.length > 0 && (
-        <div className="campus-gpa-toolbar">
-          <label>
-            <span>学期</span>
-            <select
-              value={scoreSemester}
-              onChange={(event) => setScoreSemester(event.target.value)}
-              aria-label="选择成绩学期"
-            >
-              <option value="all">全部学期</option>
-              {scoreSemesters.map((semester) => (
-                <option key={semester} value={semester}>
-                  {semesterLabel(semester)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span>{scoringRows.length} 门课程</span>
-        </div>
-      )}
+    <div className="campus-tool-panel campus-gpa">
+      <div className="campus-gpa-top">
+        {scoreSemesters.length > 0 ? (
+          <SemesterPicker
+            value={scoreSemester}
+            options={scoreSemesters}
+            onChange={setScoreSemester}
+          />
+        ) : (
+          <span className="campus-gpa-fixed">
+            <CalendarDays size={14} />
+            全部学期
+          </span>
+        )}
+        <span className="campus-gpa-count">
+          {scoringRows.length > 0 ? `${scoringRows.length} 门课程` : '暂无成绩'}
+        </span>
+      </div>
+
       <div className="campus-gpa-summary">
-        <div>
-          <span>教务成绩</span>
-          <strong>
-            {scoreSummary
-              ? `${scoreSummary.counted} 门`
-              : scoringRows.length > 0
-                ? `${scoringRows.length} 门`
-                : '未同步'}
-          </strong>
-          <em>
-            {scoreSummary
-              ? `${scoreSummary.credits} 学分`
-              : '在「账号与课表 → 成绩」同步'}
-          </em>
+        <div className="is-primary">
+          <span>GPA（5.0 制）</span>
+          <strong>{scoreSummary?.gpaFive != null ? scoreSummary.gpaFive.toFixed(2) : '—'}</strong>
+          <em>{scoreSummary ? '本校按 5.0 制计算' : '同步成绩后自动计算'}</em>
         </div>
         <div>
           <span>加权平均</span>
@@ -630,13 +701,22 @@ export function CampusTools({
           <em>按学分加权</em>
         </div>
         <div>
-          <span>GPA（5.0）</span>
-          <strong>{scoreSummary?.gpaFive != null ? scoreSummary.gpaFive.toFixed(2) : '—'}</strong>
-          <em>本校按 5.0 制计算</em>
+          <span>已计入学分</span>
+          <strong>{scoreSummary ? scoreSummary.credits : '—'}</strong>
+          <em>
+            {scoreSummary
+              ? `${scoreSummary.counted} 门课程计入`
+              : '在「账号与课表 → 成绩」同步'}
+          </em>
         </div>
       </div>
       {scoringRows.length > 0 ? (
         <div className="campus-score-list">
+          <div className="campus-score-head">
+            <span>课程</span>
+            <span>学分</span>
+            <span>成绩</span>
+          </div>
           {scoringRows.map((row) => (
             <div className="campus-score-row" key={row.id}>
               <div>
@@ -646,8 +726,10 @@ export function CampusTools({
                   {row.kind ? ` · ${row.kind}` : ''}
                 </em>
               </div>
-              <span>{row.credit != null ? `${row.credit} 学分` : '—'}</span>
-              <strong className="campus-score-value">{row.score || '—'}</strong>
+              <span>{row.credit != null ? `${row.credit}` : '—'}</span>
+              <strong className={`campus-score-value ${scoreTone(row.score)}`}>
+                {row.score || '—'}
+              </strong>
             </div>
           ))}
         </div>
