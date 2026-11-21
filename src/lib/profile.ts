@@ -39,6 +39,8 @@ export interface ScoreRow {
 export interface StudentProfile {
   name: string
   college: string
+  /** 例如 2024级；与学院分开保存，方便注册和后续筛选。 */
+  grade: string
   /** Used by the major mentor; manually chosen, independent of the timetable. */
   major: string
   studentNo: string
@@ -87,7 +89,8 @@ export const DEFAULT_TERM_START = new Date(2026, 7, 31).getTime()
 
 export const DEFAULT_PROFILE: StudentProfile = {
   name: '林晓',
-  college: '计算机学院 · 2024 级',
+  college: '计算机学院',
+  grade: '2024级',
   major: '计算机科学与技术',
   studentNo: '',
   defaultCourseId: PILOT_DEFAULT_COURSE_ID,
@@ -209,6 +212,11 @@ function normalizeReviewLapses(raw: unknown): Record<string, { lapses: number; l
 }
 
 export function normalizeProfile(next: StudentProfile): StudentProfile {
+  const rawCollege = String(next.college ?? '').trim()
+  const legacyGrade = rawCollege.match(/[·|]\s*(\d{4}\s*级)\s*$/)?.[1] ?? ''
+  const college = legacyGrade
+    ? rawCollege.replace(/\s*[·|]\s*\d{4}\s*级\s*$/, '').trim()
+    : rawCollege
   const schedule = (Array.isArray(next.schedule) ? next.schedule : []).filter(
     (entry) => !isFootnoteEntry(entry),
   )
@@ -233,6 +241,8 @@ export function normalizeProfile(next: StudentProfile): StudentProfile {
     customCourses: bound.customCourses,
     defaultCourseId,
     hiddenTeacherNames,
+    college,
+    grade: String(next.grade || legacyGrade || '').trim(),
     termStart: next.termStart ?? DEFAULT_TERM_START,
     emailOnTeacherReply: next.emailOnTeacherReply === true,
     reviewLapses: normalizeReviewLapses(next.reviewLapses),

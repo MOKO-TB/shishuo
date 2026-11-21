@@ -932,15 +932,26 @@ export function AccountModal({
                   placeholder="例如：林晓"
                 />
               </label>
-              <label className="field">
-                <span className="field-label">学院 / 年级</span>
-                <input
-                  className="input"
-                  value={form.college}
-                  onChange={(event) => setForm({ ...form, college: event.target.value })}
-                  placeholder="例如：计算机学院 · 2024 级"
-                />
-              </label>
+              <div className="account-field-row">
+                <label className="field">
+                  <span className="field-label">学院</span>
+                  <input
+                    className="input"
+                    value={form.college}
+                    onChange={(event) => setForm({ ...form, college: event.target.value })}
+                    placeholder="例如：计算机学院"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">年级</span>
+                  <input
+                    className="input"
+                    value={form.grade}
+                    onChange={(event) => setForm({ ...form, grade: event.target.value })}
+                    placeholder="例如：2024级"
+                  />
+                </label>
+              </div>
               <label className="field">
                 <span className="field-label">专业（学习背景）</span>
                 <input

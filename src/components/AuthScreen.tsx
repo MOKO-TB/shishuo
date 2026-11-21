@@ -13,6 +13,7 @@ import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
 import { readRememberedEmail } from '../lib/authStorage'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
+import { majorOptions } from '../data/major'
 import { BrandMark } from './ui'
 
 type Mode = 'login' | 'register' | 'reset'
@@ -28,6 +29,10 @@ export function AuthScreen() {
   const [password, setPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [name, setName] = useState('')
+  const [college, setCollege] = useState('')
+  const [grade, setGrade] = useState('')
+  const [major, setMajor] = useState('')
+  const [studentNo, setStudentNo] = useState('')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [codeSending, setCodeSending] = useState(false)
@@ -73,6 +78,10 @@ export function AuthScreen() {
     setRegisterRole('student')
     setInviteCode('')
     setTeacherCourses([])
+    setCollege('')
+    setGrade('')
+    setMajor('')
+    setStudentNo('')
   }
 
   const fillDemo = (account: 'student' | 'teacher') => {
@@ -144,6 +153,24 @@ export function AuthScreen() {
           setError('请选择至少一门要任教的课程。')
           return
         }
+        if (!asTeacher) {
+          if (!college.trim()) {
+            setError('请填写学院。')
+            return
+          }
+          if (!grade.trim()) {
+            setError('请填写年级，例如 2024级。')
+            return
+          }
+          if (!major.trim()) {
+            setError('请填写专业。')
+            return
+          }
+          if (!/^[A-Za-z0-9]{6,24}$/.test(studentNo.trim())) {
+            setError('请填写有效学号（6–24 位数字或字母）。')
+            return
+          }
+        }
         await register({
           name: name.trim(),
           email: email.trim(),
@@ -151,7 +178,12 @@ export function AuthScreen() {
           code: code.trim(),
           ...(asTeacher
             ? { role: 'teacher' as const, inviteCode: inviteCode.trim(), courses: teacherCourses }
-            : {}),
+            : {
+                college: college.trim(),
+                grade: grade.trim(),
+                major: major.trim(),
+                studentNo: studentNo.trim(),
+              }),
         })
       } else {
         if (!/^\d{6}$/.test(code.trim())) {
@@ -314,6 +346,67 @@ export function AuthScreen() {
                   required
                 />
               </label>
+            )}
+            {mode === 'register' && !isTeacherRegister && (
+              <div className="auth-info-grid">
+                <label className="field">
+                  <span className="field-label">学院</span>
+                  <input
+                    className="input"
+                    value={college}
+                    onChange={(event) => setCollege(event.target.value)}
+                    placeholder="例如：计算机学院"
+                    autoComplete="organization"
+                    required
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">年级</span>
+                  <input
+                    className="input"
+                    value={grade}
+                    onChange={(event) => setGrade(event.target.value)}
+                    placeholder="例如：2024级"
+                    list="register-grade-options"
+                    required
+                  />
+                  <datalist id="register-grade-options">
+                    {['2026级', '2025级', '2024级', '2023级', '2022级', '2021级'].map((item) => (
+                      <option key={item} value={item} />
+                    ))}
+                  </datalist>
+                </label>
+                <label className="field">
+                  <span className="field-label">专业</span>
+                  <input
+                    className="input"
+                    value={major}
+                    onChange={(event) => setMajor(event.target.value)}
+                    placeholder="例如：计算机科学与技术"
+                    list="register-major-options"
+                    required
+                  />
+                  <datalist id="register-major-options">
+                    {majorOptions().map((item) => (
+                      <option key={item} value={item} />
+                    ))}
+                  </datalist>
+                </label>
+                <label className="field">
+                  <span className="field-label">学号</span>
+                  <input
+                    className="input"
+                    value={studentNo}
+                    onChange={(event) => setStudentNo(event.target.value)}
+                    placeholder="例如：202410010031"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={24}
+                    required
+                  />
+                  <span className="field-hint">仅用于个人资料，不会公开展示。</span>
+                </label>
+              </div>
             )}
             <label className="field">
               <span className="field-label">邮箱</span>

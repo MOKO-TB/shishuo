@@ -754,6 +754,18 @@ export function createApiHandler({ db, config }) {
         return sendError(res, 400, '密码长度需要在 8–128 位之间。')
       }
       if (name.length < 1 || name.length > 40) return sendError(res, 400, '请输入姓名。')
+      const college = String(body.college ?? '').trim().slice(0, 80)
+      const grade = String(body.grade ?? '').trim().slice(0, 20)
+      const major = String(body.major ?? '').trim().slice(0, 80)
+      const studentNo = String(body.studentNo ?? '').trim().slice(0, 24)
+      if (role === 'student') {
+        if (!college) return sendError(res, 400, '请填写学院。')
+        if (!grade) return sendError(res, 400, '请填写年级。')
+        if (!major) return sendError(res, 400, '请填写专业。')
+        if (!/^[A-Za-z0-9]{6,24}$/.test(studentNo)) {
+          return sendError(res, 400, '请填写有效学号（6–24 位数字或字母）。')
+        }
+      }
       let courses = []
       if (role === 'teacher') {
         if (!config.teacherInviteCode) return sendError(res, 403, '教师注册未开放，请使用教师演示账号。')
@@ -775,6 +787,10 @@ export function createApiHandler({ db, config }) {
       const verified = verifyEmailCode(db, config, { email, purpose: 'register', code })
       if (!verified.ok) return sendError(res, 400, verificationMessage(verified.reason))
       const id = newId(role === 'teacher' ? 'teacher' : 'student')
+      const profileJson =
+        role === 'student'
+          ? JSON.stringify({ name, college, grade, major, studentNo })
+          : '{}'
       try {
         db.prepare(
           `INSERT INTO users (id, email, name, role, password_hash, profile_json, courses_json, created_at)
@@ -785,7 +801,7 @@ export function createApiHandler({ db, config }) {
           name,
           role,
           hashPassword(password),
-          '{}',
+          profileJson,
           JSON.stringify(courses),
           Date.now(),
         )

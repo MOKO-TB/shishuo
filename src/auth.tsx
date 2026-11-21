@@ -33,6 +33,10 @@ interface AuthContextValue {
     role?: 'student' | 'teacher'
     inviteCode?: string
     courses?: string[]
+    college?: string
+    grade?: string
+    major?: string
+    studentNo?: string
   }) => Promise<void>
   logout: () => Promise<void>
 }
