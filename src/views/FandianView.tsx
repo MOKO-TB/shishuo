@@ -38,6 +38,8 @@ interface FandianViewProps {
     tone?: 'success' | 'info' | 'danger',
     action?: { label: string; onAction: () => void },
   ) => void
+  /** 嵌入校园工具页签时隐藏品牌头与页脚，只留功能主体 */
+  embedded?: boolean
 }
 
 type MainTab = 'eat' | 'rank' | 'blind'
@@ -343,7 +345,7 @@ function DishDetail({ dish, eatenCount, onEaten, onClose }: { dish: DishView; ea
   )
 }
 
-export function FandianView({ notify }: FandianViewProps) {
+export function FandianView({ notify, embedded = false }: FandianViewProps) {
   const [kind, setKind] = useState<FdKind>('food')
   const [tab, setTab] = useState<MainTab>('eat')
   const [rankKey, setRankKey] = useState<RankKey>('hot')
@@ -528,7 +530,8 @@ export function FandianView({ notify }: FandianViewProps) {
   }
 
   return (
-    <div className="fd-page">
+    <div className={`fd-page${embedded ? ' is-embedded' : ''}`}>
+      {!embedded && (
       <section className="fd-hero">
         <div className="fd-hero-main">
           <div className="fd-hero-kicker">
@@ -562,6 +565,7 @@ export function FandianView({ notify }: FandianViewProps) {
           </span>
         </div>
       </section>
+      )}
 
       <nav className="fd-kindtabs" aria-label="类别切换">
         {KIND_TABS.map((k) => {
@@ -848,9 +852,11 @@ export function FandianView({ notify }: FandianViewProps) {
         />
       )}
 
-      <footer className="fd-foot">
-        <Footprints size={13} /> 移植自「饭点·广应科」学生端 + 校生活真实数据集（105 家门店真实营业时段）· 组合菜可勾选荤素加料 · 「吃过」让推荐越用越准 · 演示数据
-      </footer>
+      {!embedded && (
+        <footer className="fd-foot">
+          <Footprints size={13} /> 移植自「饭点·广应科」学生端 + 校生活真实数据集（105 家门店真实营业时段）· 组合菜可勾选荤素加料 · 「吃过」让推荐越用越准 · 演示数据
+        </footer>
+      )}
     </div>
   )
 }

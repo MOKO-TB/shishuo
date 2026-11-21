@@ -117,6 +117,11 @@
   margin-top: 17px;
 }
 
+/* 教师端第二个导航分组（校园生活）：与上一组拉开距离 */
+.nav-section-group {
+  margin-top: 10px;
+}
+
 .nav-item {
   position: relative;
   display: flex;

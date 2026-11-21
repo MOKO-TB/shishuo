@@ -18,9 +18,11 @@ import {
   Search,
   Sparkles,
   UserRound,
+  UtensilsCrossed,
   X,
 } from 'lucide-react'
 import { Badge, Modal } from '../../components/ui'
+import { FandianView } from '../FandianView'
 import { useProfile, scoreStats } from '../../lib/profile'
 import { excerpt } from '../../lib/utils'
 import {
@@ -42,7 +44,7 @@ import {
 import { resolveCalendarDetail } from '../../data/campusCalendarDetails'
 import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
-type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'ask' | 'kb'
+type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'canteen' | 'kb' | 'ask'
 
 type MonthCell = {
   date: Date
@@ -752,6 +754,15 @@ export function CampusTools({
             >
               <MapPin size={15} />
               校园地图
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === 'canteen'}
+              className={tab === 'canteen' ? 'is-active' : ''}
+              onClick={() => selectTab('canteen')}
+            >
+              <UtensilsCrossed size={15} />
+              食堂决策
             </button>
             <button
               role="tab"
@@ -1535,6 +1546,12 @@ export function CampusTools({
           </div>
         </div>
       </div>
+    </div>
+  )}
+
+  {tab === 'canteen' && (
+    <div className="campus-tool-panel campus-canteen">
+      <FandianView embedded />
     </div>
   )}
       </section>

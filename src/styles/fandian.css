@@ -8,6 +8,12 @@
   min-width: 0;
 }
 
+/* 嵌入校园工具页签：去掉外页边距，保留内部节奏 */
+.fd-page.is-embedded {
+  gap: 14px;
+  padding: 0;
+}
+
 /* 品牌头 */
 .fd-hero {
   display: flex;

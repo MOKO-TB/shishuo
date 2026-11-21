@@ -114,18 +114,30 @@ export function Layout({
   );
   const today = weekdayNumber();
   const todayCount = weekEntries.filter((entry) => entry.day === today).length;
-  const navItems: NavItem[] = isTeacher
-    ? [
+  /** 教师侧栏分组：教学工具与校园生活分开，食堂决策不再混在「教学空间」里 */
+  const teacherNavGroups: { label: string; items: NavItem[] }[] = [
+    {
+      label: "教学空间",
+      items: [
         { key: "teacher", label: "待办台", icon: Inbox, badge: pendingCount },
         { key: "knowledge", label: "课程知识库", icon: BookOpen },
+        { key: "insights", label: "答疑洞察", icon: BarChart3 },
+      ],
+    },
+    {
+      label: "校园生活",
+      items: [
         {
           key: "fandian",
           label: "食堂决策",
           icon: UtensilsCrossed,
           shortLabel: "食堂",
         },
-        { key: "insights", label: "答疑洞察", icon: BarChart3 },
-      ]
+      ],
+    },
+  ];
+  const navItems: NavItem[] = isTeacher
+    ? teacherNavGroups.flatMap((group) => group.items)
     : [
         { key: "student", label: "我的答疑", icon: MessagesSquare },
         {
@@ -142,6 +154,25 @@ export function Layout({
         },
         { key: "campus", label: "校园生活", icon: Compass, shortLabel: "校园" },
       ];
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon;
+    // 设置页打开时归到「账号/设置」，其余导航项不高亮
+    const active = !accountOpen && view === item.key;
+    return (
+      <button
+        key={item.key}
+        className={cn("nav-item", active && "is-active")}
+        onClick={() => onNavigate(item.key)}
+        aria-current={active ? "page" : undefined}
+      >
+        <span className="nav-icon">
+          <Icon size={18} />
+        </span>
+        <span className="nav-label">{item.label}</span>
+        {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+      </button>
+    );
+  };
   const teacherProfile = teacherByName(teacherName);
   const profile = isTeacher ? teacherProfile : studentProfile;
   const profileMetaText = isTeacher
@@ -173,30 +204,26 @@ export function Layout({
             : `学生视角 · ${studentProfile.name}`}
         </div>
         <nav className="side-nav" aria-label="主导航">
-          <span className="nav-section-label">
-            {isTeacher ? "教学空间" : "学习空间"}
-          </span>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            // 设置页打开时归到「账号/设置」，其余导航项不高亮
-            const active = !accountOpen && view === item.key;
-            return (
-              <button
-                key={item.key}
-                className={cn("nav-item", active && "is-active")}
-                onClick={() => onNavigate(item.key)}
-                aria-current={active ? "page" : undefined}
-              >
-                <span className="nav-icon">
-                  <Icon size={18} />
+          {isTeacher ? (
+            teacherNavGroups.map((group, index) => (
+              <Fragment key={group.label}>
+                <span
+                  className={cn(
+                    "nav-section-label",
+                    index > 0 && "nav-section-group",
+                  )}
+                >
+                  {group.label}
                 </span>
-                <span className="nav-label">{item.label}</span>
-                {item.badge ? (
-                  <span className="nav-badge">{item.badge}</span>
-                ) : null}
-              </button>
-            );
-          })}
+                {group.items.map(renderNavItem)}
+              </Fragment>
+            ))
+          ) : (
+            <>
+              <span className="nav-section-label">学习空间</span>
+              {navItems.map(renderNavItem)}
+            </>
+          )}
           <span className="nav-section-label nav-section-secondary">
             了解更多
           </span>
