@@ -1212,6 +1212,209 @@ export const BILI_MENTORS: Record<string, Distilled> = {
     ],
     styleNotes: ['先真值表再化简', '时序先画状态图', '边沿和异步端必看', '计数器先算模值'],
   },
+  鸿蒙移动应用程序开发: {
+    tagline: '先跑通一个页面，再拆组件、状态和路由；每个功能都要能说清数据从哪来、存到哪。',
+    principles: [
+      '先确认 API 版本和工程模板，再写页面，避免照旧版教程抄错语法。',
+      'ArkTS 先掌握类型、对象和函数，再学状态管理，不把 UI 和业务混在一个文件。',
+      '页面先做静态布局，再接数据；网络请求必须有加载、失败和空数据三种状态。',
+      '每个功能都按“入口 → 页面 → 状态 → 数据 → 权限”走一遍。',
+    ],
+    foundation: ['ArkTS 基础', 'ArkUI 组件与布局', '页面路由', '网络请求与状态管理'],
+    quickPrompts: [
+      'ArkTS 和 TypeScript 有什么区别？',
+      '@State/@Prop/@Link 怎么选？',
+      '页面之间怎么传参和返回？',
+      '鸿蒙网络请求失败怎么排查？',
+    ],
+    chapters: [
+      chapter('环境与 ArkTS 基础', '先装 DevEco、建模板，再把类型、对象、函数和模块跑通。', [
+        'DevEco 与工程结构',
+        '变量与类型',
+        '对象与数组',
+        '函数与箭头函数',
+        '模块导入导出',
+      ]),
+      chapter('ArkUI 布局与组件', '先画页面结构，再选 Row/Column/Stack/List 和常用组件。', [
+        'Row/Column/Stack',
+        'Text/Button/Image',
+        'List/Grid',
+        '样式与自适应',
+        '自定义组件',
+      ]),
+      chapter('状态管理与路由', '先分清页面内状态和跨页面共享状态，再选装饰器和路由方案。', [
+        '@State/@Prop/@Link',
+        'AppStorage',
+        '页面路由',
+        '参数传递',
+        '返回与生命周期',
+      ]),
+      chapter('数据与网络', '先定义数据模型，再写请求、缓存和错误处理。', [
+        'HTTP 请求',
+        'JSON 解析',
+        '首选项/数据库',
+        '加载与失败态',
+        '权限申请',
+      ]),
+      chapter('项目实战与发布', '先做最小闭环，再补异常、真机调试和打包。', [
+        '页面联调',
+        '真机调试',
+        '签名与打包',
+        '性能与体积',
+      ]),
+    ],
+    styleNotes: ['先跑通再重构', '页面和数据分开', '状态管理先分清范围', '异常态必须做'],
+  },
+  复变函数与积分变换: {
+    tagline: '先分清复数运算、解析函数、积分、级数和变换，再动笔；条件和路径不能省。',
+    principles: [
+      '先判断题目在复平面上的区域和路径，再选柯西积分、留数或级数。',
+      '解析函数先验 C-R 条件和可导，再谈积分与共形映射。',
+      '留数题先找孤立奇点并判类型，再算留数。',
+      '傅里叶/拉普拉斯变换先记定义域和收敛条件，再套性质。',
+    ],
+    foundation: ['复数与复平面', '复变函数与解析性', '复积分', '级数'],
+    quickPrompts: [
+      'C-R 条件怎么用？',
+      '柯西积分定理和公式怎么选？',
+      '留数怎么判断几阶极点？',
+      '拉普拉斯变换的收敛域怎么定？',
+    ],
+    chapters: [
+      chapter('复数与复变函数', '先把复数四则、模辐角、方根和区域画清楚。', [
+        '复数运算',
+        '模与辐角',
+        '复平面区域',
+        '复变函数',
+        '初等函数',
+      ]),
+      chapter('解析函数', '先验可导和 C-R 条件，再判解析与调和。', [
+        '导数定义',
+        'C-R 条件',
+        '解析函数',
+        '调和函数',
+        '共形映射',
+      ]),
+      chapter('复积分', '先看路径和奇点，再选柯西定理、积分公式或参数化。', [
+        '复积分定义',
+        '柯西积分定理',
+        '柯西积分公式',
+        '高阶导数公式',
+      ]),
+      chapter('级数与留数', '先展开或找奇点，再判类型算留数。', [
+        '泰勒级数',
+        '洛朗级数',
+        '孤立奇点',
+        '留数定理',
+        '留数求积分',
+      ]),
+      chapter('积分变换', '先记定义和收敛域，再用性质求逆变换。', [
+        '傅里叶变换',
+        '拉普拉斯变换',
+        '卷积',
+        '逆变换',
+        '应用',
+      ]),
+    ],
+    styleNotes: ['先画复平面', '条件先验', '奇点先分类', '变换先看收敛域'],
+  },
+  居室美化与装饰: {
+    tagline: '先看空间和居住需求，再定风格、色彩、灯光和软装；好看必须建立在好用上。',
+    principles: [
+      '先问谁住、怎么住、预算多少，再谈风格。',
+      '先定动线和功能分区，再选家具尺寸和摆放。',
+      '色彩先定主色/辅助色/点缀色比例，再谈材质。',
+      '灯光按基础照明、重点照明、氛围照明分层设计。',
+    ],
+    foundation: ['空间与动线', '风格与色彩', '家具尺度', '照明与软装'],
+    quickPrompts: [
+      '小户型怎么显大？',
+      '客餐厅色彩怎么搭配？',
+      '灯光回路怎么分？',
+      '软装预算怎么分配？',
+    ],
+    chapters: [
+      chapter('空间与动线', '先画平面和动线，再定功能分区与家具尺度。', [
+        '户型分析',
+        '动静分区',
+        '动线',
+        '收纳',
+        '家具尺度',
+      ]),
+      chapter('风格与色彩', '先定整体风格，再用主色/辅助色/点缀色控制比例。', [
+        '现代/北欧/新中式',
+        '色彩三要素',
+        '配色比例',
+        '材质与纹理',
+      ]),
+      chapter('照明设计', '先分基础/重点/氛围照明，再定色温和回路。', [
+        '照度',
+        '色温',
+        '无主灯',
+        '重点照明',
+        '灯光回路',
+      ]),
+      chapter('软装与材料', '先定大件，再补布艺、挂画、绿植和饰品。', [
+        '窗帘',
+        '地毯',
+        '挂画',
+        '绿植',
+        '常用材料',
+      ]),
+      chapter('预算与落地', '先列硬装/软装/家电预算，再控增项和尺寸复核。', [
+        '预算拆分',
+        '施工顺序',
+        '尺寸复核',
+        '验收',
+      ]),
+    ],
+    styleNotes: ['先功能后风格', '先尺度再摆放', '配色讲比例', '灯光分层'],
+  },
+  电子技术课程设计: {
+    tagline: '先定题目和指标，再画框图、选器件、仿真、搭电路、调试和答辩。',
+    principles: [
+      '先把课程设计题目翻译成输入、输出、指标和约束。',
+      '先画系统框图，再分模块选器件，不直接抄整张原理图。',
+      '先仿真验证，再焊板/搭面包板；每级电路单独测。',
+      '调试先查电源和地，再查信号链路，最后查器件参数。',
+    ],
+    foundation: ['模电/数电基础', '常用元器件', 'Multisim/立创 EDA', '万用表与示波器'],
+    quickPrompts: [
+      '课程设计题目怎么拆模块？',
+      '仿真和实物对不上先查什么？',
+      '运放/比较器/定时器怎么选？',
+      '答辩时怎么讲测试数据？',
+    ],
+    chapters: [
+      chapter('选题与方案', '先把题目变成指标和框图，再比较两套方案。', [
+        '需求与指标',
+        '系统框图',
+        '方案比较',
+        '元器件选型',
+      ]),
+      chapter('电路设计与仿真', '先分模块设计，再仿真验证每级静态和动态指标。', [
+        '电源',
+        '放大/比较',
+        '逻辑控制',
+        '定时',
+        'Multisim 仿真',
+      ]),
+      chapter('搭接与调试', '先电源和地，再逐级加信号；每级留测试点。', [
+        '面包板/PCB',
+        '焊接',
+        '静态工作点',
+        '信号链路',
+        '故障排查',
+      ]),
+      chapter('测试与答辩', '先列测试表，再解释误差和改进方向。', [
+        '测试数据',
+        '误差分析',
+        '指标对照',
+        '答辩表达',
+      ]),
+    ],
+    styleNotes: ['先指标后电路', '先仿真后实物', '逐级调试', '答辩拿数据说话'],
+  },
 }
 
 const DEFAULT_VOICE = {
@@ -1238,7 +1441,16 @@ function distilledVoice(
       closing: '换一个语境，你先造一句。',
     }
   }
-  if (/思政|毛泽东|习近平|形势|劳动|体育/.test(name)) {
+  if (/体育|拓展|橄榄球|训练/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像体育老师：先讲动作要领和安全边界，再做一次示范，最后让学生按口令练一遍。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '按这个动作顺序做一遍：',
+      warningLead: '训练时最容易受伤的是：',
+      closing: '换一个项目，你先说保护动作。',
+    }
+  }
+  if (/思政|毛泽东|习近平|形势|劳动/.test(name)) {
     return {
       ...DEFAULT_VOICE,
       prompt: `像思政/通识课老师：先给框架和关键词，再联系一个现实案例，最后回到答题结构。${notes ? `公开课讲法：${notes}。` : ''}`,
@@ -1274,7 +1486,16 @@ function distilledVoice(
       closing: '换一组参数，你先画等效图。',
     }
   }
-  if (/数学|离散|线性|概率|统计/.test(name)) {
+  if (/居室|室内|装饰|艺术|设计/.test(name)) {
+    return {
+      ...DEFAULT_VOICE,
+      prompt: `像设计课老师：先看空间和居住需求，再讲风格、尺度和落地；每个方案都要说清为什么这样布置。${notes ? `公开课讲法：${notes}。` : ''}`,
+      exampleLead: '看一个具体户型：',
+      warningLead: '落地时最容易翻车的是：',
+      closing: '换一个户型，你先画动线和收纳。',
+    }
+  }
+  if (/数学|离散|线性|概率|统计|复变/.test(name)) {
     return {
       ...DEFAULT_VOICE,
       prompt: `像数学老师板书：先判断题型，再写关键一步，用一个数字例子验证，最后点出边界。${notes ? `公开课讲法：${notes}。` : ''}`,
@@ -1289,6 +1510,14 @@ function distilledVoice(
   }
 }
 
+/** A/B 班或带括号的课程名，复用同一门课的 B 站蒸馏档案。 */
+const BILI_ALIASES: Record<string, string> = {
+  概率论与数理统计: '概率论与数理统计A',
+  数字电子技术: '数字电子技术基础',
+  大学体育专项: '大学体育专项I (拓展训练)',
+  大学体育专项I: '大学体育专项I (拓展训练)',
+}
+
 /** 课程名归一化：去掉末尾 A/B/Ⅰ/Ⅱ/Ⅲ 和空格，便于匹配教务课程名。 */
 export function distilledMentorFor(name: string, shortName?: string) {
   const candidates = [name, shortName].filter(Boolean) as string[]
@@ -1298,16 +1527,17 @@ export function distilledMentorFor(name: string, shortName?: string) {
     const bases = [trimmed, trimmed.replace(/[（(].*?[)）]/g, '').trim()]
     for (const base of bases) {
       if (!base) continue
-      const exact = BILI_MENTORS[base]
-      if (exact) {
-        return exact.voice ? exact : { ...exact, voice: distilledVoice(base, exact.styleNotes) }
-      }
       const normalized = base.replace(/[A-Za-z]$/u, '').replace(/[ⅠⅡⅢⅣ]$/u, '').trim()
-      const matched = BILI_MENTORS[normalized]
-      if (matched) {
-        return matched.voice
-          ? matched
-          : { ...matched, voice: distilledVoice(normalized, matched.styleNotes) }
+      const keys = [base, normalized, BILI_ALIASES[base], BILI_ALIASES[normalized]].filter(
+        Boolean,
+      ) as string[]
+      for (const key of keys) {
+        const matched = BILI_MENTORS[key]
+        if (matched) {
+          return matched.voice
+            ? matched
+            : { ...matched, voice: distilledVoice(key, matched.styleNotes) }
+        }
       }
     }
   }
