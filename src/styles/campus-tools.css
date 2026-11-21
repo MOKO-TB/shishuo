@@ -1798,6 +1798,11 @@
     font-size: var(--text-meta);
   }
 
+  /* 双列换行时最后一项若独占一行（奇数个），拉满整行，避免右侧空一格 */
+  .campus-tool-tabs button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .campus-gpa-top {
     gap: 8px;
   }
