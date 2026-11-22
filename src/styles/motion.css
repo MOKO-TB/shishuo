@@ -332,6 +332,267 @@
   }
 }
 
+/* ---------- 09 · NAVIGATION & INTERACTIVE MICRO-MOTION（导航栏与全局交互动画） ---------- */
+
+/* 侧边栏导航项、AI 导师入口、设置按钮与顶栏操作按钮 */
+.nav-item,
+.side-mentor-entry,
+.side-settings-button,
+.bell-button,
+.theme-toggle,
+.guide-button,
+.course-combobox-trigger,
+.mentor-course-select-trigger,
+.ask-plus-button,
+.mentor-plus-btn,
+.mentor-send-btn {
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    background 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-item .nav-icon,
+.nav-item .nav-label,
+.side-mentor-entry > svg,
+.side-settings-button > svg,
+.bell-button svg,
+.theme-toggle svg {
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1),
+    color 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-item:hover .nav-icon {
+  transform: translate3d(1.5px, 0, 0) scale(1.06);
+}
+
+.nav-item:hover .nav-label {
+  transform: translate3d(2px, 0, 0);
+}
+
+.nav-item.is-active .nav-icon {
+  transform: scale(1.08);
+}
+
+.nav-item:active,
+.side-mentor-entry:active,
+.side-settings-button:active {
+  transform: scale(0.97);
+}
+
+.side-mentor-entry:hover > svg {
+  transform: translate3d(2.5px, 0, 0);
+}
+
+.side-settings-button:hover > svg {
+  transform: rotate(35deg);
+}
+
+.bell-button:hover,
+.theme-toggle:hover,
+.guide-button:hover {
+  transform: translate3d(0, -1px, 0);
+}
+
+.bell-button:active,
+.theme-toggle:active,
+.guide-button:active,
+.ask-plus-button:active,
+.mentor-plus-btn:active,
+.mentor-send-btn:active {
+  transform: scale(0.91);
+}
+
+.theme-toggle:active svg {
+  transform: rotate(-28deg) scale(0.9);
+}
+
+.bell-button:active svg {
+  transform: rotate(14deg) scale(0.92);
+}
+
+/* 分段筛选栏（我的提问 / 账号页签 / 校园工具栏） */
+.recent-filters button,
+.account-tabs button,
+.campus-tool-tabs button {
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    background 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.recent-filters button span,
+.account-tabs button span {
+  transition:
+    transform 0.26s cubic-bezier(0.34, 1.45, 0.64, 1),
+    background 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.recent-filters button:active,
+.account-tabs button:active,
+.campus-tool-tabs button:active {
+  transform: scale(0.94);
+}
+
+.recent-filters button.is-active,
+.account-tabs button.is-active,
+.campus-tool-tabs button.is-active {
+  transform: translate3d(0, -0.5px, 0);
+}
+
+.recent-filters button.is-active span,
+.account-tabs button.is-active span {
+  transform: scale(1.06);
+}
+
+/* 「我的提问」切换筛选时的列表柔和过渡 + 条目交错浮现 */
+.recent-list-stage,
+.invalid-qa-banner {
+  animation: recentStageIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes recentStageIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 列表行、回答追问入口、热门问答、课表色块按压与悬停反馈 */
+.recent-row,
+.waiting-row,
+.hot-row,
+.source-card,
+.answer-chat-entry {
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.recent-row .recent-right svg,
+.source-card > svg,
+.answer-chat-entry > svg,
+.recent-all-link svg,
+.rail-link svg {
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.recent-row:hover .recent-right svg,
+.source-card:hover > svg,
+.answer-chat-entry:hover > svg,
+.recent-all-link:hover svg,
+.rail-link:hover svg {
+  transform: translate3d(3px, 0, 0);
+}
+
+.recent-row:active,
+.source-card:active,
+.answer-chat-entry:active,
+.hot-row:active {
+  transform: scale(0.988);
+}
+
+.schedule-board .week-class,
+.schedule-zoom .week-class {
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.schedule-board .week-class:active,
+.schedule-zoom .week-class:active {
+  transform: scale(0.95);
+}
+
+/* 下拉菜单与上浮气泡菜单（方向一致的弹簧展开） */
+.course-combobox-panel,
+.mentor-course-panel,
+.mentor-switcher-menu,
+.campus-gpa-menu {
+  transform-origin: top center;
+  animation: dropdownIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ask-plus-menu,
+.mentor-plus-menu {
+  transform-origin: bottom left;
+  animation: popoverUpIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.course-combobox-option,
+.mentor-course-option,
+.ask-plus-option,
+.mentor-plus-option,
+.campus-gpa-menu button {
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.3, 0.64, 1),
+    background 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.course-combobox-option:active,
+.mentor-course-option:active,
+.ask-plus-option:active,
+.mentor-plus-option:active,
+.campus-gpa-menu button:active {
+  transform: scale(0.975);
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes popoverUpIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* 开关滑块弹性过渡与提问卡聚焦高亮 */
+.switch-track > span,
+.settings-switch::after {
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.38, 0.64, 1),
+    background 0.22s var(--ease);
+}
+
+.ask-card {
+  transition:
+    transform 0.6s cubic-bezier(0.22, 1.2, 0.36, 1),
+    border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ask-card:focus-within {
+  border-color: color-mix(in srgb, var(--jade) 42%, var(--line));
+  box-shadow:
+    0 1px 2px rgba(23, 36, 30, 0.04),
+    0 22px 48px -28px rgba(20, 108, 86, 0.24);
+}
+
 /* ---------- 降级：系统要求减少动态时全部收敛 ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -344,7 +605,16 @@
   .campus-grid .campus-card,
   .campus-card,
   .campus-card.is-expanded > p,
-  .modal-panel {
+  .modal-panel,
+  .mobile-nav-glider,
+  .mobile-nav button,
+  .mobile-nav button svg,
+  .page-wrap,
+  .recent-list-stage,
+  .course-combobox-panel,
+  .mentor-course-panel,
+  .ask-plus-menu,
+  .mentor-plus-menu {
     animation: none !important;
     transition: none !important;
     transform: none !important;

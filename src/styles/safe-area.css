@@ -128,11 +128,12 @@
   }
 
   .mobile-nav {
+    --nav-pad-x: 6px;
     left: max(12px, var(--safe-left));
     right: max(12px, var(--safe-right));
     bottom: calc(12px + var(--safe-bottom));
     /* 原样式 bottom 和 padding-bottom 各算了一次 inset，这里去掉重复。 */
-    padding: 5px 8px;
+    padding: 5px var(--nav-pad-x);
   }
 
   .toast {

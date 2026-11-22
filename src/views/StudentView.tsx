@@ -1720,7 +1720,10 @@ export function StudentView({
                     role="tab"
                     aria-selected={threadFilter === key}
                     className={threadFilter === key ? 'is-active' : ''}
-                    onClick={() => setThreadFilter(key)}
+                    onClick={() => {
+                      triggerHaptic('light')
+                      setThreadFilter(key)
+                    }}
                   >
                     {label}
                     <span>{threadFilterCounts[key]}</span>
@@ -1753,110 +1756,112 @@ export function StudentView({
               </div>
             </div>
 
-            {threadFilter === 'course-waiting' ? (
-              filteredWaitingGroups.length === 0 ? (
+            <div className="recent-list-stage" key={`${threadFilter}-${threadCourse}`}>
+              {threadFilter === 'course-waiting' ? (
+                filteredWaitingGroups.length === 0 ? (
+                  <EmptyState
+                    icon={<Users size={20} />}
+                    title="暂时没有正在等老师的提问"
+                    description="同学向老师转交的问题会出现在这里，可以一键「同问」少排一次队。"
+                  />
+                ) : (
+                  <div className="waiting-merged-wrap">
+                    <p className="waiting-merged-tip">同问，少排一次队</p>
+                    <div className="waiting-list">
+                      {filteredWaitingGroups.map((group) => {
+                        const joined = group.threads.some((item) => item.student.id === studentId)
+                        const groupCourse = courseById(group.courseId)
+                        return (
+                          <div className="waiting-row" key={group.key}>
+                            <div className="waiting-copy">
+                              <strong>{truncate(group.title, 28)}</strong>
+                              <span>
+                                {groupCourse.shortName} · {group.count} 人等 · {groupCourse.teacher}老师
+                              </span>
+                            </div>
+                            <button
+                              className={`same-button ${joined ? 'is-joined' : ''}`}
+                              disabled={joined}
+                              onClick={() => setJoinGroup(group)}
+                            >
+                              {joined ? '已在等' : '同问'}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              ) : recentThreads.length === 0 ? (
                 <EmptyState
-                  icon={<Users size={20} />}
-                  title="暂时没有正在等老师的提问"
-                  description="同学向老师转交的问题会出现在这里，可以一键「同问」少排一次队。"
+                  icon={<MessagesSquare size={20} />}
+                  title={myThreads.length === 0 ? '还没有提过问题' : '这个筛选下暂时没有记录'}
+                  description={
+                    myThreads.length === 0
+                      ? '从上面问第一个问题开始，AI 会先接住。'
+                      : '换一个筛选条件，或者回到「全部」查看最近的答疑记录。'
+                  }
+                  action={
+                    myThreads.length > 0 ? (
+                      <button className="text-button" onClick={() => setThreadFilter('all')}>
+                        回到全部
+                      </button>
+                    ) : undefined
+                  }
                 />
               ) : (
-                <div className="waiting-merged-wrap">
-                  <p className="waiting-merged-tip">同问，少排一次队</p>
-                  <div className="waiting-list">
-                    {filteredWaitingGroups.map((group) => {
-                      const joined = group.threads.some((item) => item.student.id === studentId)
-                      const groupCourse = courseById(group.courseId)
-                      return (
-                        <div className="waiting-row" key={group.key}>
-                          <div className="waiting-copy">
-                            <strong>{truncate(group.title, 28)}</strong>
-                            <span>
-                              {groupCourse.shortName} · {group.count} 人等 · {groupCourse.teacher}老师
-                            </span>
+                <div className="recent-list">
+                  {recentThreads.map((thread) => {
+                    const threadCourse = courseById(thread.courseId)
+                    return (
+                      <button
+                        key={thread.id}
+                        className={`recent-row ${activeThread?.id === thread.id ? 'is-active' : ''}`}
+                        onClick={() => setDetailThreadId(thread.id)}
+                      >
+                        <span className={`recent-status-line status-${statusTone(thread)}`} />
+                        <div className="recent-content">
+                          <div className="recent-meta">
+                            <span className={`course-dot accent-${threadCourse.accent}`} />
+                            <span>{threadCourse.shortName}</span>
+                            <span className="recent-sep">·</span>
+                            <span>{formatRelative(thread.createdAt)}</span>
+                            {thread.kind === 'same' && <span className="recent-kind">同问</span>}
+                            {thread.kind === 'follow-up' && (
+                              <span className="recent-kind is-followup">追问</span>
+                            )}
                           </div>
-                          <button
-                            className={`same-button ${joined ? 'is-joined' : ''}`}
-                            disabled={joined}
-                            onClick={() => setJoinGroup(group)}
-                          >
-                            {joined ? '已在等' : '同问'}
-                          </button>
+                          <strong className="recent-question">{thread.question}</strong>
+                          {thread.withdrawnAt ? (
+                            <p className="recent-sub is-withdrawn">已撤下</p>
+                          ) : thread.teacherReply ? (
+                            <p className="recent-sub is-reply">
+                              {thread.teacherReply.by}老师：{excerpt(thread.teacherReply.text, 54)}
+                            </p>
+                          ) : thread.status === 'needs-info' ? (
+                            <p className="recent-sub is-pending">老师请你补充信息 · 点开继续</p>
+                          ) : thread.status === 'pending' ? (
+                            <p className="recent-sub is-pending">
+                              {thread.kind === 'same'
+                                ? '已同问 · 等待老师回复'
+                                : thread.kind === 'follow-up'
+                                  ? '追问已发给老师'
+                                  : '已转交老师，等待回复'}
+                            </p>
+                          ) : null}
                         </div>
-                      )
-                    })}
-                  </div>
+                        <div className="recent-right">
+                          <Badge tone={statusTone(thread)} dot>
+                            {statusLabel(thread)}
+                          </Badge>
+                          <ChevronRight size={16} />
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              )
-            ) : recentThreads.length === 0 ? (
-              <EmptyState
-                icon={<MessagesSquare size={20} />}
-                title={myThreads.length === 0 ? '还没有提过问题' : '这个筛选下暂时没有记录'}
-                description={
-                  myThreads.length === 0
-                    ? '从上面问第一个问题开始，AI 会先接住。'
-                    : '换一个筛选条件，或者回到「全部」查看最近的答疑记录。'
-                }
-                action={
-                  myThreads.length > 0 ? (
-                    <button className="text-button" onClick={() => setThreadFilter('all')}>
-                      回到全部
-                    </button>
-                  ) : undefined
-                }
-              />
-            ) : (
-              <div className="recent-list">
-                {recentThreads.map((thread) => {
-                  const threadCourse = courseById(thread.courseId)
-                  return (
-                    <button
-                      key={thread.id}
-                      className={`recent-row ${activeThread?.id === thread.id ? 'is-active' : ''}`}
-                      onClick={() => setDetailThreadId(thread.id)}
-                    >
-                      <span className={`recent-status-line status-${statusTone(thread)}`} />
-                      <div className="recent-content">
-                        <div className="recent-meta">
-                          <span className={`course-dot accent-${threadCourse.accent}`} />
-                          <span>{threadCourse.shortName}</span>
-                          <span className="recent-sep">·</span>
-                          <span>{formatRelative(thread.createdAt)}</span>
-                          {thread.kind === 'same' && <span className="recent-kind">同问</span>}
-                          {thread.kind === 'follow-up' && (
-                            <span className="recent-kind is-followup">追问</span>
-                          )}
-                        </div>
-                        <strong className="recent-question">{thread.question}</strong>
-                        {thread.withdrawnAt ? (
-                          <p className="recent-sub is-withdrawn">已撤下</p>
-                        ) : thread.teacherReply ? (
-                          <p className="recent-sub is-reply">
-                            {thread.teacherReply.by}老师：{excerpt(thread.teacherReply.text, 54)}
-                          </p>
-                        ) : thread.status === 'needs-info' ? (
-                          <p className="recent-sub is-pending">老师请你补充信息 · 点开继续</p>
-                        ) : thread.status === 'pending' ? (
-                          <p className="recent-sub is-pending">
-                            {thread.kind === 'same'
-                              ? '已同问 · 等待老师回复'
-                              : thread.kind === 'follow-up'
-                                ? '追问已发给老师'
-                                : '已转交老师，等待回复'}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="recent-right">
-                        <Badge tone={statusTone(thread)} dot>
-                          {statusLabel(thread)}
-                        </Badge>
-                        <ChevronRight size={16} />
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+              )}
+            </div>
           </section>
         </section>
 

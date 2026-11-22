@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   BarChart3,
   Bell,
@@ -37,6 +37,7 @@ import { useAuth } from "../auth";
 import { useStore } from "../store";
 import { cn } from "../lib/utils";
 import { loadThemePreference, toggleTheme, type ThemePreference } from "../lib/theme";
+import { triggerHaptic } from "../lib/nativeShell";
 import { useMentorSelection } from "../lib/mentorSelection";
 import { DigitalAvatarBadge } from "./DigitalAvatar";
 import { Avatar, BrandMark } from "./ui";
@@ -188,6 +189,22 @@ export function Layout({
     ? teacherProfile.meta
     : profileMeta(studentProfile);
   const crumb = breadcrumbMap[view];
+  const mobileNavItems = navItems.slice(0, 4);
+  const totalMobileTabs = mobileNavItems.length + 1;
+  const matchedMobileIndex = mobileNavItems.findIndex((item) => item.key === view);
+  const activeMobileIndex = accountOpen
+    ? mobileNavItems.length
+    : matchedMobileIndex >= 0
+      ? matchedMobileIndex
+      : 0;
+  const prevMobileIndexRef = useRef(activeMobileIndex);
+  const prevDirectionRef = useRef<"next" | "prev" | "none">("none");
+  if (prevMobileIndexRef.current !== activeMobileIndex) {
+    prevDirectionRef.current =
+      activeMobileIndex > prevMobileIndexRef.current ? "next" : "prev";
+    prevMobileIndexRef.current = activeMobileIndex;
+  }
+  const pageTransitionKey = accountOpen ? "account" : view;
   return (
     <div className="app-shell">
       <aside
@@ -454,18 +471,40 @@ export function Layout({
             </button>
           </div>
         </header>
-        <main className="page-wrap" key={view}>
+        <main
+          className={cn(
+            "page-wrap",
+            prevDirectionRef.current === "next" && "is-nav-next",
+            prevDirectionRef.current === "prev" && "is-nav-prev",
+          )}
+          key={pageTransitionKey}
+        >
           {children}
         </main>
       </div>
-      <nav className="mobile-nav" aria-label="移动端导航">
-        {navItems.slice(0, 4).map((item) => {
+      <nav
+        className="mobile-nav"
+        aria-label="移动端导航"
+        style={
+          {
+            "--nav-index": activeMobileIndex,
+            "--nav-count": totalMobileTabs,
+          } as CSSProperties
+        }
+      >
+        <span className="mobile-nav-glider" aria-hidden="true" />
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
+          const active = !accountOpen && view === item.key;
           return (
             <button
               key={item.key}
-              className={cn(!accountOpen && view === item.key && "is-active")}
-              onClick={() => onNavigate(item.key)}
+              className={cn(active && "is-active")}
+              aria-current={active ? "page" : undefined}
+              onClick={() => {
+                triggerHaptic("light");
+                onNavigate(item.key);
+              }}
             >
               <Icon size={20} />
               <span>{item.shortLabel ?? item.label.replace("课程", "")}</span>
@@ -475,7 +514,10 @@ export function Layout({
         <button
           className={cn(accountOpen && "is-active")}
           aria-current={accountOpen ? "page" : undefined}
-          onClick={() => onOpenAccount("identity")}
+          onClick={() => {
+            triggerHaptic("light");
+            onOpenAccount("identity");
+          }}
         >
           <Settings size={20} />
           <span>账号</span>
