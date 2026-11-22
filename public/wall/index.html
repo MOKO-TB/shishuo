@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f0e6" />
+    <meta name="robots" content="noindex" />
+    <title>本节提问墙 · 师说</title>
+    <link rel="icon" type="image/svg+xml" href="/mark.svg" />
+    <link rel="stylesheet" href="./wall.css" />
+  </head>
+  <body>
+    <header class="wall-header">
+      <a class="brand" href="/" aria-label="师说首页">
+        <img src="/mark.svg" width="34" height="34" alt="" />
+        <span>师说</span>
+      </a>
+      <span class="header-tag">本节提问墙</span>
+    </header>
+
+    <main class="wall-main">
+      <section class="wall-hero">
+        <p class="kicker">匿名提问 · 无需登录</p>
+        <h1 id="course-name">正在打开本节提问墙…</h1>
+        <p class="meta" id="course-meta"></p>
+      </section>
+
+      <section class="wall-card" id="loading-card">
+        <div class="loading-dot" aria-hidden="true"></div>
+        <p>正在连接课堂…</p>
+      </section>
+
+      <section class="wall-card is-hidden" id="closed-card">
+        <div class="result-mark is-closed" aria-hidden="true">✕</div>
+        <h2>本节提问墙已结束</h2>
+        <p id="closed-copy">老师已经收起本节收集，下一节课再来提问吧。</p>
+      </section>
+
+      <section class="wall-card is-hidden" id="error-card">
+        <div class="result-mark is-closed" aria-hidden="true">!</div>
+        <h2>链接暂时打不开</h2>
+        <p id="error-copy">请让老师重新生成二维码。</p>
+      </section>
+
+      <form class="wall-card is-hidden" id="ask-form">
+        <label class="field-label" for="question">你卡在哪里？</label>
+        <textarea
+          id="question"
+          name="question"
+          maxlength="500"
+          rows="6"
+          placeholder="把题目、卡住的那一步，或者没听懂的地方写下来…"
+          required
+        ></textarea>
+        <div class="form-foot">
+          <span id="count">0 / 500</span>
+          <button class="submit-button" id="submit-button" type="submit">匿名提交</button>
+        </div>
+        <p class="form-hint">AI 能答会先给参考答案；答不了的会归并进老师待办，课上统一讲。</p>
+        <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+      </form>
+
+      <section class="wall-card is-hidden" id="result-card" aria-live="polite">
+        <div class="result-mark" id="result-mark" aria-hidden="true">✓</div>
+        <h2 id="result-title">已收到</h2>
+        <div class="answer-box is-hidden" id="answer-box">
+          <span class="answer-label">AI 参考答案</span>
+          <p id="answer-text"></p>
+        </div>
+        <p class="result-hint" id="result-hint"></p>
+        <button class="ghost-button" id="ask-again" type="button">再问一个</button>
+      </section>
+
+      <p class="privacy-note">匿名提交 · 不收集你的账号信息</p>
+    </main>
+
+    <script src="./wall.js" defer></script>
+  </body>
+</html>

@@ -8,6 +8,7 @@ import {
   Compass,
   Inbox,
   LayoutDashboard,
+  MessageSquarePlus,
   RefreshCw,
   Server,
   ShieldAlert,
@@ -35,6 +36,7 @@ import { AdminUsagePanel } from './AdminUsagePanel'
 import { AdminContentPanel } from './AdminContentPanel'
 import { AdminVerificationPanel } from './AdminVerificationPanel'
 import { AdminSystemPanel } from './AdminSystemPanel'
+import { AdminFeedbackPanel } from './AdminFeedbackPanel'
 
 interface AdminConsoleViewProps {
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
@@ -47,6 +49,7 @@ const TABS: Array<{ key: AdminTab; label: string; icon: typeof LayoutDashboard }
   { key: 'users', label: '账号管理', icon: Users },
   { key: 'moderation', label: '风控审核', icon: ShieldAlert },
   { key: 'campus', label: '学生问答', icon: Inbox },
+  { key: 'feedback', label: '意见反馈', icon: MessageSquarePlus },
   { key: 'audit', label: '操作审计', icon: ShieldCheck },
   { key: 'usage', label: 'AI 用量', icon: Activity },
   { key: 'content', label: '内容运营', icon: Compass },
@@ -153,6 +156,12 @@ export function AdminConsoleView({
       label: '学生问答',
       description: '查看学生问题，校园主理人回复',
       icon: Inbox,
+    },
+    {
+      tab: 'feedback',
+      label: '意见反馈',
+      description: '查看并回复学生/教师提交的问题与建议',
+      icon: MessageSquarePlus,
     },
     {
       tab: 'audit',
@@ -404,6 +413,7 @@ export function AdminConsoleView({
       {tab === 'users' && <AdminUsersPanel notify={notify} />}
       {tab === 'moderation' && <AdminModerationPanel notify={notify} />}
       {tab === 'campus' && <AdminCampusPanel notify={notify} />}
+      {tab === 'feedback' && <AdminFeedbackPanel notify={notify} />}
       {tab === 'audit' && <AdminAuditPanel />}
       {tab === 'usage' && <AdminUsagePanel notify={notify} />}
       {tab === 'content' && (

@@ -14,6 +14,7 @@ const ACTION_LABELS = {
   'thread-info-request': '请学生补充',
   'thread-supplement': '学生补充',
   'thread-group': '调整同题组',
+  'wall-submit': '提问墙匿名提问',
   'faq-add': '新增 FAQ',
   'faq-update': '编辑 FAQ',
   'faq-delete': '删除 FAQ',

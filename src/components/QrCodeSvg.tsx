@@ -26,7 +26,7 @@ export function QrCodeSvg({ value, size = 168, label = '扫码进入本节提问
     )
   }
 
-  const quiet = 3
+  const quiet = 4
   const viewSize = count + quiet * 2
   const paths: string[] = []
   for (let r = 0; r < count; r += 1) {

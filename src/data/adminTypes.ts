@@ -248,6 +248,7 @@ export type AdminTab =
   | 'users'
   | 'moderation'
   | 'campus'
+  | 'feedback'
   | 'audit'
   | 'usage'
   | 'content'

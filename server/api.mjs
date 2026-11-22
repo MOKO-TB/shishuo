@@ -2,7 +2,7 @@ import { gzipSync } from 'node:zlib'
 import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId, createRememberToken, userForRememberToken, deleteRememberToken, deleteRememberTokensForUser } from './auth.mjs'
 import { WORKSPACE_ID } from './db.mjs'
 import { HttpError } from './http-error.mjs'
-import { PILOT_COURSES, PILOT_COURSE_IDS, TEACHER_COURSES, parseJsonObject, studentCourseTeacherMap, teacherCourseSet } from './policy.mjs'
+import { CAMPUS_COURSE_ID, PILOT_COURSES, PILOT_COURSE_IDS, TEACHER_COURSES, parseJsonObject, studentCourseTeacherMap, teacherCourseSet } from './policy.mjs'
 import { authorizeAndMerge, projectWorkspace } from './permissions.mjs'
 import { buildActionNext } from './actions.mjs'
 import { redactMessages } from './redact.mjs'
@@ -483,8 +483,155 @@ function pickUpstreamMessage(status, raw) {
   return `上游模型调用失败（HTTP ${status}）。${providerMessage ? ` ${providerMessage}` : ''}`.trim()
 }
 
+const FEEDBACK_CATEGORIES = new Set(['bug', 'suggestion', 'ai', 'schedule', 'report', 'account'])
+const FEEDBACK_STATUSES = new Set(['pending', 'reviewing', 'resolved', 'closed'])
+
+function sanitizeFeedbackRow(row) {
+  let clientMeta = {}
+  try {
+    const parsed = JSON.parse(row.client_meta_json || '{}')
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) clientMeta = parsed
+  } catch {
+    clientMeta = {}
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    userName: row.user_name,
+    userEmail: row.user_email,
+    userRole: row.user_role,
+    category: row.category,
+    content: row.content,
+    contact: row.contact,
+    screenshotUrl: row.screenshot_url || '',
+    clientMeta,
+    status: row.status,
+    adminReply: row.admin_reply || '',
+    repliedBy: row.replied_by || '',
+    repliedAt: row.replied_at ? Number(row.replied_at) : null,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  }
+}
+
+function safeFeedbackScreenshotUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (raw.startsWith('/uploads/') && !raw.includes('..') && raw.length <= 240) return raw
+  if (/^https?:\/\//i.test(raw) && raw.length <= 500) return raw
+  return ''
+}
+
+/** 提问墙公开问卷：轻量文本向量，用来判断问题与课程 FAQ 是否有重叠。 */
+function wallTextGrams(text) {
+  const normalized = String(text || '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+  const grams = new Set()
+  for (const word of normalized.split(/\s+/)) {
+    if (!word) continue
+    if (/^[a-z0-9]+$/.test(word)) {
+      if (word.length >= 2) grams.add(word)
+      continue
+    }
+    for (let index = 0; index < word.length - 1; index += 1) {
+      grams.add(word.slice(index, index + 2))
+    }
+  }
+  return grams
+}
+
+function wallFaqMatches(question, faqs) {
+  const query = wallTextGrams(question)
+  if (query.size === 0) return []
+  return faqs
+    .map((faq) => {
+      const documentText = [faq.question, ...(faq.aliases ?? []), ...(faq.tags ?? [])].join(' ')
+      const document = wallTextGrams(documentText)
+      let shared = 0
+      for (const gram of query) {
+        if (document.has(gram)) shared += 1
+      }
+      return { faq, score: shared }
+    })
+    .filter((item) => item.score >= 2)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 3)
+}
+
+async function askWallAi({ ai, courseName, question, matches }) {
+  if (!ai.configured || !ai.baseUrl || !ai.model || matches.length === 0) return ''
+  const context = matches
+    .map(
+      ({ faq }, index) =>
+        `【${index + 1}】${faq.question}\n${String(faq.answer || '').slice(0, 700)}`,
+    )
+    .join('\n\n')
+  const controller = new AbortController()
+  const timeout = setTimeout(
+    () => controller.abort(),
+    Math.min(Number(ai.timeoutMs) || 30_000, 30_000),
+  )
+  try {
+    const response = await fetch(upstreamEndpoint(ai.baseUrl), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ai.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: ai.model,
+        messages: redactMessages([
+          {
+            role: 'system',
+            content:
+              '你是高校课程助教。只能依据提供的课程 FAQ 回答，不要编造；没有依据就明确说不知道。回答控制在 220 字以内，口语化，先说结论，再说关键一步。',
+          },
+          {
+            role: 'user',
+            content: `课程：${courseName}\n学生问题：${question}\n\n课程 FAQ：\n${context}`,
+          },
+        ]),
+        temperature: 0.2,
+        max_tokens: 600,
+        stream: false,
+        enable_thinking: false,
+      }),
+      signal: controller.signal,
+    })
+    if (!response.ok) return ''
+    const payload = await response.json()
+    const content = payload?.choices?.[0]?.message?.content
+    return typeof content === 'string' ? content.trim().slice(0, 2_000) : ''
+  } catch {
+    return ''
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 export function createApiHandler({ db, config }) {
   const loginAttempts = new Map()
+  const wallSubmits = new Map()
+
+  function allowWallSubmit(key) {
+    const now = Date.now()
+    const recent = (wallSubmits.get(key) ?? []).filter((at) => now - at < 60 * 60_000)
+    const lastMinute = recent.filter((at) => now - at < 60_000).length
+    if (lastMinute >= 5 || recent.length >= 30) {
+      wallSubmits.set(key, recent)
+      return false
+    }
+    recent.push(now)
+    wallSubmits.set(key, recent)
+    if (wallSubmits.size > 2_000) {
+      for (const [entry, times] of wallSubmits) {
+        if (!times.some((at) => now - at < 60 * 60_000)) wallSubmits.delete(entry)
+      }
+    }
+    return true
+  }
   const jw = createJwService()
   const chaoxing = createChaoxingService(db)
   const library = createLibraryService({ storageDir: config.librarySessionsDir })
@@ -1147,6 +1294,158 @@ export function createApiHandler({ db, config }) {
           // 教师自助注册是否开放（需配置 TEACHER_INVITE_CODE）。
           teacherRegistration: Boolean(config.teacherInviteCode),
           workspaceRevision: Number(row?.revision ?? 0),
+        })
+      }
+
+      // 本节提问墙公开问卷：不要求登录，只允许向正在收集的场次匿名提问。
+      if (pathname === '/api/wall/info' && req.method === 'GET') {
+        const courseId = String(url.searchParams.get('course') || '').trim()
+        const sessionId = String(url.searchParams.get('session') || '').trim()
+        const data = parsedWorkspace(workspaceRow(db))
+        const note = (data?.courseNotes ?? []).find((item) => item.courseId === courseId)
+        const session = note?.wallSession
+        if (!note || !session || session.id !== sessionId) {
+          return sendError(res, 404, '本节提问墙不存在或已更新，请重新扫码。')
+        }
+        return sendJson(res, 200, {
+          courseId,
+          courseName: PILOT_COURSES[courseId]?.name ?? '本课程',
+          teacher: String(note.teacher || PILOT_COURSES[courseId]?.teacher || '任课老师'),
+          topic: String(session.topic || ''),
+          active: session.active === true,
+          startedAt: Number(session.startedAt || 0),
+        })
+      }
+
+      if (pathname === '/api/wall/submit' && req.method === 'POST') {
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, 8 * 1024)
+        // 隐藏字段是给自动化脚本踩的；正常用户永远不会填。
+        if (String(body.website || '').trim()) return sendJson(res, 200, { ok: true, mode: 'ignored' })
+        const courseId = String(body.courseId || '').trim()
+        const sessionId = String(body.sessionId || '').trim()
+        const question = String(body.question || '').trim()
+        if (!courseId || !sessionId) return sendError(res, 400, '缺少课程或场次信息。')
+        if (!question) return sendError(res, 400, '请先写下你的问题。')
+        if (question.length > 500) return sendError(res, 400, '问题最多 500 字。')
+        if (!allowWallSubmit(`${clientIp(req)}:${sessionId}`)) {
+          return sendError(res, 429, '提交太频繁了，请过一会儿再试。')
+        }
+
+        const data = parsedWorkspace(workspaceRow(db))
+        const note = (data?.courseNotes ?? []).find((item) => item.courseId === courseId)
+        const session = note?.wallSession
+        if (!note || !session || session.id !== sessionId) {
+          return sendError(res, 409, '本节提问墙已更新，请重新扫码。')
+        }
+        if (session.active !== true) {
+          return sendError(res, 410, '本节提问墙已结束，请让老师重新开启。')
+        }
+
+        const terms = activeTerms(db)
+        const blocked =
+          findModerationTerm(question, terms) ||
+          findBlockedTerm(config, [{ role: 'user', content: question }])
+        if (blocked) return sendError(res, 400, `内容包含不允许的词：${blocked}`)
+
+        const sessionCount = (data?.threads ?? []).filter(
+          (thread) => thread.courseId === courseId && thread.wallSessionId === sessionId,
+        ).length
+        if (sessionCount >= 300) {
+          return sendError(res, 429, '本节提问墙已经收满，请联系老师。')
+        }
+
+        const courseFaqs = (data?.faqs ?? []).filter(
+          (faq) => faq.courseId === courseId && faq.courseId !== CAMPUS_COURSE_ID,
+        )
+        const matches = wallFaqMatches(question, courseFaqs)
+        const courseName = PILOT_COURSES[courseId]?.name ?? '本课程'
+        const answer = matches.length > 0
+          ? await askWallAi({
+              ai: resolveAiConfig(db, config.ai),
+              courseName,
+              question,
+              matches,
+            })
+          : ''
+        const now = Date.now()
+        const threadId = `t-wall-${newId()}`
+        const thread = {
+          id: threadId,
+          courseId,
+          student: {
+            id: `wall-guest-${newId()}`,
+            name: '匿名同学',
+            anonymous: true,
+          },
+          question,
+          createdAt: now,
+          status: answer ? 'ai' : 'pending',
+          kind: 'ask',
+          confidence: answer ? 'medium' : 'low',
+          confidenceScore: answer ? 0.6 : 0,
+          aiAnswer: answer || undefined,
+          sources: answer ? matches.map((item) => item.faq.id) : [],
+          feedback: null,
+          wallSessionId: sessionId,
+          wallTopic: session.topic || '',
+          ...(answer
+            ? {}
+            : {
+                escalation: {
+                  title: question.slice(0, 80),
+                  note: '本节提问墙匿名提交，AI 没有把握，自动转交。',
+                  anonymous: true,
+                  urgency: 'week',
+                  at: now,
+                  auto: true,
+                },
+              }),
+        }
+        const notification = answer
+          ? null
+          : {
+              id: `n-${newId()}`,
+              audience: 'teacher',
+              recipientId: note.teacher || PILOT_COURSES[courseId]?.teacher || '',
+              courseId,
+              threadId,
+              kind: 'teacher-new-question',
+              title: `提问墙新问题：${question.slice(0, 26)}`,
+              body: `匿名同学 · ${session.topic || '本节提问墙'}`,
+              createdAt: now,
+              read: false,
+            }
+
+        let written = null
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          try {
+            written = mutateWorkspaceAsAdmin(db, {
+              user: { id: 'wall-guest', name: '本节提问墙', role: 'system' },
+              action: 'wall-submit',
+              summary: `提问墙收到匿名问题（${courseName}）`,
+              courseIds: [courseId],
+              mutate(next) {
+                next.threads = [thread, ...(next.threads ?? [])]
+                if (notification) {
+                  next.notifications = [notification, ...(next.notifications ?? [])]
+                }
+                return true
+              },
+            })
+            break
+          } catch (error) {
+            if (error instanceof HttpError && error.status === 409 && attempt === 0) continue
+            throw error
+          }
+        }
+        return sendJson(res, 201, {
+          ok: true,
+          id: threadId,
+          mode: answer ? 'ai' : 'pending',
+          answer,
+          topic: session.topic || '',
+          revision: written?.revision ?? 0,
         })
       }
 
@@ -2191,6 +2490,137 @@ export function createApiHandler({ db, config }) {
           serverTime: Date.now(),
           revision: Number(row?.revision ?? 0),
         })
+      }
+
+      // 意见反馈（学生端 / 教师端 / 手机端共用）：仅提交人与管理员可见。
+      if (pathname === '/api/feedback' && req.method === 'POST') {
+        const user = requireUser(req)
+        assertUserCanWrite(db, user)
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const category = String(body.category || '').trim()
+        if (!FEEDBACK_CATEGORIES.has(category)) {
+          return sendError(res, 400, '请选择有效的反馈类型。')
+        }
+        const content = String(body.content || '').trim()
+        if (!content) return sendError(res, 400, '请填写问题描述。')
+        if (content.length > 500) return sendError(res, 400, '问题描述最多 500 字。')
+        const contact = String(body.contact || '').trim().slice(0, 100)
+        const screenshotUrl = safeFeedbackScreenshotUrl(body.screenshotUrl)
+        const rawMeta =
+          body.clientMeta && typeof body.clientMeta === 'object' && !Array.isArray(body.clientMeta)
+            ? body.clientMeta
+            : {}
+        const clientMeta = {
+          platform: String(rawMeta.platform || '').slice(0, 32),
+          appVersion: String(rawMeta.appVersion || '').slice(0, 32),
+          view: String(rawMeta.view || '').slice(0, 32),
+          viewport: String(rawMeta.viewport || '').slice(0, 32),
+        }
+        const now = Date.now()
+        const id = `fb_${newId()}`
+        db.prepare(
+          `INSERT INTO feedbacks
+             (id, user_id, user_name, user_email, user_role, category, content, contact, screenshot_url, client_meta_json, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+        ).run(
+          id,
+          user.id,
+          user.name,
+          user.email || '',
+          user.role || 'student',
+          category,
+          content,
+          contact,
+          screenshotUrl,
+          JSON.stringify(clientMeta),
+          now,
+          now,
+        )
+        const created = db.prepare('SELECT * FROM feedbacks WHERE id = ?').get(id)
+        recordAudit(db, {
+          revision: Number(workspaceRow(db)?.revision ?? 0),
+          user,
+          actions: ['feedback-create'],
+          courseIds: ['campus'],
+          summary: `${user.name} 提交了意见反馈（${category}）`,
+          mode: clientMeta.platform || 'web',
+        })
+        return sendJson(res, 201, { feedback: sanitizeFeedbackRow(created) })
+      }
+
+      if (pathname === '/api/feedback/mine' && req.method === 'GET') {
+        const user = requireUser(req)
+        const rows = db
+          .prepare('SELECT * FROM feedbacks WHERE user_id = ? ORDER BY created_at DESC LIMIT 100')
+          .all(user.id)
+        return sendJson(res, 200, { items: rows.map(sanitizeFeedbackRow) })
+      }
+
+      if (pathname === '/api/admin/feedback' && req.method === 'GET') {
+        requireAdmin(req)
+        const status = url.searchParams.get('status') || 'all'
+        const category = url.searchParams.get('category') || 'all'
+        const q = String(url.searchParams.get('q') || '').trim().toLowerCase()
+        const allRows = db.prepare('SELECT * FROM feedbacks ORDER BY created_at DESC LIMIT 300').all()
+        const stats = {
+          total: allRows.length,
+          pending: allRows.filter((row) => row.status === 'pending').length,
+          reviewing: allRows.filter((row) => row.status === 'reviewing').length,
+          resolved: allRows.filter((row) => row.status === 'resolved' || row.status === 'closed').length,
+        }
+        const filtered = allRows
+          .filter((row) => status === 'all' || row.status === status)
+          .filter((row) => category === 'all' || row.category === category)
+          .filter(
+            (row) =>
+              !q ||
+              String(row.content || '').toLowerCase().includes(q) ||
+              String(row.user_name || '').toLowerCase().includes(q) ||
+              String(row.contact || '').toLowerCase().includes(q),
+          )
+        return sendJson(res, 200, { stats, items: filtered.map(sanitizeFeedbackRow) })
+      }
+
+      const adminFeedbackMatch = /^\/api\/admin\/feedback\/([\w.-]+)$/.exec(pathname)
+      if (adminFeedbackMatch && req.method === 'PATCH') {
+        const admin = requireAdmin(req)
+        const id = adminFeedbackMatch[1]
+        const existing = db.prepare('SELECT * FROM feedbacks WHERE id = ?').get(id)
+        if (!existing) return sendError(res, 404, '未找到对应的意见反馈。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const nextStatus =
+          body.status !== undefined ? String(body.status).trim() : existing.status
+        if (!FEEDBACK_STATUSES.has(nextStatus)) {
+          return sendError(res, 400, '无效的处理状态。')
+        }
+        const nextReply =
+          body.adminReply !== undefined
+            ? String(body.adminReply || '').trim().slice(0, 1000)
+            : existing.admin_reply
+        const now = Date.now()
+        const hasReplyChanged = nextReply && nextReply !== (existing.admin_reply || '')
+        db.prepare(
+          `UPDATE feedbacks
+           SET status = ?, admin_reply = ?, replied_by = ?, replied_at = ?, updated_at = ?
+           WHERE id = ?`,
+        ).run(
+          nextStatus,
+          nextReply,
+          nextReply ? admin.name : existing.replied_by,
+          nextReply ? (hasReplyChanged ? now : existing.replied_at || now) : null,
+          now,
+          id,
+        )
+        const updated = db.prepare('SELECT * FROM feedbacks WHERE id = ?').get(id)
+        recordAudit(db, {
+          revision: Number(workspaceRow(db)?.revision ?? 0),
+          user: admin,
+          actions: ['feedback-reply'],
+          courseIds: ['campus'],
+          summary: `管理员处理了 ${existing.user_name} 的意见反馈（${nextStatus}）`,
+          mode: 'admin',
+        })
+        return sendJson(res, 200, { feedback: sanitizeFeedbackRow(updated) })
       }
 
       if (pathname === '/api/state' && req.method === 'GET') {

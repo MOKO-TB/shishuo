@@ -8,6 +8,7 @@ import {
   Compass,
   GraduationCap,
   Inbox,
+  MessageSquarePlus,
   MessagesSquare,
   Moon,
   Monitor,
@@ -59,6 +60,7 @@ interface LayoutProps {
     tab?: "identity" | "schedule" | "scores" | "teachers",
   ) => void;
   onOpenAdmin: () => void;
+  onOpenFeedback?: (tab?: "compose" | "mine") => void;
   onOpenMentor: (prompt?: string) => void;
   onNavigate: (view: ViewKey) => void;
   onOpenGuide: () => void;
@@ -86,6 +88,7 @@ export function Layout({
   accountOpen = false,
   onOpenAccount,
   onOpenAdmin,
+  onOpenFeedback,
   onOpenMentor,
   onNavigate,
   onOpenGuide,
@@ -388,6 +391,17 @@ export function Layout({
               <Compass size={16} />
               <span>演示指引</span>
             </button>
+            {onOpenFeedback && (
+              <button
+                className="guide-button"
+                onClick={() => onOpenFeedback("compose")}
+                aria-label="意见反馈"
+                title="意见反馈"
+              >
+                <MessageSquarePlus size={16} />
+                <span>反馈</span>
+              </button>
+            )}
             <button
               className="theme-toggle"
               onClick={() => setThemePreference(toggleTheme())}

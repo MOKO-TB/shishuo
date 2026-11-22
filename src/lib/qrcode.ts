@@ -236,7 +236,8 @@ function drawFormatBits(modules: boolean[][], mask: number) {
   // EC level M = 00
   const bits = bchFormatBits(0b00, mask)
   for (let i = 0; i < 15; i += 1) {
-    const dark = ((bits >>> i) & 1) === 1
+    // 格式信息按高位到低位写入；反序会导致标准扫码器读不出码。
+    const dark = ((bits >>> (14 - i)) & 1) === 1
     if (i < 6) modules[8][i] = dark
     else if (i < 8) modules[8][i + 1] = dark
     else modules[8][n - 15 + i] = dark

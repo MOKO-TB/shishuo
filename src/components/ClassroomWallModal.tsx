@@ -87,13 +87,12 @@ export function ClassroomWallModal({
   const totalAiSolved = clusters.reduce((sum, item) => sum + item.aiSolvedCount, 0)
   const totalPending = clusters.reduce((sum, item) => sum + item.pendingCount, 0)
 
-  const effectiveSessionId = session?.id ?? (course ? `wall-${course.id}` : 'wall')
   const qrUrl = useMemo(() => {
-    if (!course) return ''
-    return `${window.location.origin}/?view=student&wall=1&course=${encodeURIComponent(
+    if (!course || !session?.active) return ''
+    return `${window.location.origin}/wall/?course=${encodeURIComponent(
       course.id,
-    )}&session=${encodeURIComponent(effectiveSessionId)}`
-  }, [course, effectiveSessionId])
+    )}&session=${encodeURIComponent(session.id)}`
+  }, [course, session?.active, session?.id])
 
   if (!course) return null
 
@@ -273,26 +272,36 @@ export function ClassroomWallModal({
           </div>
 
           <div className="wall-qr-card">
-            <div className="wall-qr-frame">
-              <QrCodeSvg value={qrUrl} size={148} label={`${course.shortName}本节提问墙二维码`} />
-            </div>
-            <div className="wall-qr-meta">
-              <strong>
-                <QrCode size={14} />
-                学生扫码匿名提问
-              </strong>
-              <span>投屏到教室大屏，下课前 3 分钟扫码直达「本节提问墙」。</span>
-              <div className="wall-qr-actions">
-                <button
-                  type="button"
-                  className="button button-ghost"
-                  onClick={() => void handleCopyUrl()}
-                >
-                  <Copy size={13} />
-                  复制扫码链接
-                </button>
+            {qrUrl ? (
+              <>
+                <div className="wall-qr-frame">
+                  <QrCodeSvg value={qrUrl} size={176} label={`${course.shortName}本节提问墙二维码`} />
+                </div>
+                <div className="wall-qr-meta">
+                  <strong>
+                    <QrCode size={14} />
+                    学生扫码匿名提问
+                  </strong>
+                  <span>匿名问卷 · 无需登录，扫码直接填写，不进入主网站。</span>
+                  <div className="wall-qr-actions">
+                    <button
+                      type="button"
+                      className="button button-ghost"
+                      onClick={() => void handleCopyUrl()}
+                    >
+                      <Copy size={13} />
+                      复制问卷链接
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="wall-qr-placeholder">
+                <QrCode size={26} />
+                <strong>开启本节提问墙后生成问卷二维码</strong>
+                <span>学生扫码即可匿名填写，不用登录师说账号。</span>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

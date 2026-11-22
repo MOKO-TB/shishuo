@@ -178,6 +178,31 @@ export function openDatabase(dbPath) {
       updated_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS feedbacks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      user_name TEXT NOT NULL,
+      user_email TEXT NOT NULL DEFAULT '',
+      user_role TEXT NOT NULL DEFAULT 'student',
+      category TEXT NOT NULL,
+      content TEXT NOT NULL,
+      contact TEXT NOT NULL DEFAULT '',
+      screenshot_url TEXT NOT NULL DEFAULT '',
+      client_meta_json TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_reply TEXT NOT NULL DEFAULT '',
+      replied_by TEXT NOT NULL DEFAULT '',
+      replied_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_feedbacks_user_time
+      ON feedbacks(user_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_feedbacks_status_time
+      ON feedbacks(status, created_at DESC);
+
     CREATE TABLE IF NOT EXISTS chaoxing_courses (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

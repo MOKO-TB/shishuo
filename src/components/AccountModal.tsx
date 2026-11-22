@@ -9,6 +9,7 @@ import {
   GraduationCap,
   Loader2,
   LogOut,
+  MessageSquarePlus,
   Plus,
   RefreshCw,
   Search,
@@ -86,6 +87,7 @@ interface AccountModalProps {
   open: boolean
   initialTab?: TabKey
   onClose: () => void
+  onOpenFeedback?: (tab?: 'compose' | 'mine') => void
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
   /** page：作为二级页面展示（默认，设置场景）；dialog：保留弹窗形态 */
   variant?: 'page' | 'dialog'
@@ -317,6 +319,46 @@ function JwLoginFields({
   )
 }
 
+function FeedbackSettingsGroup({
+  onOpenFeedback,
+}: {
+  onOpenFeedback?: (tab?: 'compose' | 'mine') => void
+}) {
+  if (!onOpenFeedback) return null
+  return (
+    <section className="settings-group" aria-labelledby="settings-feedback">
+      <h3 className="settings-group-title" id="settings-feedback">
+        意见反馈
+      </h3>
+      <div className="settings-row-list">
+        <div className="settings-row is-keep-hint">
+          <span className="settings-row-copy">
+            <strong>告诉我们哪里不对</strong>
+            <small>提交异常、体验建议或违规举报，查看处理进度与管理员回复。</small>
+          </span>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={() => onOpenFeedback('mine')}
+            >
+              我的反馈
+            </button>
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={() => onOpenFeedback('compose')}
+            >
+              <MessageSquarePlus size={14} />
+              写反馈
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function AttachmentPrivacyGroup({
   ask,
   onChange,
@@ -368,6 +410,7 @@ export function AccountModal({
   initialTab = 'identity',
   variant = 'page',
   onClose,
+  onOpenFeedback,
   notify,
 }: AccountModalProps) {
   const profile = useProfile()
@@ -867,6 +910,7 @@ export function AccountModal({
           </section>
 
           <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
+          <FeedbackSettingsGroup onOpenFeedback={onOpenFeedback} />
 
           <section className="settings-group is-danger" aria-labelledby="settings-teacher-danger">
             <h3 className="settings-group-title" id="settings-teacher-danger">
@@ -1099,6 +1143,7 @@ export function AccountModal({
           </section>
 
           <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
+          <FeedbackSettingsGroup onOpenFeedback={onOpenFeedback} />
 
           <section className="settings-group" aria-labelledby="settings-notes">
             <h3 className="settings-group-title" id="settings-notes">

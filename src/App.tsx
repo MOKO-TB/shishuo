@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Layout } from './components/Layout'
 import { AccountModal } from './components/AccountModal'
 import { FaqModal, type FaqModalState } from './components/FaqModal'
+import { FeedbackModal } from './components/FeedbackModal'
 import { GuideModal } from './components/GuideModal'
 import { MajorMentorDrawer } from './components/MajorMentor'
 import { NotificationCenter } from './components/NotificationCenter'
@@ -39,6 +40,10 @@ export default function App() {
     () => TEACHERS.find((teacher) => teacher.name === user?.name)?.name ?? TEACHERS[0].name,
   )
   const [guideOpen, setGuideOpen] = useState(false)
+  const [feedbackModal, setFeedbackModal] = useState<{ open: boolean; tab: 'compose' | 'mine' }>({
+    open: false,
+    tab: 'compose',
+  })
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [backupOpen, setBackupOpen] = useState(false)
@@ -160,6 +165,10 @@ export default function App() {
     },
     [accountRole, data.threads, notify, profile],
   )
+
+  const openFeedback = useCallback((tab: 'compose' | 'mine' = 'compose') => {
+    setFeedbackModal({ open: true, tab })
+  }, [])
 
   const openFaq = useCallback((faqId: string) => {
     setFaqModal({ mode: 'view', faqId })
@@ -416,6 +425,7 @@ export default function App() {
         onOpenAccount={openAccount}
         accountOpen={accountOpen}
         onOpenAdmin={() => window.location.assign('/admin/')}
+        onOpenFeedback={openFeedback}
         onOpenMentor={openMentor}
         onNavigate={navigate}
         onOpenGuide={openGuide}
@@ -427,6 +437,7 @@ export default function App() {
               open={accountOpen}
               initialTab={accountTab}
               onClose={() => setAccountOpen(false)}
+              onOpenFeedback={openFeedback}
               notify={notify}
             />
           </div>
@@ -511,6 +522,14 @@ export default function App() {
         teacherName={selectedTeacher.name}
         onClose={() => setFaqModal(null)}
         onEdit={(faqId) => setFaqModal({ mode: 'edit', faqId })}
+        notify={notify}
+      />
+
+      <FeedbackModal
+        open={feedbackModal.open}
+        initialTab={feedbackModal.tab}
+        currentView={view}
+        onClose={() => setFeedbackModal((prev) => ({ ...prev, open: false }))}
         notify={notify}
       />
 

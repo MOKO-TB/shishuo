@@ -1543,3 +1543,80 @@ test('本节提问墙：教师开启场次，学生匿名提问同步且跨端�
   assert.equal(seen.student.name, '匿名同学', '教师端应看到匿名保护')
   assert.equal(seen.wallSessionId, 'wall-ds-session-1')
 })
+
+test('公开提问墙：免登录问卷提交，结束后拒绝', async () => {
+  const current = await state('teacherDs')
+  const existing = (current.json.data.courseNotes ?? []).find((note) => note.courseId === 'ds') ?? {
+    courseId: 'ds',
+    teacher: '陈砚',
+    announcement: '',
+    officeHours: '',
+    updatedAt: Date.now(),
+  }
+  const wallNote = {
+    ...existing,
+    updatedAt: Date.now(),
+    wallSession: {
+      id: 'wall-public-1',
+      topic: '第 6 章 · 图',
+      startedAt: Date.now(),
+      active: true,
+    },
+  }
+  const saved = await putState(
+    'teacherDs',
+    {
+      ...current.json.data,
+      courseNotes: [wallNote, ...(current.json.data.courseNotes ?? []).filter((note) => note.courseId !== 'ds')],
+    },
+    current.json.revision,
+  )
+  assert.equal(saved.status, 200)
+
+  const info = await api('/api/wall/info?course=ds&session=wall-public-1')
+  assert.equal(info.status, 200)
+  assert.equal(info.json.active, true)
+  assert.equal(info.json.courseName, '数据结构')
+  assert.equal(info.json.teacher, '陈砚')
+
+  const submitted = await api('/api/wall/submit', {
+    method: 'POST',
+    body: {
+      courseId: 'ds',
+      sessionId: 'wall-public-1',
+      question: 'KMP 的 next 数组手算总是差一位，怎么理解？',
+    },
+  })
+  assert.equal(submitted.status, 201)
+  assert.equal(submitted.json.ok, true)
+  assert.ok(['ai', 'pending'].includes(submitted.json.mode))
+
+  const teacherView = await state('teacherDs')
+  const wallThread = teacherView.json.data.threads.find((thread) => thread.id === submitted.json.id)
+  assert.ok(wallThread, '公开问卷提交应进入教师工作区')
+  assert.equal(wallThread.student.name, '匿名同学')
+  assert.equal(wallThread.wallSessionId, 'wall-public-1')
+
+  const latest = await state('teacherDs')
+  const closedNotes = (latest.json.data.courseNotes ?? []).map((note) =>
+    note.courseId === 'ds' && note.wallSession?.id === 'wall-public-1'
+      ? { ...note, wallSession: { ...note.wallSession, active: false } }
+      : note,
+  )
+  const closed = await putState(
+    'teacherDs',
+    { ...latest.json.data, courseNotes: closedNotes },
+    latest.json.revision,
+  )
+  assert.equal(closed.status, 200)
+
+  const rejected = await api('/api/wall/submit', {
+    method: 'POST',
+    body: {
+      courseId: 'ds',
+      sessionId: 'wall-public-1',
+      question: '结束后还能提交吗？',
+    },
+  })
+  assert.equal(rejected.status, 410)
+})

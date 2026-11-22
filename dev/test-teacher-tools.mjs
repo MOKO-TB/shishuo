@@ -25,6 +25,26 @@ try {
   assert.equal(matrix[0][matrix.length - 1], true, '右上角定位块应为深色')
   assert.equal(matrix[matrix.length - 1][0], true, '左下角定位块应为深色')
 
+  // Format information must be a valid M-level format string for one of the 8 masks.
+  // A reversed bit order still passes finder-pattern checks but no scanner can decode it.
+  const formatPositions = [
+    [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8],
+    [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8],
+  ]
+  const actualFormat = formatPositions.map(([r, c]) => (matrix[r][c] ? '1' : '0')).join('')
+  const validFormats = Array.from({ length: 8 }, (_, mask) => {
+    const data = mask
+    let rem = data << 10
+    for (let i = 14; i >= 10; i -= 1) {
+      if ((rem >>> i) & 1) rem ^= 0x537 << (i - 10)
+    }
+    return (((data << 10) | rem) ^ 0x5412).toString(2).padStart(15, '0')
+  })
+  assert.ok(
+    validFormats.includes(actualFormat),
+    `二维码格式信息不合法（${actualFormat}），标准扫码器无法识别`,
+  )
+
   // 2. 本节提问墙：30 名学生围绕 5 类主题的提问自动归并
   const wallSessionId = 'wall-ds-demo'
   const topicTemplates = [
