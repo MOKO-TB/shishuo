@@ -1,5 +1,6 @@
 package com.shishuo.app;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 import java.util.Locale;
+import org.json.JSONObject;
 
 /**
  * 沉浸式壳层：
@@ -33,13 +35,18 @@ public class MainActivity extends BridgeActivity {
      * 需要回退成原生 padding，否则内容会钻到状态栏/手势条下面。
      */
     private boolean edgeToEdgeWeb = true;
+    private String pendingThreadId;
+    private String pendingNotificationId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         registerPlugin(PhotoAccessPlugin.class);
+        registerPlugin(ChaoxingAppPlugin.class);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         super.onCreate(savedInstanceState);
+        NotificationPollScheduler.ensureScheduled(getApplicationContext());
+        handleNotificationIntent(getIntent());
 
         Window window = getWindow();
         window.setStatusBarColor(Color.TRANSPARENT);
@@ -72,6 +79,7 @@ public class MainActivity extends BridgeActivity {
                 public void onPageCommitVisible(WebView view, String url) {
                     super.onPageCommitVisible(view, url);
                     detectPageMode(view);
+                    view.postDelayed(MainActivity.this::dispatchPendingOpen, 1200);
                 }
             });
         }
@@ -127,6 +135,49 @@ public class MainActivity extends BridgeActivity {
 
     private void finishFromBack() {
         super.onBackPressed();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNotificationIntent(intent);
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView != null) {
+            webView.postDelayed(this::dispatchPendingOpen, 500);
+        }
+    }
+
+    private void handleNotificationIntent(Intent intent) {
+        if (intent == null) return;
+        String threadId = intent.getStringExtra("shishuo_thread_id");
+        String notificationId = intent.getStringExtra("shishuo_notification_id");
+        if (threadId != null && !threadId.isEmpty()) pendingThreadId = threadId;
+        if (notificationId != null && !notificationId.isEmpty()) {
+            pendingNotificationId = notificationId;
+        }
+    }
+
+    /** 把系统通知点击带到网页；同时保留全局变量，供 React 尚未挂载时补发。 */
+    private void dispatchPendingOpen() {
+        if (pendingThreadId == null && pendingNotificationId == null) return;
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView == null) return;
+        String threadId = pendingThreadId == null ? "" : pendingThreadId;
+        String notificationId =
+            pendingNotificationId == null ? "" : pendingNotificationId;
+        pendingThreadId = null;
+        pendingNotificationId = null;
+        String script =
+            "try{" +
+            "window.__shishuoPendingOpen={threadId:" +
+            JSONObject.quote(threadId) +
+            ",notificationId:" +
+            JSONObject.quote(notificationId) +
+            "};" +
+            "window.dispatchEvent(new CustomEvent('shishuo:open-thread',{detail:window.__shishuoPendingOpen}));" +
+            "}catch(e){}";
+        webView.post(() -> webView.evaluateJavascript(script, null));
     }
 
     @Override

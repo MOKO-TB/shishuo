@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#f4f0e6" />
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('shishuo.theme.v2')
+          if (pref !== 'light' && pref !== 'dark' && pref !== 'system') pref = 'system'
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+          document.documentElement.dataset.themePreference = pref
+        } catch (error) {}
+      })()
+    </script>
     <title>师说 · 管理台</title>
   </head>
   <body>

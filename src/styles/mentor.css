@@ -753,7 +753,7 @@
   padding: 9px 12px;
   border-radius: var(--radius-md) 14px 4px 14px;
   background: var(--jade-deep);
-  color: var(--cream);
+  color: var(--on-accent);
   font-size: 12px;
   line-height: 1.65;
   overflow-wrap: anywhere;
@@ -987,8 +987,8 @@
 }
 
 .mentor-input:focus {
-  border-color: rgba(20, 108, 86, 0.55);
-  box-shadow: 0 0 0 3px rgba(20, 108, 86, 0.09);
+  border-color: var(--jade);
+  box-shadow: 0 0 0 3px var(--jade-soft);
 }
 
 .mentor-send {

@@ -934,10 +934,14 @@
 }
 
 .week-grid {
+  --week-lead-col: 40px;
+  --week-col-min: 94px;
+  --week-row-h: 56px;
+  --week-gap: 4px;
   display: grid;
-  grid-template-columns: 40px repeat(7, minmax(94px, 1fr));
-  grid-auto-rows: 56px;
-  gap: 4px;
+  grid-template-columns: var(--week-lead-col) repeat(7, minmax(var(--week-col-min), 1fr));
+  grid-auto-rows: var(--week-row-h);
+  gap: var(--week-gap);
   overflow-x: auto;
   padding-bottom: 4px;
 }

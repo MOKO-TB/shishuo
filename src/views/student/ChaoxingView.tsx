@@ -16,10 +16,11 @@ import {
 import { Badge, Modal } from '../../components/ui'
 import {
   autoSyncChaoxing,
-  chaoxingExternalUrl,
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
+  openChaoxingAppHome,
+  openChaoxingUrl,
   syncChaoxing,
   type ChaoxingChapter,
   type ChaoxingCourseChapters,
@@ -230,7 +231,7 @@ export function ChaoxingView() {
     } catch {
       // 标记已读失败不挡打开原文
     }
-    if (item.url) window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')
+    if (item.url) await openChaoxingUrl(item.url)
   }
 
   const courseAssignments = useMemo(
@@ -316,22 +317,32 @@ export function ChaoxingView() {
               <button className="button button-ghost" onClick={() => setBindOpen(true)}>
                 课程与绑定
               </button>
+              <button className="button button-ghost" onClick={() => void openChaoxingAppHome()}>
+                <ExternalLink size={14} />
+                学习通 App
+              </button>
               <button className="button button-ghost" onClick={() => void logout()}>
                 <LogOut size={14} />
                 退出学习通
               </button>
             </>
           ) : (
-            <button
-              className="button button-primary"
-              onClick={() => {
-                setBindMethod(mobileLayout ? 'password' : 'qr')
-                setBindOpen(true)
-              }}
-            >
-              {mobileLayout ? <LogOut size={14} /> : <QrCode size={14} />}
-              {mobileLayout ? '账号密码绑定学习通' : '扫码绑定学习通'}
-            </button>
+            <>
+              <button
+                className="button button-primary"
+                onClick={() => {
+                  setBindMethod(mobileLayout ? 'password' : 'qr')
+                  setBindOpen(true)
+                }}
+              >
+                {mobileLayout ? <LogOut size={14} /> : <QrCode size={14} />}
+                {mobileLayout ? '账号密码绑定学习通' : '扫码绑定学习通'}
+              </button>
+              <button className="button button-ghost" onClick={() => void openChaoxingAppHome()}>
+                <ExternalLink size={14} />
+                打开学习通
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -783,7 +794,7 @@ function ChapterModal({
                 <button
                   key={item.id}
                   className="cx-chapter-row"
-                  onClick={() => item.url && window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')}
+                  onClick={() => item.url && void openChaoxingUrl(item.url)}
                 >
                   <span>
                     <strong>{item.sectionTitle}</strong>

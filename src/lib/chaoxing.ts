@@ -1,4 +1,6 @@
 import { apiGet, apiPost } from './api'
+import { openChaoxingAppNative } from './chaoxingApp'
+import { isNativeApp, openExternalUrl } from './nativeShell'
 
 export type ChaoxingKind = 'assignment' | 'material' | 'message'
 
@@ -137,9 +139,40 @@ export function loginChaoxingPassword(account: string, password: string) {
 
 /**
  * 学习通的资源/作业详情没有对应的移动版路径，强换 m.chaoxing.com 会 404；
- * 这里保持教务同步下来的原始 PC 链接，交给手机浏览器打开网页版。
+ * 这里保持教务同步下来的原始 PC 链接，优先交给学习通 App，失败再走浏览器。
  */
 export function chaoxingExternalUrl(url: string) {
   return url
+}
+
+function notifyChaoxingFallback() {
+  window.dispatchEvent(
+    new CustomEvent('shishuo:sync-notice', {
+      detail: { message: '未检测到学习通 App，已用浏览器打开' },
+    }),
+  )
+}
+
+/** 打开一条学习通内容：App 优先，未安装/未处理则浏览器兜底。 */
+export async function openChaoxingUrl(url: string) {
+  const target = chaoxingExternalUrl(url)
+  if (await openChaoxingAppNative(target)) return
+  if (isNativeApp()) {
+    notifyChaoxingFallback()
+    await openExternalUrl(target)
+    return
+  }
+  window.open(target, '_blank', 'noopener,noreferrer')
+}
+
+/** 打开学习通 App 首页；未安装则浏览器兜底。 */
+export async function openChaoxingAppHome() {
+  if (await openChaoxingAppNative('')) return
+  if (isNativeApp()) {
+    notifyChaoxingFallback()
+    await openExternalUrl('https://i.chaoxing.com/')
+    return
+  }
+  window.open('https://i.chaoxing.com/', '_blank', 'noopener,noreferrer')
 }
 

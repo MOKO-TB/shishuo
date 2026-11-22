@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 系统深色时的壳层底色；网页 data-theme 会同步切换。 -->
+    <color name="appBackground">#0F1714</color>
+    <color name="splashBackground">#0F1714</color>
+</resources>

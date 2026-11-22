@@ -86,9 +86,13 @@
 /* 网格：左栏节次 + 7 天；行高按 55 分钟一节排 */
 .schedule-board .week-grid,
 .schedule-zoom .week-grid {
-  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
-  grid-auto-rows: 58px;
-  gap: 5px;
+  --week-lead-col: 52px;
+  --week-col-min: 0px;
+  --week-row-h: 58px;
+  --week-gap: 5px;
+  grid-template-columns: var(--week-lead-col) repeat(7, minmax(0, 1fr));
+  grid-auto-rows: var(--week-row-h);
+  gap: var(--week-gap);
   padding-bottom: 2px;
 }
 
@@ -241,8 +245,10 @@
 }
 
 .schedule-zoom .week-grid.is-zoomed {
-  grid-auto-rows: 78px;
-  gap: 6px;
+  --week-row-h: 78px;
+  --week-gap: 6px;
+  grid-auto-rows: var(--week-row-h);
+  gap: var(--week-gap);
 }
 
 .schedule-zoom .week-class {
@@ -675,5 +681,47 @@
 
   .schedule-zoom .week-grid.is-zoomed {
     grid-auto-rows: 58px;
+  }
+}
+
+/* 平板横屏/矮窗口：按可用高度压缩课表，避免一屏只看到表头。 */
+@media (min-width: 721px) and (max-height: 900px) {
+  .week-grid,
+  .account-week .week-grid,
+  .schedule-board .week-grid,
+  .schedule-zoom .week-grid {
+    grid-auto-rows: 46px;
+    gap: 3px;
+  }
+
+  .schedule-board .week-class,
+  .schedule-zoom .week-class {
+    padding: 4px 6px;
+  }
+}
+
+@media (min-width: 721px) and (max-height: 700px) {
+  .week-grid,
+  .account-week .week-grid,
+  .schedule-board .week-grid,
+  .schedule-zoom .week-grid {
+    grid-auto-rows: 36px;
+    gap: 2px;
+  }
+
+  .week-grid-period em,
+  .week-class-weeks {
+    display: none;
+  }
+
+  .schedule-board .week-class,
+  .schedule-zoom .week-class {
+    padding: 3px 5px;
+  }
+
+  .schedule-board .week-class strong,
+  .schedule-zoom .week-class strong {
+    font-size: 11px;
+    line-height: 1.25;
   }
 }

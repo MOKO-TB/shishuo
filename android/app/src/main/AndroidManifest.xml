@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.chaoxing.mobile" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="chaoxing" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mobilelearn" />
+        </intent>
+    </queries>
     <application
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="false"
@@ -10,7 +21,7 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -34,6 +45,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 系统相册权限：用户点“图片”时申请，授权后打开系统相册全库选图。 -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission

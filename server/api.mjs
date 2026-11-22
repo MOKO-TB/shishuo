@@ -2,7 +2,7 @@ import { gzipSync } from 'node:zlib'
 import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId, createRememberToken, userForRememberToken, deleteRememberToken, deleteRememberTokensForUser } from './auth.mjs'
 import { WORKSPACE_ID } from './db.mjs'
 import { HttpError } from './http-error.mjs'
-import { PILOT_COURSES, PILOT_COURSE_IDS, TEACHER_COURSES, parseJsonObject } from './policy.mjs'
+import { PILOT_COURSES, PILOT_COURSE_IDS, TEACHER_COURSES, parseJsonObject, studentCourseTeacherMap, teacherCourseSet } from './policy.mjs'
 import { authorizeAndMerge, projectWorkspace } from './permissions.mjs'
 import { buildActionNext } from './actions.mjs'
 import { redactMessages } from './redact.mjs'
@@ -2156,6 +2156,40 @@ export function createApiHandler({ db, config }) {
           topUsers: Array.from(users.values())
             .sort((a, b) => b.calls - a.calls)
             .slice(0, 8),
+        })
+      }
+
+      // 轻量通知接口：原生后台轮询用，避免每次拉整份工作区。
+      if (pathname === '/api/notifications' && req.method === 'GET') {
+        const user = requireUser(req)
+        const row = workspaceRow(db)
+        const data = parsedWorkspace(row) ?? {}
+        const all = Array.isArray(data.notifications) ? data.notifications : []
+        const courses = user.role === 'teacher' ? teacherCourseSet(user) : studentCourseTeacherMap(user)
+        const visible = all.filter((notification) => {
+          if (!notification || !courses.has(notification.courseId)) return false
+          if (user.role === 'teacher') return notification.audience === 'teacher'
+          return notification.audience === 'student' && notification.recipientId === user.id
+        })
+        const params = new URL(req.url, 'http://localhost').searchParams
+        const since = Number(params.get('since') || 0) || 0
+        const unreadOnly = params.get('unread') === '1'
+        const limit = Math.min(Math.max(Number(params.get('limit') || 50) || 50, 1), 100)
+        const fresh = visible
+          .filter((notification) => !since || Number(notification.createdAt || 0) > since)
+          .filter((notification) => !unreadOnly || !notification.read)
+          .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0))
+          .slice(-limit)
+        const cursor = fresh.reduce(
+          (max, notification) => Math.max(max, Number(notification.createdAt || 0)),
+          since,
+        )
+        return sendJson(res, 200, {
+          notifications: fresh,
+          unreadCount: visible.filter((notification) => !notification.read).length,
+          cursor: cursor || Date.now(),
+          serverTime: Date.now(),
+          revision: Number(row?.revision ?? 0),
         })
       }
 

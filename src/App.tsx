@@ -24,6 +24,7 @@ import { studentCourses, useProfile, visibleTeachers } from './lib/profile'
 import { useAuth } from './auth'
 import { usePlaceholderTab } from './lib/placeholderTab'
 import { closeTopOverlay } from './lib/overlayStack'
+import { syncLocalNotifications } from './lib/localNotifications'
 import type { FaqPrefill, Role, ViewKey } from './types'
 
 export default function App() {
@@ -285,6 +286,55 @@ export default function App() {
       notification.recipientId === notificationRecipient &&
       scopedCourseIds.has(notification.courseId),
   ).length
+
+  // 新通知 → 手机系统通知；后台/被杀由原生 WorkManager 兜底。
+  useEffect(() => {
+    if (!user) return
+    const courseIds = new Set(scopedCourseIds)
+    courseIds.add('campus')
+    void syncLocalNotifications({
+      userId: user.id,
+      audience: role,
+      recipientId: notificationRecipient,
+      courseIds,
+      notifications: data.notifications,
+    })
+  }, [data.notifications, user, role, notificationRecipient, scopedCourseIds])
+
+  // 点击系统通知 / 原生通知：标记已读并打开对应问答。
+  useEffect(() => {
+    const onOpenThread = (event: Event) => {
+      const shellWindow = window as typeof window & {
+        __shishuoPendingOpen?: { threadId?: string; notificationId?: string }
+      }
+      const detail =
+        (event as CustomEvent<{ threadId?: string; notificationId?: string }>).detail ??
+        shellWindow.__shishuoPendingOpen
+      if (!detail) return
+      delete shellWindow.__shishuoPendingOpen
+      if (detail.notificationId) {
+        dispatch({ type: 'notifications-read', ids: [detail.notificationId] })
+      }
+      if (detail.threadId) {
+        openThreadFromNotification(detail.threadId)
+      } else {
+        setNotificationsOpen(true)
+      }
+    }
+    window.addEventListener('shishuo:open-thread', onOpenThread)
+    return () => window.removeEventListener('shishuo:open-thread', onOpenThread)
+  }, [dispatch, openThreadFromNotification])
+
+  // 冷启动时原生可能已经派发过事件；挂载后再补一次。
+  useEffect(() => {
+    const shellWindow = window as typeof window & {
+      __shishuoPendingOpen?: { threadId?: string; notificationId?: string }
+    }
+    const pending = shellWindow.__shishuoPendingOpen
+    if (!pending) return
+    delete shellWindow.__shishuoPendingOpen
+    window.dispatchEvent(new CustomEvent('shishuo:open-thread', { detail: pending }))
+  }, [])
 
   // 安卓返回键：先关最上层弹窗/抽屉，再回首页，最后才让原生退出。
   const nativeBackRef = useRef<() => boolean>(() => false)

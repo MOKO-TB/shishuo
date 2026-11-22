@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Loader2,
   Moon,
+  Monitor,
   Presentation,
   ShieldCheck,
   Sparkles,
@@ -15,7 +16,7 @@ import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
 import { readRememberedEmail } from '../lib/authStorage'
 import { isNativeApp, setAuthStatusDark } from '../lib/nativeShell'
-import { loadTheme, toggleTheme, type Theme } from '../lib/theme'
+import { loadThemePreference, toggleTheme, type ThemePreference } from '../lib/theme'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
 import { majorOptions } from '../data/major'
 import { BrandMark } from './ui'
@@ -28,7 +29,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function AuthScreen() {
   const { login, register, error: sessionError } = useAuth()
-  const [theme, setTheme] = useState<Theme>(() => loadTheme())
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference())
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState(() => readRememberedEmail())
   const [password, setPassword] = useState('')
@@ -260,13 +261,37 @@ export function AuthScreen() {
     <div className="auth-shell">
       <button
         className="auth-theme-toggle"
-        onClick={() => setTheme(toggleTheme())}
-        aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
-        title={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+        onClick={() => setThemePreference(toggleTheme())}
+        aria-label={
+          themePreference === 'system'
+            ? '当前跟随系统，点击切换到浅色'
+            : themePreference === 'light'
+              ? '当前浅色，点击切换到深色'
+              : '当前深色，点击切换到跟随系统'
+        }
+        title={
+          themePreference === 'system'
+            ? '当前跟随系统，点击切换到浅色'
+            : themePreference === 'light'
+              ? '当前浅色，点击切换到深色'
+              : '当前深色，点击切换到跟随系统'
+        }
         type="button"
       >
-        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-        <span>{theme === 'dark' ? '浅色' : '深色'}</span>
+        {themePreference === 'system' ? (
+          <Monitor size={16} />
+        ) : themePreference === 'light' ? (
+          <Sun size={16} />
+        ) : (
+          <Moon size={16} />
+        )}
+        <span>
+          {themePreference === 'system'
+            ? '系统'
+            : themePreference === 'light'
+              ? '浅色'
+              : '深色'}
+        </span>
       </button>
       <section className="auth-story">
         <div className="auth-brand">

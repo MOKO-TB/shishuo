@@ -121,6 +121,11 @@ adb install -r dev/builds/shishuo-0.1.0-debug.apk
 | 拒绝后「照片权限未开启」→ 系统设置授权 | 通过 |
 | 「改用系统选择器」→ Photo Picker 选图 → 预览 | 通过 |
 | 生产环境（121.37.30.147）授权 → 选图 → 上传 | 通过 |
+| 深浅色跟随系统（切系统深色后 Activity 重建） | 通过 |
+| 通知权限首次同步时申请、频道 `shishuo-alerts` 创建 | 通过 |
+| 平板/横屏课程表独立页与短屏紧凑行高 | 通过（生产 CSS 已确认） |
+| 学习通链接优先唤起 `com.chaoxing.mobile` | 需真机装学习通验证 |
+| 后台 15 分钟轮询 + 系统通知 | 需真机验证 |
 
 ## 八、原生相册权限（2026-11-22 补充）
 
@@ -132,12 +137,48 @@ adb install -r dev/builds/shishuo-0.1.0-debug.apk
 - 三处入口都已接入：学生提问、教师 FAQ 附件、教师回复附图。
 - Web 端仍保留原来的“发送前确认”弹窗；原生照片授权由系统弹窗承担，避免双重询问。
 
+### 图标与启动修复（2026-11-22 补充）
+
+- 自适应图标前景按 108dp 规格生成（xxxhdpi 432px），传统图标各密度 4×；解决桌面图标被放大后发糊。
+- MainActivity 默认 edge-to-edge，并在 `onCreate` 里 `SplashScreen.installSplashScreen`，避免启动时 WebView 先 pad 再切 edge-to-edge 的二次 resize 留下旧页面/黑条。
+- 说明：P1/P2 那种“顶部多标签/多 logo”的截图在安装版 App 内未能复现；P2 更像浏览器多标签栏/系统多任务界面。若安装新版后仍出现，需要一张 App 完全加载后的截图再定位。
+
+### 课程表、学习通、主题、提示与通知（2026-11-22 补充）
+
+**1. 平板/横屏课程表**
+- 侧栏的“查看 / 添加”和小课程块改为直接打开独立的课程表页，不再先跳账号设置里的窄栏。
+- 周网格列宽、行高、间距统一走 CSS 变量，支持双指缩放与按钮缩放；窄屏自动切紧凑列宽。
+- 横屏短屏（`min-width:721px` 且高度 ≤900/700px）自动把行高降到 46/36px，避免底部被切断。
+- 账号里的“课程表”页签仍保留，作为管理/添加课程的入口。
+
+**2. 学习通直接唤起 App**
+- 新增原生 `ChaoxingAppPlugin`：对学习通链接依次尝试 `ACTION_VIEW + com.chaoxing.mobile`、该包 launch intent、`chaoxing://` / `mobilelearn://` scheme。
+- 全部失败才回退系统浏览器，并提示“未检测到学习通 App”。
+- `AndroidManifest.xml` 增加 `<queries>` 包可见性声明；学生端“学习通”列表与绑定页均提供“打开学习通”入口。
+- 限制：手机必须已安装学习通；部分 ROM 会要求用户确认跳转；学习通自身对未登录/过期链接可能落首页。
+
+**3. 深浅色跟随系统**
+- 主题偏好增加“系统”档（默认）：`shishuo.theme.v2` 存 `system|light|dark`，用 `prefers-color-scheme` 实时跟随；按钮循环“系统 → 浅色 → 深色”。
+- 原生主题改为 `Theme.AppCompat.DayNight.NoActionBar`，新增 `values-night/colors.xml`；Activity 的 `configChanges` 去掉 `uiMode`，系统切深色会重建并重新应用 WebView 的媒体查询。
+- 首屏内联脚本在 React 之前写 `data-theme`，避免深色系统闪白；`--on-accent` 保证强调底上的文字在深浅两套主题都清晰。
+- 深色下“交给 AI”禁用态改为中性底 + 可读文字；“问导师”、导师输入区、学员端底部等对比度问题一并修正。
+
+**4. 去掉提示小字**
+- 新增 `src/styles/cleanup.css`，统一隐藏静态说明小字（登录演示提示、附件隐私说明、导师页脚注、设置项描述等）。
+- 保留动态错误、权限拒绝、危险操作确认等必要信息；不做 `display:none` 的“假删除”。
+
+**5. 手机系统通知**
+- M1（前台）：`@capacitor/local-notifications` 在 `/api/state` 同步后，对新未读通知发本地通知；首次运行只建基线，不补发历史；点击通知打开对应会话或通知中心。
+- M2（后台）：WorkManager 每 15 分钟轮询 `/api/notifications`（带 WebView 登录 Cookie），去重后发系统通知；`POST_NOTIFICATIONS` 在首次同步时申请。
+- 服务端 `GET /api/notifications` 按学生/教师身份、课程范围和 `since/unread` 过滤，返回 `cursor` 与 `unreadCount`。
+- 限制：不是厂商推送，杀进程/省电模式/部分 ROM 会延迟或拦截；15 分钟是系统允许的最小周期之一，不能做到即时。
+
 ## 九、仍缺 / 后续
 
 | # | 问题 | 影响 | 方向 |
 |---|---|---|---|
 | 1 | 生产仍是 HTTP 明文 | 无证书，长期不可上架 | 域名 + HTTPS，移除 `usesCleartextTraffic` |
-| 2 | 没有系统推送 | 老师回复不能弹通知 | 国内厂商推送通道（FCM 不可用） |
+| 2 | 只有本地通知 + 15 分钟轮询，没有厂商推送 | 后台/杀进程时通知会延迟 | 接入国内厂商推送通道（FCM 不可用） |
 | 3 | 线上响应头 `Permissions-Policy: camera=()` | 网页内 `getUserMedia` 被禁用 | 改响应头，或原生相机桥 |
 | 4 | 宽屏（平板/横屏）侧栏+顶栏分栏时，状态栏左右底色不同 | 单色图标在某一侧对比度不足 | 宽屏加统一 scrim，或强制移动端单栏 |
 | 5 | 纯 WebView 套壳在国内商店容易被拒 | 上架风险 | 补原生能力、软著、隐私政策、备案 |
@@ -151,4 +192,4 @@ adb install -r dev/builds/shishuo-0.1.0-debug.apk
 4. 隐私政策、软著、备案。
 5. 真机覆盖测试：微信/QQ 内打开的分享链接、老安卓版本、刘海屏/手势导航、平板宽屏。
 
-> 本次部署记录（2026-11-22）：只替换了生产 `/opt/shishuo/dist` 的 `index.html`、`admin/`、`assets/` 与本次源码，另一条 UI 任务线的未提交改动没有上线；介绍站 `/intro/` 未受影响。服务器备份在 `/root/shishuo-stage1-backup-20261122-003959`。本地代码仍未提交，后续用 `git archive HEAD` 部署前需要先把本次文件提交。
+> 本次部署记录（2026-11-22）：本次改动单独提交为 `05f8f48`，合并最新主线 `4780c17`（公式渲染/长回答修复）后推送 Gitee `origin/main`（`898a1eb`），生产已部署合并版；两次备份分别在 `/root/shishuo-stage1-backup-20261122-003959` 和 `/root/shishuo-merged-backup-20261122-010502`。另一条 UI 任务线的未提交改动没有上线；介绍站 `/intro/` 未受影响。

@@ -1,0 +1,104 @@
+/**
+ * 2026-11-22 视觉收口：
+ * 1) 主站隐藏提示性小字（错误、隐私、破坏性确认保留）；
+ * 2) 深色模式低对比度硬编码底色修正；
+ * 3) 输入框 placeholder / 弹窗底部对齐。
+ */
+
+/* ---------- 提示小字 ---------- */
+
+.app-shell .field-hint:not(.course-note-error):not(.faq-attachment-error):not(.faq-ai-suggest-error),
+.auth-shell .field-hint:not(.course-note-error):not(.faq-attachment-error):not(.faq-ai-suggest-error),
+.modal-layer .field-hint:not(.course-note-error):not(.faq-attachment-error):not(.faq-ai-suggest-error),
+.drawer-layer .field-hint:not(.course-note-error):not(.faq-attachment-error):not(.faq-ai-suggest-error) {
+  display: none !important;
+}
+
+.app-shell .settings-row-copy small,
+.modal-layer .settings-row-copy small,
+.drawer-layer .settings-row-copy small,
+.app-shell .settings-group-lede,
+.app-shell .mentor-footnote,
+.app-shell .schedule-note,
+.app-shell .schedule-mobile-hint,
+.app-shell .schedule-board-foot p,
+.app-shell .cx-hint,
+.app-shell .cx-modal-foot-note,
+.auth-shell .auth-remember-hint,
+.app-shell .rail-footnote,
+.app-shell .account-bind-hint,
+.app-shell .week-footnote,
+.app-shell .account-teacher-foot,
+.app-shell .export-hint,
+.app-shell .knowledge-footnote,
+.app-shell .insights-footnote,
+.app-shell .campus-tool-hint,
+.app-shell .campus-tool-note,
+.app-shell .fd-pref-hint,
+.app-shell .fd-pref-bubble,
+.page-sheet-fineprint,
+.app-shell .teach-footnote,
+.app-shell .teach-attribution,
+.app-shell .ask-drop-hint,
+.app-shell .ask-self-check-hint,
+.app-shell .closest-caption,
+.app-shell .external-answer-foot,
+.app-shell .join-meta,
+.modal-layer .modal-foot-note,
+.drawer-layer .modal-foot-note,
+.modal-layer .draft-meta > span,
+.drawer-layer .draft-meta > span,
+.app-shell .campus-library-personal-note,
+.app-shell .campus-map-hint {
+  display: none !important;
+}
+
+/* 说明被隐藏后，底部按钮组保持右对齐。 */
+.modal-actions-split {
+  justify-content: flex-end;
+}
+
+.page-sheet-foot {
+  justify-content: flex-end;
+}
+
+/* ---------- 深色模式对比度 ---------- */
+
+[data-theme='dark'] .ai-no-answer {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .daily-note {
+  background: var(--surface-2);
+}
+
+[data-theme='dark'] .closest-card {
+  background: var(--surface-2);
+}
+
+[data-theme='dark'] .ask-preview-faq:hover {
+  background: var(--jade-mist);
+}
+
+[data-theme='dark'] .same-button:hover {
+  background: var(--surface-2);
+}
+
+[data-theme='dark'] .seal {
+  background: var(--surface);
+  color: var(--clay);
+}
+
+/* 原生控件（placeholder/滚动条）跟随主题。 */
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.72;
+}
+
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}

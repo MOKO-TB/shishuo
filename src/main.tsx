@@ -10,13 +10,15 @@ import { AttachmentConsentProvider } from './components/AttachmentConsent'
 import { PhotoAccessProvider } from './components/PhotoAccess'
 import { AuthScreen } from './components/AuthScreen'
 import { BrandMark } from './components/ui'
-import { applyTheme, loadTheme } from './lib/theme'
+import { initTheme } from './lib/theme'
 import { installNativeChrome } from './lib/nativeShell'
+import { initLocalNotifications } from './lib/localNotifications'
 import { StoreProvider } from './store'
 import './styles.css'
 
-applyTheme(loadTheme())
+initTheme()
 installNativeChrome()
+void initLocalNotifications()
 
 function Root() {
   const { user, loading, logout } = useAuth()

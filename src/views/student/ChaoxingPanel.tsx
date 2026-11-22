@@ -19,11 +19,12 @@ import {
   chaoxingOverview,
   logoutChaoxing,
   markChaoxingRead,
+  openChaoxingAppHome,
+  openChaoxingUrl,
   pollChaoxingLogin,
   selectChaoxingCourse,
   startChaoxingLogin,
   syncChaoxing,
-  chaoxingExternalUrl,
   type ChaoxingItem,
   type ChaoxingKind,
   type ChaoxingLoginStart,
@@ -331,7 +332,7 @@ export function ChaoxingModal({
     } catch {
       // 标记已读失败不挡打开原文。
     }
-    if (item.url) window.open(chaoxingExternalUrl(item.url), '_blank', 'noopener,noreferrer')
+    if (item.url) await openChaoxingUrl(item.url)
   }
 
   const toggleCourse = async (id: string, selected: boolean) => {
@@ -382,6 +383,10 @@ export function ChaoxingModal({
                 {syncing ? '同步中…' : '同步全部'}
               </button>
             )}
+            <button className="button button-ghost" onClick={() => void openChaoxingAppHome()}>
+              <ExternalLink size={14} />
+              学习通 App
+            </button>
             <button className="button button-ghost" onClick={onClose}>
               关闭
             </button>

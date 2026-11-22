@@ -27,6 +27,7 @@
     "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.6.2",
     "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/share": "^8.0.3",
     "@fontsource/noto-serif-sc": "^5.3.1",
     "katex": "^0.19.0",

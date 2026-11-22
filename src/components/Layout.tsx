@@ -10,6 +10,7 @@ import {
   Inbox,
   MessagesSquare,
   Moon,
+  Monitor,
   Presentation,
   QrCode,
   RotateCcw,
@@ -34,7 +35,7 @@ import {
 import { useAuth } from "../auth";
 import { useStore } from "../store";
 import { cn } from "../lib/utils";
-import { loadTheme, toggleTheme, type Theme } from "../lib/theme";
+import { loadThemePreference, toggleTheme, type ThemePreference } from "../lib/theme";
 import { useMentorSelection } from "../lib/mentorSelection";
 import { Avatar, BrandMark } from "./ui";
 interface NavItem {
@@ -96,7 +97,7 @@ export function Layout({
   const { syncState } = useStore();
   const studentProfile = useProfile();
   const { mentor } = useMentorSelection();
-  const [theme, setTheme] = useState<Theme>(() => loadTheme());
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
   const syncLabel =
     syncState === "saving"
       ? "共享空间 · 保存中"
@@ -258,7 +259,7 @@ export function Layout({
                 <span>本周课程</span>
                 <button
                   className="side-timetable-link"
-                  onClick={() => onOpenAccount("schedule")}
+                  onClick={() => onNavigate("schedule")}
                 >
                   查看 / 添加
                 </button>
@@ -310,7 +311,7 @@ export function Layout({
                         }}
                         title={`${entry.course}${entry.room ? ` · ${entry.room}` : ""}`}
                         aria-label={entry.course}
-                        onClick={() => onOpenAccount("schedule")}
+                        onClick={() => onNavigate("schedule")}
                       >
                         <span className="side-week-glyph" aria-hidden="true">
                           {courseGlyph(entry.course)}
@@ -402,14 +403,36 @@ export function Layout({
             </button>
             <button
               className="theme-toggle"
-              onClick={() => setTheme(toggleTheme())}
+              onClick={() => setThemePreference(toggleTheme())}
               aria-label={
-                theme === "dark" ? "切换到浅色模式" : "切换到深色模式"
+                themePreference === "system"
+                  ? "当前跟随系统，点击切换到浅色"
+                  : themePreference === "light"
+                    ? "当前浅色，点击切换到深色"
+                    : "当前深色，点击切换到跟随系统"
               }
-              title={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
+              title={
+                themePreference === "system"
+                  ? "当前跟随系统，点击切换到浅色"
+                  : themePreference === "light"
+                    ? "当前浅色，点击切换到深色"
+                    : "当前深色，点击切换到跟随系统"
+              }
             >
-              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-              <span>{theme === "dark" ? "浅色" : "深色"}</span>
+              {themePreference === "system" ? (
+                <Monitor size={15} />
+              ) : themePreference === "light" ? (
+                <Sun size={15} />
+              ) : (
+                <Moon size={15} />
+              )}
+              <span>
+                {themePreference === "system"
+                  ? "系统"
+                  : themePreference === "light"
+                    ? "浅色"
+                    : "深色"}
+              </span>
             </button>
             <button
               className="bell-button"

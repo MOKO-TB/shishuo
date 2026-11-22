@@ -8,7 +8,22 @@
       name="description"
       content="师说 — AI 先答，老师精答。面向高校课程的 AI + 教师双通道答疑平台。"
     />
-    <meta name="theme-color" content="#14211c" />
+    <meta name="theme-color" content="#f4f0e6" />
+    <script>
+      // 首屏前先按系统/本地偏好写 data-theme，避免深色系统闪白。
+      (function () {
+        try {
+          var pref = localStorage.getItem('shishuo.theme.v2')
+          if (pref !== 'light' && pref !== 'dark' && pref !== 'system') pref = 'system'
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+          document.documentElement.dataset.themePreference = pref
+        } catch (error) {}
+      })()
+    </script>
     <title>师说 · AI 双通道课后答疑</title>
   </head>
   <body>

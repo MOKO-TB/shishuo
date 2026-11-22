@@ -13,6 +13,7 @@ const apiProxy = {
   '/api/library': { target: API_TARGET },
   '/api/admin': { target: API_TARGET },
   '/api/uploads': { target: API_TARGET },
+  '/api/notifications': { target: API_TARGET },
   '/api/health': { target: API_TARGET },
   '/uploads': { target: API_TARGET },
 }
