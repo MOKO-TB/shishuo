@@ -20,6 +20,7 @@
     "check:ui": "node dev/check-ui.mjs",
     "android:sync": "cap sync android",
     "android:build": "cd android && gradlew.bat assembleDebug",
+    "android:build:release": "cd android && gradlew.bat assembleRelease",
     "android:open": "cap open android"
   },
   "dependencies": {

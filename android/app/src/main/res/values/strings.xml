@@ -4,4 +4,16 @@
     <string name="title_activity_main">师说</string>
     <string name="package_name">com.shishuo.app</string>
     <string name="custom_url_scheme">com.shishuo.app</string>
+    <string name="widget_schedule_name">师说 · 今日课表</string>
+    <string name="widget_schedule_desc">在手机桌面查看今日课程、上课时间与教室，点击直达完整周课表</string>
+    <string name="widget_schedule_static_name">师说 · 今日课表（兼容版）</string>
+    <string name="widget_schedule_static_desc">兼容 OPPO / ColorOS 等桌面的精简课表，显示最多 4 节课程，点击直达完整周课表</string>
+    <string name="shortcut_camera_short">拍题提问</string>
+    <string name="shortcut_camera_long">拍照拍题问 AI</string>
+    <string name="shortcut_schedule_short">我的课表</string>
+    <string name="shortcut_schedule_long">查看本周课程表</string>
+    <string name="shortcut_chaoxing_short">学习通</string>
+    <string name="shortcut_chaoxing_long">查看学习通消息与作业</string>
+    <string name="shortcut_fandian_short">今天吃什么</string>
+    <string name="shortcut_fandian_long">打开校园食堂推荐</string>
 </resources>

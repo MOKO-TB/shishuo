@@ -34,7 +34,6 @@ import org.json.JSONObject;
  */
 public class NotificationPollWorker extends Worker {
 
-    private static final String BASE_URL = "http://121.37.30.147";
     private static final String CHANNEL_ID = "shishuo-alerts";
     private static final String PREFS = "shishuo_notifications";
     private static final String CURSOR_KEY = "cursor";
@@ -52,7 +51,8 @@ public class NotificationPollWorker extends Worker {
             return Result.success();
         }
 
-        String cookie = CookieManager.getInstance().getCookie(BASE_URL);
+        String baseUrl = ShellConfig.getServerUrl(context);
+        String cookie = CookieManager.getInstance().getCookie(baseUrl);
         if (cookie == null || !cookie.contains("shishuo_session=")) {
             return Result.success();
         }
@@ -64,7 +64,7 @@ public class NotificationPollWorker extends Worker {
         HttpURLConnection connection = null;
         try {
             String endpoint =
-                BASE_URL +
+                baseUrl +
                 "/api/notifications?since=" +
                 (firstRun ? 0 : cursor) +
                 "&unread=1&limit=50";

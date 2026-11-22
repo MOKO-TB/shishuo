@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -14,11 +17,14 @@ import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Base64;
 import androidx.activity.result.ActivityResult;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
@@ -30,23 +36,37 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * 系统相册授权 + 全库选图。
- *
- * 与 WebView 的 <input type=file> 不同：这里会先走安卓运行时权限
- * （READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE），授权后打开系统相册，
- * 用户可以从整个相册里选图。拒绝时由网页显示“去授权”页。
+ * 原生图片与相机桥：
+ * - 系统相册授权（含 Android 14+ READ_MEDIA_VISUAL_USER_SELECTED 有限访问兼容）+ 全库选图；
+ * - 原生拍照拍题/拍板书（CAMERA 权限 + FileProvider + EXIF 旋转 + 1600px 压缩）；
+ * - 保存图片到系统相册（MediaStore，Android 10+ 无需存储权限）。
  */
 @CapacitorPlugin(
     name = "PhotoAccess",
     permissions = {
-        @Permission(alias = "images", strings = { Manifest.permission.READ_MEDIA_IMAGES }),
-        @Permission(alias = "storage", strings = { Manifest.permission.READ_EXTERNAL_STORAGE })
+        @Permission(
+            alias = "images",
+            strings = {
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+            }
+        ),
+        @Permission(alias = "images33", strings = { Manifest.permission.READ_MEDIA_IMAGES }),
+        @Permission(alias = "storage", strings = { Manifest.permission.READ_EXTERNAL_STORAGE }),
+        @Permission(alias = "camera", strings = { Manifest.permission.CAMERA }),
     }
 )
 public class PhotoAccessPlugin extends Plugin {
@@ -55,11 +75,33 @@ public class PhotoAccessPlugin extends Plugin {
     private static final int MAX_EDGE = 1600;
     private static final int JPEG_QUALITY = 85;
 
+    private File pendingPhotoFile;
+    private Uri pendingPhotoUri;
+
     private boolean hasAccess() {
+        Context context = getContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            boolean full =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) ==
+                PackageManager.PERMISSION_GRANTED;
+            boolean limited =
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                ) == PackageManager.PERMISSION_GRANTED;
+            return full || limited;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return getPermissionState("images") == PermissionState.GRANTED;
+            return getPermissionState("images33") == PermissionState.GRANTED;
         }
         return getPermissionState("storage") == PermissionState.GRANTED;
+    }
+
+    private boolean hasCameraAccess() {
+        return (
+            ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        );
     }
 
     @PluginMethod
@@ -77,8 +119,10 @@ public class PhotoAccessPlugin extends Plugin {
             call.resolve(ret);
             return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             requestPermissionForAlias("images", call, "permissionCallback");
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionForAlias("images33", call, "permissionCallback");
         } else {
             requestPermissionForAlias("storage", call, "permissionCallback");
         }
@@ -89,6 +133,133 @@ public class PhotoAccessPlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("status", hasAccess() ? "granted" : "denied");
         call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void checkCameraAccess(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("status", hasCameraAccess() ? "granted" : "denied");
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void takePhoto(PluginCall call) {
+        if (!hasCameraAccess()) {
+            requestPermissionForAlias("camera", call, "cameraPermissionCallback");
+            return;
+        }
+        launchCamera(call);
+    }
+
+    @PermissionCallback
+    private void cameraPermissionCallback(PluginCall call) {
+        if (!hasCameraAccess()) {
+            JSObject ret = new JSObject();
+            ret.put("status", "denied");
+            call.resolve(ret);
+            return;
+        }
+        launchCamera(call);
+    }
+
+    private void launchCamera(PluginCall call) {
+        Context context = getContext();
+        try {
+            File dir = new File(context.getCacheDir(), "camera");
+            if (!dir.exists() && !dir.mkdirs()) {
+                JSObject ret = new JSObject();
+                ret.put("status", "unavailable");
+                ret.put("message", "无法创建临时拍照目录");
+                call.resolve(ret);
+                return;
+            }
+            cleanupPendingPhoto();
+            String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            pendingPhotoFile = new File(dir, "shishuo_" + stamp + ".jpg");
+            pendingPhotoUri = FileProvider.getUriForFile(
+                context,
+                context.getPackageName() + ".fileprovider",
+                pendingPhotoFile
+            );
+
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, pendingPhotoUri);
+            intent.setClipData(ClipData.newRawUri("photo", pendingPhotoUri));
+            intent.addFlags(
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+            List<android.content.pm.ResolveInfo> handlers = context
+                .getPackageManager()
+                .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            for (android.content.pm.ResolveInfo info : handlers) {
+                context.grantUriPermission(
+                    info.activityInfo.packageName,
+                    pendingPhotoUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION
+                );
+            }
+            startActivityForResult(call, intent, "cameraResult");
+        } catch (ActivityNotFoundException error) {
+            cleanupPendingPhoto();
+            JSObject ret = new JSObject();
+            ret.put("status", "unavailable");
+            ret.put("message", "未找到系统相机应用");
+            call.resolve(ret);
+        } catch (Exception error) {
+            cleanupPendingPhoto();
+            JSObject ret = new JSObject();
+            ret.put("status", "unavailable");
+            ret.put("message", error.getMessage() == null ? "启动相机失败" : error.getMessage());
+            call.resolve(ret);
+        }
+    }
+
+    @ActivityCallback
+    private void cameraResult(PluginCall call, ActivityResult result) {
+        if (call == null) {
+            cleanupPendingPhoto();
+            return;
+        }
+        Uri photoUri = pendingPhotoUri;
+        File photoFile = pendingPhotoFile;
+        pendingPhotoUri = null;
+        pendingPhotoFile = null;
+
+        if (
+            result.getResultCode() != Activity.RESULT_OK ||
+            photoUri == null ||
+            photoFile == null ||
+            !photoFile.exists() ||
+            photoFile.length() == 0
+        ) {
+            if (photoFile != null) photoFile.delete();
+            JSObject ret = new JSObject();
+            ret.put("cancelled", true);
+            call.resolve(ret);
+            return;
+        }
+
+        try {
+            JSObject file = readImageStatic(getContext(), photoUri, photoFile.getName());
+            JSObject ret = new JSObject();
+            ret.put("file", file);
+            call.resolve(ret);
+        } catch (Exception error) {
+            JSObject ret = new JSObject();
+            ret.put("status", "error");
+            ret.put("message", error.getMessage() == null ? "读取拍摄图片失败" : error.getMessage());
+            call.resolve(ret);
+        } finally {
+            photoFile.delete();
+        }
+    }
+
+    private void cleanupPendingPhoto() {
+        if (pendingPhotoFile != null) {
+            pendingPhotoFile.delete();
+            pendingPhotoFile = null;
+        }
+        pendingPhotoUri = null;
     }
 
     @PluginMethod
@@ -139,7 +310,7 @@ public class PhotoAccessPlugin extends Plugin {
         JSArray errors = new JSArray();
         for (Uri uri : uris) {
             try {
-                JSObject file = readImage(uri);
+                JSObject file = readImageStatic(getContext(), uri, null);
                 if (file != null) files.put(file);
             } catch (Exception error) {
                 errors.put(error.getMessage() == null ? "读取图片失败" : error.getMessage());
@@ -152,9 +323,98 @@ public class PhotoAccessPlugin extends Plugin {
         call.resolve(ret);
     }
 
-    private JSObject readImage(Uri uri) throws IOException {
-        ContentResolver resolver = getContext().getContentResolver();
-        String name = queryName(resolver, uri);
+    @PluginMethod
+    public void saveImageToGallery(PluginCall call) {
+        String source = call.getString("source", "").trim();
+        String name = call.getString("name", "shishuo-image.jpg").trim();
+        if (source.isEmpty()) {
+            call.reject("缺少图片数据");
+            return;
+        }
+        new Thread(() -> {
+            try {
+                byte[] bytes = loadImageBytes(source);
+                if (bytes == null || bytes.length == 0) {
+                    call.reject("图片数据为空");
+                    return;
+                }
+                String safeName = jpegName(name.replaceAll("[\\\\/:*?\"<>|]", "_"));
+                ContentResolver resolver = getContext().getContentResolver();
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, safeName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.put(
+                        MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/师说"
+                    );
+                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                }
+                Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) {
+                    call.reject("无法写入系统相册");
+                    return;
+                }
+                try (OutputStream out = resolver.openOutputStream(uri)) {
+                    if (out == null) throw new IOException("无法打开相册输出流");
+                    out.write(bytes);
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.clear();
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    resolver.update(uri, values, null, null);
+                }
+                JSObject ret = new JSObject();
+                ret.put("saved", true);
+                ret.put("name", safeName);
+                call.resolve(ret);
+            } catch (Exception error) {
+                call.reject(error.getMessage() == null ? "保存图片失败" : error.getMessage());
+            }
+        })
+            .start();
+    }
+
+    private byte[] loadImageBytes(String source) throws IOException {
+        if (source.startsWith("data:")) {
+            int comma = source.indexOf(',');
+            if (comma < 0) throw new IOException("无效的图片数据");
+            return Base64.decode(source.substring(comma + 1), Base64.DEFAULT);
+        }
+        String urlText = source;
+        if (source.startsWith("/")) {
+            urlText = ShellConfig.getServerUrl(getContext()) + source;
+        }
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(urlText).openConnection();
+            conn.setConnectTimeout(10_000);
+            conn.setReadTimeout(15_000);
+            String cookie = android.webkit.CookieManager.getInstance().getCookie(urlText);
+            if (cookie != null && !cookie.isEmpty()) {
+                conn.setRequestProperty("Cookie", cookie);
+            }
+            if (conn.getResponseCode() < 200 || conn.getResponseCode() >= 300) {
+                throw new IOException("下载图片失败");
+            }
+            try (InputStream in = conn.getInputStream()) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                return out.toByteArray();
+            }
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    static JSObject readImageStatic(Context context, Uri uri, String fallbackName)
+        throws IOException {
+        ContentResolver resolver = context.getContentResolver();
+        String name = fallbackName != null && !fallbackName.isEmpty()
+            ? fallbackName
+            : queryName(resolver, uri);
         byte[] bytes = compress(uri, resolver);
         if (bytes.length == 0) throw new IOException("图片为空");
         if (bytes.length > 8 * 1024 * 1024) throw new IOException("图片过大，请先压缩");
@@ -166,14 +426,16 @@ public class PhotoAccessPlugin extends Plugin {
         return file;
     }
 
-    private String queryName(ContentResolver resolver, Uri uri) {
-        try (android.database.Cursor cursor = resolver.query(
-            uri,
-            new String[] { OpenableColumns.DISPLAY_NAME },
-            null,
-            null,
-            null
-        )) {
+    private static String queryName(ContentResolver resolver, Uri uri) {
+        try (
+            android.database.Cursor cursor = resolver.query(
+                uri,
+                new String[] { OpenableColumns.DISPLAY_NAME },
+                null,
+                null,
+                null
+            )
+        ) {
             if (cursor != null && cursor.moveToFirst()) {
                 int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                 if (index >= 0) {
@@ -188,13 +450,13 @@ public class PhotoAccessPlugin extends Plugin {
         return last == null || last.isEmpty() ? "photo.jpg" : last;
     }
 
-    private String jpegName(String name) {
+    private static String jpegName(String name) {
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name;
         return base + ".jpg";
     }
 
-    private byte[] compress(Uri uri, ContentResolver resolver) throws IOException {
+    private static byte[] compress(Uri uri, ContentResolver resolver) throws IOException {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         try (InputStream input = resolver.openInputStream(uri)) {
@@ -207,7 +469,8 @@ public class PhotoAccessPlugin extends Plugin {
 
         int sample = 1;
         while (
-            bounds.outWidth / (sample * 2) >= MAX_EDGE || bounds.outHeight / (sample * 2) >= MAX_EDGE
+            bounds.outWidth / (sample * 2) >= MAX_EDGE ||
+            bounds.outHeight / (sample * 2) >= MAX_EDGE
         ) {
             sample *= 2;
         }
@@ -269,7 +532,7 @@ public class PhotoAccessPlugin extends Plugin {
         return output.toByteArray();
     }
 
-    private int readRotation(Uri uri, ContentResolver resolver) {
+    private static int readRotation(Uri uri, ContentResolver resolver) {
         try (InputStream input = resolver.openInputStream(uri)) {
             if (input == null) return 0;
             ExifInterface exif = new ExifInterface(input);

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="ask_camera"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_camera_short"
+        android:shortcutLongLabel="@string/shortcut_camera_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.shishuo.app"
+            android:targetClass="com.shishuo.app.MainActivity">
+            <extra android:name="shishuo_shortcut" android:value="camera" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="open_schedule"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_schedule_short"
+        android:shortcutLongLabel="@string/shortcut_schedule_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.shishuo.app"
+            android:targetClass="com.shishuo.app.MainActivity">
+            <extra android:name="shishuo_shortcut" android:value="schedule" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="open_chaoxing"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_chaoxing_short"
+        android:shortcutLongLabel="@string/shortcut_chaoxing_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.shishuo.app"
+            android:targetClass="com.shishuo.app.MainActivity">
+            <extra android:name="shishuo_shortcut" android:value="chaoxing" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="open_fandian"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_fandian_short"
+        android:shortcutLongLabel="@string/shortcut_fandian_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.shishuo.app"
+            android:targetClass="com.shishuo.app.MainActivity">
+            <extra android:name="shishuo_shortcut" android:value="fandian" />
+        </intent>
+    </shortcut>
+</shortcuts>

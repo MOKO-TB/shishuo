@@ -6,4 +6,12 @@
     <!-- 与网页 bg 变量、mark.svg 的底色保持一致，避免启动闪白 -->
     <color name="appBackground">#F4F0E6</color>
     <color name="splashBackground">#F4F0E6</color>
+    <!-- 桌面课程表小组件配色（浅色） -->
+    <color name="widgetBg">#FAF7F0</color>
+    <color name="widgetRowBg">#F0EAE0</color>
+    <color name="widgetBorder">#E3DCCD</color>
+    <color name="widgetTitle">#14211C</color>
+    <color name="widgetText">#1D2C25</color>
+    <color name="widgetMuted">#5F6E67</color>
+    <color name="widgetAccent">#146C56</color>
 </resources>

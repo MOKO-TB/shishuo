@@ -65,6 +65,10 @@ const MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.apk': 'application/vnd.android.package-archive',
+  '.vtt': 'text/vtt; charset=utf-8',
   '.pdf': 'application/pdf',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
@@ -80,7 +84,8 @@ const MIME_TYPES = {
 }
 
 // 可压缩的文本类资源；图片/字体已是压缩格式，再压反而变大
-const COMPRESSIBLE_EXT = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.map', '.txt'])
+const COMPRESSIBLE_EXT = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.map', '.txt', '.vtt'])
+const RANGE_EXT = new Set(['.mp4', '.webm', '.apk'])
 const COMPRESS_MIN_BYTES = 1024
 
 function acceptsGzip(req) {
@@ -208,6 +213,35 @@ async function serveStatic(req, res, pathname) {
     const info = await stat(filePath)
     if (!info.isFile()) throw new Error('not-a-file')
     const ext = path.extname(filePath).toLowerCase()
+    if (RANGE_EXT.has(ext) && req.headers.range) {
+      const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range)
+      if (m) {
+        let start = m[1] ? parseInt(m[1], 10) : 0
+        let end = m[2] ? parseInt(m[2], 10) : info.size - 1
+        if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= info.size) {
+          res.statusCode = 416
+          res.setHeader('Content-Range', 'bytes */' + info.size)
+          res.end()
+          return
+        }
+        start = Math.max(0, start)
+        end = Math.min(end, info.size - 1)
+        res.statusCode = 206
+        res.setHeader('Content-Type', MIME_TYPES[ext] ?? 'application/octet-stream')
+        res.setHeader('Accept-Ranges', 'bytes')
+        res.setHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + info.size)
+        res.setHeader('Content-Length', end - start + 1)
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+        securityHeaders(res, req)
+        if (req.method === 'HEAD') {
+          res.end()
+          return
+        }
+        createReadStream(filePath, { start, end }).pipe(res)
+        return
+      }
+    }
+    if (RANGE_EXT.has(ext)) res.setHeader('Accept-Ranges', 'bytes')
     const useGzip =
       COMPRESSIBLE_EXT.has(ext) && info.size >= COMPRESS_MIN_BYTES && acceptsGzip(req)
     res.statusCode = 200
@@ -219,6 +253,8 @@ async function serveStatic(req, res, pathname) {
     if (useGzip) {
       res.setHeader('Content-Encoding', 'gzip')
       res.setHeader('Vary', 'Accept-Encoding')
+    } else {
+      res.setHeader('Content-Length', info.size)
     }
     securityHeaders(res, req)
     if (req.method === 'HEAD') {

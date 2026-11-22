@@ -1,4 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import { gzipSync } from 'node:zlib'
+import { ROOT_DIR } from './config.mjs'
 import { createSession, deleteSession, hashPassword, hashToken, publicUser, sessionCookie, expiredSessionCookie, sessionTokenFromRequest, userForRequest, verifyPassword, newId, createRememberToken, userForRememberToken, deleteRememberToken, deleteRememberTokensForUser } from './auth.mjs'
 import { WORKSPACE_ID } from './db.mjs'
 import { HttpError } from './http-error.mjs'
@@ -1295,6 +1298,52 @@ export function createApiHandler({ db, config }) {
           teacherRegistration: Boolean(config.teacherInviteCode),
           workspaceRevision: Number(row?.revision ?? 0),
         })
+      }
+
+      // 安卓 App 版本检查：优先读取 data/app-release.json（免重启更新），其次环境变量，最后默认值。
+      if (pathname === '/api/app/version' && req.method === 'GET') {
+        const defaults = {
+          platform: 'android',
+          versionCode: Number(process.env.SHISHUO_ANDROID_VERSION_CODE || 8) || 8,
+          versionName: String(process.env.SHISHUO_ANDROID_VERSION_NAME || '0.2.6'),
+          minSupportedCode: Number(process.env.SHISHUO_ANDROID_MIN_CODE || 1) || 1,
+          releaseSha256: String(
+            process.env.SHISHUO_ANDROID_RELEASE_SHA256 ||
+              'f1cce83c1ca41afd53346a8ecafc5e573fbed22429f7363174806ffce5123c58',
+          ),
+          downloadUrl: String(
+            process.env.SHISHUO_ANDROID_APK_URL ||
+              'http://121.37.30.147/intro/download/shishuo-android-0.2.6.apk',
+          ),
+          fallbackUrl: String(
+            process.env.SHISHUO_ANDROID_FALLBACK_URL ||
+              'http://121.37.30.147/intro/download/shishuo-android-0.2.6.apk',
+          ),
+          notes: String(
+            process.env.SHISHUO_ANDROID_RELEASE_NOTES ||
+              '1. 新增兼容版桌面课表小组件，修复 OPPO / ColorOS 等桌面无法添加小组件的问题；\n2. 主小组件补充预览图，桌面选择器里不再空白；\n3. 优化桌面小组件添加引导与旧版本提示。',
+          ),
+          updatedAt: '2026-11-22',
+        }
+        try {
+          const releasePath = path.join(ROOT_DIR, 'data', 'app-release.json')
+          if (existsSync(releasePath)) {
+            const parsed = JSON.parse(readFileSync(releasePath, 'utf8'))
+            if (parsed && typeof parsed === 'object') {
+              return sendJson(res, 200, {
+                ...defaults,
+                ...parsed,
+                versionCode: Number(parsed.versionCode ?? defaults.versionCode) || defaults.versionCode,
+                minSupportedCode:
+                  Number(parsed.minSupportedCode ?? defaults.minSupportedCode) ||
+                  defaults.minSupportedCode,
+              })
+            }
+          }
+        } catch {
+          // 配置文件损坏时安全回退默认值。
+        }
+        return sendJson(res, 200, defaults)
       }
 
       // 本节提问墙公开问卷：不要求登录，只允许向正在收集的场次匿名提问。

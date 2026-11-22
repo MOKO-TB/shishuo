@@ -3,4 +3,12 @@
     <!-- 系统深色时的壳层底色；网页 data-theme 会同步切换。 -->
     <color name="appBackground">#0F1714</color>
     <color name="splashBackground">#0F1714</color>
+    <!-- 桌面课程表小组件配色（深色） -->
+    <color name="widgetBg">#141E1A</color>
+    <color name="widgetRowBg">#1C2924</color>
+    <color name="widgetBorder">#2A3A33</color>
+    <color name="widgetTitle">#F2EDE2</color>
+    <color name="widgetText">#E5E0D5</color>
+    <color name="widgetMuted">#9AA9A2</color>
+    <color name="widgetAccent">#44B694</color>
 </resources>

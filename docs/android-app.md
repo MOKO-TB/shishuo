@@ -92,10 +92,12 @@ npm run android:build
 ## 六、安装
 
 ```bash
-adb install -r dev/builds/shishuo-0.1.0-debug.apk
+adb install -r dev/builds/shishuo-0.2.6-release.apk
 ```
 
-或把 APK 发到手机，允许“安装未知来源应用”后直接安装。当前是 **debug 签名**，仅用于内测，不能直接上架。
+或把 APK 发到手机，允许“安装未知来源应用”后直接安装。当前是 **Release 签名**（`android/shishuo-release.jks`），可用于内测分发，但不能直接上架。
+
+介绍站已提供同域直接下载：<http://121.37.30.147/intro/download/shishuo-android-0.2.6.apk>（1.4MB，文件名 `shishuo-android-0.2.6.apk`）。打开 <http://121.37.30.147/intro/> 的「手机端」章节，点「下载 Android 安装包」即可；下载完成后按系统提示安装。微信内置浏览器会拦截 APK，请用系统浏览器打开。
 
 ## 七、已验证（Android 15 / API 35，1080×2400，WebView 124）
 
@@ -196,3 +198,52 @@ adb install -r dev/builds/shishuo-0.1.0-debug.apk
 
 > 第二批部署记录（2026-11-22）：课程表宽屏、学习通 App 跳转、系统深色跟随、提示小字清理、本地通知 + 15 分钟后台轮询。功能提交 `ff1e3d6` 已推送 Gitee `origin/main`；生产备份 `/root/shishuo-stage2-backup-20261122-083444`；最终 APK `dev/builds/shishuo-0.1.0-debug.apk`（8.5MB，`server.url=http://121.37.30.147`）。
 > 注意：生产前端是从当前工作区构建部署的，包含同工作区另一条任务线的介绍站/动效改动；这些改动不在 `ff1e3d6`（该提交只含本批功能，介绍站 `public/intro` 等未提交文件仍由另一条任务线管理）。
+
+## 十一、v0.2.0 阶段 3 升级（2026-11-22）
+
+面向「产品完成度提升 + 本校同学内测日常使用」新增以下原生与联动能力（已编译验证，`dev/builds/shishuo-0.2.0-debug.apk`，5.75MB，`versionCode 2`）：
+
+1. **原生拍题 / 拍板书 + 图片保存相册**
+   - 扩展 `PhotoAccessPlugin.java`：新增 `takePhoto()`（`CAMERA` 权限 + `FileProvider` + EXIF 旋转修正 + 1600px JPEG 压缩）与 `saveImageToGallery()`（写入系统 `Pictures/师说`）。
+   - 修复 Android 14+ 有限相册访问兼容：声明并检查 `READ_MEDIA_VISUAL_USER_SELECTED`。
+   - 前端接入：学生提问框新增「拍题」按钮，教师回复抽屉和 FAQ 编辑器新增「拍照」按钮，问答详情老师附图支持一键「保存到相册」。
+2. **4×2 桌面课程表小组件 + 断网离线课表**
+   - 新增 `ScheduleWidgetProvider.java`、`ScheduleBridgePlugin.java` 及浅/深色自适应小组件布局 `widget_schedule.xml`。
+   - 学生课表变动自动同步到原生 `SharedPreferences`，小组件自动计算当前教学周并展示今日剩余课程/上课中状态或明日预告；点击直达课程表页。
+   - 课程表页与设置页支持 Android 8.0+ 一键「添加到桌面」。
+   - `android-shell/index.html` 适配系统深色模式，且断网时自动读取本地缓存展示「离线课表」（可按周一~周日切换查看）。
+3. **上课前本地自动提醒**
+   - 新增 `src/lib/classReminders.ts`：纯本机按课表排期未来 7 天课程（独立频道 `shishuo-class-reminder`，固定 ID 段 `200001..200060`），支持提前 10/15/20/30 分钟，点击通知直达课程表。
+4. **桌面长按快捷方式 + 系统「分享到师说」+ 原生分享与触感**
+   - `res/xml/shortcuts.xml` 配置 4 个桌面长按快捷入口：拍题提问、我的课表、学习通、今天吃什么。
+   - `MainActivity` 支持 `ACTION_SEND`（`image/*`、`text/plain`），从相册/微信/学习通分享题目图片或文字可直接填入学生提问框。
+   - 问答/FAQ 分享在 App 内改用原生系统分享面板；关键操作与「今天吃什么」开盲盒加入轻触感反馈。
+5. **APK 应用内版本检测与更新 + 工程隐患修复**
+   - 服务端新增 `GET /api/app/version`（支持 `data/app-release.json` 或环境变量覆盖）；原生新增 `AppSystemPlugin.java`（读取版本号、`DownloadManager` 下载并唤起安装器、跳转省电/电池优化设置）。
+   - 新增 `ShellConfig.java` 统一从 `assets/capacitor.config.json` 读取 `server.url`，消除 `NotificationPollWorker.java` 和 `android-shell/index.html` 的硬编码服务器地址。
+
+> 第三批部署记录（2026-11-22）：已精准增量部署主站前端产物（`dist/index.html`、`dist/admin/`、`dist/assets/`）、`server/api.mjs` 及 `shishuo-android-0.2.0.apk` 到生产 `121.37.30.147`（生产备份 `/root/shishuo-stage3-backup-20261122-093852`，未覆盖线上 `server/index.mjs` 与介绍站其他文件）。介绍站 `/intro/` 下载卡片已同步更新为 `v0.2.0 · 5.8 MB`（直链 `/intro/download/shishuo-android-0.2.0.apk`，同时保留 `0.1.0` 包不 404）；公网接口 `/api/health`、`/api/app/version`、`/`、`/admin/`、`/intro/` 及 APK 下载均已验收 `200 OK`，无头移动端冒烟测试 `0` 报错。
+
+> 第四批优化与 v0.2.1 正式签名发布（2026-11-22）：
+> - **APK 极致瘦身 + 正式签名**：生成固定 Release 签名证书（`android/shishuo-release.jks`，已加入 `.gitignore`），开启 R8 代码压缩裁剪与资源压缩，并将 25 张冗余 `splash.png` 替换为 300B 矢量 `splash.xml`；APK 体积从 8.5 MB → **1.35 MB**（`versionCode 3`，`versionName 0.2.1`）。
+> - **拍题相机修复**：在 `AndroidManifest.xml` `<queries>` 增加 `IMAGE_CAPTURE`，在 `proguard-rules.pro` 显式保留 `*Annotation*`，在 `PhotoAccessPlugin` 补充 `ClipData` + `grantUriPermission` 授权；同时前端三处拍照入口增加 `capture="environment"` 无缝兜底，彻底消除“当前设备暂不支持直接调用相机”提示。
+> - **下载提速与 CDN 分流**：服务端 `server/index.mjs` 补齐 `.apk` 标准 MIME、`Content-Length` 与 `206` 断点续传；已发布 Gitee Release `v0.2.1`（`https://gitee.com/vesper1111/school-hackathon/releases/download/v0.2.1/shishuo-android-0.2.1.apk`），介绍站与 `/api/app/version` 均已指向 Gitee Release 免登录直链，同时在服务器保留同域镜像 `/intro/download/shishuo-android-0.2.1.apk`。
+
+> 第五批优化与 v0.2.2 发布（2026-11-22）：
+> - **真正的应用内直接更新**：`AppSystemPlugin` 改用原生流式下载（支持 Gitee 多跳 302 + 备用镜像回退）并向前端实时推送下载百分比进度条，完成后检测 `canRequestPackageInstalls()`（未开启时一键跳系统授权页，返回自动续装），直接通过 `FileProvider` 调起系统安装包，无需跳转浏览器。
+> - **平板横屏左下角课表修复**：修复 `layout.css` 在矮屏（`max-height: 780px`）把「本周课程」内容全部 `display: none` 掏空成空白框以及 `.side-nav` 不收缩导致底部账号按钮被裁切的问题；矮横屏下自动切换为「下一节 / 今日课程摘要」卡片，点击直达整周课程表页。
+
+> 第六批优化 v0.2.3（2026-11-22）：
+> - **解决「安装失败(-7) 与已安装应用签名不同」引导**：`AppSystemPlugin.getAppInfo()` 新增当前安装包签名 SHA-256 与 `debuggable` 检测，`/api/app/version` 返回 `releaseSha256`；前端识别 `0.1.0 / 0.2.0` 早期 debug 签名后，在更新弹窗与设置页提前警示并引导“先保存正式版 APK → 卸载旧版 → 再安装”（不删 `cacheDir` 导致丢包），自正式版起全面支持应用内直接覆盖升级。
+> - **手机端设置清晰显示版本号**：在「设置 → 账号头卡」顶部展示 `Android vX.Y.Z` 徽章，并在 `cleanup.css` 为 `.settings-row.is-keep-hint` 放行，使「安卓手机端」分组内的版本号、Build 号、签名类型与下载进度完整可见。
+
+> 第七批优化 v0.2.5（2026-11-22）：
+> - **桌面小组件完整显示 4 节及以上全部课程**：将 `widget_schedule.xml` 静态 3 行改为 `ListView` + `ScheduleWidgetService`（`RemoteViewsService`），并收紧单行垂直间距；4 节课一屏完整展示，5 节及以上支持上下滑动查看，点击任意课程直达课表页。
+> - **修复小组件右上角圆角裁切**：将 `widget_root` 左右内边距增至 `16dp`、顶部增至 `13dp` 并为表头增加左右安全间距，避免「今日无课 · 明日 X 节」被 18dp 圆角切字。
+
+> 第八批优化 v0.2.6（2026-11-22，OPPO / ColorOS 小组件兼容）：
+> - **主小组件补预览**：`widget_schedule_info.xml` 增加 `android:previewImage="@drawable/widget_preview"` 与 `android:previewLayout="@layout/widget_schedule_preview"`，解决部分 OEM 桌面小组件选择器里不显示/空白的问题。
+> - **新增兼容版静态小组件**：`ScheduleWidgetStaticProvider` + `widget_schedule_static.xml`，只使用普通 `RemoteViews`，不依赖 `ListView` / `RemoteViewsService`；3×2、最多 4 行，适用于 ColorOS 等无法添加集合小组件的桌面，三个 Provider/布局/字符串/清单均已接入。
+> - **OPPO 一键添加优先兼容版**：`ScheduleBridgePlugin.requestPinWidget()` 按 `Build.MANUFACTURER/BRAND` 识别 OPPO / realme / OnePlus / OPlus，优先请求兼容版；失败再回退完整版。课表同步会同时刷新两个 Provider。
+> - **前端引导**：添加失败时明确提示「长按桌面空白处 → 小组件 → 搜索『师说』；OPPO 若找不到，请选『师说 · 今日课表（兼容版）』」，并阻止 0.1.0 旧版误点。
+> - **发布**：`versionCode 8` / `versionName 0.2.6`，`dev/builds/shishuo-0.2.6-release.apk`，1,465,383 B；签名证书 SHA-256 仍为 `f1cce83c…123c58`，可从 0.2.5 直接应用内覆盖更新。生产备份 `/root/shishuo-widget-backup-20261122-123831`。
