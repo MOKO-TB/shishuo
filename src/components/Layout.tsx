@@ -225,19 +225,6 @@ export function Layout({
               {navItems.map(renderNavItem)}
             </>
           )}
-          <span className="nav-section-label nav-section-secondary">
-            了解更多
-          </span>
-          <button
-            className={cn("nav-item", view === "about" && "is-active")}
-            onClick={() => onNavigate("about")}
-            aria-current={view === "about" ? "page" : undefined}
-          >
-            <span className="nav-icon">
-              <Compass size={18} />
-            </span>
-            <span className="nav-label">方案说明</span>
-          </button>
         </nav>
         {!isTeacher && (
           <button className="side-mentor-entry" onClick={() => onOpenMentor()}>
