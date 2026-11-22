@@ -5,7 +5,10 @@ import {
   Copy,
   Database,
   Inbox,
+  ListChecks,
   Megaphone,
+  Presentation,
+  QrCode,
   Sparkles,
   Timer,
   X,
@@ -31,7 +34,10 @@ import {
 } from '../lib/utils'
 import { TeacherReplyDrawer } from '../components/TeacherReplyDrawer'
 import { AIAnswerReviewDrawer } from '../components/AIAnswerReviewDrawer'
+import { ClassroomWallModal } from '../components/ClassroomWallModal'
 import { CourseNoteModal } from '../components/CourseNoteModal'
+import { OpeningCardsModal } from '../components/OpeningCardsModal'
+import { ReviewPackModal } from '../components/ReviewPackModal'
 import { ThreadDetailModal } from '../components/ThreadDetailModal'
 import { MiniBars } from '../components/charts'
 import { TeacherQueue } from './teacher/TeacherQueue'
@@ -81,6 +87,14 @@ export function TeacherView({
   const [needsInfoThreadId, setNeedsInfoThreadId] = useState<string | null>(null)
   const [selectedAiThreadId, setSelectedAiThreadId] = useState<string | null>(null)
   const [noteOpen, setNoteOpen] = useState(false)
+  const [notePrefill, setNotePrefill] = useState<{
+    courseId: string
+    text: string
+    key: number
+  } | null>(null)
+  const [wallOpen, setWallOpen] = useState(false)
+  const [reviewPackOpen, setReviewPackOpen] = useState(false)
+  const [openingCardsOpen, setOpeningCardsOpen] = useState(false)
   const [followUpDismissed, setFollowUpDismissed] = useState(false)
   const [reviewedAiIds, setReviewedAiIds] = useState<Set<string>>(() => {
     try {
@@ -122,6 +136,8 @@ export function TeacherView({
         .join(' ')
         .toLowerCase()
       if (needle && !haystack.includes(needle)) return false
+      if (queueFilter === 'wall')
+        return group.threads.some((thread) => Boolean(thread.wallSessionId))
       if (queueFilter === 'today') return group.urgency === 'today'
       if (queueFilter === 'follow-up') return group.primary.kind === 'follow-up'
       if (queueFilter === 'image')
@@ -264,6 +280,9 @@ export function TeacherView({
   const staleInfoCount = needsInfoAll.filter(
     (thread) => Date.now() - (thread.teacherRequest?.at ?? thread.createdAt) >= 48 * 3_600_000,
   ).length
+  const activeWallSession = (data.courseNotes ?? []).some(
+    (note) => teacherCourseIds.includes(note.courseId) && Boolean(note.wallSession?.active),
+  )
 
   const acknowledgeAiThread = (threadId: string) => {
     const next = new Set(reviewedAiIds).add(threadId)
@@ -469,24 +488,53 @@ export function TeacherView({
         </div>
 
         <div className="teacher-head-side">
-          <button
-            className="button button-ghost teacher-guide-button"
-            onClick={() => void copyFollowUpSummary()}
-          >
-            <Copy size={16} />
-            复制跟进摘要
-          </button>
-          <button
-            className="button button-ghost teacher-guide-button"
-            onClick={() => setNoteOpen(true)}
-          >
-            <Megaphone size={16} />
-            课程公告
-          </button>
-          <button className="button button-ghost teacher-guide-button" onClick={onOpenBackup}>
-            <Database size={16} />
-            数据备份
-          </button>
+          <div className="teacher-head-actions">
+            <button
+              className={`button ${activeWallSession ? 'button-primary' : 'button-ghost'} teacher-guide-button`}
+              onClick={() => setWallOpen(true)}
+            >
+              <QrCode size={16} />
+              本节提问墙
+              {activeWallSession && <span className="wall-live-dot" aria-label="收集中" />}
+            </button>
+            <button
+              className="button button-ghost teacher-guide-button"
+              onClick={() => setReviewPackOpen(true)}
+            >
+              <ListChecks size={16} />
+              期末复习包
+            </button>
+            <button
+              className="button button-ghost teacher-guide-button"
+              onClick={() => setOpeningCardsOpen(true)}
+            >
+              <Presentation size={16} />
+              下节课开场卡
+            </button>
+          </div>
+          <div className="teacher-head-actions">
+            <button
+              className="button button-ghost teacher-guide-button"
+              onClick={() => void copyFollowUpSummary()}
+            >
+              <Copy size={16} />
+              复制跟进摘要
+            </button>
+            <button
+              className="button button-ghost teacher-guide-button"
+              onClick={() => {
+                setNotePrefill(null)
+                setNoteOpen(true)
+              }}
+            >
+              <Megaphone size={16} />
+              课程公告
+            </button>
+            <button className="button button-ghost teacher-guide-button" onClick={onOpenBackup}>
+              <Database size={16} />
+              数据备份
+            </button>
+          </div>
         </div>
       </header>
 
@@ -631,6 +679,7 @@ export function TeacherView({
         <TeacherRail
           gapsAll={gapsAll}
           openGap={openGap}
+          onOpenOpeningCards={() => setOpeningCardsOpen(true)}
           weekly={weekly}
           savedHours={savedHours}
           rate7={rate7}
@@ -673,10 +722,62 @@ export function TeacherView({
       />
       <CourseNoteModal
         open={noteOpen}
-        onClose={() => setNoteOpen(false)}
+        onClose={() => {
+          setNoteOpen(false)
+          setNotePrefill(null)
+        }}
         courses={teacherCourses}
         notes={data.courseNotes ?? []}
         initialCourseId={courseFilter === 'all' ? undefined : courseFilter}
+        prefillAnnouncement={notePrefill}
+        notify={notify}
+      />
+      <ClassroomWallModal
+        open={wallOpen}
+        onClose={() => setWallOpen(false)}
+        courses={teacherCourses}
+        notes={data.courseNotes ?? []}
+        threads={teacherThreads}
+        initialCourseId={courseFilter === 'all' ? undefined : courseFilter}
+        onOpenGroup={(groupKey) => {
+          setWallOpen(false)
+          setTab('pending')
+          setCourseFilter('all')
+          setQueueFilter('all')
+          setSelectedGroupKey(groupKey)
+        }}
+        notify={notify}
+      />
+      <ReviewPackModal
+        open={reviewPackOpen}
+        onClose={() => setReviewPackOpen(false)}
+        teacherName={teacherName}
+        courses={teacherCourses}
+        threads={teacherThreads}
+        faqs={data.faqs}
+        initialCourseId={courseFilter === 'all' ? undefined : courseFilter}
+        openFaq={openFaq}
+        onOpenPendingGroup={(groupKey) => {
+          setTab('pending')
+          setCourseFilter('all')
+          setSelectedGroupKey(groupKey)
+        }}
+        notify={notify}
+      />
+      <OpeningCardsModal
+        open={openingCardsOpen}
+        onClose={() => setOpeningCardsOpen(false)}
+        courses={teacherCourses}
+        gaps={gapsAll}
+        threads={teacherThreads}
+        faqs={data.faqs}
+        initialCourseId={courseFilter === 'all' ? undefined : courseFilter}
+        openFaq={openFaq}
+        onFillAnnouncement={(targetCourseId, text) => {
+          setNotePrefill({ courseId: targetCourseId, text, key: Date.now() })
+          setNoteOpen(true)
+          notify('已将 3 条开场卡填入课程公告，确认后点击「保存公告」即可同步给学生', 'info')
+        }}
         notify={notify}
       />
     </div>

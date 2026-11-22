@@ -2568,10 +2568,6 @@
     max-height: 300px;
   }
 
-  .collapsible-rich.is-chat .collapsible-rich-body.is-collapsed {
-    max-height: 210px;
-  }
-
   /* 手机端展开后也限制在视口内滚动，避免一条长回答把整页拉到很长 */
   .collapsible-rich.is-expanded .collapsible-rich-body {
     max-height: 65vh;
@@ -2579,6 +2575,10 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .collapsible-rich.is-chat .collapsible-rich-body.is-collapsed {
+    max-height: 210px;
   }
 
   .ask-input {
@@ -2939,4 +2939,104 @@
 
 .course-announcement-attachments {
   margin-top: 8px;
+}
+
+/* ---------- 学生端：本节提问墙 ---------- */
+.student-wall-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--jade-mist);
+  text-align: left;
+  transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
+}
+
+.student-wall-banner:hover {
+  border-color: var(--jade);
+  background: var(--jade-soft);
+}
+
+.student-wall-banner.is-active {
+  border-color: var(--jade);
+  background: var(--jade-soft);
+}
+
+.student-wall-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--jade-deep);
+  flex: 0 0 auto;
+}
+
+.student-wall-copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.student-wall-copy strong {
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.student-wall-copy span {
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.student-wall-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--jade-deep);
+  white-space: nowrap;
+}
+
+.student-wall-clusters {
+  margin-top: 14px;
+}
+
+.student-wall-cluster-list {
+  display: grid;
+  gap: 8px;
+}
+
+.student-wall-cluster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.student-wall-cluster-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.student-wall-cluster-copy strong {
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.student-wall-cluster-copy span {
+  font-size: var(--text-meta);
+  color: var(--muted);
 }

@@ -1457,3 +1457,89 @@ test('学习通接口：必须登录，未绑定时返回空概览', async () =>
   assert.equal(overview.json.connected, false)
   assert.equal(overview.json.items.length, 0)
 })
+
+test('本节提问墙：教师开启场次，学生匿名提问同步且跨端权限受控', async () => {
+  const dsTeacherState = await state('teacherDs')
+  const now = Date.now()
+  const dsNote = {
+    courseId: 'ds',
+    teacher: '陈砚',
+    announcement: '',
+    officeHours: '',
+    updatedAt: now,
+    wallSession: {
+      id: 'wall-ds-session-1',
+      topic: '第 6 章 · 二叉树与图',
+      startedAt: now,
+      active: true,
+    },
+  }
+  const savedWall = await putState(
+    'teacherDs',
+    {
+      ...dsTeacherState.json.data,
+      courseNotes: [
+        dsNote,
+        ...(dsTeacherState.json.data.courseNotes ?? []).filter((n) => n.courseId !== 'ds'),
+      ],
+    },
+    dsTeacherState.json.revision,
+  )
+  assert.equal(savedWall.status, 200, '数据结构老师应该能开启本节提问墙')
+
+  const studentState = await state('student1')
+  const syncedWall = studentState.json.data.courseNotes.find((n) => n.courseId === 'ds')?.wallSession
+  assert.equal(syncedWall?.id, 'wall-ds-session-1')
+  assert.equal(syncedWall?.active, true)
+
+  const studentTamperWall = await putState(
+    'student1',
+    {
+      ...studentState.json.data,
+      courseNotes: [
+        { ...dsNote, wallSession: { ...dsNote.wallSession, active: false } },
+        ...(studentState.json.data.courseNotes ?? []).filter((n) => n.courseId !== 'ds'),
+      ],
+    },
+    studentState.json.revision,
+  )
+  assert.equal(studentTamperWall.status, 403, '学生不能修改提问墙场次')
+
+  const studentUser = session.get('student1').user
+  const wallThread = {
+    id: `t-wall-${now}`,
+    courseId: 'ds',
+    student: { id: studentUser.id, name: studentUser.name, anonymous: true },
+    question: '红黑树旋转后为什么还要重新染色？',
+    createdAt: now,
+    status: 'pending',
+    confidence: 'low',
+    confidenceScore: 0.12,
+    sources: [],
+    wallSessionId: 'wall-ds-session-1',
+    wallTopic: '第 6 章 · 二叉树与图',
+    escalation: {
+      title: '红黑树旋转后为什么还要重新染色',
+      note: 'AI 没有找到足够可靠的依据，自动转交。',
+      anonymous: true,
+      urgency: 'week',
+      at: now,
+      auto: true,
+    },
+  }
+  const submitted = await putState(
+    'student1',
+    {
+      ...studentState.json.data,
+      threads: [wallThread, ...studentState.json.data.threads],
+    },
+    studentState.json.revision,
+  )
+  assert.equal(submitted.status, 200, '学生应该能提交本节提问墙匿名问题')
+
+  const teacherAfter = await state('teacherDs')
+  const seen = teacherAfter.json.data.threads.find((t) => t.id === wallThread.id)
+  assert.ok(seen, '教师端应收到本节提问墙问题')
+  assert.equal(seen.student.name, '匿名同学', '教师端应看到匿名保护')
+  assert.equal(seen.wallSessionId, 'wall-ds-session-1')
+})

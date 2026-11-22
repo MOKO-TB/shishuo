@@ -1,11 +1,12 @@
 import type { Faq, KnowledgeGap } from '../../types'
-import { ArrowRight, BookOpen, CheckCheck, ChevronRight, CircleAlert, Layers3 } from 'lucide-react'
+import { ArrowRight, BookOpen, CheckCheck, ChevronRight, CircleAlert, Layers3, Presentation } from 'lucide-react'
 import { MiniBars } from '../../components/charts'
 import { Badge } from '../../components/ui'
 
 export interface TeacherRailProps {
   gapsAll: KnowledgeGap[]
   openGap: (gap: KnowledgeGap) => void
+  onOpenOpeningCards: () => void
   weekly: { date: string; ai: number; human: number }[]
   savedHours: number
   rate7: number
@@ -21,6 +22,7 @@ export interface TeacherRailProps {
 export function TeacherRail({
   gapsAll,
   openGap,
+  onOpenOpeningCards,
   weekly,
   savedHours,
   rate7,
@@ -69,6 +71,11 @@ export function TeacherRail({
         ))}
       </div>
     )}
+    <button type="button" className="rail-opening-cta" onClick={onOpenOpeningCards}>
+      <Presentation size={14} />
+      <span>生成下节课 3 条开场卡</span>
+      <ArrowRight size={14} />
+    </button>
   </div>
 
   <div className="rail-card saving-card">

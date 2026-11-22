@@ -56,6 +56,11 @@ export default function App() {
     question: string
   } | null>(null)
   const [courseRequest, setCourseRequest] = useState<{ id: number; courseId: string } | null>(null)
+  const [wallRequest, setWallRequest] = useState<{
+    id: number
+    courseId: string
+    sessionId: string
+  } | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
   const toastTimer = useRef<number | null>(null)
 
@@ -112,10 +117,18 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get('view')
+    const params = new URLSearchParams(window.location.search)
+    const requested = params.get('view')
     const allowed: ViewKey[] = ['student', 'teacher', 'knowledge', 'chaoxing', 'campus', 'insights', 'about', 'schedule']
     if (requested && (allowed as string[]).includes(requested)) {
       navigate(requested as ViewKey)
+    }
+    const wallFlag = params.get('wall')
+    const wallCourse = params.get('course')
+    const wallSession = params.get('session')
+    if (wallFlag === '1' && wallCourse && wallSession) {
+      navigate('student')
+      setWallRequest({ id: Date.now(), courseId: wallCourse, sessionId: wallSession })
     }
     // Only apply the deep link once on entry; normal navigation uses state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -240,6 +253,7 @@ export default function App() {
 
   const mentorRequestHandled = useCallback(() => setMentorRequest(null), [])
   const courseRequestHandled = useCallback(() => setCourseRequest(null), [])
+  const wallRequestHandled = useCallback(() => setWallRequest(null), [])
 
   const handleReset = useCallback(() => {
     resetDemo()
@@ -428,6 +442,8 @@ export default function App() {
             onMentorRequestHandled={mentorRequestHandled}
             courseRequest={courseRequest}
             onCourseRequestHandled={courseRequestHandled}
+            wallRequest={wallRequest}
+            onWallRequestHandled={wallRequestHandled}
             focusThreadId={focusThread}
             onFocusHandled={focusHandled}
           />

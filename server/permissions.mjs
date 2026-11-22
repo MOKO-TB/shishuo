@@ -212,6 +212,12 @@ function assertThreadBasics(thread) {
   if (thread.clusterId !== undefined && !isString(thread.clusterId, 200)) {
     fail('同题组标记不合法。')
   }
+  if (thread.wallSessionId !== undefined && !isString(thread.wallSessionId, 100)) {
+    bad('提问墙场次 ID 不合法。')
+  }
+  if (thread.wallTopic !== undefined && !isString(thread.wallTopic, 200, true)) {
+    bad('提问墙主题过长。')
+  }
   if (thread.groupLocked !== undefined && typeof thread.groupLocked !== 'boolean') {
     fail('手动分组标记不合法。')
   }
@@ -500,6 +506,15 @@ function validateFaqVersion(version) {
   assertFaqAttachments(version.attachments)
 }
 
+function assertWallSession(value) {
+  if (value === undefined) return
+  if (!isObject(value)) bad('提问墙场次格式不正确。')
+  if (!isString(value.id, 100)) bad('提问墙场次 ID 不合法。')
+  if (!isString(value.topic, 200, true)) bad('提问墙主题过长。')
+  if (!isNumber(value.startedAt)) bad('提问墙开始时间不合法。')
+  if (typeof value.active !== 'boolean') bad('提问墙状态标记不合法。')
+}
+
 function assertCourseNote(note) {
   if (!isObject(note)) bad('课程公告格式不正确。')
   if (!isString(note.courseId, 100)) bad('课程公告课程不合法。')
@@ -516,6 +531,7 @@ function assertCourseNote(note) {
   if (note.currentChapter !== undefined && !isString(note.currentChapter, 200, true)) {
     bad('教学进度章节不合法。')
   }
+  assertWallSession(note.wallSession)
   assertFaqAttachments(note.attachments)
 }
 

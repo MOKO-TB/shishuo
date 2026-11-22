@@ -238,6 +238,17 @@ export interface Thread {
   /** Pinned in the student's question archive. */
   favorite?: boolean
   clusterId?: string
+  /** 课前提问墙 / 本节提问墙场次 ID。 */
+  wallSessionId?: string
+  /** 本节提问墙主题。 */
+  wallTopic?: string
+}
+
+export interface WallSession {
+  id: string
+  topic: string
+  startedAt: number
+  active: boolean
 }
 
 export interface DailyMetric {
@@ -260,6 +271,8 @@ export interface CourseNote {
   currentChapter?: string
   /** 公告发布时间；学生端用它与本地已读时间比较，显示「新」标记。 */
   publishedAt?: number
+  /** 本节提问墙场次（教师开启后，学生端可见并扫码匿名提交）。 */
+  wallSession?: WallSession
 }
 
 export interface AppData {

@@ -29,6 +29,7 @@ export function CourseNoteModal({
   courses,
   notes,
   initialCourseId,
+  prefillAnnouncement,
   notify,
 }: {
   open: boolean
@@ -36,6 +37,7 @@ export function CourseNoteModal({
   courses: Course[]
   notes: CourseNote[]
   initialCourseId?: string
+  prefillAnnouncement?: { courseId: string; text: string; key: number } | null
   notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
 }) {
   const { dispatch } = useStore()
@@ -52,12 +54,22 @@ export function CourseNoteModal({
 
   useEffect(() => {
     if (!open || courses.length === 0) return
-    const preferred = courses.some((course) => course.id === initialCourseId)
-      ? (initialCourseId as string)
+    const targetCourse = prefillAnnouncement?.courseId || initialCourseId
+    const preferred = courses.some((course) => course.id === targetCourse)
+      ? (targetCourse as string)
       : courses[0].id
     setCourseId(preferred)
     const note = notes.find((item) => item.courseId === preferred)
-    setAnnouncement(note?.announcement ?? '')
+    const existing = note?.announcement ?? ''
+    if (prefillAnnouncement && prefillAnnouncement.courseId === preferred) {
+      setAnnouncement(
+        existing.trim()
+          ? `${prefillAnnouncement.text}\n\n---\n${existing.trim()}`
+          : prefillAnnouncement.text,
+      )
+    } else {
+      setAnnouncement(existing)
+    }
     setOfficeHours(note?.officeHours ?? '')
     setCurrentChapter(note?.currentChapter ?? '')
     setExpiresAt(note?.expiresAt ? dateInputValue(note.expiresAt) : '')
@@ -65,7 +77,7 @@ export function CourseNoteModal({
     setUploadError(null)
     // Reset only when the dialog opens or the default course changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialCourseId])
+  }, [open, initialCourseId, prefillAnnouncement?.key])
 
   const changeCourse = (nextId: string) => {
     setCourseId(nextId)
@@ -156,6 +168,7 @@ export function CourseNoteModal({
               ? Date.now()
               : previous.publishedAt
             : undefined,
+        wallSession: previous?.wallSession,
       },
     })
     notify(

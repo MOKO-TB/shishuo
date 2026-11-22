@@ -21,6 +21,7 @@ import {
   Loader2,
   MessagesSquare,
   Paperclip,
+  QrCode,
   Server,
   Send,
   Sparkles,
@@ -38,7 +39,12 @@ import {
   upcomingTodayClasses,
   useProfile,
 } from '../lib/profile'
-import { findSimilarPendingGroup, groupPendingThreads, retrieve } from '../lib/engine'
+import {
+  clusterClassroomThreads,
+  findSimilarPendingGroup,
+  groupPendingThreads,
+  retrieve,
+} from '../lib/engine'
 import {
   answerWithExternalAI,
   errorMessage,
@@ -116,6 +122,8 @@ interface StudentViewProps {
   onMentorRequestHandled?: () => void
   courseRequest?: { id: number; courseId: string } | null
   onCourseRequestHandled?: () => void
+  wallRequest?: { id: number; courseId: string; sessionId: string } | null
+  onWallRequestHandled?: () => void
   focusThreadId?: string | null
   onFocusHandled?: () => void
 }
@@ -188,6 +196,8 @@ export function StudentView({
   onMentorRequestHandled,
   courseRequest,
   onCourseRequestHandled,
+  wallRequest,
+  onWallRequestHandled,
   focusThreadId,
   onFocusHandled,
 }: StudentViewProps) {
@@ -215,6 +225,7 @@ export function StudentView({
   const [question, setQuestion] = useState('')
   // 默认匿名：同班同学只看到「一位同学」，实名需要学生主动选择。
   const [anonymous, setAnonymous] = useState(true)
+  const [wallSessionId, setWallSessionId] = useState<string | null>(null)
   const [thinking, setThinking] = useState<{
     question: string
     step: number
@@ -257,6 +268,29 @@ export function StudentView({
   const course = courseById(courseId)
   const courseTeacher = teacherByName(course.teacher)
   const courseNote = data.courseNotes?.find((note) => note.courseId === courseId)
+  const activeWallNote = courseNote?.wallSession
+  const activeWallTopic =
+    activeWallNote?.topic || courseNote?.currentChapter || course.chapter || '本节随堂答疑'
+  const wallThreads = useMemo(
+    () =>
+      wallSessionId
+        ? data.threads.filter(
+            (thread) =>
+              !thread.withdrawnAt &&
+              thread.courseId === courseId &&
+              thread.wallSessionId === wallSessionId,
+          )
+        : [],
+    [wallSessionId, courseId, data.threads],
+  )
+  const wallClusters = useMemo(
+    () => (wallSessionId ? clusterClassroomThreads(wallThreads, courseId) : []),
+    [wallSessionId, wallThreads, courseId],
+  )
+  const pendingGroupsForCourse = useMemo(
+    () => groupPendingThreads(data.threads, courseId),
+    [data.threads, courseId],
+  )
   const aiReady = isAIConfigReady(aiConfig) && Boolean(aiStatus?.configured)
   const aiVision = Boolean(aiStatus?.vision)
   const questionCheck = useMemo(
@@ -420,6 +454,7 @@ export function StudentView({
       return
     }
     setCourseId(nextId)
+    setWallSessionId(null)
     setQuestion('')
     setActiveThreadId(null)
     setActiveResult(null)
@@ -471,6 +506,23 @@ export function StudentView({
     // courseRequest.id 是去重键；changeCourse 每次渲染都会重建，不放进依赖。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseRequest, onCourseRequestHandled])
+
+  const lastWallReq = useRef<number | null>(null)
+  useEffect(() => {
+    if (!wallRequest || lastWallReq.current === wallRequest.id) return
+    lastWallReq.current = wallRequest.id
+    if (courses.some((item) => item.id === wallRequest.courseId)) {
+      setCourseId(wallRequest.courseId)
+    }
+    setWallSessionId(wallRequest.sessionId)
+    setAnonymous(true)
+    setActiveThreadId(null)
+    setActiveResult(null)
+    notify('已进入「本节提问墙」，提交自动匿名并由 AI 先行应答', 'info')
+    focusAskCard()
+    onWallRequestHandled?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallRequest, courses, onWallRequestHandled])
 
   const chooseImage = async () => {
     if (thinking || attachmentBusy) return
@@ -660,10 +712,11 @@ export function StudentView({
       result.score = Math.min(result.score, 0.2)
       result.reason = '学生上传了文件，交给服务端 AI 结合文件内容分析。'
     }
+    const submitAnonymous = wallSessionId ? true : anonymous
     const thread: Thread = {
       id: makeId('t'),
       courseId,
-      student: { id: studentId, name: profile.name, anonymous },
+      student: { id: studentId, name: profile.name, anonymous: submitAnonymous },
       question: text,
       createdAt: Date.now(),
       status: 'ai',
@@ -674,6 +727,7 @@ export function StudentView({
       closestSource: result.closestSource,
       attachment: storedAttachment,
       feedback: null,
+      ...(wallSessionId ? { wallSessionId, wallTopic: activeWallTopic } : {}),
     }
 
     pendingPayload.current = { thread, result }
@@ -1016,6 +1070,52 @@ export function StudentView({
               onEditMajor={() => onOpenAccount?.('identity')}
             />
           </div>
+          {wallSessionId ? (
+            <div className="student-wall-banner is-active">
+              <span className="student-wall-icon">
+                <QrCode size={16} />
+              </span>
+              <div className="student-wall-copy">
+                <strong>
+                  本节提问墙 · {activeWallTopic}
+                </strong>
+                <span>
+                  匿名保护已锁定 · AI 先行应答，拿不准的自动合并进老师待办合集（已收 {wallThreads.length} 人次 / {wallClusters.length} 类）
+                </span>
+              </div>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setWallSessionId(null)}
+              >
+                退出提问墙
+              </button>
+            </div>
+          ) : (
+            activeWallNote?.active && (
+              <button
+                type="button"
+                className="student-wall-banner"
+                onClick={() => {
+                  setWallSessionId(activeWallNote.id)
+                  setAnonymous(true)
+                  focusAskCard()
+                }}
+              >
+                <span className="student-wall-icon">
+                  <QrCode size={16} />
+                </span>
+                <div className="student-wall-copy">
+                  <strong>{course.teacher}老师开启了「本节提问墙」· {activeWallNote.topic}</strong>
+                  <span>下课前 3 分钟匿名提交卡点，AI 先答，未解决的自动并入老师待办</span>
+                </div>
+                <span className="student-wall-enter">
+                  进入提问墙
+                  <ArrowRight size={14} />
+                </span>
+              </button>
+            )
+          )}
           <div
             ref={askCardRef}
             className={`ask-card${dragActive ? ' is-dragging' : ''}`}
@@ -1252,13 +1352,21 @@ export function StudentView({
                   {aiReady && <i className="ask-tool-dot" />}
                 </button>
                 <button
-                  className={`anon-toggle ${anonymous ? 'is-active' : ''}`}
-                  onClick={() => setAnonymous(!anonymous)}
+                  className={`anon-toggle ${wallSessionId || anonymous ? 'is-active' : ''}`}
+                  onClick={() => {
+                    if (wallSessionId) {
+                      notify('「本节提问墙」默认开启匿名保护', 'info')
+                      return
+                    }
+                    setAnonymous(!anonymous)
+                  }}
                   type="button"
-                  aria-pressed={anonymous}
+                  aria-pressed={Boolean(wallSessionId) || anonymous}
                 >
-                  {anonymous ? <EyeOff size={15} /> : <Eye size={15} />}
-                  <span>{anonymous ? '匿名提问' : '实名提问'}</span>
+                  {wallSessionId || anonymous ? <EyeOff size={15} /> : <Eye size={15} />}
+                  <span>
+                    {wallSessionId ? '提问墙匿名保护' : anonymous ? '匿名提问' : '实名提问'}
+                  </span>
                   <span className="switch-track">
                     <span />
                   </span>
@@ -1331,6 +1439,51 @@ export function StudentView({
                 onFollowUpChat={followUpChat}
               />
             </div>
+          )}
+
+          {wallSessionId && wallClusters.length > 0 && (
+            <section className="card student-wall-clusters">
+              <header className="section-head">
+                <div>
+                  <div className="eyebrow">本节实时归并</div>
+                  <h2>本节同学热问（{wallClusters.length} 类）</h2>
+                </div>
+                <Badge tone="jade">{wallThreads.length} 人次</Badge>
+              </header>
+              <div className="student-wall-cluster-list">
+                {wallClusters.slice(0, 6).map((cluster) => {
+                  const pendingGroup = cluster.pendingGroupKey
+                    ? pendingGroupsForCourse.find((item) => item.key === cluster.pendingGroupKey)
+                    : undefined
+                  const alreadyJoined = pendingGroup
+                    ? pendingGroup.threads.some((item) => item.student.id === studentId)
+                    : false
+                  return (
+                    <div className="student-wall-cluster-row" key={cluster.key}>
+                      <div className="student-wall-cluster-copy">
+                        <strong>{cluster.topic}</strong>
+                        <span>
+                          {cluster.totalCount} 人次提问 · AI 已答 {cluster.aiSolvedCount} ·{' '}
+                          {cluster.pendingCount > 0
+                            ? `待老师确认 ${cluster.pendingCount}`
+                            : '暂无需转人工'}
+                        </span>
+                      </div>
+                      {pendingGroup && !alreadyJoined && (
+                        <button
+                          type="button"
+                          className="same-button"
+                          onClick={() => setJoinGroup(pendingGroup)}
+                        >
+                          同问 +1
+                        </button>
+                      )}
+                      {alreadyJoined && <Badge tone="neutral">已在等</Badge>}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
           )}
 
           <section className="recent-card card">

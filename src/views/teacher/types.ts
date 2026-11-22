@@ -4,7 +4,7 @@ import type { Course, Thread, ThreadGroup } from '../../types'
 export type WorkTab = 'pending' | 'needs-info' | 'answered' | 'ai-answered'
 
 /** 待办筛选条件。 */
-export type QueueFilter = 'all' | 'today' | 'follow-up' | 'image' | 'low' | 'aged'
+export type QueueFilter = 'all' | 'wall' | 'today' | 'follow-up' | 'image' | 'low' | 'aged'
 
 /** 已处理列表筛选：未反馈、负反馈、未沉淀、已解决。 */
 export type AnsweredFilter = 'all' | 'no-feedback' | 'unhelpful' | 'unsealed' | 'resolved'

@@ -677,6 +677,44 @@ export async function suggestFaqMeta({
   return parseFaqMetaSuggestion(result.content)
 }
 
+/** 可选增强：用服务端 AI 将下节课 3 条开场卡的一句话讲法润色得更口语、更贴课堂。 */
+export async function polishOpeningCardsWithAI({
+  courseName,
+  cards,
+}: {
+  courseName: string
+  cards: Array<{ topic: string; gapDescription: string; oneLiner: string; relatedFaqQuestion?: string }>
+}): Promise<string[]> {
+  const list = cards
+    .map(
+      (card, index) =>
+        `${index + 1}. 主题：${card.topic}\n缺口：${card.gapDescription}\n现有讲法：${card.oneLiner}${
+          card.relatedFaqQuestion ? `\n关联FAQ：${card.relatedFaqQuestion}` : ''
+        }`,
+    )
+    .join('\n\n')
+  const result = await callChat(
+    [
+      {
+        role: 'system',
+        content:
+          '你是高校资深助教，帮任课老师优化下节课开场 3 分钟的「一句话讲法」。要求：每条严格控制在 35–55 字，口语化、一针见血点破易错前提或核心直觉，不编造新结论。只输出 JSON 数组，例如 ["讲法1","讲法2","讲法3"]，不要输出多余说明或代码块。',
+      },
+      {
+        role: 'user',
+        content: `课程：${courseName}\n\n${list}`,
+      },
+    ],
+    700,
+  )
+  const cleaned = result.content.replace(/```[a-zA-Z]*\s*/g, '').trim()
+  const match = /\[[\s\S]*\]/.exec(cleaned)
+  if (!match) throw new Error('AI 返回格式未能识别，保留当前讲法。')
+  const parsed = JSON.parse(match[0]) as unknown
+  if (!Array.isArray(parsed)) throw new Error('AI 返回格式未能识别，保留当前讲法。')
+  return parsed.map((item) => (typeof item === 'string' ? item.trim() : '')).filter(Boolean)
+}
+
 export function errorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message
   return '调用失败，请检查服务端 AI 配置。'

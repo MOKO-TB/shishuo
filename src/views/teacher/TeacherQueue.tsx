@@ -201,6 +201,7 @@ export function TeacherQueue({
         label="待办筛选"
         options={[
           ['all', '全部'],
+          ['wall', '提问墙'],
           ['today', '今天要用'],
           ['follow-up', '追问'],
           ['image', '含图片'],
@@ -321,6 +322,7 @@ export function TeacherQueue({
           const hasDocAttachment = group.threads.some(
             (thread) => thread.attachment && isDocumentAttachment(thread.attachment),
           )
+          const isWallGroup = group.threads.some((thread) => Boolean(thread.wallSessionId))
           const score = group.primary.confidenceScore ?? 0
           return (
             <button
@@ -334,6 +336,7 @@ export function TeacherQueue({
                     <span className={`course-dot accent-${course.accent}`} />
                     {course.shortName}
                   </span>
+                  {isWallGroup && <Badge tone="jade">提问墙</Badge>}
                   <Badge tone={group.urgency === 'today' ? 'danger' : 'neutral'} dot>
                     {urgencyLabel(group.urgency)}
                   </Badge>

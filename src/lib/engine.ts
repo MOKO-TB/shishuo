@@ -59,8 +59,11 @@ function normalize(text: string) {
     .toLowerCase()
     .replace(/dp\s*\[[^\]]*\]/g, ' 动态规划状态 ')
     .replace(/\bdp\b/g, ' 动态规划 ')
+    .replace(/b\+\s*树/g, ' bplus bplus树 ')
+    .replace(/\bb\s*[- ]?树/g, ' btree btree树 ')
     .replace(/快排/g, '快速排序')
     .replace(/迪杰斯特拉/g, 'dijkstra')
+    .replace(/散列表/g, '散列表 哈希表 哈希')
     .replace(/哈希表/g, '哈希表 哈希')
     .replace(PUNCTUATION, ' ')
     .replace(/\s+/g, ' ')
@@ -336,6 +339,7 @@ export function questionSimilarity(a: string, b: string, courseId?: string) {
 
   const termsA = domainTerms(a, courseId)
   const termsB = domainTerms(b, courseId)
+  if (termsA.size === 0 || termsB.size === 0) return overlap
   let sharedTerms = 0
   for (const term of termsA) {
     if (termsB.has(term)) sharedTerms += 1
@@ -595,4 +599,213 @@ export function confidenceScore(confidence?: Confidence) {
   if (confidence === 'medium') return 54
   if (confidence === 'low') return 22
   return 0
+}
+
+export interface WallCluster {
+  key: string
+  courseId: string
+  topic: string
+  primary: Thread
+  threads: Thread[]
+  /** 提问总人次（同一节课或作用域内合并后的总提问数）。 */
+  totalCount: number
+  /** AI 先行应答且未转人工的人次。 */
+  aiSolvedCount: number
+  /** 当前等待教师介入的人次。 */
+  pendingCount: number
+  /** 等待学生补充的人次。 */
+  needsInfoCount: number
+  /** 教师已回复的人次。 */
+  answeredCount: number
+  /** 低置信度人次。 */
+  lowConfidenceCount: number
+  /** 对应待办合集的 ThreadGroup.key，方便教师一键打开回复抽屉。 */
+  pendingGroupKey: string | null
+  latestAt: number
+  sampleQuestions: string[]
+}
+
+function sharedDomainTermCount(a: string, b: string, courseId: string) {
+  const termsA = domainTerms(a, courseId)
+  const termsB = domainTerms(b, courseId)
+  let shared = 0
+  for (const term of termsA) {
+    if (termsB.has(term)) shared += 1
+  }
+  return shared
+}
+
+function classroomPairSimilar(a: string, b: string, courseId: string) {
+  const sim = questionSimilarity(a, b, courseId)
+  if (sim >= 0.25) return true
+  const setA = tokenSet(a)
+  const setB = tokenSet(b)
+  if (setA.size === 0 || setB.size === 0) return false
+  let shared = 0
+  let sharedLatin = 0
+  for (const token of setA) {
+    if (setB.has(token)) {
+      shared += 1
+      if (/^[a-z0-9]{2,}$/.test(token)) sharedLatin += 1
+    }
+  }
+  const overlap = shared / Math.min(setA.size, setB.size)
+  if (overlap >= 0.28) return true
+  const sharedTerms = sharedDomainTermCount(a, b, courseId)
+  if (sharedTerms >= 1 && overlap >= 0.22) return true
+  if (sharedLatin >= 1 && overlap >= 0.14) return true
+  return false
+}
+
+/**
+ * 将同一课程（或同一节提问墙）内的全部提问按语义/引用自动合并归类，
+ * 用于「本节提问墙」归并看板与「期末复习包」全学期高频汇总。
+ */
+export function clusterClassroomThreads(threads: Thread[], courseId?: string): WallCluster[] {
+  const active = threads.filter(
+    (thread) => !thread.withdrawnAt && (!courseId || thread.courseId === courseId),
+  )
+  if (active.length === 0) return []
+
+  const parent = new Map<string, string>(active.map((thread) => [thread.id, thread.id]))
+  const find = (id: string): string => {
+    const current = parent.get(id)!
+    if (current === id) return id
+    const root = find(current)
+    parent.set(id, root)
+    return root
+  }
+  const union = (a: string, b: string) => {
+    const rootA = find(a)
+    const rootB = find(b)
+    if (rootA !== rootB) parent.set(rootA, rootB)
+  }
+
+  // 1. 已有同题组标记或追问父子关系的线程先合并。
+  const clusterOwners = new Map<string, string>()
+  for (const thread of active) {
+    if (thread.clusterId) {
+      const key = `${thread.courseId}:${thread.clusterId}`
+      const owner = clusterOwners.get(key)
+      if (owner) union(thread.id, owner)
+      else clusterOwners.set(key, thread.id)
+    }
+    if (thread.parentThreadId && parent.has(thread.parentThreadId)) {
+      union(thread.id, thread.parentThreadId)
+    }
+  }
+  for (const thread of active) {
+    const owner = clusterOwners.get(`${thread.courseId}:${thread.id}`)
+    if (owner && owner !== thread.id) union(thread.id, owner)
+  }
+
+  // 2. 命中同一条可靠课程 FAQ 的问题合并为一类。
+  const faqOwners = new Map<string, string>()
+  for (const thread of active) {
+    const primarySource = thread.sources?.[0]
+    if (!primarySource || thread.confidence === 'low') continue
+    const key = `${thread.courseId}:${primarySource}`
+    const owner = faqOwners.get(key)
+    if (owner) union(thread.id, owner)
+    else faqOwners.set(key, thread.id)
+  }
+
+  // 3. 语义相似度 / 共同领域术语合并（同一节课内口语不同问法自动归类）。
+  for (let i = 0; i < active.length; i += 1) {
+    for (let j = i + 1; j < active.length; j += 1) {
+      const left = active[i]
+      const right = active[j]
+      if (left.courseId !== right.courseId) continue
+      if (left.groupLocked || right.groupLocked) continue
+      if (classroomPairSimilar(left.question, right.question, left.courseId)) {
+        union(left.id, right.id)
+      }
+    }
+  }
+
+  const buckets = new Map<string, Thread[]>()
+  for (const thread of active) {
+    const root = find(thread.id)
+    const list = buckets.get(root) ?? []
+    list.push(thread)
+    buckets.set(root, list)
+  }
+
+  const pendingGroups = groupPendingThreads(active, courseId)
+  const pendingGroupByThreadId = new Map<string, string>()
+  for (const group of pendingGroups) {
+    for (const thread of group.threads) {
+      pendingGroupByThreadId.set(thread.id, group.key)
+    }
+  }
+
+  const clusters: WallCluster[] = []
+  for (const list of buckets.values()) {
+    const sorted = [...list].sort((a, b) => a.createdAt - b.createdAt)
+    let primary = sorted[0]
+    let bestCentrality = -1
+    for (const candidate of sorted) {
+      let centrality = 0
+      for (const other of sorted) {
+        if (other.id !== candidate.id) {
+          centrality += questionSimilarity(candidate.question, other.question, candidate.courseId)
+        }
+      }
+      centrality += Math.min(candidate.question.length, 40) / 1000
+      if (centrality > bestCentrality) {
+        bestCentrality = centrality
+        primary = candidate
+      }
+    }
+
+    const topic =
+      [...sorted]
+        .map((thread) => thread.escalation?.title ?? '')
+        .sort((a, b) => b.length - a.length)[0] ||
+      primary.question.replace(/[？?]$/, '').slice(0, 36)
+
+    const aiSolvedCount = sorted.filter(
+      (thread) =>
+        Boolean(thread.aiAnswer || thread.externalAnswer) &&
+        !thread.escalation &&
+        thread.status === 'ai',
+    ).length
+    const pendingCount = sorted.filter((thread) => thread.status === 'pending').length
+    const needsInfoCount = sorted.filter((thread) => thread.status === 'needs-info').length
+    const answeredCount = sorted.filter((thread) => thread.status === 'answered').length
+    const lowConfidenceCount = sorted.filter((thread) => thread.confidence === 'low').length
+    const pendingThread = sorted.find((thread) => pendingGroupByThreadId.has(thread.id))
+    const pendingGroupKey = pendingThread
+      ? (pendingGroupByThreadId.get(pendingThread.id) ?? null)
+      : null
+
+    const sampleQuestions = Array.from(
+      new Set(sorted.map((thread) => thread.question.trim()).filter(Boolean)),
+    ).slice(0, 4)
+
+    clusters.push({
+      key: primary.clusterId ?? primary.id,
+      courseId: primary.courseId,
+      topic,
+      primary,
+      threads: sorted,
+      totalCount: sorted.length,
+      aiSolvedCount,
+      pendingCount,
+      needsInfoCount,
+      answeredCount,
+      lowConfidenceCount,
+      pendingGroupKey,
+      latestAt: Math.max(...sorted.map((thread) => thread.createdAt)),
+      sampleQuestions,
+    })
+  }
+
+  return clusters.sort((a, b) => {
+    const aNeed = a.pendingCount > 0 ? 1 : 0
+    const bNeed = b.pendingCount > 0 ? 1 : 0
+    if (aNeed !== bNeed) return bNeed - aNeed
+    if (a.totalCount !== b.totalCount) return b.totalCount - a.totalCount
+    return b.latestAt - a.latestAt
+  })
 }
