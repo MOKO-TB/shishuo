@@ -193,3 +193,6 @@ adb install -r dev/builds/shishuo-0.1.0-debug.apk
 5. 真机覆盖测试：微信/QQ 内打开的分享链接、老安卓版本、刘海屏/手势导航、平板宽屏。
 
 > 本次部署记录（2026-11-22）：本次改动单独提交为 `05f8f48`，合并最新主线 `4780c17`（公式渲染/长回答修复）后推送 Gitee `origin/main`（`898a1eb`），生产已部署合并版；两次备份分别在 `/root/shishuo-stage1-backup-20261122-003959` 和 `/root/shishuo-merged-backup-20261122-010502`。另一条 UI 任务线的未提交改动没有上线；介绍站 `/intro/` 未受影响。
+
+> 第二批部署记录（2026-11-22）：课程表宽屏、学习通 App 跳转、系统深色跟随、提示小字清理、本地通知 + 15 分钟后台轮询。功能提交 `ff1e3d6` 已推送 Gitee `origin/main`；生产备份 `/root/shishuo-stage2-backup-20261122-083444`；最终 APK `dev/builds/shishuo-0.1.0-debug.apk`（8.5MB，`server.url=http://121.37.30.147`）。
+> 注意：生产前端是从当前工作区构建部署的，包含同工作区另一条任务线的介绍站/动效改动；这些改动不在 `ff1e3d6`（该提交只含本批功能，介绍站 `public/intro` 等未提交文件仍由另一条任务线管理）。
