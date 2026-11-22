@@ -1,6 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Activity, CircleAlert, KeyRound, RefreshCw, Save, ShieldCheck } from 'lucide-react'
+import {
+  Activity,
+  CircleAlert,
+  CircleCheck,
+  Cpu,
+  KeyRound,
+  Loader2,
+  RefreshCw,
+  Save,
+  Server,
+  ShieldCheck,
+} from 'lucide-react'
 import { apiGet, apiPost } from '../../lib/api'
+import {
+  errorMessage,
+  fetchAIStatus,
+  loadAIConfig,
+  saveAIConfig,
+  testAIConnection,
+  type AIConfig,
+  type AIStatus,
+} from '../../lib/ai'
+import { AIConfigModal } from '../../components/AIConfigModal'
 import { Badge } from '../../components/ui'
 import type { AiSettingsView, AiUsageSummary } from '../../data/adminTypes'
 import { formatNumber, roleLabel } from './helpers'
@@ -36,6 +57,14 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{
+    tone: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [aiConfig, setAiConfig] = useState<AIConfig>(() => loadAIConfig())
 
   const fillForm = (next: AiSettingsView) => {
     setForm((current) => ({
@@ -54,12 +83,14 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
     setLoading(true)
     setError(null)
     try {
-      const [usageResult, settingsResult] = await Promise.all([
+      const [usageResult, settingsResult, statusResult] = await Promise.all([
         apiGet<AiUsageSummary>('/api/admin/ai-usage'),
         apiGet<{ settings: AiSettingsView }>('/api/admin/ai-settings'),
+        fetchAIStatus().catch(() => null),
       ])
       setUsage(usageResult)
       setSettings(settingsResult.settings)
+      setAiStatus(statusResult)
       fillForm(settingsResult.settings)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'AI 配置加载失败。')
@@ -67,6 +98,42 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
       setLoading(false)
     }
   }, [])
+
+  const runGatewayTest = async () => {
+    if (testing) return
+    setTesting(true)
+    setTestResult(null)
+    try {
+      await testAIConnection()
+      setTestResult({ tone: 'success', message: '连接成功，服务端网关已返回响应。' })
+      void fetchAIStatus().then(setAiStatus).catch(() => undefined)
+    } catch (err) {
+      setTestResult({ tone: 'error', message: errorMessage(err) })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const handleModalSave = async (next: AIConfig) => {
+    saveAIConfig(next)
+    setAiConfig(next)
+    try {
+      const result = await apiPost<{ settings: AiSettingsView }>('/api/admin/ai-settings', {
+        baseUrl: form.baseUrl.trim(),
+        model: form.model.trim(),
+        dailyLimitStudent: Number(form.dailyLimitStudent),
+        dailyLimitTeacher: Number(form.dailyLimitTeacher),
+        enabled: next.enabled,
+        vision: form.vision,
+      })
+      setSettings(result.settings)
+      fillForm(result.settings)
+      await load()
+    } catch {
+      // If server save fails, refresh status so UI stays accurate.
+      void fetchAIStatus().then(setAiStatus).catch(() => undefined)
+    }
+  }
 
   useEffect(() => {
     void load()
@@ -123,10 +190,18 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
     <div className="admin-panel admin-panel-usage">
       <div className="admin-panel-toolbar">
         <div>
-          <strong>AI 网关与用量</strong>
-          <span>管理员在这里配置 API Key、Base URL、模型和每日额度；学生端和教师端统一使用</span>
+          <strong>AI 增强与网关用量</strong>
+          <span>管理员在这里统一维护服务端 AI 增强、API Key、模型、网关测试与每日额度</span>
         </div>
         <div className="admin-panel-actions">
+          <button
+            className="button button-secondary"
+            onClick={() => setAiModalOpen(true)}
+            type="button"
+          >
+            <Server size={14} />
+            AI 增强网关
+          </button>
           <button className="button button-ghost" onClick={() => void load()} disabled={loading}>
             <RefreshCw size={14} className={loading ? 'spin-icon' : undefined} />
             刷新
@@ -140,6 +215,69 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
           <span>{error}</span>
         </div>
       )}
+
+      <section className="admin-ai-settings">
+        <div className="ai-config-intro">
+          <Server size={17} />
+          <p>
+            模型 Key 只保存在服务端配置/数据库中，浏览器不会接触，也不会进入问答数据。
+            知识库没把握时，由服务端网关补充回答；图片题目识别也走同一个网关。
+          </p>
+        </div>
+
+        <div className="ai-gateway-card">
+          <div className="ai-gateway-head">
+            <span className={`ai-gateway-dot ${aiStatus?.configured ? 'is-ready' : ''}`} />
+            <div>
+              <strong>
+                {loading
+                  ? '正在检查网关…'
+                  : aiStatus?.configured
+                    ? '服务端 AI 已就绪'
+                    : '服务端 AI 尚未配置'}
+              </strong>
+              <span>
+                {aiStatus?.configured
+                  ? `模型 ${aiStatus.model} · 今日已用 ${aiStatus.usedToday}/${aiStatus.dailyLimit} 次`
+                  : '低置信问题会直接转交老师，核心答疑流程不受影响。'}
+              </span>
+            </div>
+            <button
+              className="icon-button"
+              onClick={() => void load()}
+              aria-label="刷新网关状态"
+              disabled={loading}
+              type="button"
+            >
+              <RefreshCw size={15} className={loading ? 'spin-icon' : undefined} />
+            </button>
+          </div>
+          <div className="ai-gateway-note">
+            <Cpu size={14} />
+            <span>
+              网关配置由管理员在管理台统一维护；保存后立即生效，学生端无需手动配置。
+            </span>
+          </div>
+        </div>
+
+        <div className="ai-test-row">
+          <button
+            className="button button-secondary"
+            onClick={() => void runGatewayTest()}
+            disabled={testing || !aiStatus?.configured}
+            type="button"
+          >
+            {testing ? <Loader2 size={15} className="spin-icon" /> : <CircleCheck size={15} />}
+            {testing ? '测试中…' : '测试网关'}
+          </button>
+          {testResult && (
+            <span className={`ai-test-result ${testResult.tone}`}>
+              {testResult.tone === 'success' ? <CircleCheck size={14} /> : <CircleAlert size={14} />}
+              {testResult.message}
+            </span>
+          )}
+        </div>
+      </section>
 
       <section className="admin-ai-settings">
         <div className="admin-ai-head">
@@ -342,6 +480,14 @@ export function AdminUsagePanel({ notify }: AdminUsagePanelProps) {
           </div>
         </>
       )}
+
+      <AIConfigModal
+        open={aiModalOpen}
+        config={{ enabled: settings ? settings.enabled : aiConfig.enabled }}
+        onClose={() => setAiModalOpen(false)}
+        onSave={(next) => void handleModalSave(next)}
+        notify={notify}
+      />
     </div>
   )
 }

@@ -17,12 +17,13 @@
     </style>
   </head>
   <body>
-    <!-- Android 12 会把启动图标裁成圆形，这里直接按圆形构图，避免金点被切 -->
+    <!-- 严格控制在 Android 12+ SplashScreen 内部 2/3 安全区（682x682）内绘制圆润超椭圆图标，
+         防止小米 HyperOS / MIUI 等按方形安全区裁切时把满幅底色裁成直角正方形。 -->
     <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="512" cy="512" r="500" fill="#14211c" />
-      <g transform="translate(512 512) scale(10.5) translate(-32 -32)">
+      <rect x="242" y="242" width="540" height="540" rx="156" fill="#14211c" />
+      <g transform="translate(512 512) scale(7.5) translate(-32 -32)">
         <path
-          d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8h-1a6 6 0 0 1-6-6V18Z"
+          d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8a6 6 0 0 1-4-5.65V18Z"
           fill="#f6f1e5"
         />
         <path

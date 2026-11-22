@@ -145,19 +145,19 @@
   }
 
   .campus-tools {
-    top: calc(62px + var(--safe-top) + 4px);
+    top: calc(62px + var(--safe-top));
   }
 }
 
 @media (max-width: 920px) {
   .auth-story {
-    padding-top: calc(28px + var(--safe-top));
-    padding-left: max(24px, var(--safe-left));
-    padding-right: max(24px, var(--safe-right));
+    padding-top: calc(16px + var(--safe-top));
+    padding-left: max(18px, var(--safe-left));
+    padding-right: max(18px, var(--safe-right));
   }
 
   .auth-panel {
-    padding-bottom: calc(48px + var(--safe-bottom));
+    padding-bottom: calc(20px + var(--safe-bottom));
   }
 }
 

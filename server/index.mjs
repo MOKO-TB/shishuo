@@ -248,7 +248,9 @@ async function serveStatic(req, res, pathname) {
     res.setHeader('Content-Type', MIME_TYPES[ext] ?? 'application/octet-stream')
     res.setHeader(
       'Cache-Control',
-      filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable',
+      filePath.endsWith('index.html')
+        ? 'no-store, no-cache, must-revalidate'
+        : 'public, max-age=31536000, immutable',
     )
     if (useGzip) {
       res.setHeader('Content-Encoding', 'gzip')

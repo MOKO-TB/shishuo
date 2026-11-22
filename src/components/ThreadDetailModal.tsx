@@ -7,10 +7,12 @@ import {
   CircleCheck,
   Clock3,
   CornerDownRight,
+  Download,
   FileText,
   KeyRound,
   Link2,
   Send,
+  Share2,
   Sparkles,
   Undo2,
 } from 'lucide-react'
@@ -29,6 +31,8 @@ import {
   urgencyLabel,
 } from '../lib/utils'
 import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
+import { isNativeApp, shareNativeLink, triggerHaptic } from '../lib/nativeShell'
+import { saveNativeImageToGallery } from '../lib/photoAccess'
 import {
   Avatar,
   Badge,
@@ -261,15 +265,24 @@ export function ThreadDetailModal({
             <button
               className="button button-ghost"
               onClick={async () => {
-                const copied = await copyText(shareLink('thread', thread.id))
+                const link = shareLink('thread', thread.id)
+                if (isNativeApp()) {
+                  const status = await shareNativeLink({
+                    title: `${course.shortName} · 师说问答`,
+                    text: thread.question.slice(0, 80),
+                    url: link,
+                  })
+                  if (status === 'shared' || status === 'cancelled') return
+                }
+                const copied = await copyText(link)
                 notify?.(
                   copied ? '链接已复制，可以发给同学或老师' : '复制失败，请手动复制地址栏链接',
                   copied ? 'success' : 'info',
                 )
               }}
             >
-              <Link2 size={15} />
-              复制链接
+              {isNativeApp() ? <Share2 size={15} /> : <Link2 size={15} />}
+              {isNativeApp() ? '分享问答' : '复制链接'}
             </button>
             <button className="button button-primary" onClick={onClose}>
               关闭
@@ -535,19 +548,42 @@ export function ThreadDetailModal({
               </div>
               <CollapsibleRichText text={thread.teacherReply.text} />
               {thread.teacherReply.attachment && (
-                <a
-                  className="thread-attachment-link teacher-reply-attachment"
-                  href={thread.teacherReply.attachment.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="查看老师附图"
-                >
-                  <img
-                    className="thread-attachment"
-                    src={thread.teacherReply.attachment.url}
-                    alt="老师回复附图"
-                  />
-                </a>
+                <div>
+                  <a
+                    className="thread-attachment-link teacher-reply-attachment"
+                    href={thread.teacherReply.attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="查看老师附图"
+                  >
+                    <img
+                      className="thread-attachment"
+                      src={thread.teacherReply.attachment.url}
+                      alt="老师回复附图"
+                    />
+                  </a>
+                  {isNativeApp() && thread.teacherReply.attachment.url && (
+                    <button
+                      type="button"
+                      className="text-button"
+                      style={{ marginTop: 6 }}
+                      onClick={async () => {
+                        triggerHaptic('light')
+                        const ok = await saveNativeImageToGallery(
+                          thread.teacherReply!.attachment!.url!,
+                          `shishuo-reply-${thread.id}.jpg`,
+                        )
+                        notify?.(
+                          ok ? '已保存到手机相册「Pictures/师说」' : '保存失败，请点击图片长按保存',
+                          ok ? 'success' : 'info',
+                        )
+                      }}
+                    >
+                      <Download size={13} />
+                      保存到相册
+                    </button>
+                  )}
+                </div>
               )}
               <div className="teacher-reply-foot">
                 {thread.teacherReply.recipientCount && thread.teacherReply.recipientCount > 1

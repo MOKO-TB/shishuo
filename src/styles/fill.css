@@ -68,6 +68,34 @@
 [data-radius='xl'] { border-radius: var(--radius-xl); }
 [data-radius='pill'] { border-radius: var(--radius-pill); }
 
+/* 触控与点击高亮：彻底关闭移动端/WebView 默认蓝色点击框与非键盘焦点框 */
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button,
+[role='button'],
+a,
+summary,
+.icon-button,
+.text-button,
+.pill-button,
+.da-sprite,
+.da-stage,
+.da-float,
+.da-badge {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* 键盘焦点：全局唯一来源 */
 :focus-visible {
   outline: 2px solid var(--accent);

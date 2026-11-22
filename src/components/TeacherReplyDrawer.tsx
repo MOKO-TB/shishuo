@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BookmarkPlus,
   BookOpen,
+  Camera,
   Check,
   CircleAlert,
   CornerDownRight,
@@ -89,7 +90,7 @@ export function TeacherReplyDrawer({
 }: TeacherReplyDrawerProps) {
   const { data, dispatch } = useStore()
   const { requestConsent } = useAttachmentConsent()
-  const { pickImages } = usePhotoAccess()
+  const { pickImages, takePhoto } = usePhotoAccess()
   const [draft, setDraft] = useState('')
   const [sediment, setSediment] = useState(true)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -106,6 +107,7 @@ export function TeacherReplyDrawer({
   const [templateLabel, setTemplateLabel] = useState('')
   const [templateFormOpen, setTemplateFormOpen] = useState(false)
   const replyFileRef = useRef<HTMLInputElement>(null)
+  const replyCameraRef = useRef<HTMLInputElement>(null)
   const previousAutoDraft = useRef('')
 
   const course = group ? courseById(group.courseId) : null
@@ -407,6 +409,16 @@ export function TeacherReplyDrawer({
       return
     }
     if (result?.length) await handleReplyImageFile(result[0], { skipConsent: true })
+  }
+
+  const captureReplyPhoto = async () => {
+    if (uploadingAttachment) return
+    const result = await takePhoto()
+    if (result === 'unavailable') {
+      replyCameraRef.current?.click()
+      return
+    }
+    if (result) await handleReplyImageFile(result, { skipConsent: true })
   }
 
   const rewriteDraft = async (style: 'shorter' | 'clearer') => {
@@ -1053,6 +1065,25 @@ export function TeacherReplyDrawer({
                     onChange={handleReplyImage}
                     hidden
                   />
+                  <input
+                    ref={replyCameraRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleReplyImage}
+                    hidden
+                  />
+                  {isNativeApp() && (
+                    <button
+                      type="button"
+                      className="text-button reply-image-button"
+                      onClick={() => void captureReplyPhoto()}
+                      disabled={uploadingAttachment}
+                    >
+                      <Camera size={13} />
+                      拍照
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="text-button reply-image-button"

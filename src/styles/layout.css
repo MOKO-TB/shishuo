@@ -677,7 +677,7 @@
 .page-wrap {
   min-width: 0;
   flex: 1;
-  animation: pageFade 0.32s var(--ease);
+  animation: pageFade 0.3s var(--ease-out);
 }
 
 .mobile-nav {
@@ -687,7 +687,7 @@
 @keyframes pageFade {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -979,11 +979,17 @@
 
 /* ---------- 侧栏结构：上半可滚，底部固定 ---------- */
 
-/* 品牌与导航区可滚动，导师卡跟随其后 */
+/* 品牌与角色标识固定高度，导航区允许在矮屏下收缩滚动，不把底部课程与设置挤出视口 */
 .sidebar > .brand,
-.sidebar > .sidebar-role-note,
-.side-nav {
+.sidebar > .sidebar-role-note {
   flex: 0 0 auto;
+}
+
+.side-nav {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 /* ---------- 底部固定区：本周课程 + 设置 ----------
@@ -1086,17 +1092,65 @@
   }
 }
 
-/* 极矮视口（<720px）底部固定区压缩：课程网格收起，只留标题入口与设置 */
-@media (max-height: 720px) {
+/* 矮视口 / 平板横屏（<=840px）：侧栏收紧间距，课程网格自动切换为「下一节/今日摘要」紧凑卡片，
+   不再把卡片掏空成空白框，同时保留「还没有课程表」引导与底部账号入口不被裁切。 */
+@media (max-height: 840px) and (min-width: 1081px) {
+  .sidebar {
+    padding-top: calc(14px + var(--safe-top));
+    padding-bottom: calc(12px + var(--safe-bottom));
+  }
+
+  .sidebar-role-note {
+    margin: 8px 6px 6px;
+    padding-bottom: 8px;
+  }
+
+  .nav-item {
+    min-height: 36px;
+    padding: 6px 11px;
+  }
+
+  .nav-section-secondary {
+    margin-top: 8px;
+  }
+
+  .side-mentor-entry {
+    margin-top: 8px;
+    padding: 7px 9px;
+  }
+
+  .side-timetable {
+    padding: 8px 9px;
+  }
+
+  .side-timetable-head {
+    margin-bottom: 6px;
+  }
+
   .side-timetable .side-week,
-  .side-timetable .side-timetable-foot,
-  .side-timetable .side-timetable-empty {
+  .side-timetable .side-timetable-foot {
     display: none;
+  }
+
+  .side-timetable .side-timetable-compact {
+    display: grid;
   }
 
   .sidebar-bottom {
     gap: 6px;
     padding-top: 8px;
+    margin-top: 8px;
+  }
+}
+
+@media (max-height: 600px) and (min-width: 1081px) {
+  .side-timetable .side-timetable-compact,
+  .side-timetable .side-timetable-empty {
+    display: none;
+  }
+
+  .side-timetable-head {
+    margin-bottom: 0;
   }
 }
 

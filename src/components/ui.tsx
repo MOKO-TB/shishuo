@@ -1,4 +1,14 @@
-import { Fragment, useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react'
 import { createPortal } from 'react-dom'
 import katex from 'katex'
 import {
@@ -13,6 +23,7 @@ import {
 import type { Confidence, FeedbackReason } from '../types'
 import { cn } from '../lib/utils'
 import { popOverlay, pushOverlay } from '../lib/overlayStack'
+import { morphAllowed, morphIn, morphOut, takeMorphOrigin, type MorphKind } from '../lib/morph'
 
 export function BrandMark({ size = 40, className }: { size?: number; className?: string }) {
   return (
@@ -26,7 +37,7 @@ export function BrandMark({ size = 40, className }: { size?: number; className?:
     >
       <rect width="64" height="64" rx="18" fill="var(--sidebar, #14211c)" />
       <path
-        d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8h-1a6 6 0 0 1-6-6V18Z"
+        d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8a6 6 0 0 1-4-5.65V18Z"
         fill="#f6f1e5"
       />
       <path
@@ -549,9 +560,106 @@ export function Modal({
   className,
   layerClassName,
 }: ModalProps) {
-  useOverlay(onClose, open)
   const panelRef = useRef<HTMLDivElement>(null)
+  const [dragY, setDragY] = useState(0)
+  const [dragProgress, setDragProgress] = useState(0)
+  const dragRef = useRef({
+    startY: 0,
+    lastY: 0,
+    lastAt: 0,
+    velocity: 0,
+    height: 0,
+    active: false,
+  })
+  const morphRef = useRef<{ el: HTMLElement; rect: DOMRect; kind: MorphKind } | null>(null)
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const closingRef = useRef(false)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+
+  const requestClose = () => {
+    if (closingRef.current) return
+    const panel = panelRef.current
+    const surface = surfaceRef.current
+    const origin = morphRef.current
+    // 形变尚未结束就关闭时不做反向动画：此时量到的是形变中的矩形，会算错落点。
+    if (!panel || !surface || !origin || !morphAllowed() || panel.classList.contains('is-morphing')) {
+      closeRef.current()
+      return
+    }
+    closingRef.current = true
+    // 起点元素可能已被列表重渲染移除，位置以最新矩形为准。
+    const rect = origin.el.isConnected ? origin.el.getBoundingClientRect() : origin.rect
+    morphOut(panel, rect, origin.kind, () => closeRef.current())
+  }
+
+  // 02 / 03：空形变面从触发元素的位置与尺寸展开到面板矩形，面板本体不参与逐帧重排。
+  useLayoutEffect(() => {
+    if (!open) {
+      closingRef.current = false
+      morphRef.current = null
+      return
+    }
+    if (morphRef.current || !morphAllowed()) return
+    const panel = panelRef.current
+    const surface = surfaceRef.current
+    if (!panel || !surface) return
+    const origin = takeMorphOrigin()
+    if (!origin) return
+    const rect = origin.el.getBoundingClientRect()
+    if (rect.width < 6 || rect.height < 6) return
+    morphRef.current = { el: origin.el, rect, kind: origin.kind }
+    morphIn(panel, surface, rect, origin.kind, () => {})
+  }, [open])
+
+  useOverlay(requestClose, open)
   useFocusTrap(open, panelRef)
+
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!window.matchMedia('(max-width: 640px)').matches) return
+    dragRef.current = {
+      startY: event.clientY,
+      lastY: event.clientY,
+      lastAt: performance.now(),
+      velocity: 0,
+      height: panelRef.current?.getBoundingClientRect().height ?? 0,
+      active: true,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+    panelRef.current?.classList.add('is-dragging')
+  }
+
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag.active) return
+    const raw = event.clientY - drag.startY
+    const now = performance.now()
+    drag.velocity = (event.clientY - drag.lastY) / Math.max(1, now - drag.lastAt)
+    drag.lastY = event.clientY
+    drag.lastAt = now
+    // 向下是允许区间，跟手 1:1；向上越界按 0.35 衰减做橡皮筋（不硬顶）。
+    const next = raw >= 0 ? raw : raw * 0.35
+    setDragY(next)
+    setDragProgress(Math.min(1, Math.max(0, next / Math.max(1, drag.height))))
+  }
+
+  const endDrag = () => {
+    const drag = dragRef.current
+    if (!drag.active) return
+    drag.active = false
+    panelRef.current?.classList.remove('is-dragging')
+    // 位置 + 速度投影（160ms）后再找最近锚点：回弹 0 / 关闭。
+    const projected = dragY + drag.velocity * 160
+    const closeAnchor = Math.max(96, drag.height * 0.32)
+    if (projected > closeAnchor) {
+      setDragY(Math.max(drag.height, dragY))
+      setDragProgress(1)
+      window.setTimeout(() => closeRef.current(), 260)
+      return
+    }
+    setDragY(0)
+    setDragProgress(0)
+  }
 
   useEffect(() => {
     if (!open) return
@@ -564,23 +672,38 @@ export function Modal({
   if (!open) return null
 
   return createPortal(
-    <div className={cn('modal-layer', layerClassName)}>
-      <div className="modal-backdrop" onMouseDown={onClose} />
+    <div
+      className={cn('modal-layer', layerClassName)}
+      style={{ '--sheet-progress': dragProgress } as CSSProperties}
+    >
+      <div className="modal-backdrop" onMouseDown={requestClose} />
+      <div className="morph-surface" ref={surfaceRef} aria-hidden="true">
+        <div className="morph-surface-head" />
+      </div>
       <div
         ref={panelRef}
         className={cn('modal-panel', `modal-${size}`, className)}
+        style={dragY !== 0 ? { transform: `translateY(${dragY}px)` } : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : '对话框'}
         tabIndex={-1}
       >
+        <div
+          className="modal-grab"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          aria-hidden="true"
+        />
         {(title || eyebrow) && (
           <header className="modal-head">
             <div className="modal-heading">
               {eyebrow && <div className="eyebrow">{eyebrow}</div>}
               {title && <h2>{title}</h2>}
             </div>
-            <button className="icon-button modal-close" onClick={onClose} aria-label="关闭">
+            <button className="icon-button modal-close" onClick={requestClose} aria-label="关闭">
               <X size={18} />
             </button>
           </header>

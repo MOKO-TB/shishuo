@@ -1,9 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type KeyboardEvent,
+} from 'react'
 import {
   ArrowRight,
+  Check,
   ChevronDown,
+  FileText,
   GraduationCap,
+  ImagePlus,
   Lightbulb,
+  Loader2,
+  Paperclip,
   Plus,
   RotateCcw,
   Search,
@@ -12,7 +25,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import type { AppData } from '../types'
+import type { AppData, ThreadAttachment } from '../types'
+import {
+  ASK_FILE_ACCEPT,
+  ASK_IMAGE_ACCEPT,
+  formatFileSize,
+  prepareAttachment,
+} from '../lib/attachment'
 import type { CourseMentor } from '../data/mentor'
 import {
   buildMentorPrompt,
@@ -27,13 +46,25 @@ import {
   fetchAIStatus,
   type AIStatus,
 } from '../lib/ai'
+import {
+  checkLocalTeachingRelevance,
+  parseStudyQaResponse,
+  reportInvalidQa,
+  stripInvalidQaMarker,
+} from '../lib/studyQaSkill'
 import type { StudentProfile } from '../lib/profile'
 import { useMentorSelection } from '../lib/mentorSelection'
 import { makeId } from '../lib/utils'
 import { useStore } from '../store'
 import { DigitalMentorTools } from './DigitalTools'
 import { AnalogMentorTools } from './AnalogTools'
-import { AiMark, Badge, Drawer, MathText, Modal, RichText } from './ui'
+import {
+  DigitalAvatarBadge,
+  MentorAvatarStage,
+  type AvatarMood,
+} from './DigitalAvatar'
+import { Badge, Drawer, MathText, Modal, RichText } from './ui'
+import { scoreFuzzyCourseQuery } from './CourseSelect'
 
 interface MentorAnswer {
   title: string
@@ -63,7 +94,173 @@ interface MentorMessage {
   id: string
   role: 'user' | 'mentor'
   text: string
+  attachment?: ThreadAttachment
   answer?: MentorAnswer
+}
+
+function MentorCourseSelect({
+  mentor,
+  options,
+  onSelect,
+  onManage,
+}: {
+  mentor: CourseMentor
+  options: CourseMentor[]
+  onSelect: (courseId: string) => void
+  onManage: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [highlightIndex, setHighlightIndex] = useState(0)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return options
+    return options
+      .map((item) => ({
+        item,
+        score: scoreFuzzyCourseQuery(
+          item.title,
+          `${item.name} ${item.courseId} ${item.chapters.map((c) => c.label).join(' ')}`,
+          query,
+        ),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((entry) => entry.item)
+  }, [options, query])
+
+  useEffect(() => {
+    setHighlightIndex(0)
+  }, [query, open])
+
+  useEffect(() => {
+    if (!open) return
+    const timer = window.setTimeout(() => {
+      searchInputRef.current?.focus()
+    }, 20)
+    const close = (event: MouseEvent | TouchEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('touchstart', close, { passive: true })
+    document.addEventListener('keydown', onKey)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('touchstart', close)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const pick = (courseId: string) => {
+    onSelect(courseId)
+    setOpen(false)
+    setQuery('')
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setHighlightIndex((i) => (filtered.length > 0 ? (i + 1) % filtered.length : 0))
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setHighlightIndex((i) =>
+        filtered.length > 0 ? (i - 1 + filtered.length) % filtered.length : 0,
+      )
+    } else if (event.key === 'Enter' && filtered[highlightIndex]) {
+      event.preventDefault()
+      pick(filtered[highlightIndex].courseId)
+    }
+  }
+
+  return (
+    <div className={`mentor-head-select${open ? ' is-open' : ''}`} ref={rootRef}>
+      <button
+        type="button"
+        className="mentor-head-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="mentor-head-select-title">{mentor.title}</span>
+        <ChevronDown size={16} className="mentor-head-select-chevron" />
+      </button>
+
+      {open && (
+        <div className="mentor-head-select-menu" role="dialog" aria-label="切换导师课程">
+          <div className="mentor-head-select-search">
+            <Search size={14} className="mentor-head-select-search-icon" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="mentor-head-select-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="搜索课程名、简称或拼音…"
+              aria-label="搜索导师课程"
+            />
+            {query && (
+              <button
+                type="button"
+                className="mentor-head-select-clear"
+                onClick={() => {
+                  setQuery('')
+                  searchInputRef.current?.focus()
+                }}
+                aria-label="清空搜索"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="mentor-head-select-list" role="listbox" aria-label="导师课程列表">
+            {filtered.length > 0 ? (
+              filtered.map((option, index) => {
+                const selected = option.courseId === mentor.courseId
+                return (
+                  <button
+                    key={option.courseId}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={`mentor-head-select-option${selected ? ' is-selected' : ''}${index === highlightIndex ? ' is-highlighted' : ''}`}
+                    onMouseEnter={() => setHighlightIndex(index)}
+                    onClick={() => pick(option.courseId)}
+                  >
+                    <span>{option.title}</span>
+                    {selected && <Check size={14} className="mentor-head-select-check" />}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="mentor-head-select-empty">没有找到匹配「{query}」的课程</div>
+            )}
+          </div>
+
+          <div className="mentor-head-select-foot">
+            <button
+              type="button"
+              className="mentor-head-select-manage"
+              onClick={() => {
+                setOpen(false)
+                onManage()
+              }}
+            >
+              <Settings2 size={13} />
+              管理导师
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function MentorSwitcher({
@@ -207,9 +404,7 @@ function MentorManager({
           const enabled = enabledIds.includes(mentor.courseId)
           return (
             <div className={`mentor-manager-row ${enabled ? 'is-enabled' : ''}`} key={mentor.courseId}>
-              <span className="mentor-manager-mark">
-                <AiMark size={15} />
-              </span>
+              <DigitalAvatarBadge size={28} />
               <div className="mentor-manager-copy">
                 <div>
                   <strong>{mentor.title}</strong>
@@ -371,9 +566,7 @@ export function MajorMentorStrip({
   return (
     <section className="mentor-strip" aria-label={`${mentor.title} AI 导师`}>
       <div className="mentor-strip-main">
-        <span className="mentor-strip-mark">
-          <AiMark size={17} />
-        </span>
+        <DigitalAvatarBadge size={36} />
         <div className="mentor-strip-copy">
           <div className="mentor-strip-title">
             <strong>{mentor.name}</strong>
@@ -451,18 +644,37 @@ export function MajorMentorDrawer({
   const [managerOpen, setManagerOpen] = useState(false)
   const [threads, setThreads] = useState<Record<string, MentorMessage[]>>({})
   const [inputs, setInputs] = useState<Record<string, string>>({})
+  const [attachments, setAttachments] = useState<Record<string, ThreadAttachment | null>>({})
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false)
+  const [attachmentBusy, setAttachmentBusy] = useState(false)
+  const [attachError, setAttachError] = useState<string | null>(null)
+  const [invalidNotice, setInvalidNotice] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false)
   const [thinkingByMentor, setThinkingByMentor] = useState<Record<string, boolean>>({})
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const attachMenuRef = useRef<HTMLDivElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const lastSeed = useRef<number | null>(null)
   const thinkingRef = useRef<Record<string, boolean>>({})
-  const aiReady = Boolean(aiStatus?.configured)
   const canRoute = isPilotCourse(mentor.courseId)
 
   const messages = threads[mentor.courseId] ?? []
   const input = inputs[mentor.courseId] ?? ''
+  const attachment = attachments[mentor.courseId] ?? null
   const thinking = Boolean(thinkingByMentor[mentor.courseId])
+  const lastMessage = messages[messages.length - 1]
+  const avatarMood: AvatarMood = thinking
+    ? lastMessage?.answer?.streaming && lastMessage.answer.text.length > 0
+      ? 'answering'
+      : 'thinking'
+    : lastMessage?.role === 'mentor'
+      ? lastMessage.answer?.note && !lastMessage.answer.ai
+        ? 'notice'
+        : 'happy'
+      : 'idle'
 
   const updateThread = (
     mentorId: string,
@@ -478,20 +690,125 @@ export function MajorMentorDrawer({
     setInputs((current) => ({ ...current, [mentorId]: value }))
   }
 
+  const updateAttachment = (mentorId: string, value: ThreadAttachment | null) => {
+    setAttachments((current) => ({ ...current, [mentorId]: value }))
+  }
+
   const updateThinking = (mentorId: string, value: boolean) => {
     setThinkingByMentor((current) => ({ ...current, [mentorId]: value }))
   }
 
+  const resizeInput = (el: HTMLTextAreaElement | null) => {
+    if (!el) return
+    el.style.height = '42px'
+    const next = Math.min(120, Math.max(42, el.scrollHeight))
+    el.style.height = `${next}px`
+  }
+
+  const attachFile = async (file: File) => {
+    if (thinking || attachmentBusy) return
+    setAttachError(null)
+    setAttachmentBusy(true)
+    try {
+      const prepared = await prepareAttachment(file)
+      updateAttachment(mentor.courseId, prepared)
+    } catch (error) {
+      setAttachError(errorMessage(error))
+    } finally {
+      setAttachmentBusy(false)
+    }
+  }
+
+  const handleFilePicked = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    await attachFile(file)
+  }
+
+  const handleDrop = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault()
+    setDragActive(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) void attachFile(file)
+  }
+
+  useEffect(() => {
+    if (!attachMenuOpen) return
+    const onPointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!attachMenuRef.current?.contains(event.target as Node)) {
+        setAttachMenuOpen(false)
+      }
+    }
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setAttachMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('touchstart', onPointerDown, { passive: true })
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('touchstart', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [attachMenuOpen])
+
+  useEffect(() => {
+    resizeInput(inputRef.current)
+  }, [input, mentor.courseId, open])
+
+  useEffect(() => {
+    setInvalidNotice(null)
+  }, [mentor.courseId, open])
+
   const send = async (raw: string) => {
-    const text = raw.trim()
     const mentorId = mentor.courseId
+    const currentAttachment = attachments[mentorId] ?? null
+    const text =
+      raw.trim() ||
+      (currentAttachment
+        ? currentAttachment.kind === 'image'
+          ? '请帮我看一下这张图片'
+          : `请帮我分析这份文件《${currentAttachment.name}》`
+        : '')
     if (!text || thinkingRef.current[mentorId]) return
+
+    // 第一道过滤：本地快速预筛与课程教学无关的内容，不进入导师对话记录并上报后台标记无效。
+    const localRelevance = checkLocalTeachingRelevance(text, {
+      hasAttachment: Boolean(currentAttachment),
+      courseName: mentor.title,
+    })
+    if (localRelevance.invalid) {
+      updateInput(mentorId, '')
+      setAttachMenuOpen(false)
+      setInvalidNotice(localRelevance.notice)
+      void reportInvalidQa({
+        source: 'mentor',
+        courseId: mentorId,
+        courseName: mentor.title,
+        question: text,
+        reason: localRelevance.reason,
+        reply: localRelevance.notice,
+      })
+      return
+    }
+
     thinkingRef.current[mentorId] = true
+    setAttachError(null)
+    setInvalidNotice(null)
+    setAttachMenuOpen(false)
+    const userMessageId = makeId('mentor-q')
     updateThread(mentorId, (current) => [
       ...current,
-      { id: makeId('mentor-q'), role: 'user', text },
+      {
+        id: userMessageId,
+        role: 'user',
+        text,
+        attachment: currentAttachment ?? undefined,
+      },
     ])
     updateInput(mentorId, '')
+    updateAttachment(mentorId, null)
     updateThinking(mentorId, true)
 
     if (aiStatus?.configured) {
@@ -524,19 +841,44 @@ export function MajorMentorDrawer({
         const ai = await answerMentorWithAI({
           question: text,
           mentorPrompt: buildMentorPrompt(mentor, text),
+          courseName: mentor.title,
+          imageDataUrl:
+            currentAttachment?.kind === 'image' ? currentAttachment.dataUrl : undefined,
+          documentText:
+            currentAttachment?.kind === 'document' ? currentAttachment.text : undefined,
+          documentName:
+            currentAttachment?.kind === 'document' ? currentAttachment.name : undefined,
           onUpdate: (partial) => {
             patchAnswer({
               title: '导师回答',
-              text: partial,
+              text: stripInvalidQaMarker(partial),
               ai: true,
               model: aiStatus.model || '服务端 AI',
               streaming: true,
             })
           },
         })
+        const parsed = parseStudyQaResponse(ai.text)
+        if (parsed.invalid) {
+          updateThread(mentorId, (current) =>
+            current.filter(
+              (message) => message.id !== userMessageId && message.id !== messageId,
+            ),
+          )
+          setInvalidNotice(parsed.cleanText)
+          void reportInvalidQa({
+            source: 'mentor',
+            courseId: mentorId,
+            courseName: mentor.title,
+            question: text,
+            reason: parsed.reason,
+            reply: parsed.cleanText,
+          })
+          return
+        }
         patchAnswer({
           title: '导师回答',
-          text: ai.text,
+          text: parsed.cleanText,
           ai: true,
           model: ai.model || aiStatus.model || '服务端 AI',
         })
@@ -629,49 +971,36 @@ export function MajorMentorDrawer({
       <div className="mentor-drawer">
         <header className="mentor-drawer-head">
           <div className="mentor-drawer-head-main">
-            <AiMark size={18} />
-            <div>
-              <div className="eyebrow">{mentor.name} · AI</div>
-              <h2>{mentor.title}</h2>
+            <div className="mentor-drawer-head-copy">
+              <MentorCourseSelect
+                mentor={mentor}
+                options={options}
+                onSelect={(courseId) => {
+                  selectMentor(courseId)
+                  onSelectCourse(courseId)
+                }}
+                onManage={() => setManagerOpen(true)}
+              />
             </div>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="关闭 AI 导师">
+          <button
+            className="icon-button mentor-drawer-close"
+            onClick={onClose}
+            aria-label="关闭 AI 导师"
+          >
             <X size={18} />
           </button>
         </header>
-        <div className="mentor-drawer-sub">
-          <div className="mentor-teacher-switch" role="group" aria-label="切换 AI 老师">
-            {options.map((option) => (
-              <button
-                key={option.courseId}
-                className={`mentor-teacher-chip ${option.courseId === mentor.courseId ? 'is-active' : ''}`}
-                onClick={() => {
-                  selectMentor(option.courseId)
-                  onSelectCourse(option.courseId)
-                }}
-              >
-                {option.title}
-              </button>
-            ))}
-          </div>
-          <button
-            className="mentor-manage-button"
-            onClick={() => setManagerOpen(true)}
-            aria-label="管理 AI 导师"
-          >
-            <Settings2 size={13} />
-            管理导师
-          </button>
-        </div>
 
-        {mentor.courseId === 'digital' && <DigitalMentorTools />}
-        {mentor.courseId === 'analog' && <AnalogMentorTools />}
+        <MentorAvatarStage
+          mood={avatarMood}
+          mentorName={mentor.name}
+          courseTitle={mentor.title}
+        />
 
         <div className="mentor-drawer-body" ref={bodyRef}>
           <div className={`mentor-welcome ${messages.length > 0 ? 'is-kept' : ''}`}>
-              <span className="mentor-welcome-mark">
-                <AiMark size={17} />
-              </span>
+              <DigitalAvatarBadge mood={avatarMood} size={32} />
               <div>
                 <strong>我是你的{mentor.name}</strong>
                 <p>
@@ -710,9 +1039,6 @@ export function MajorMentorDrawer({
                       </button>
                     ))}
                   </div>
-                  <p className="mentor-course-style">
-                    讲课特点：条件先行 · 例题密度高 · 易错点直接说破
-                  </p>
                 </div>
                 {mentor.sourceStats && (
                   <div className="mentor-source-stats">
@@ -777,7 +1103,22 @@ export function MajorMentorDrawer({
             {messages.map((message) =>
               message.role === 'user' ? (
                 <div className="mentor-msg is-user" key={message.id}>
-                  <p>{message.text}</p>
+                  <p>
+                    {message.text}
+                    {message.attachment?.kind === 'image' && message.attachment.dataUrl && (
+                      <img
+                        className="mentor-msg-attach-img"
+                        src={message.attachment.dataUrl}
+                        alt={message.attachment.name}
+                      />
+                    )}
+                    {message.attachment?.kind === 'document' && (
+                      <span className="mentor-msg-attach">
+                        <FileText size={12} />
+                        {message.attachment.name}
+                      </span>
+                    )}
+                  </p>
                 </div>
               ) : message.answer ? (
                 <MathMentorBubble
@@ -789,28 +1130,144 @@ export function MajorMentorDrawer({
                 />
               ) : (
                 <div className="mentor-msg is-mentor" key={message.id}>
+                  <DigitalAvatarBadge mood="notice" size={28} />
                   <p className="mentor-msg-text">{message.text}</p>
                 </div>
               ),
             )}
-            {thinking && (
+            {thinking && !messages[messages.length - 1]?.answer?.streaming && (
               <div className="mentor-msg is-mentor">
-                <span className="mentor-msg-mark">
-                  <AiMark size={14} />
-                </span>
-                <p className="mentor-msg-text">导师正在按你的卡点组织回答…</p>
+                <DigitalAvatarBadge mood="thinking" size={28} />
+                <p className="mentor-msg-text">正在思考中…</p>
               </div>
             )}
           </div>
         </div>
 
-        <footer className="mentor-composer">
+        {mentor.courseId === 'digital' && <DigitalMentorTools />}
+        {mentor.courseId === 'analog' && <AnalogMentorTools />}
+
+        <footer
+          className={`mentor-composer${dragActive ? ' is-drag-active' : ''}`}
+          onDragOver={(event) => {
+            event.preventDefault()
+            if (!dragActive) setDragActive(true)
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setDragActive(false)
+            }
+          }}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept={ASK_IMAGE_ACCEPT}
+            onChange={(event) => void handleFilePicked(event)}
+            hidden
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ASK_FILE_ACCEPT}
+            onChange={(event) => void handleFilePicked(event)}
+            hidden
+          />
+
+          {attachError && <div className="mentor-attach-error">{attachError}</div>}
+
+          {invalidNotice && (
+            <div className="mentor-invalid-banner" role="status" aria-live="polite">
+              <span>{invalidNotice}</span>
+              <button
+                type="button"
+                className="mentor-attach-remove"
+                onClick={() => setInvalidNotice(null)}
+                aria-label="关闭提示"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          )}
+
+          {attachment && (
+            <div className="mentor-attach-preview">
+              {attachment.kind === 'image' && attachment.dataUrl ? (
+                <img
+                  className="mentor-attach-thumb"
+                  src={attachment.dataUrl}
+                  alt={attachment.name}
+                />
+              ) : (
+                <span className="mentor-attach-icon">
+                  <FileText size={15} />
+                </span>
+              )}
+              <div className="mentor-attach-meta">
+                <strong>{attachment.name}</strong>
+                {attachment.size ? <span>{formatFileSize(attachment.size)}</span> : null}
+              </div>
+              <button
+                type="button"
+                className="mentor-attach-remove"
+                onClick={() => updateAttachment(mentor.courseId, null)}
+                aria-label="移除附件"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <div className="mentor-input-row">
+            <div className="mentor-plus-wrap" ref={attachMenuRef}>
+              <button
+                type="button"
+                className={`mentor-plus-btn${attachMenuOpen ? ' is-open' : ''}`}
+                onClick={() => setAttachMenuOpen((current) => !current)}
+                disabled={thinking || attachmentBusy}
+                aria-label="添加照片或文件"
+                aria-expanded={attachMenuOpen}
+                aria-haspopup="menu"
+              >
+                {attachmentBusy ? <Loader2 size={17} className="spin-icon" /> : <Plus size={18} />}
+              </button>
+              {attachMenuOpen && (
+                <div className="mentor-plus-menu" role="menu" aria-label="添加附件">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAttachMenuOpen(false)
+                      imageInputRef.current?.click()
+                    }}
+                  >
+                    <ImagePlus size={15} />
+                    选择照片
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAttachMenuOpen(false)
+                      fileInputRef.current?.click()
+                    }}
+                  >
+                    <Paperclip size={15} />
+                    选择文件
+                  </button>
+                </div>
+              )}
+            </div>
+
             <textarea
               ref={inputRef}
               className="mentor-input"
               value={input}
-              onChange={(event) => updateInput(mentor.courseId, event.target.value)}
+              onChange={(event) => {
+                updateInput(mentor.courseId, event.target.value)
+                resizeInput(event.target)
+              }}
               onKeyDown={(event) => {
                 if (
                   event.key === 'Enter' &&
@@ -822,25 +1279,20 @@ export function MajorMentorDrawer({
                 }
               }}
               placeholder={`问${mentor.title}：卡在哪、下一步怎么学…`}
-              rows={2}
+              rows={1}
               aria-label={`问${mentor.title}`}
               disabled={thinking}
             />
             <button
+              type="button"
               className="button button-primary mentor-send"
               onClick={() => void send(input)}
-              disabled={!input.trim() || thinking}
+              disabled={(!input.trim() && !attachment) || thinking || attachmentBusy}
               aria-label={`发送给${mentor.name}`}
             >
               <Send size={16} />
             </button>
           </div>
-          <p className="mentor-footnote">
-            {aiReady
-              ? '已接入服务端 AI；回答按导师档案生成。'
-              : '服务端 AI 未就绪；当前用固定诊断。'}{' '}
-            学习建议，不替代任课老师。Enter 发送，Shift + Enter 换行。
-          </p>
         </footer>
       </div>
       <MentorManager
@@ -869,21 +1321,31 @@ function MathMentorBubble({
 }) {
   return (
     <article className="mentor-msg is-mentor mentor-kind-guide">
-      <span className="mentor-msg-mark">
-        <AiMark size={14} />
-      </span>
+      <DigitalAvatarBadge
+        mood={answer.streaming ? 'answering' : 'happy'}
+        size={28}
+      />
       <div className="mentor-msg-main">
         <div className="mentor-msg-head">
-          <strong>
-            <MathText text={answer.title} />
-          </strong>
-          <Badge tone="gold">{mentorName}</Badge>
-          {answer.ai && <Badge tone="blue">AI 生成</Badge>}
+          <strong className="mentor-msg-author">{mentorName}</strong>
+          {!answer.ai && answer.title && answer.title !== '导师回答' && (
+            <span className="mentor-msg-subtitle">
+              <MathText text={answer.title} />
+            </span>
+          )}
         </div>
         {answer.ai ? (
           <div className="mentor-ai-answer">
-            <RichText text={answer.text} />
-            {answer.streaming && <span className="ai-streaming-caret" aria-label="正在生成" />}
+            {answer.streaming && !answer.text.trim() ? (
+              <p className="mentor-msg-text mentor-thinking-text">正在思考中…</p>
+            ) : (
+              <>
+                <RichText text={answer.text} />
+                {answer.streaming && (
+                  <span className="ai-streaming-caret" aria-label="正在生成" />
+                )}
+              </>
+            )}
           </div>
         ) : (
           <p className="mentor-msg-text">
@@ -956,9 +1418,6 @@ function MathMentorBubble({
             {answer.routeLabel ?? '去课程里问'}
             <ArrowRight size={14} />
           </button>
-        )}
-        {answer.ai && answer.model && (
-          <p className="mentor-ai-source">由 {answer.model} 生成 · 按导师档案提示</p>
         )}
       </div>
     </article>

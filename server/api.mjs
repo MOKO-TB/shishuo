@@ -615,6 +615,24 @@ async function askWallAi({ ai, courseName, question, matches }) {
 }
 
 export function createApiHandler({ db, config }) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS invalid_qa (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      user_name TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'student',
+      source TEXT NOT NULL DEFAULT 'ask',
+      course_id TEXT NOT NULL DEFAULT '',
+      course_name TEXT NOT NULL DEFAULT '',
+      question TEXT NOT NULL DEFAULT '',
+      reason TEXT NOT NULL DEFAULT '',
+      reply TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'invalid',
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_invalid_qa_created ON invalid_qa(created_at);
+    CREATE INDEX IF NOT EXISTS idx_invalid_qa_user ON invalid_qa(user_id, created_at);
+  `)
   const loginAttempts = new Map()
   const wallSubmits = new Map()
 
@@ -2335,6 +2353,40 @@ export function createApiHandler({ db, config }) {
         return sendJson(res, 200, { threads: listArchivedThreads(db, limit) })
       }
 
+      if (pathname === '/api/admin/invalid-qa' && req.method === 'GET') {
+        requireAdmin(req)
+        const limit = Math.max(1, Math.min(300, Number(url.searchParams.get('limit') ?? 100)))
+        const rows = db
+          .prepare(
+            `SELECT id, user_id, user_name, role, source, course_id, course_name,
+                    question, reason, reply, status, created_at
+               FROM invalid_qa
+              ORDER BY created_at DESC
+              LIMIT ?`,
+          )
+          .all(limit)
+        const total = Number(
+          db.prepare('SELECT COUNT(*) AS count FROM invalid_qa').get()?.count ?? 0,
+        )
+        return sendJson(res, 200, {
+          total,
+          items: rows.map((row) => ({
+            id: row.id,
+            userId: row.user_id,
+            userName: row.user_name,
+            role: row.role,
+            source: row.source,
+            courseId: row.course_id,
+            courseName: row.course_name,
+            question: row.question,
+            reason: row.reason,
+            reply: row.reply,
+            status: row.status,
+            createdAt: Number(row.created_at),
+          })),
+        })
+      }
+
       if (pathname === '/api/admin/ai-settings' && req.method === 'GET') {
         requireAdmin(req)
         const ai = resolveAiConfig(db, config.ai)
@@ -2972,6 +3024,50 @@ export function createApiHandler({ db, config }) {
           type: mime,
           size: buffer.length,
         })
+      }
+
+      if (pathname === '/api/qa/invalid' && req.method === 'POST') {
+        const user = requireUser(req)
+        if (!sameOrigin(req)) return sendError(res, 403, '请求来源不合法。')
+        const body = await readJson(req, SMALL_BODY_LIMIT)
+        const source = ['ask', 'mentor', 'follow-up'].includes(body?.source)
+          ? body.source
+          : 'ask'
+        const courseId = String(body?.courseId ?? '').trim().slice(0, 80)
+        const courseName = String(body?.courseName ?? '').trim().slice(0, 120)
+        const question = String(body?.question ?? '').trim().slice(0, 2000)
+        const reason = String(body?.reason ?? '与教学无关').trim().slice(0, 200)
+        const reply = String(body?.reply ?? '').trim().slice(0, 1000)
+        if (!question) return sendError(res, 400, '缺少问题内容。')
+        const id = newId('inv')
+        const now = Date.now()
+        db.prepare(
+          `INSERT INTO invalid_qa (
+             id, user_id, user_name, role, source, course_id, course_name,
+             question, reason, reply, status, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'invalid', ?)`,
+        ).run(
+          id,
+          user.id,
+          user.name,
+          user.role,
+          source,
+          courseId,
+          courseName,
+          question,
+          reason,
+          reply,
+          now,
+        )
+        recordAudit(db, {
+          user,
+          action: 'invalid-qa-filtered',
+          actions: ['invalid-qa-filtered'],
+          courseIds: courseId ? [courseId] : [],
+          summary: `过滤无效问答（${source === 'mentor' ? 'AI 导师' : source === 'follow-up' ? '追问' : 'AI 助教'} · ${reason}）：${question.slice(0, 48)}`,
+          mode: 'filter',
+        })
+        return sendJson(res, 200, { ok: true, id, status: 'invalid' })
       }
 
       if (pathname === '/api/ai/status' && req.method === 'GET') {

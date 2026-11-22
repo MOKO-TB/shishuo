@@ -36,7 +36,7 @@ import {
 import { Badge, EmptyState, Modal, RichText, type BadgeTone } from '../components/ui'
 import { ThreadDetailModal } from '../components/ThreadDetailModal'
 import type { AnswerResult, ExternalAnswer, Faq, Role, Thread } from '../types'
-import { CampusTools } from './campus/CampusTools'
+import { CampusTools, type CampusToolTab } from './campus/CampusTools'
 
 type CredFilter = 'all' | 'verified' | 'unverified' | 'no-source'
 type SortMode = 'verified' | 'review'
@@ -252,6 +252,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
   const [shuffleSeed] = useState(() => Math.random())
   const [visibleLimit, setVisibleLimit] = useState(24)
   const [category, setCategory] = useState('all')
+  const [toolTab, setToolTab] = useState<CampusToolTab>('gpa')
   const [credFilter, setCredFilter] = useState<CredFilter>('all')
   const [sort, setSort] = useState<SortMode>(role === 'teacher' ? 'review' : 'verified')
   const [expandedCards, setExpandedCards] = useState<Set<string>>(() => new Set())
@@ -687,7 +688,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
             <div>
               <strong>
                 <Sparkles size={16} />
-                问引路学长
+                引路学长
               </strong>
             </div>
           </div>
@@ -840,23 +841,26 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </section>
       )}
 
-<CampusTools
-          askCount={role === 'student' ? myCampusThreads.length : 0}
-          kbCategories={categories.map((name) => ({ name, count: categoryCounts[name] ?? 0 }))}
-          activeCategory={category}
-          onPickCategory={(next) => {
-            setCategory(next)
-            setCredFilter('all')
-            setQuery('')
-            // 等筛选结果渲染后再滚到知识卡列表
+      <CampusTools
+        tab={toolTab}
+        onTabChange={setToolTab}
+        askCount={role === 'student' ? myCampusThreads.length : 0}
+        kbCategories={categories.map((name) => ({ name, count: categoryCounts[name] ?? 0 }))}
+        activeCategory={category}
+        onPickCategory={(next) => {
+          setToolTab('kb')
+          setCategory(next)
+          setCredFilter('all')
+          setQuery('')
+          // 等筛选结果渲染后再滚到知识卡列表
+          window.requestAnimationFrame(() => {
             window.requestAnimationFrame(() => {
-              window.requestAnimationFrame(() => {
-                document
-                  .querySelector('.campus-grid')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              })
+              document
+                .querySelector('.campus-grid')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             })
-          }}
+          })
+        }}
           askSlot={
             <div className="campus-thread-list">
               {myCampusThreads.slice(0, 4).map((thread) => (
@@ -1143,7 +1147,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
         </>
       )}
 
-      {visibleItems.length === 0 ? (
+      {(role === 'teacher' || toolTab === 'kb') && (visibleItems.length === 0 ? (
         <div className="card">
           <EmptyState
             icon={<BookOpen size={20} />}
@@ -1240,7 +1244,7 @@ export function CampusView({ role, notify }: CampusViewProps) {
             </div>
           )}
         </>
-      )}
+      ))}
       </CampusTools>
 
       <Modal

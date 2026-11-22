@@ -29,7 +29,7 @@ import {
   type FeedbackCategory,
   type FeedbackItem,
 } from '../lib/feedback'
-import { isNativeApp } from '../lib/nativeShell'
+import { getNativeAppInfo, isNativeApp, triggerHaptic } from '../lib/nativeShell'
 import { formatRelative } from '../lib/utils'
 import { usePhotoAccess } from './PhotoAccess'
 import { Badge, EmptyState, Modal } from './ui'
@@ -105,7 +105,13 @@ export function FeedbackModal({
       setDraftRestored(false)
     }
     void loadMine()
-    setAppVersionText(isNativeApp() ? 'Android' : 'Web 网页版')
+    if (isNativeApp()) {
+      void getNativeAppInfo().then((info) => {
+        if (info) setAppVersionText(`Android v${info.versionName} (${info.versionCode})`)
+      })
+    } else {
+      setAppVersionText('Web 网页版')
+    }
   }, [open, initialTab, userId, loadMine])
 
   useEffect(() => {
@@ -188,6 +194,7 @@ export function FeedbackModal({
       return
     }
     setSubmitting(true)
+    triggerHaptic('medium')
     try {
       const clientMeta = includeMeta
         ? {

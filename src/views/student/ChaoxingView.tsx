@@ -292,7 +292,6 @@ export function ChaoxingView() {
     <div className="page cx-page">
       <header className="cx-page-head">
         <div>
-          <div className="eyebrow">学生端 / 学习通</div>
           <h1 className="display-title">
             课程消息、作业与资料
             <br />
@@ -301,31 +300,28 @@ export function ChaoxingView() {
         </div>
         <div className="cx-page-head-side">
           {connected ? (
-            <>
-              <Badge tone="jade">已绑定</Badge>
-              <span>
+            <div className="cx-connected-controls">
+              <span className="cx-sync-meta">
                 {autoSyncing
                   ? '自动同步中…'
                   : overview?.lastSyncAt
                     ? `上次同步 ${fmt(overview.lastSyncAt)}`
                     : '还没有同步'}
               </span>
-              <button className="button button-primary" onClick={() => void syncNow()} disabled={syncing}>
-                {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
-                {syncing ? '同步中…' : '同步全部'}
-              </button>
-              <button className="button button-ghost" onClick={() => setBindOpen(true)}>
-                课程与绑定
-              </button>
-              <button className="button button-ghost" onClick={() => void openChaoxingAppHome()}>
-                <ExternalLink size={14} />
-                学习通 App
-              </button>
-              <button className="button button-ghost" onClick={() => void logout()}>
-                <LogOut size={14} />
-                退出学习通
-              </button>
-            </>
+              <div className="cx-head-actions">
+                <button className="button button-primary" onClick={() => void syncNow()} disabled={syncing}>
+                  {syncing ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
+                  {syncing ? '同步中…' : '同步全部'}
+                </button>
+                <button className="button button-ghost" onClick={() => setBindOpen(true)}>
+                  课程与绑定
+                </button>
+                <button className="button button-ghost" onClick={() => void logout()}>
+                  <LogOut size={14} />
+                  退出学习通
+                </button>
+              </div>
+            </div>
           ) : (
             <>
               <button

@@ -20,6 +20,7 @@ export function PageSheet({
   footer,
   children,
   className,
+  hideBack = false,
 }: {
   open: boolean
   onClose: () => void
@@ -29,6 +30,7 @@ export function PageSheet({
   footer?: ReactNode
   children: ReactNode
   className?: string
+  hideBack?: boolean
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const previousRef = useRef<HTMLElement | null>(null)
@@ -75,10 +77,12 @@ export function PageSheet({
   return (
     <div className="page-sheet" role="region" aria-label={typeof title === 'string' ? title : '设置'}>
       <div className="page-sheet-bar">
-        <button className="page-sheet-back" onClick={onClose} type="button">
-          <ArrowLeft size={16} />
-          返回
-        </button>
+        {!hideBack && (
+          <button className="page-sheet-back" onClick={onClose} type="button">
+            <ArrowLeft size={16} />
+            返回
+          </button>
+        )}
         <div className="page-sheet-heading">
           {eyebrow && <span className="page-sheet-eyebrow">{eyebrow}</span>}
           <strong>{title}</strong>

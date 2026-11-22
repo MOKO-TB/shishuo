@@ -1,23 +1,17 @@
 import { useEffect, useState } from "react"
 import { ArrowRight, BookOpen, CalendarDays } from "lucide-react"
-import type { Course, CourseNote, ThreadGroup } from '../../types'
+import type { Course, CourseNote } from '../../types'
 import type { TeacherProfile } from '../../data/seed'
 import type { ScheduleEntry } from '../../lib/profile'
-import { formatRelative, truncate } from "../../lib/utils"
+import { formatRelative } from "../../lib/utils"
 import { sectionLabel, weekdayLabel } from '../../lib/profile'
 import { courseById } from '../../data/seed'
 import { Avatar, Badge } from '../../components/ui'
-import { Donut } from '../../components/charts'
 import { FaqAttachments } from '../../components/FaqAttachments'
 
 export interface StudentRailProps {
-  todayAi: number
-  todayHuman: number
-  todayRate: number
-  firstResponse: { value: string; unit: string }
   todaysClasses: ScheduleEntry[]
   hasSchedule: boolean
-  waitingGroups: ThreadGroup[]
   hotFaqs: { id: string; courseId: string; question: string; citations: number }[]
   course: Course
   courseId: string
@@ -27,20 +21,14 @@ export interface StudentRailProps {
   studentId: string
   onChangeCourse: (courseId: string) => void
   onOpenAccount?: (tab: 'identity' | 'schedule' | 'scores' | 'teachers') => void
-  onOpenJoinGroup: (group: ThreadGroup) => void
   onOpenFaq: (faqId: string) => void
   onNavigate: (view: 'student' | 'schedule' | 'knowledge' | 'teacher' | 'insights' | 'about') => void
 }
 
-/** 学生端右侧栏：今日答疑 / 课程表 / 等老师 / 知识库热度 / 教师信息。纯展示，数据由视图注入。 */
+/** 学生端右侧栏：课程表 / 知识库热度 / 教师信息。纯展示，数据由视图注入。 */
 export function StudentRail({
-  todayAi,
-  todayHuman,
-  todayRate,
-  firstResponse,
   todaysClasses,
   hasSchedule,
-  waitingGroups,
   hotFaqs,
   course,
   courseId,
@@ -50,7 +38,6 @@ export function StudentRail({
   studentId,
   onChangeCourse,
   onOpenAccount,
-  onOpenJoinGroup,
   onOpenFaq,
   onNavigate,
 }: StudentRailProps) {
@@ -86,32 +73,6 @@ export function StudentRail({
 
   return (
     <aside className="student-rail">
-      <div className="rail-card daily-card">
-        <div className="rail-card-head">
-          <div>
-            <div className="eyebrow">今日答疑</div>
-            <h3>AI 先接住了多少</h3>
-          </div>
-        </div>
-        <div className="daily-main">
-          <div className="daily-number">
-            <strong>{todayAi}</strong>
-            <span>个问题被 AI 直接答完</span>
-          </div>
-          <Donut value={todayRate} label="AI 解决" size={92} />
-        </div>
-        <div className="daily-foot">
-          <span>
-            <i className="dot-human" />
-            转人工 {todayHuman}
-          </span>
-          <span>
-            老师首响 {firstResponse.value}
-            {firstResponse.unit}
-          </span>
-        </div>
-      </div>
-
       {todaysClasses.length > 0 && (
         <div className="rail-card class-card">
           <div className="rail-card-head">
@@ -179,46 +140,6 @@ export function StudentRail({
           </button>
         </div>
       )}
-
-      <div className="rail-card waiting-card">
-        <div className="rail-card-head">
-          <div>
-            <div className="eyebrow">正在等老师</div>
-            <h3>同问，少排一次队</h3>
-          </div>
-          <span className="waiting-live">
-            <i />
-            {waitingGroups.length}
-          </span>
-        </div>
-        {waitingGroups.length === 0 ? (
-          <p className="waiting-empty">这门课暂时没有待答问题。</p>
-        ) : (
-          <div className="waiting-list">
-            {waitingGroups.map((group) => {
-              const joined = group.threads.some((item) => item.student.id === studentId)
-              const teacher = courseById(group.courseId).teacher
-              return (
-                <div className="waiting-row" key={group.key}>
-                  <div className="waiting-copy">
-                    <strong>{truncate(group.title, 22)}</strong>
-                    <span>
-                      {group.count} 人等 · {teacher}老师
-                    </span>
-                  </div>
-                  <button
-                    className={`same-button ${joined ? 'is-joined' : ''}`}
-                    disabled={joined}
-                    onClick={() => onOpenJoinGroup(group)}
-                  >
-                    {joined ? '已在等' : '同问'}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
 
       <div className="rail-card hot-card">
         <div className="rail-card-head">

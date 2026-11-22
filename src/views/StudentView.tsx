@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CalendarDays,
+  Camera,
   ChevronRight,
   Eye,
   EyeOff,
@@ -21,16 +22,14 @@ import {
   Loader2,
   MessagesSquare,
   Paperclip,
+  Plus,
   QrCode,
-  Server,
-  Send,
-  Sparkles,
   Users,
   X,
 } from 'lucide-react'
 import { useStore } from '../store'
 import { useAuth } from '../auth'
-import { courseById, dateKey, teacherByName } from '../data/seed'
+import { courseById, teacherByName } from '../data/seed'
 import { mentorBriefForCourse } from '../data/mentor'
 import {
   runsInWeek,
@@ -50,12 +49,14 @@ import {
   errorMessage,
   extractQuestionFromImage,
   fetchAIStatus,
-  isAIConfigReady,
-  loadAIConfig,
-  saveAIConfig,
-  type AIConfig,
   type AIStatus,
 } from '../lib/ai'
+import {
+  checkLocalTeachingRelevance,
+  parseStudyQaResponse,
+  reportInvalidQa,
+  stripInvalidQaMarker,
+} from '../lib/studyQaSkill'
 import {
   ASK_FILE_ACCEPT,
   ASK_IMAGE_ACCEPT,
@@ -65,7 +66,8 @@ import {
   prepareAttachment,
 } from '../lib/attachment'
 import { uploadThreadImage } from '../lib/image'
-import { isNativeApp } from '../lib/nativeShell'
+import { isNativeApp, triggerHaptic } from '../lib/nativeShell'
+import { nativePhotoDataUrlToFile, type NativePhotoFile } from '../lib/photoAccess'
 import { useAttachmentConsent } from '../components/AttachmentConsent'
 import { usePhotoAccess } from '../components/PhotoAccess'
 import type {
@@ -78,8 +80,6 @@ import type {
   ViewKey,
 } from '../types'
 import {
-  averageFirstResponseMinutes,
-  durationLabel,
   excerpt,
   formatRelative,
   formatWeekday,
@@ -89,8 +89,8 @@ import {
   statusTone,
   truncate,
 } from '../lib/utils'
-import { AIConfigModal } from '../components/AIConfigModal'
 import { AnswerCard } from '../components/AnswerCard'
+import { CourseSelect } from '../components/CourseSelect'
 import { EscalateModal } from '../components/EscalateModal'
 import { FollowUpModal } from '../components/FollowUpModal'
 import { JoinGroupModal } from '../components/JoinGroupModal'
@@ -102,11 +102,9 @@ import { TeachModal } from '../components/TeachModal'
 import { ThreadDetailModal } from '../components/ThreadDetailModal'
 import { StudentRail } from './student/StudentRail'
 import { checkQuestionClarity, selfCheckTemplate } from '../lib/questionCheck'
+import { DigitalAvatarBadge, DigitalAvatarSprite } from '../components/DigitalAvatar'
 import {
-  AiMark,
-  Avatar,
   Badge,
-  BrandMark,
   EmptyState,
   MathText,
   RichText,
@@ -126,6 +124,10 @@ interface StudentViewProps {
   onWallRequestHandled?: () => void
   focusThreadId?: string | null
   onFocusHandled?: () => void
+  nativeCameraRequest?: number | null
+  onNativeCameraHandled?: () => void
+  incomingShare?: { id: number; text?: string; image?: NativePhotoFile } | null
+  onIncomingShareHandled?: () => void
 }
 
 const suggestions: Record<string, string[]> = {
@@ -200,11 +202,15 @@ export function StudentView({
   onWallRequestHandled,
   focusThreadId,
   onFocusHandled,
+  nativeCameraRequest,
+  onNativeCameraHandled,
+  incomingShare,
+  onIncomingShareHandled,
 }: StudentViewProps) {
   const { data, dispatch } = useStore()
   const { user } = useAuth()
   const { requestConsent } = useAttachmentConsent()
-  const { pickImages } = usePhotoAccess()
+  const { pickImages, takePhoto } = usePhotoAccess()
   const studentId = user?.id ?? ''
   const profile = useProfile()
   const courses = useMemo(() => studentCourses(profile), [profile])
@@ -233,9 +239,8 @@ export function StudentView({
     mode?: 'local' | 'image' | 'document' | 'external'
   } | null>(null)
   const [streamPreview, setStreamPreview] = useState('')
-  const [aiConfig, setAiConfig] = useState<AIConfig>(() => loadAIConfig())
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
-  const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false)
   const [attachment, setAttachment] = useState<ThreadAttachment | null>(null)
   const [attachmentVisible, setAttachmentVisible] = useState(true)
   const [attachmentBusy, setAttachmentBusy] = useState(false)
@@ -244,11 +249,16 @@ export function StudentView({
     faq?: Faq
     group?: ThreadGroup
   } | null>(null)
-  const courseStripRef = useRef<HTMLDivElement>(null)
+  const attachMenuRef = useRef<HTMLDivElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
   const [activeResult, setActiveResult] = useState<AnswerResult | null>(null)
+  const [invalidNotice, setInvalidNotice] = useState<{
+    question: string
+    message: string
+  } | null>(null)
   const [escalateOpen, setEscalateOpen] = useState(false)
   const [teachOpen, setTeachOpen] = useState(false)
   const [detailThreadId, setDetailThreadId] = useState<string | null>(null)
@@ -291,7 +301,7 @@ export function StudentView({
     () => groupPendingThreads(data.threads, courseId),
     [data.threads, courseId],
   )
-  const aiReady = isAIConfigReady(aiConfig) && Boolean(aiStatus?.configured)
+  const aiReady = Boolean(aiStatus?.configured)
   const aiVision = Boolean(aiStatus?.vision)
   const questionCheck = useMemo(
     () => checkQuestionClarity(question, Boolean(attachment)),
@@ -306,8 +316,14 @@ export function StudentView({
       .filter((thread) => thread.student.id === studentId && scoped.has(thread.courseId))
       .sort((a, b) => b.createdAt - a.createdAt)
   }, [courses, data.threads, studentId])
+  const allWaitingGroups = useMemo(() => {
+    const scoped = new Set(courses.map((item) => item.id))
+    return groupPendingThreads(data.threads).filter(
+      (group) => scoped.has(group.courseId) && group.primary.kind !== 'follow-up',
+    )
+  }, [data.threads, courses])
   const [threadFilter, setThreadFilter] = useState<
-    'all' | 'waiting' | 'needs-info' | 'replied' | 'resolved' | 'withdrawn'
+    'all' | 'waiting' | 'course-waiting' | 'needs-info' | 'replied' | 'resolved' | 'withdrawn'
   >('all')
   const [threadCourse, setThreadCourse] = useState('all')
   const threadsInFilter = useMemo(
@@ -324,18 +340,32 @@ export function StudentView({
       }),
     [myThreads, threadFilter],
   )
+  const filteredWaitingGroups = useMemo(
+    () =>
+      allWaitingGroups.filter(
+        (group) => threadCourse === 'all' || group.courseId === threadCourse,
+      ),
+    [allWaitingGroups, threadCourse],
+  )
   const threadCourseCounts = useMemo(() => {
     const counts: Record<string, number> = {}
+    if (threadFilter === 'course-waiting') {
+      for (const group of allWaitingGroups) {
+        counts[group.courseId] = (counts[group.courseId] ?? 0) + 1
+      }
+      return counts
+    }
     for (const thread of threadsInFilter) {
       counts[thread.courseId] = (counts[thread.courseId] ?? 0) + 1
     }
     return counts
-  }, [threadsInFilter])
+  }, [allWaitingGroups, threadFilter, threadsInFilter])
   const threadFilterCounts = useMemo(
     () => ({
       all: myThreads.length,
       waiting: myThreads.filter((thread) => thread.status === 'pending' && !thread.withdrawnAt)
         .length,
+      'course-waiting': allWaitingGroups.length,
       'needs-info': myThreads.filter(
         (thread) => thread.status === 'needs-info' && !thread.withdrawnAt,
       ).length,
@@ -345,7 +375,7 @@ export function StudentView({
       resolved: myThreads.filter((thread) => thread.resolvedAt).length,
       withdrawn: myThreads.filter((thread) => thread.withdrawnAt).length,
     }),
-    [myThreads],
+    [myThreads, allWaitingGroups.length],
   )
   const recentThreads = useMemo(
     () =>
@@ -354,11 +384,6 @@ export function StudentView({
         .slice(0, 5),
     [threadsInFilter, threadCourse],
   )
-  const today = data.daily.find((entry) => entry.date === dateKey(Date.now()))
-  const todayAi = today?.ai ?? 0
-  const todayHuman = today?.human ?? 0
-  const todayRate = todayAi + todayHuman > 0 ? todayAi / (todayAi + todayHuman) : 0
-  const firstResponse = durationLabel(averageFirstResponseMinutes(data.threads))
   const hotFaqs = useMemo(() => {
     const ids = new Set(courses.map((item) => item.id))
     return [...data.faqs]
@@ -366,13 +391,6 @@ export function StudentView({
       .sort((a, b) => b.citations - a.citations)
       .slice(0, 4)
   }, [data.faqs, courses])
-  const waitingGroups = useMemo(
-    () =>
-      groupPendingThreads(data.threads, courseId)
-        .filter((group) => group.primary.kind !== 'follow-up')
-        .slice(0, 3),
-    [data.threads, courseId],
-  )
   const courseFaqCount = data.faqs.filter((faq) => faq.courseId === courseId).length
 
   useEffect(() => {
@@ -389,15 +407,24 @@ export function StudentView({
   }, [courseId, courses, todaysClasses])
 
   useEffect(() => {
-    const strip = courseStripRef.current
-    const chip = strip?.querySelector<HTMLElement>('.course-chip.is-active')
-    if (!strip || !chip) return
-    const stripRect = strip.getBoundingClientRect()
-    const chipRect = chip.getBoundingClientRect()
-    const target =
-      strip.scrollLeft + chipRect.left - stripRect.left - (stripRect.width - chipRect.width) / 2
-    strip.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
-  }, [courseId, courses.length])
+    if (!attachMenuOpen) return
+    const onPointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!attachMenuRef.current?.contains(event.target as Node)) {
+        setAttachMenuOpen(false)
+      }
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAttachMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('touchstart', onPointerDown, { passive: true })
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('touchstart', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [attachMenuOpen])
 
   useEffect(
     () => () => {
@@ -458,6 +485,7 @@ export function StudentView({
     setQuestion('')
     setActiveThreadId(null)
     setActiveResult(null)
+    setInvalidNotice(null)
     setEscalateOpen(false)
     setTeachOpen(false)
     setSelfCheckOpen(false)
@@ -485,6 +513,7 @@ export function StudentView({
     setAttachment(null)
     setActiveThreadId(null)
     setActiveResult(null)
+    setInvalidNotice(null)
     setEscalateOpen(false)
     setTeachOpen(false)
     notify(
@@ -531,8 +560,55 @@ export function StudentView({
       imageInputRef.current?.click()
       return
     }
-    if (result?.length) await attachFile(result[0], { skipConsent: true })
+    if (result?.length) {
+      triggerHaptic('light')
+      await attachFile(result[0], { skipConsent: true })
+    }
   }
+
+  const capturePhoto = async () => {
+    if (thinking || attachmentBusy) return
+    const result = await takePhoto()
+    if (result === 'unavailable') {
+      // 旧版 APK 或不支持原生相机桥的设备：自动回退到带 capture="environment" 的系统拍照选择器。
+      cameraInputRef.current?.click()
+      return
+    }
+    if (result) {
+      triggerHaptic('light')
+      await attachFile(result, { skipConsent: true })
+      focusAskCard()
+    }
+  }
+
+  const lastCameraReq = useRef<number | null>(null)
+  useEffect(() => {
+    if (!nativeCameraRequest || lastCameraReq.current === nativeCameraRequest) return
+    lastCameraReq.current = nativeCameraRequest
+    onNativeCameraHandled?.()
+    focusAskCard()
+    void capturePhoto()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nativeCameraRequest, onNativeCameraHandled])
+
+  const lastShareId = useRef<number | null>(null)
+  useEffect(() => {
+    if (!incomingShare || lastShareId.current === incomingShare.id) return
+    lastShareId.current = incomingShare.id
+    onIncomingShareHandled?.()
+    focusAskCard()
+    if (incomingShare.text) {
+      setQuestion((prev) => (prev.trim() ? `${prev.trim()}\n${incomingShare.text}` : incomingShare.text!))
+    }
+    if (incomingShare.image) {
+      void nativePhotoDataUrlToFile(incomingShare.image)
+        .then((file) => attachFile(file, { skipConsent: true }))
+        .catch(() => notify('读取分享的图片失败，请重试', 'danger'))
+    } else if (incomingShare.text) {
+      notify('已把分享的文字放进提问框', 'info')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingShare, onIncomingShareHandled])
 
   const chooseFile = () => {
     if (thinking || attachmentBusy) return
@@ -600,9 +676,18 @@ export function StudentView({
     void attachFile(image)
   }
 
+  const handleAskDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    if (!Array.from(event.dataTransfer.types).includes('Files')) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (!thinking && !attachmentBusy) setDragActive(true)
+  }
+
   const handleAskDragOver = (event: DragEvent<HTMLDivElement>) => {
     if (!Array.from(event.dataTransfer.types).includes('Files')) return
     event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'copy'
     if (!thinking && !attachmentBusy) setDragActive(true)
   }
 
@@ -613,6 +698,7 @@ export function StudentView({
 
   const handleAskDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
+    event.stopPropagation()
     setDragActive(false)
     const file = event.dataTransfer.files?.[0]
     if (file) void attachFile(file)
@@ -672,6 +758,31 @@ export function StudentView({
     }
 
     if (!text) return
+    triggerHaptic('medium')
+
+    // 第一道过滤：本地快速检测与教学无关的内容（乱码、纯数字、闲聊、生活琐事等）
+    // 命中后直接提示无关，不进入问答记录与「我的提问」，并上报后台标记为无效问答。
+    const localRelevance = checkLocalTeachingRelevance(text, {
+      hasAttachment: Boolean(attachment),
+      courseName: course.name,
+    })
+    if (localRelevance.invalid) {
+      setQuestion('')
+      setActiveThreadId(null)
+      setActiveResult(null)
+      setInvalidNotice({ question: text, message: localRelevance.notice })
+      notify('检测到与课程教学无关的内容，未计入提问记录', 'info')
+      void reportInvalidQa({
+        source: 'ask',
+        courseId,
+        courseName: course.name,
+        question: text,
+        reason: localRelevance.reason,
+        reply: localRelevance.notice,
+      })
+      return
+    }
+    setInvalidNotice(null)
 
     // AI 就绪时跳过自检，让低置信问题直接走服务端 AI 补充，而不是被自检弹窗拦住。
     if (!questionCheck.ok && !selfCheckBypass.current && !aiReady) {
@@ -746,6 +857,7 @@ export function StudentView({
     setAttachmentVisible(true)
     setActiveThreadId(null)
     setActiveResult(null)
+    setInvalidNotice(null)
     setEscalateOpen(false)
     setTeachOpen(false)
     clearTimers()
@@ -828,10 +940,31 @@ export function StudentView({
               documentText: documentAttachment?.text,
               documentName: documentAttachment?.name,
               knowledgeFiles: result.matches[0]?.faq.attachments,
-              onUpdate: (partial) => setStreamPreview(partial),
+              onUpdate: (partial) => setStreamPreview(stripInvalidQaMarker(partial)),
             })
+            const parsed = parseStudyQaResponse(external.text)
+            if (parsed.invalid) {
+              setThinking(null)
+              pendingPayload.current = null
+              setActiveThreadId(null)
+              setActiveResult(null)
+              setInvalidNotice({
+                question: thread.question,
+                message: parsed.cleanText,
+              })
+              notify('检测到与课程教学无关的内容，未计入提问记录', 'info')
+              void reportInvalidQa({
+                source: 'ask',
+                courseId: thread.courseId,
+                courseName: threadCourse.name,
+                question: thread.question,
+                reason: parsed.reason,
+                reply: parsed.cleanText,
+              })
+              return
+            }
             thread.externalAnswer = {
-              text: external.text,
+              text: parsed.cleanText,
               model: external.model || aiStatus?.model || '服务端 AI',
               at: Date.now(),
             }
@@ -912,6 +1045,20 @@ export function StudentView({
   ) => {
     if (!aiReady) throw new Error('服务端 AI 未配置，暂时不能继续对话。')
     const threadCourse = courseById(thread.courseId)
+    const localCheck = checkLocalTeachingRelevance(followUp, {
+      courseName: threadCourse.name,
+    })
+    if (localCheck.invalid) {
+      void reportInvalidQa({
+        source: 'follow-up',
+        courseId: thread.courseId,
+        courseName: threadCourse.name,
+        question: followUp,
+        reason: localCheck.reason,
+        reply: localCheck.notice,
+      })
+      throw new Error(localCheck.notice)
+    }
     const result = retrieve(
       data.faqs,
       followUp,
@@ -923,7 +1070,7 @@ export function StudentView({
       .slice(0, 2)
       .map((match) => `Q: ${match.faq.question}\nA: ${match.faq.answer.slice(0, 600)}`)
       .join('\n\n')
-    return answerWithExternalAI({
+    const external = await answerWithExternalAI({
       question: followUp,
       courseName: threadCourse.name,
       localContext,
@@ -931,6 +1078,19 @@ export function StudentView({
       knowledgeFiles: sourceFaq?.attachments,
       history,
     })
+    const parsed = parseStudyQaResponse(external.text)
+    if (parsed.invalid) {
+      void reportInvalidQa({
+        source: 'follow-up',
+        courseId: thread.courseId,
+        courseName: threadCourse.name,
+        question: followUp,
+        reason: parsed.reason,
+        reply: parsed.cleanText,
+      })
+      throw new Error(parsed.cleanText)
+    }
+    return { text: parsed.cleanText, model: external.model }
   }
 
   const withdrawThread = (thread: Thread, withdrawn: boolean) => {
@@ -998,14 +1158,6 @@ export function StudentView({
         : '识别题目'
       : '交给 AI'
 
-  const handleAiSave = (next: AIConfig) => {
-    saveAIConfig(next)
-    setAiConfig(next)
-    void fetchAIStatus()
-      .then(setAiStatus)
-      .catch(() => setAiStatus(null))
-  }
-
   return (
     <div className="page student-page">
       <header className="student-head">
@@ -1025,23 +1177,12 @@ export function StudentView({
       </header>
 
       <div className="course-switch-row">
-        <div className="course-switch" role="tablist" aria-label="选择课程" ref={courseStripRef}>
-          {courses.map((item) => (
-            <button
-              key={item.id}
-              className={`course-chip ${courseId === item.id ? 'is-active' : ''}`}
-              onClick={() => changeCourse(item.id)}
-              role="tab"
-              aria-selected={courseId === item.id}
-            >
-              <span className={`course-dot accent-${item.accent}`} />
-              <span className="course-chip-copy">
-                <strong title={item.name}>{item.shortName}</strong>
-                <em>{item.teacher}老师</em>
-              </span>
-            </button>
-          ))}
-        </div>
+        <CourseSelect
+          courses={courses}
+          value={courseId}
+          onChange={changeCourse}
+          disabled={Boolean(thinking)}
+        />
         <div className="course-switch-side">
           <div className="course-switch-actions">
             <button
@@ -1119,21 +1260,24 @@ export function StudentView({
           <div
             ref={askCardRef}
             className={`ask-card${dragActive ? ' is-dragging' : ''}`}
+            onDragEnter={handleAskDragEnter}
             onDragOver={handleAskDragOver}
             onDragLeave={handleAskDragLeave}
             onDrop={handleAskDrop}
           >
-            <div className="ask-card-glow" aria-hidden="true" />
+            <div className="ask-card-bg" aria-hidden="true">
+              <div className="ask-card-glow" />
+            </div>
             {dragActive && (
               <div className="ask-drop-hint" aria-hidden="true">
                 <Paperclip size={22} />
-                <strong>松手放入文件或截图</strong>
-                <span>支持 PDF、Word、PPT、Excel、文本和图片</span>
+                <strong>松手拖入照片或文件即可上传</strong>
+                <span>支持图片、PDF、Word、PPT、Excel 和文本</span>
               </div>
             )}
             <div className="ask-head">
               <div className="ask-identity">
-                <AiMark size={18} />
+                <DigitalAvatarBadge mood={thinking ? 'thinking' : 'idle'} size={34} />
                 <div>
                   <strong>问 AI 助教</strong>
                 </div>
@@ -1178,6 +1322,14 @@ export function StudentView({
               ref={imageInputRef}
               type="file"
               accept={ASK_IMAGE_ACCEPT}
+              onChange={handleImageChange}
+              hidden
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
               onChange={handleImageChange}
               hidden
             />
@@ -1316,41 +1468,68 @@ export function StudentView({
 
             <div className="ask-foot">
               <div className="ask-tools">
-                <button
-                  className="ask-tool-button"
-                  onClick={chooseImage}
-                  disabled={Boolean(thinking) || attachmentBusy}
-                  type="button"
-                >
-                  <ImagePlus size={15} />
-                  图片
-                </button>
-                <button
-                  className="ask-tool-button"
-                  onClick={chooseFile}
-                  disabled={Boolean(thinking) || attachmentBusy}
-                  type="button"
-                >
-                  {attachmentBusy ? <Loader2 size={15} className="spin-icon" /> : <Paperclip size={15} />}
-                  {attachmentBusy ? '读取中' : '文件'}
-                </button>
-                <button
-                  className={`ask-tool-button ai-tool ${aiReady ? 'is-ready' : ''}`}
-                  onClick={() => setAiSettingsOpen(true)}
-                  type="button"
-                >
-                  <Server size={15} />
-                  <span>
-                    {aiReady
-                      ? '服务端 AI 已开'
-                      : !aiConfig.enabled
-                        ? 'AI 增强已关'
-                        : aiStatus?.configured
-                          ? 'AI 增强已关'
-                          : 'AI 未配置'}
-                  </span>
-                  {aiReady && <i className="ask-tool-dot" />}
-                </button>
+                <div className="ask-plus-wrap" ref={attachMenuRef}>
+                  <button
+                    className={`ask-plus-button${attachMenuOpen ? ' is-open' : ''}`}
+                    onClick={() => setAttachMenuOpen((open) => !open)}
+                    disabled={Boolean(thinking) || attachmentBusy}
+                    type="button"
+                    aria-label="添加照片或文件"
+                    aria-expanded={attachMenuOpen}
+                    aria-haspopup="menu"
+                    title="上传照片或文件（也支持直接拖入输入框）"
+                  >
+                    {attachmentBusy ? (
+                      <Loader2 size={16} className="spin-icon" />
+                    ) : (
+                      <Plus size={18} />
+                    )}
+                  </button>
+                  {attachMenuOpen && (
+                    <div className="ask-plus-menu" role="menu" aria-label="选择上传方式">
+                      {isNativeApp() && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="ask-plus-option"
+                          onClick={() => {
+                            setAttachMenuOpen(false)
+                            void capturePhoto()
+                          }}
+                        >
+                          <Camera size={15} />
+                          <span>拍照识题</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="ask-plus-option"
+                        onClick={() => {
+                          setAttachMenuOpen(false)
+                          void chooseImage()
+                        }}
+                      >
+                        <ImagePlus size={15} />
+                        <span>选择照片</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="ask-plus-option"
+                        onClick={() => {
+                          setAttachMenuOpen(false)
+                          chooseFile()
+                        }}
+                      >
+                        <Paperclip size={15} />
+                        <span>选择文件</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="ask-foot-right">
                 <button
                   className={`anon-toggle ${wallSessionId || anonymous ? 'is-active' : ''}`}
                   onClick={() => {
@@ -1371,8 +1550,6 @@ export function StudentView({
                     <span />
                   </span>
                 </button>
-              </div>
-              <div className="ask-foot-right">
                 <button
                   className="button button-primary ask-submit"
                   onClick={ask}
@@ -1390,7 +1567,11 @@ export function StudentView({
               <div className="thinking-art">
                 <span className="thinking-ring" />
                 <span className="thinking-ring second" />
-                <BrandMark size={46} />
+                <DigitalAvatarSprite
+                  mood={thinking.mode === 'external' && streamPreview ? 'answering' : 'thinking'}
+                  variant="thinking"
+                  interactive={false}
+                />
               </div>
               <div className="thinking-main">
                 <div className="eyebrow">AI 正在工作</div>
@@ -1420,6 +1601,23 @@ export function StudentView({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {invalidNotice && !thinking && (
+            <div className="invalid-qa-banner" role="status" aria-live="polite">
+              <div className="invalid-qa-banner-head">
+                <strong>与课程教学无关</strong>
+                <button
+                  type="button"
+                  className="icon-button invalid-qa-banner-close"
+                  onClick={() => setInvalidNotice(null)}
+                  aria-label="关闭提示"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <p>{invalidNotice.message}</p>
             </div>
           )}
 
@@ -1489,11 +1687,9 @@ export function StudentView({
           <section className="recent-card card">
             <header className="section-head">
               <div>
-                <div className="eyebrow">你的问题</div>
                 <h2>我的提问</h2>
               </div>
               <div className="recent-head-actions">
-
                 {myThreads.length > 0 && (
                   <button
                     className="text-button recent-all-link"
@@ -1503,6 +1699,48 @@ export function StudentView({
                     <Layers size={13} />
                   </button>
                 )}
+              </div>
+            </header>
+
+            <div className="recent-filter-row">
+              <div className="recent-filters" role="tablist" aria-label="我的提问筛选">
+                {(
+                  [
+                    ['all', '全部'],
+                    ['waiting', '等待中'],
+                    ['course-waiting', '正在等老师'],
+                    ['needs-info', '待补充'],
+                    ['replied', '老师已回复'],
+                    ['resolved', '已解决'],
+                    ['withdrawn', '已撤下'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={threadFilter === key}
+                    className={threadFilter === key ? 'is-active' : ''}
+                    onClick={() => setThreadFilter(key)}
+                  >
+                    {label}
+                    <span>{threadFilterCounts[key]}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="recent-course-row">
+                <select
+                  className="recent-course-filter"
+                  value={threadCourse}
+                  onChange={(event) => setThreadCourse(event.target.value)}
+                  aria-label="按课程筛选提问"
+                >
+                  <option value="all">全部课程</option>
+                  {courses.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.shortName}（{threadCourseCounts[item.id] ?? 0}）
+                    </option>
+                  ))}
+                </select>
                 {myThreads.length > 0 && (
                   <button
                     className="text-button recent-all-link"
@@ -1513,48 +1751,44 @@ export function StudentView({
                   </button>
                 )}
               </div>
-            </header>
-
-            <div className="recent-filter-row">
-              <div className="recent-filters" role="tablist" aria-label="我的提问筛选">
-              {(
-                [
-                  ['all', '全部'],
-                  ['waiting', '等待中'],
-                  ['needs-info', '待补充'],
-                  ['replied', '老师已回复'],
-                  ['resolved', '已解决'],
-                  ['withdrawn', '已撤下'],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  role="tab"
-                  aria-selected={threadFilter === key}
-                  className={threadFilter === key ? 'is-active' : ''}
-                  onClick={() => setThreadFilter(key)}
-                >
-                  {label}
-                  <span>{threadFilterCounts[key]}</span>
-                </button>
-              ))}
-              </div>
-              <select
-                className="recent-course-filter"
-                value={threadCourse}
-                onChange={(event) => setThreadCourse(event.target.value)}
-                aria-label="按课程筛选提问"
-              >
-                <option value="all">全部课程</option>
-                {courses.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.shortName}（{threadCourseCounts[item.id] ?? 0}）
-                  </option>
-                ))}
-              </select>
             </div>
 
-            {recentThreads.length === 0 ? (
+            {threadFilter === 'course-waiting' ? (
+              filteredWaitingGroups.length === 0 ? (
+                <EmptyState
+                  icon={<Users size={20} />}
+                  title="暂时没有正在等老师的提问"
+                  description="同学向老师转交的问题会出现在这里，可以一键「同问」少排一次队。"
+                />
+              ) : (
+                <div className="waiting-merged-wrap">
+                  <p className="waiting-merged-tip">同问，少排一次队</p>
+                  <div className="waiting-list">
+                    {filteredWaitingGroups.map((group) => {
+                      const joined = group.threads.some((item) => item.student.id === studentId)
+                      const groupCourse = courseById(group.courseId)
+                      return (
+                        <div className="waiting-row" key={group.key}>
+                          <div className="waiting-copy">
+                            <strong>{truncate(group.title, 28)}</strong>
+                            <span>
+                              {groupCourse.shortName} · {group.count} 人等 · {groupCourse.teacher}老师
+                            </span>
+                          </div>
+                          <button
+                            className={`same-button ${joined ? 'is-joined' : ''}`}
+                            disabled={joined}
+                            onClick={() => setJoinGroup(group)}
+                          >
+                            {joined ? '已在等' : '同问'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            ) : recentThreads.length === 0 ? (
               <EmptyState
                 icon={<MessagesSquare size={20} />}
                 title={myThreads.length === 0 ? '还没有提过问题' : '这个筛选下暂时没有记录'}
@@ -1592,47 +1826,25 @@ export function StudentView({
                           {thread.kind === 'follow-up' && (
                             <span className="recent-kind is-followup">追问</span>
                           )}
-                          {thread.attachment && (
-                            <span className="recent-kind is-image">图片</span>
-                          )}
-                          {thread.externalAnswer && (
-                            <span className="recent-kind is-external">AI补充</span>
-                          )}
                         </div>
                         <strong className="recent-question">{thread.question}</strong>
                         {thread.withdrawnAt ? (
-                          <p className="recent-sub is-withdrawn">
-                            你已撤下这条 · 打开记录可以重新发起
-                          </p>
+                          <p className="recent-sub is-withdrawn">已撤下</p>
                         ) : thread.teacherReply ? (
                           <p className="recent-sub is-reply">
                             {thread.teacherReply.by}老师：{excerpt(thread.teacherReply.text, 54)}
                           </p>
                         ) : thread.status === 'needs-info' ? (
-                          <p className="recent-sub is-pending">
-                            老师请你补充信息 · 点开继续
-                          </p>
+                          <p className="recent-sub is-pending">老师请你补充信息 · 点开继续</p>
                         ) : thread.status === 'pending' ? (
                           <p className="recent-sub is-pending">
                             {thread.kind === 'same'
-                              ? '已同问 · 老师回复后会同步给你'
+                              ? '已同问 · 等待老师回复'
                               : thread.kind === 'follow-up'
-                                ? '追问已发给老师 · 带上上次回复'
-                                : thread.externalAnswer
-                                  ? '已转交 · 服务端 AI 补充过，建议老师核对'
-                                  : thread.escalation?.auto
-                                    ? 'AI 没把握，已自动转交 · 老师会看到摘要'
-                                    : '已转交 · AI 已附上问题摘要与依据'}
+                                ? '追问已发给老师'
+                                : '已转交老师，等待回复'}
                           </p>
-                        ) : thread.externalAnswer ? (
-                          <p className="recent-sub is-external">
-                            服务端 AI 补充 · 建议老师确认
-                          </p>
-                        ) : thread.confidence === 'low' ? (
-                          <p className="recent-sub">AI 没有把握，可以转交老师</p>
-                        ) : (
-                          <p className="recent-sub">AI 依据课程知识库作答</p>
-                        )}
+                        ) : null}
                       </div>
                       <div className="recent-right">
                         <Badge tone={statusTone(thread)} dot>
@@ -1649,13 +1861,8 @@ export function StudentView({
         </section>
 
         <StudentRail
-          todayAi={todayAi}
-          todayHuman={todayHuman}
-          todayRate={todayRate}
-          firstResponse={firstResponse}
           todaysClasses={todaysClasses}
           hasSchedule={profile.schedule.length > 0}
-          waitingGroups={waitingGroups}
           hotFaqs={hotFaqs}
           course={course}
           courseId={courseId}
@@ -1665,7 +1872,6 @@ export function StudentView({
           studentId={studentId}
           onChangeCourse={setCourseId}
           onOpenAccount={onOpenAccount}
-          onOpenJoinGroup={setJoinGroup}
           onOpenFaq={openFaq}
           onNavigate={onNavigate}
         />
@@ -1731,13 +1937,6 @@ export function StudentView({
       <ReviewModal
         open={reviewOpen}
         onClose={() => setReviewOpen(false)}
-        notify={notify}
-      />
-      <AIConfigModal
-        open={aiSettingsOpen}
-        config={aiConfig}
-        onClose={() => setAiSettingsOpen(false)}
-        onSave={handleAiSave}
         notify={notify}
       />
       {selfCheckOpen && (

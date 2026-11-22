@@ -16,20 +16,13 @@ import { useStore } from '../store'
 import { courseById } from '../data/seed'
 import { findMentorTopic, mentorForCourse } from '../data/mentor'
 import { loadThreadChat, saveThreadChat, type ThreadChatMessage } from '../lib/threadChat'
-import { isDocumentAttachment } from '../lib/attachment'
 import type { AnswerResult, FeedbackReason, Thread } from '../types'
 import {
-  confidenceDescription,
-  confidenceLabel,
-  formatRelative,
-} from '../lib/utils'
-import {
-  AiMark,
   Badge,
-  ConfidenceMeter,
   FeedbackButtons,
   RichText,
 } from './ui'
+import { DigitalAvatarBadge } from './DigitalAvatar'
 import { FaqAttachments } from './FaqAttachments'
 import { CollapsibleRichText } from './CollapsibleRichText'
 
@@ -101,11 +94,11 @@ export function AnswerCard({
         content: message.text,
       })),
     ]
-    const nextMessages = [...chatMessages, { role: 'user' as const, text: question }]
+    const prevMessages = chatMessages
+    const nextMessages = [...prevMessages, { role: 'user' as const, text: question }]
     setChatDraft('')
     setChatError('')
     setChatMessages(nextMessages)
-    saveThreadChat(thread.id, nextMessages)
     setChatBusy(true)
     try {
       const answer = await onFollowUpChat(thread, question, history)
@@ -113,6 +106,7 @@ export function AnswerCard({
       setChatMessages(finished)
       saveThreadChat(thread.id, finished)
     } catch (error) {
+      setChatMessages(prevMessages)
       setChatError(error instanceof Error ? error.message : '继续对话失败，请稍后再试。')
     } finally {
       setChatBusy(false)
@@ -144,45 +138,17 @@ export function AnswerCard({
   const isNeedsInfo = thread.status === 'needs-info'
   const isAnswered = thread.status === 'answered'
   const hasExternal = Boolean(thread.externalAnswer)
-  const reason =
-    result?.reason ??
-    (isLow
-      ? '课程知识库里没有足够可靠的依据，AI 没有生成答案。'
-      : confidence === 'medium'
-        ? '找到了相关内容，但依据还不够完整，建议请老师确认。'
-        : '答案来自课程知识库中的老师维护内容，可以直接参考。')
 
   return (
     <article className={`answer-card answer-${confidence}`}>
       <header className="answer-head">
         <div className="answer-identity">
-          <AiMark size={18} />
-          <div>
-            <div className="answer-name">
-              <strong>AI 助教</strong>
-              <span>课程知识库检索</span>
-            </div>
-            <div className="answer-sub">
-              {course.shortName} · {formatRelative(thread.createdAt)}
-              {thread.attachment ? (isDocumentAttachment(thread.attachment) ? ' · 含文件' : ' · 含图片') : ''}
-            </div>
+          <DigitalAvatarBadge mood="happy" size={34} />
+          <div className="answer-name">
+            <strong>AI 助教</strong>
           </div>
         </div>
-        <div className="answer-confidence">
-          <Badge
-            tone={confidence === 'high' ? 'high' : confidence === 'medium' ? 'medium' : 'low'}
-            dot
-          >
-            {confidenceLabel(confidence)}
-          </Badge>
-          <ConfidenceMeter confidence={confidence} compact />
-        </div>
       </header>
-
-      <div className={`answer-reason answer-reason-${confidence}`}>
-        {isLow ? <CircleAlert size={15} /> : <ShieldCheck size={15} />}
-        <span>{reason}</span>
-      </div>
 
       {isLow ? (
         hasExternal ? (
@@ -193,19 +159,12 @@ export function AnswerCard({
               </span>
               <div>
                 <strong>服务端 AI 补充</strong>
-                <span>{thread.externalAnswer?.model} · 非课程知识库</span>
               </div>
               <Badge tone="blue">外部模型</Badge>
-            </div>
-            <div className="inline-note warning">
-              这条补充来自你配置的外部模型，未经过课程知识库和老师确认。需要权威结论时请转交老师。
             </div>
             {thread.externalAnswer && (
               <CollapsibleRichText text={thread.externalAnswer.text} />
             )}
-            <div className="external-answer-foot">
-              由服务端 AI 网关调用 · 建议核对后再使用
-            </div>
           </div>
         ) : (
           <div className="ai-no-answer">
@@ -350,14 +309,11 @@ export function AnswerCard({
             )}
           </div>
         ) : isLow ? (
-          <div className="answer-actions">
+          <div className="answer-actions answer-actions-fill">
             <button className="button button-escalate" onClick={onEscalate}>
               {hasExternal ? '转交老师确认' : `转交${course.teacher}老师`}
               <ArrowRight size={16} />
             </button>
-            <span className="answer-action-hint">
-              {hasExternal ? '外部模型补充 · 建议老师核对' : confidenceDescription(confidence)}
-            </span>
           </div>
         ) : (
           <>
@@ -452,7 +408,6 @@ export function AnswerCard({
               </span>
               <span className="answer-chat-copy">
                 <strong>继续对话</strong>
-                <span>还有没懂的？接着这条回答问 AI，会带着上下文回答。</span>
               </span>
               <ArrowRight size={15} />
             </button>

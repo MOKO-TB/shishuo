@@ -1,5 +1,8 @@
 import { apiGet } from './api'
 import { CAMPUS_ANSWER_SKILL, CAMPUS_OFFICIAL_LINKS } from './campusAnswerSkill'
+import { buildStudyQaSkillBlock } from './studyQaSkill'
+import { allCourses } from '../data/seed'
+import { CAMPUS_COURSE_ID } from '../data/campus'
 
 export interface AIConfig {
   enabled: boolean
@@ -481,17 +484,26 @@ export async function answerWithExternalAI({
       ]
     : userText
   const hasLongContext = Boolean(documentText?.trim() || knowledgeFileBlock)
+  const availableCourses = allCourses()
+    .filter((course) => course.id !== CAMPUS_COURSE_ID)
+    .map((course) => ({ name: course.name, teacher: course.teacher }))
+  const studySkillBlock = buildStudyQaSkillBlock({
+    currentCourse: courseName,
+    availableCourses,
+  })
 
   const result = await callChatStream(
     [
       {
         role: 'system',
-        content: `你是高校课程「${courseName}」的答疑辅助。课程知识库没有足够可靠的答案，请用中文补充回答：
-1. 先给简短结论或解题思路；
-2. 再给必要步骤或一个具体例子；
-3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；数学公式统一用 $...$ 或 $$...$$ 包裹，不要使用 \(...\) 或 \[...\]；
-4. 最后单独一行以“需要老师确认：”开头，列出仍需核对的地方；
-5. 控制在 ${hasLongContext ? '900' : '500'} 字以内，不使用 Markdown 表格。${imageRule}${documentRule}${knowledgeRule}${mentorBlock}`,
+        content: `${studySkillBlock}
+
+补充执行要求（当前课程「${courseName}」）：
+1. 若问题属于当前课程，只做问题总结：先给核心结论，再列 2–3 条关键要点/易错点，不要事无巨细；
+2. 若问题与学习无关或属于其他学科，严格按上方 Skill 提示或推荐对应课程/老师，不要硬答；
+3. 明确区分通用知识与课程要求，不得编造“老师说过”或课程引用；数学公式统一用 $...$ 或 $$...$$ 包裹，不要使用 \\(...\\) 或 \\[...\\]；
+4. 仅在确实属于当前课程且存在待确认口径时，末尾单独一行以“需要老师确认：”列出 1 句；
+5. 严格控制在 ${hasLongContext ? '380' : '260'} 字以内，不使用 Markdown 表格。${imageRule}${documentRule}${knowledgeRule}${mentorBlock}`,
       },
       ...(history ?? []).slice(-8).map((item) => ({
         role: item.role,
@@ -574,18 +586,46 @@ ${officialLinkBlock}`,
 export async function answerMentorWithAI({
   question,
   mentorPrompt,
+  courseName,
+  imageDataUrl,
+  documentText,
+  documentName,
   onUpdate,
 }: {
   question: string
   mentorPrompt: string
+  courseName?: string
+  imageDataUrl?: string
+  documentText?: string
+  documentName?: string
   onUpdate?: (partial: string) => void
 }) {
+  const availableCourses = allCourses()
+    .filter((course) => course.id !== CAMPUS_COURSE_ID)
+    .map((course) => ({ name: course.name, teacher: course.teacher }))
+  const studySkillBlock = buildStudyQaSkillBlock({
+    currentCourse: courseName,
+    availableCourses,
+  })
+  const documentBlock = documentText?.trim()
+    ? `\n\n学生上传的文件《${documentName || '附件'}》内容（已提取纯文本，可能不完整）：\n"""\n${documentText.slice(0, 14_000)}\n"""\n请先判断文件是否与当前课程学习相关，再围绕核心要点做简明总结；看不清或缺失的部分直接说明。`
+    : ''
+  const userText = `学生的问题：${question}${documentBlock}`
+  const userContent: string | ContentPart[] = imageDataUrl
+    ? [
+        { type: 'text', text: userText },
+        { type: 'image_url', image_url: { url: imageDataUrl, detail: 'auto' } },
+      ]
+    : userText
   const result = await callChatStream(
     [
-      { role: 'system', content: mentorPrompt },
-      { role: 'user', content: `学生的问题：${question}` },
+      {
+        role: 'system',
+        content: `${studySkillBlock}\n\n---\n\n${mentorPrompt}`,
+      },
+      { role: 'user', content: userContent },
     ],
-    3_000,
+    documentText?.trim() ? 4_096 : 3_000,
     onUpdate ? (partial) => onUpdate(partial.slice(0, 4_000)) : undefined,
   )
   return { text: result.content.slice(0, 4_000), model: result.model }

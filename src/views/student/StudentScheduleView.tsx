@@ -1,10 +1,21 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type TouchEvent,
+} from 'react'
 import { createPortal } from 'react-dom'
 import {
+  Bell,
+  BellOff,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   DoorOpen,
+  LayoutGrid,
   Loader2,
   Maximize2,
   SlidersHorizontal,
@@ -29,6 +40,17 @@ import {
 } from '../../lib/profile'
 import { EmptyState, Modal } from '../../components/ui'
 import { fetchEmptyRooms, type EmptyRoomDay } from '../../lib/emptyRooms'
+import {
+  isNativeApp,
+  requestPinScheduleWidget,
+  syncNativeSchedule,
+  triggerHaptic,
+} from '../../lib/nativeShell'
+import {
+  readClassReminderPrefs,
+  syncClassReminders,
+  writeClassReminderPrefs,
+} from '../../lib/classReminders'
 import { cn } from '../../lib/utils'
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7]
@@ -41,8 +63,10 @@ const MIN_SECTIONS = 11
  */
 export function ScheduleView({
   onOpenAccount,
+  notify,
 }: {
   onOpenAccount: (tab?: 'identity' | 'schedule' | 'scores' | 'teachers') => void
+  notify?: (message: string, tone?: 'success' | 'info' | 'danger') => void
 }) {
   const profile = useProfile()
   const currentWeek = teachingWeek(profile.termStart)
@@ -51,7 +75,129 @@ export function ScheduleView({
   const [emptyOpen, setEmptyOpen] = useState(false)
   const [zoom, setZoom] = useState(false)
   const [detail, setDetail] = useState<ScheduleEntry | null>(null)
+  const [reminderEnabled, setReminderEnabled] = useState(() => readClassReminderPrefs().enabled)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [slideState, setSlideState] = useState<{ dir: 'next' | 'prev' | null; seq: number }>({
+    dir: null,
+    seq: 0,
+  })
+  const touchStartRef = useRef<{ x: number; y: number; locked?: 'x' | 'y' } | null>(null)
+  const swipedRef = useRef(false)
   const hasCalendar = currentWeek != null
+
+  const jumpToWeek = (target: number) => {
+    if (!hasCalendar) return
+    const clamped = Math.min(maxWeek, Math.max(1, target))
+    if (clamped === selectedWeek) return
+    const dir = clamped > selectedWeek ? 'next' : 'prev'
+    triggerHaptic('light')
+    setSelectedWeek(clamped)
+    setSlideState((prev) => ({ dir, seq: prev.seq + 1 }))
+  }
+
+  const stepWeek = (delta: -1 | 1) => {
+    jumpToWeek(selectedWeek + delta)
+  }
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!hasCalendar || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    swipedRef.current = false
+  }
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current
+    if (!start || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    const dx = touch.clientX - start.x
+    const dy = touch.clientY - start.y
+    if (!start.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      start.locked = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y'
+    }
+    if (start.locked === 'x') {
+      const clamped = Math.max(-72, Math.min(72, dx * 0.45))
+      setSwipeOffset(clamped)
+    }
+  }
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    setSwipeOffset(0)
+    if (!start || start.locked !== 'x') return
+    const touch = event.changedTouches[0]
+    if (!touch) return
+    const dx = touch.clientX - start.x
+    if (Math.abs(dx) >= 44) {
+      swipedRef.current = true
+      stepWeek(dx < 0 ? 1 : -1)
+    }
+  }
+
+  const handleTouchCancel = () => {
+    touchStartRef.current = null
+    setSwipeOffset(0)
+  }
+
+  const handleSelectEntry = (entry: ScheduleEntry) => {
+    if (swipedRef.current) {
+      swipedRef.current = false
+      return
+    }
+    setDetail(entry)
+  }
+
+  const handleBoardClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    if (swipedRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      swipedRef.current = false
+    }
+  }
+
+  const toggleClassReminder = async () => {
+    const prefs = readClassReminderPrefs()
+    const next = { ...prefs, enabled: !prefs.enabled }
+    writeClassReminderPrefs(next)
+    setReminderEnabled(next.enabled)
+    triggerHaptic('light')
+    const result = await syncClassReminders({
+      schedule: profile.schedule,
+      termStart: profile.termStart,
+      requestPermission: next.enabled,
+    })
+    if (next.enabled && result.permissionDenied) {
+      writeClassReminderPrefs({ ...next, enabled: false })
+      setReminderEnabled(false)
+      notify?.('未开启系统通知权限，无法设置上课前提醒', 'info')
+      return
+    }
+    if (next.enabled) {
+      notify?.(
+        result.scheduled > 0
+          ? `已开启课前 ${next.leadMinutes} 分钟提醒（已排期未来 7 天 ${result.scheduled} 节课）`
+          : `已开启课前 ${next.leadMinutes} 分钟提醒`,
+      )
+    } else {
+      notify?.('已关闭上课前本地提醒', 'info')
+    }
+  }
+
+  const pinDesktopWidget = async () => {
+    triggerHaptic('light')
+    await syncNativeSchedule({
+      schedule: profile.schedule,
+      termStart: profile.termStart,
+      studentName: profile.name,
+    })
+    const status = await requestPinScheduleWidget()
+    if (status === 'requested') {
+      notify?.('已发起添加；若桌面没有弹窗，请长按桌面空白处 → 小组件 → 搜索「师说」')
+    } else {
+      notify?.('请长按桌面空白处 → 小组件 → 搜索「师说」；OPPO 若找不到，请选「师说 · 今日课表（兼容版）」', 'info')
+    }
+  }
 
   useEffect(() => {
     if (!zoom) return
@@ -126,7 +272,6 @@ export function ScheduleView({
         <h1 className="eyebrow schedule-title">
           <span className="eyebrow-mark jade" />
           我的课程表
-          {currentWeek != null && <> · 现在是第 {currentWeek} 周</>}
         </h1>
         {ownCourseCount > 0 && (
           <p className="schedule-note">
@@ -147,7 +292,7 @@ export function ScheduleView({
               <button
                 type="button"
                 className="week-nav-button"
-                onClick={() => setSelectedWeek((week) => Math.max(1, week - 1))}
+                onClick={() => stepWeek(-1)}
                 disabled={selectedWeek <= 1}
                 aria-label="上一周"
               >
@@ -159,7 +304,7 @@ export function ScheduleView({
               <button
                 type="button"
                 className="week-nav-button"
-                onClick={() => setSelectedWeek((week) => Math.min(maxWeek, week + 1))}
+                onClick={() => stepWeek(1)}
                 disabled={selectedWeek >= maxWeek}
                 aria-label="下一周"
               >
@@ -170,23 +315,41 @@ export function ScheduleView({
               <button
                 type="button"
                 className="text-button"
-                onClick={() => setSelectedWeek(currentWeek)}
+                onClick={() => jumpToWeek(currentWeek)}
               >
                 回到本周
               </button>
             )}
           </div>
 
-          <span className="week-count">{weekEntries.length} 节课</span>
-
           <div className="schedule-toolbar-actions">
+            {isNativeApp() && (
+              <>
+                <button
+                  type="button"
+                  className={cn('button', reminderEnabled ? 'button-secondary' : 'button-ghost')}
+                  onClick={() => void toggleClassReminder()}
+                >
+                  {reminderEnabled ? <Bell size={15} /> : <BellOff size={15} />}
+                  {reminderEnabled ? '课前提醒已开' : '课前提醒'}
+                </button>
+                <button
+                  type="button"
+                  className="button button-ghost"
+                  onClick={() => void pinDesktopWidget()}
+                >
+                  <LayoutGrid size={15} />
+                  桌面小组件
+                </button>
+              </>
+            )}
             <button
               type="button"
-              className="button button-ghost"
+              className="schedule-empty-room-btn"
               onClick={() => setEmptyOpen(true)}
             >
-              <DoorOpen size={15} />
-              空教室
+              <DoorOpen size={17} />
+              <span>空教室</span>
             </button>
             <button
               type="button"
@@ -205,15 +368,45 @@ export function ScheduleView({
           </p>
         )}
 
-        <p className="schedule-mobile-hint">点课程块可看老师、教室</p>
+        <p className="schedule-mobile-hint">
+          {hasCalendar ? '左右滑动切换周次 · 点课程块看详情' : '点课程块可看老师、教室'}
+        </p>
 
-        <WeekTimetable
-          entries={weekEntries}
-          week={selectedWeek}
-          termStart={profile.termStart}
-          tones={tones}
-          onSelect={setDetail}
-        />
+        <div className="schedule-swipe-viewport">
+          <div
+            className="schedule-swipe-zone"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+            onClickCapture={handleBoardClickCapture}
+            style={
+              swipeOffset !== 0
+                ? {
+                    transform: `translate3d(${swipeOffset}px, 0, 0)`,
+                    transition: 'none',
+                  }
+                : undefined
+            }
+          >
+            <div
+              key={`${selectedWeek}-${slideState.seq}`}
+              className={cn(
+                'schedule-slide-pane',
+                slideState.dir === 'next' && 'is-slide-next',
+                slideState.dir === 'prev' && 'is-slide-prev',
+              )}
+            >
+              <WeekTimetable
+                entries={weekEntries}
+                week={selectedWeek}
+                termStart={profile.termStart}
+                tones={tones}
+                onSelect={handleSelectEntry}
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="schedule-board-foot">
           <p>左栏是学校标准作息；课程块里的时间来自教务课表，教务没写时按节次推算。</p>
@@ -223,7 +416,7 @@ export function ScheduleView({
             onClick={() => onOpenAccount('schedule')}
           >
             <SlidersHorizontal size={13} />
-            课程表不对？去「账号与课表」调整
+            课程表不对？点我去调整
           </button>
         </div>
       </section>
@@ -242,7 +435,7 @@ export function ScheduleView({
                   <button
                     type="button"
                     className="week-nav-button"
-                    onClick={() => setSelectedWeek((week) => Math.max(1, week - 1))}
+                    onClick={() => stepWeek(-1)}
                     disabled={selectedWeek <= 1}
                     aria-label="上一周"
                   >
@@ -254,7 +447,7 @@ export function ScheduleView({
                   <button
                     type="button"
                     className="week-nav-button"
-                    onClick={() => setSelectedWeek((week) => Math.min(maxWeek, week + 1))}
+                    onClick={() => stepWeek(1)}
                     disabled={selectedWeek >= maxWeek}
                     aria-label="下一周"
                   >
@@ -262,7 +455,6 @@ export function ScheduleView({
                   </button>
                 )}
               </div>
-              <span className="week-count">{weekEntries.length} 节课</span>
               <button
                 type="button"
                 className="icon-button"
@@ -272,14 +464,41 @@ export function ScheduleView({
                 <X size={18} />
               </button>
             </div>
-            <WeekTimetable
-              entries={weekEntries}
-              week={selectedWeek}
-              termStart={profile.termStart}
-              tones={tones}
-              zoomed
-              onSelect={setDetail}
-            />
+            <div className="schedule-swipe-viewport">
+              <div
+                className="schedule-swipe-zone"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+                style={
+                  swipeOffset !== 0
+                    ? {
+                        transform: `translate3d(${swipeOffset}px, 0, 0)`,
+                        transition: 'none',
+                      }
+                    : undefined
+                }
+              >
+                <div
+                  key={`zoom-${selectedWeek}-${slideState.seq}`}
+                  className={cn(
+                    'schedule-slide-pane',
+                    slideState.dir === 'next' && 'is-slide-next',
+                    slideState.dir === 'prev' && 'is-slide-prev',
+                  )}
+                >
+                  <WeekTimetable
+                    entries={weekEntries}
+                    week={selectedWeek}
+                    termStart={profile.termStart}
+                    tones={tones}
+                    zoomed
+                    onSelect={handleSelectEntry}
+                  />
+                </div>
+              </div>
+            </div>
           </div>,
           document.body,
         )}

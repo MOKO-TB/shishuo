@@ -14,9 +14,9 @@
   display: none !important;
 }
 
-.app-shell .settings-row-copy small,
-.modal-layer .settings-row-copy small,
-.drawer-layer .settings-row-copy small,
+.app-shell .settings-row:not(.is-keep-hint) .settings-row-copy small,
+.modal-layer .settings-row:not(.is-keep-hint) .settings-row-copy small,
+.drawer-layer .settings-row:not(.is-keep-hint) .settings-row-copy small,
 .app-shell .settings-group-lede,
 .app-shell .mentor-footnote,
 .app-shell .schedule-note,

@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { Badge } from '../components/ui'
+import { triggerHaptic } from '../lib/nativeShell'
 import { FANDIAN_PREFS } from '../data/fandianData'
 import {
   FD_MEALS,
@@ -507,6 +508,7 @@ export function FandianView({ notify, embedded = false }: FandianViewProps) {
       return
     }
     setBlind(box)
+    triggerHaptic('medium')
   }
 
   /** 打开盲盒页签：每次进入都重新开一盒 */
@@ -516,6 +518,7 @@ export function FandianView({ notify, embedded = false }: FandianViewProps) {
   }
 
   const rerollBlind = () => {
+    triggerHaptic('medium')
     const prev = blind?.names || ''
     let next: BlindBox | null = null
     for (let i = 0; i < 10; i++) {

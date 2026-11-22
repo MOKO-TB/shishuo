@@ -11,13 +11,11 @@ import {
   MessageSquarePlus,
   MessagesSquare,
   Moon,
-  Monitor,
   Presentation,
   QrCode,
   RotateCcw,
   Settings,
   ShieldCheck,
-  Sparkles,
   Sun,
   UserCog,
   UtensilsCrossed,
@@ -28,8 +26,10 @@ import {
   profileMeta,
   courseGlyph,
   courseToneMap,
+  periodTime,
   runsInWeek,
   teachingWeek,
+  upcomingTodayClasses,
   useProfile,
   weekdayNumber,
 } from "../lib/profile";
@@ -38,6 +38,7 @@ import { useStore } from "../store";
 import { cn } from "../lib/utils";
 import { loadThemePreference, toggleTheme, type ThemePreference } from "../lib/theme";
 import { useMentorSelection } from "../lib/mentorSelection";
+import { DigitalAvatarBadge } from "./DigitalAvatar";
 import { Avatar, BrandMark } from "./ui";
 interface NavItem {
   key: ViewKey;
@@ -60,10 +61,10 @@ interface LayoutProps {
     tab?: "identity" | "schedule" | "scores" | "teachers",
   ) => void;
   onOpenAdmin: () => void;
-  onOpenFeedback?: (tab?: "compose" | "mine") => void;
   onOpenMentor: (prompt?: string) => void;
   onNavigate: (view: ViewKey) => void;
   onOpenGuide: () => void;
+  onOpenFeedback?: (tab?: "compose" | "mine") => void;
   onRequestReset: () => void;
   children: ReactNode;
 }
@@ -88,10 +89,9 @@ export function Layout({
   accountOpen = false,
   onOpenAccount,
   onOpenAdmin,
-  onOpenFeedback,
   onOpenMentor,
   onNavigate,
-  onOpenGuide,
+  onOpenFeedback,
   onRequestReset,
   children,
 }: LayoutProps) {
@@ -117,7 +117,12 @@ export function Layout({
     ...weekEntries.map((entry) => entry.endSection),
   );
   const today = weekdayNumber();
-  const todayCount = weekEntries.filter((entry) => entry.day === today).length;
+  const todayClassesList = weekEntries.filter((entry) => entry.day === today);
+  const todayCount = todayClassesList.length;
+  const upcomingToday = upcomingTodayClasses(studentProfile).filter((entry) =>
+    runsInWeek(entry.weeks, teachingWeekNow),
+  );
+  const nextToday = upcomingToday[0];
   /** 教师侧栏分组：教学工具与校园生活分开，食堂决策不再混在「教学空间」里 */
   const teacherNavGroups: { label: string; items: NavItem[] }[] = [
     {
@@ -231,9 +236,7 @@ export function Layout({
         </nav>
         {!isTeacher && (
           <button className="side-mentor-entry" onClick={() => onOpenMentor()}>
-            <span className="side-mentor-entry-mark">
-              <Sparkles size={15} />
-            </span>
+            <DigitalAvatarBadge size={32} />
             <span className="side-mentor-entry-copy">
               <strong>{mentor.name}</strong>
               <span>{mentor.title} · AI 导师</span>
@@ -312,6 +315,24 @@ export function Layout({
                   <p className="side-timetable-foot">
                     第 {teachingWeekNow} 周 · 今天 {todayCount} 节
                   </p>
+                  <button
+                    type="button"
+                    className="side-timetable-compact"
+                    onClick={() => onNavigate("schedule")}
+                  >
+                    <strong>
+                      {nextToday
+                        ? `${nextToday.course}`
+                        : todayCount > 0
+                          ? "今日课程已上完"
+                          : "今日无课"}
+                    </strong>
+                    <span>
+                      {nextToday
+                        ? `${periodTime(nextToday)}${nextToday.room ? ` · ${nextToday.room}` : ""}`
+                        : `第 ${teachingWeekNow} 周 · 本周共 ${weekEntries.length} 节`}
+                    </span>
+                  </button>
                 </>
               ) : (
                 <button
@@ -387,10 +408,6 @@ export function Layout({
                 <UserCog size={16} />
               </button>
             )}
-            <button className="guide-button" onClick={onOpenGuide}>
-              <Compass size={16} />
-              <span>演示指引</span>
-            </button>
             {onOpenFeedback && (
               <button
                 className="guide-button"
@@ -406,34 +423,22 @@ export function Layout({
               className="theme-toggle"
               onClick={() => setThemePreference(toggleTheme())}
               aria-label={
-                themePreference === "system"
-                  ? "当前跟随系统，点击切换到浅色"
-                  : themePreference === "light"
-                    ? "当前浅色，点击切换到深色"
-                    : "当前深色，点击切换到跟随系统"
+                themePreference === "light"
+                  ? "当前浅色，点击切换到深色"
+                  : "当前深色，点击切换到浅色"
               }
               title={
-                themePreference === "system"
-                  ? "当前跟随系统，点击切换到浅色"
-                  : themePreference === "light"
-                    ? "当前浅色，点击切换到深色"
-                    : "当前深色，点击切换到跟随系统"
+                themePreference === "light"
+                  ? "当前浅色，点击切换到深色"
+                  : "当前深色，点击切换到浅色"
               }
             >
-              {themePreference === "system" ? (
-                <Monitor size={15} />
-              ) : themePreference === "light" ? (
+              {themePreference === "light" ? (
                 <Sun size={15} />
               ) : (
                 <Moon size={15} />
               )}
-              <span>
-                {themePreference === "system"
-                  ? "系统"
-                  : themePreference === "light"
-                    ? "浅色"
-                    : "深色"}
-              </span>
+              <span>{themePreference === "light" ? "浅色" : "深色"}</span>
             </button>
             <button
               className="bell-button"

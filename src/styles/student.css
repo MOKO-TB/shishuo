@@ -266,10 +266,18 @@
   border-radius: var(--radius-xl);
   background: var(--bg-card);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
+  overflow: visible;
 }
 
-.ask-card::before {
+.ask-card-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ask-card-bg::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
@@ -650,10 +658,9 @@
 
 .ask-foot {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
   padding-top: 12px;
   border-top: 1px solid var(--line);
 }
@@ -771,8 +778,10 @@
 
 .ask-foot-right {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .ask-shortcut {
@@ -2595,16 +2604,17 @@
   }
 
   .ask-foot {
-    align-items: flex-start;
+    align-items: flex-end;
+    flex-wrap: nowrap;
   }
 
   .ask-tools {
-    width: 100%;
+    width: auto;
   }
 
   .ask-foot-right {
-    width: 100%;
-    justify-content: flex-end;
+    width: auto;
+    align-items: flex-end;
   }
 
   .ask-shortcut {
@@ -3039,4 +3049,368 @@
 .student-wall-cluster-copy span {
   font-size: var(--text-meta);
   color: var(--muted);
+}
+
+/* ---------- 课程下拉搜索选择器 ---------- */
+.course-combobox {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-width: 440px;
+}
+
+.course-combobox-trigger {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+
+.course-combobox-trigger:hover:not(:disabled),
+.course-combobox.is-open .course-combobox-trigger {
+  border-color: var(--jade);
+  background: var(--surface-3);
+}
+
+.course-combobox-trigger:disabled {
+  opacity: 0.6;
+}
+
+.course-combobox-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.course-combobox-value strong {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-combobox-value em {
+  flex: 0 0 auto;
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.course-combobox-chevron {
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: transform 0.2s var(--ease);
+}
+
+.course-combobox.is-open .course-combobox-chevron {
+  transform: rotate(180deg);
+  color: var(--jade);
+}
+
+.course-combobox-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-float);
+  animation: fadeUp 0.16s var(--ease);
+}
+
+.course-combobox-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.course-combobox-search:focus-within {
+  border-color: var(--jade);
+}
+
+.course-combobox-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.course-combobox-search input::placeholder {
+  color: var(--faint);
+}
+
+.course-combobox-clear {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.course-combobox-clear:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.course-combobox-list {
+  display: grid;
+  gap: 2px;
+  max-height: min(46vh, 300px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.course-combobox-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background 0.14s var(--ease);
+}
+
+.course-combobox-option:hover,
+.course-combobox-option.is-highlighted {
+  background: var(--surface-2);
+}
+
+.course-combobox-option.is-active {
+  background: var(--jade-mist);
+}
+
+.course-combobox-option-copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.course-combobox-option-copy strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-combobox-option-copy em {
+  font-style: normal;
+  font-size: var(--text-meta);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-combobox-check {
+  flex: 0 0 auto;
+  color: var(--jade);
+}
+
+.course-combobox-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px 10px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .course-combobox {
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* ---------- 提问框加号上传菜单 ---------- */
+.ask-plus-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ask-plus-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  transition:
+    border-color 0.18s var(--ease),
+    background 0.18s var(--ease),
+    color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+
+.ask-plus-button:hover:not(:disabled),
+.ask-plus-button.is-open {
+  border-color: var(--jade);
+  background: var(--jade-mist);
+  color: var(--jade-deep);
+}
+
+.ask-plus-button.is-open svg {
+  transform: rotate(45deg);
+}
+
+.ask-plus-button svg {
+  transition: transform 0.18s var(--ease);
+}
+
+.ask-plus-button:disabled {
+  opacity: 0.5;
+}
+
+.ask-plus-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  min-width: 144px;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-float);
+  animation: fadeUp 0.15s var(--ease);
+}
+
+.ask-plus-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 550;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.14s var(--ease), color 0.14s var(--ease);
+}
+
+.ask-plus-option svg {
+  color: var(--jade);
+  flex: 0 0 auto;
+}
+
+.ask-plus-option:hover {
+  background: var(--jade-mist);
+  color: var(--jade-deep);
+}
+
+/* ---------- 我的提问：课程筛选 + 查看全部 + 正在等老师合并 ---------- */
+.recent-course-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.waiting-merged-wrap {
+  display: grid;
+  gap: 4px;
+}
+
+.waiting-merged-tip {
+  margin: 0 0 2px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+/* ---------- 回答卡片精简补齐 ---------- */
+.answer-actions-fill {
+  width: 100%;
+  margin-left: 0;
+}
+
+.answer-actions-fill .button-escalate {
+  width: 100%;
+  height: 44px;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.answer-chat-entry {
+  min-height: 48px;
+}
+
+/* ---------- 无效问答（与教学无关）即时提示，不进入问答记录 ---------- */
+.invalid-qa-banner {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--gold) 38%, var(--line));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--gold-soft) 52%, var(--surface));
+}
+
+.invalid-qa-banner-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.invalid-qa-banner-head strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.invalid-qa-banner-close {
+  width: 26px;
+  height: 26px;
+}
+
+.invalid-qa-banner p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
 }

@@ -506,6 +506,46 @@
 .campus-month-calendar {
   display: grid;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.campus-month-swipe-viewport {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.campus-month-swipe-zone {
+  min-width: 0;
+  touch-action: pan-y;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.campus-month-grid.is-slide-next {
+  animation: calSlideFromRight 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.campus-month-grid.is-slide-prev {
+  animation: calSlideFromLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes calSlideFromRight {
+  from {
+    transform: translate3d(56px, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes calSlideFromLeft {
+  from {
+    transform: translate3d(-56px, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .campus-month-head {
@@ -607,6 +647,7 @@
   width: 100%;
   padding: 5px 7px;
   border: 1px solid var(--line);
+  border-left: 3px solid var(--event-bar-color, var(--accent));
   border-radius: var(--radius-xs);
   background: var(--surface);
   color: inherit;
@@ -772,6 +813,7 @@
   display: -webkit-box;
   overflow: hidden;
   padding: 1px 5px;
+  border-left: 3px solid var(--event-bar-color, var(--accent));
   border-radius: var(--radius-xs);
   font-size: var(--text-meta);
   line-height: 1.35;
@@ -779,7 +821,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   background: var(--bg-accent-mist);
-  color: var(--accent-deep);
+  color: var(--ink);
 }
 
 .campus-month-event.is-exam {
@@ -2034,7 +2076,7 @@
 
   .campus-month-day {
     min-height: 48px;
-    padding: 4px;
+    padding: 4px 3px 5px;
   }
 
   .campus-month-grid,
@@ -2042,41 +2084,31 @@
     gap: 3px;
   }
 
-  /* 手机宽度放不下文字标签，改成事件圆点；点击整格查看详情 */
+  /* 手机宽度用同色横线区分不同活动；同一多天活动同色，不同活动不同色 */
   .campus-month-events {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 3px;
+    width: 100%;
     margin-top: auto;
   }
 
-  .campus-month-event {
+  .campus-month-event,
+  .campus-month-event.is-exam,
+  .campus-month-event.is-term,
+  .campus-month-event.is-event,
+  .campus-month-event.is-deadline {
     display: block;
-    width: 5px;
-    height: 5px;
+    width: 100%;
+    height: 4px;
     padding: 0;
-    border-radius: 50%;
+    border-left: 0;
+    border-radius: 999px;
     font-size: 0;
     line-height: 0;
     overflow: hidden;
-    background: var(--accent);
+    background: var(--event-bar-color, var(--accent));
     color: transparent;
-  }
-
-  .campus-month-event.is-exam {
-    background: var(--accent-clay);
-  }
-
-  .campus-month-event.is-term {
-    background: var(--accent-gold);
-  }
-
-  .campus-month-event.is-event {
-    background: var(--accent-blue);
-  }
-
-  .campus-month-event.is-deadline {
-    background: var(--danger);
   }
 
   .campus-month-more,
@@ -2320,7 +2352,13 @@
   z-index: 1;
 }
 
-/* 吸顶区：标题 + 选项栏 */
+.campus-tools-sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+  pointer-events: none;
+}
+
+/* 吸顶区：标题 + 选项栏，上滑吸顶自动收窄为单行，点击下箭头展开全部 */
 .campus-tools {
   position: sticky;
   top: calc(var(--header-h) + 8px);
@@ -2328,6 +2366,67 @@
   background: var(--bg-card);
   /* 吸顶时下方内容从卡片下沿滑过，用阴影区分层次 */
   box-shadow: var(--shadow-card);
+  transition: padding 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.campus-tools.is-collapsed {
+  padding: 6px 12px 2px;
+  box-shadow: var(--shadow-float);
+}
+
+.campus-tools.is-collapsed .campus-tools-bar {
+  gap: 2px;
+}
+
+.campus-tools.is-collapsed .campus-tools-head {
+  display: none;
+}
+
+.campus-tools.is-collapsed .campus-tool-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.campus-tools.is-collapsed .campus-tool-tabs button:not(.is-active) {
+  display: none;
+}
+
+.campus-tools.is-collapsed .campus-tool-tabs button.is-active {
+  flex: 0 0 auto;
+  width: auto;
+  height: 30px;
+  white-space: nowrap;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card-alt);
+  box-shadow: none;
+  font-weight: 650;
+}
+
+.campus-tools.is-stuck-expanded {
+  padding-bottom: 6px;
+  box-shadow: var(--shadow-float);
+}
+
+.campus-tools-collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+
+.campus-tools-collapse-toggle:hover {
+  background: var(--surface-2);
+  color: var(--jade-deep);
 }
 
 .campus-tools-bar {
@@ -2357,7 +2456,7 @@
 
 @media (max-width: 700px) {
   .campus-tools {
-    top: calc(var(--header-h) + 4px);
+    top: calc(62px + var(--safe-top, 0px));
   }
 
   .campus-tools-body {

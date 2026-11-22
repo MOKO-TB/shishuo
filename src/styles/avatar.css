@@ -1,0 +1,462 @@
+/* 数字虚拟人（书灵助教）轻量 2D 多状态立绘样式
+   严格遵循 tokens.css / base.css 语义变量，无字面色值与非法圆角。 */
+
+.da-badge {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--jade-mist);
+  box-shadow: var(--shadow-switch);
+}
+
+.da-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transform: scale(1.08);
+  pointer-events: none;
+}
+
+.da-badge-dot {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--jade);
+  border: 1px solid var(--surface);
+}
+
+.da-badge.is-thinking .da-badge-dot,
+.da-badge.is-answering .da-badge-dot {
+  background: var(--gold);
+}
+
+.da-badge.is-notice .da-badge-dot {
+  background: var(--clay);
+}
+
+/* 侧栏深色背景上的徽章适配 */
+.side-mentor-entry .da-badge {
+  border-color: var(--side-line-strong);
+  background: var(--sidebar-soft);
+}
+
+.side-mentor-entry .da-badge-dot {
+  border-color: var(--sidebar);
+}
+
+/* ---------- 通用 2D 立绘容器与呼吸/切态动画 ---------- */
+
+.da-sprite {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.da-sprite.is-interactive {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.da-sprite.is-interactive:focus {
+  outline: none;
+}
+
+.da-sprite img,
+.da-sprite canvas {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.da-sprite.is-interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-md);
+}
+
+.da-aura {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--jade) 18%, transparent) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.da-sprite.is-mood-thinking .da-aura,
+.da-sprite.is-mood-answering .da-aura {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--gold) 22%, transparent) 0%,
+    transparent 72%
+  );
+}
+
+.da-sprite.is-mood-happy .da-aura {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--jade) 26%, transparent) 0%,
+    transparent 72%
+  );
+}
+
+.da-img,
+.da-canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--ink) 14%, transparent));
+  transition: transform 0.22s var(--ease-spring);
+}
+
+.da-img {
+  animation: daFloat 3.6s ease-in-out infinite, daSwapIn 0.22s var(--ease);
+}
+
+.da-sprite.is-interactive:hover .da-img,
+.da-sprite.is-interactive:hover .da-canvas {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.da-sprite.is-interactive:active .da-img,
+.da-sprite.is-interactive:active .da-canvas {
+  transform: scale(0.97);
+}
+
+.da-sprite.is-mood-thinking .da-img {
+  animation: daThinkBob 2.2s ease-in-out infinite, daSwapIn 0.22s var(--ease);
+}
+
+.da-sprite.is-mood-answering .da-img {
+  animation: daSpeakBounce 1.2s ease-in-out infinite, daSwapIn 0.22s var(--ease);
+}
+
+.da-sprite.is-mood-happy .da-img {
+  animation: daHappyHop 0.7s var(--ease-spring) 2, daSwapIn 0.22s var(--ease);
+}
+
+.da-sparkle {
+  position: absolute;
+  top: 8%;
+  right: 10%;
+  z-index: 2;
+  color: var(--gold);
+  pointer-events: none;
+  animation: daSparklePulse 1.3s ease-in-out infinite;
+}
+
+/* 尺寸预设 */
+.da-sprite.is-stage {
+  width: 72px;
+  height: 72px;
+}
+
+.da-sprite.is-thinking {
+  width: 78px;
+  height: 78px;
+}
+
+.da-sprite.is-widget {
+  width: 108px;
+  height: 108px;
+}
+
+/* ---------- AI 导师抽屉顶部舞台条 ---------- */
+
+.da-stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  margin: 10px 22px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--fill-panel);
+}
+
+.da-stage-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.da-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.da-stage-name {
+  font-family: var(--serif);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.da-stage-pill {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--jade-soft);
+  color: var(--jade-deep);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.da-stage-bar.is-thinking .da-stage-pill,
+.da-stage-bar.is-answering .da-stage-pill {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.da-stage-bar.is-notice .da-stage-pill {
+  background: var(--clay-soft);
+  color: var(--clay-deep);
+}
+
+.da-stage-line {
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 桌面端右下角伴学挂件 ---------- */
+
+.da-widget {
+  position: fixed;
+  right: 22px;
+  bottom: 20px;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.da-widget-bubble,
+.da-widget-dock {
+  pointer-events: auto;
+}
+
+.da-widget-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 230px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 0.25s var(--ease);
+}
+
+.da-widget-bubble-body {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  color: var(--ink);
+}
+
+.da-widget-bubble-body strong {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--jade-deep);
+}
+
+.da-widget-bubble-body span {
+  font-size: var(--text-meta);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.da-widget-bubble-close {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  color: var(--faint);
+}
+
+.da-widget-bubble-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.da-widget-dock {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+}
+
+.da-widget-collapse {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  box-shadow: var(--shadow-switch);
+  opacity: 0;
+  transition: opacity 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.da-widget-dock:hover .da-widget-collapse,
+.da-widget-collapse:focus-visible {
+  opacity: 1;
+}
+
+.da-widget-collapse:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.da-widget-pill {
+  position: fixed;
+  right: 22px;
+  bottom: 20px;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.da-widget-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--jade);
+}
+
+/* 移动端 / 窄屏：隐藏右下角浮窗，避免遮挡底部导航栏与正文 */
+@media (max-width: 1080px) {
+  .da-widget,
+  .da-widget-pill {
+    display: none;
+  }
+
+  .da-stage-bar {
+    margin: 8px 16px 0;
+  }
+
+  .da-sprite.is-thinking {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ---------- 关键帧 & 减弱动态偏好 ---------- */
+
+@keyframes daFloat {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-3px) scaleY(1.012);
+  }
+}
+
+@keyframes daThinkBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-1.2deg);
+  }
+}
+
+@keyframes daSpeakBounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+@keyframes daHappyHop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-6px) scale(1.04);
+  }
+}
+
+@keyframes daSwapIn {
+  from {
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes daSparklePulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.88) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12) rotate(12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .da-img,
+  .da-sparkle,
+  .da-widget-bubble {
+    animation: none;
+  }
+}

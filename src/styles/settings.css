@@ -114,6 +114,47 @@
   color: var(--fg-faint);
 }
 
+/* 身份信息：标题放大突出，字段采用左标签右输入框横向分布 */
+.settings-group-identity .settings-group-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.settings-identity-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.settings-identity-fields .field {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-identity-fields .field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.settings-identity-fields .input {
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-identity-fields .field-hint {
+  grid-column: 2;
+}
+
 /* ---------- 2. 左右布局行：名称左、控件右 ---------- */
 .settings-row-list {
   display: grid;
@@ -237,6 +278,123 @@
 
 .settings-group.is-danger .settings-group-title {
   color: var(--danger);
+}
+
+.settings-logout-btn {
+  width: 100%;
+  height: 48px;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg-card));
+  color: var(--danger);
+}
+
+.settings-logout-btn:hover {
+  background: color-mix(in srgb, var(--danger) 13%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--danger) 48%, var(--border));
+}
+
+/* ---------- 4b. 课表设置：最新更新右对齐 + 精简「管理与添加课程」统一入口 ---------- */
+.account-jw-login-btn {
+  width: 100%;
+  height: 46px;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+}
+
+.account-current-updated {
+  margin-left: auto;
+}
+
+.account-course-hub-entry {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 6px;
+}
+
+.account-course-hub-btn {
+  width: 100%;
+  height: 44px;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--fg);
+}
+
+.account-course-hub-btn:hover {
+  background: var(--bg-soft);
+}
+
+.account-course-hub {
+  display: grid;
+  gap: 14px;
+}
+
+.account-course-hub-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+
+.account-course-hub-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border-radius: calc(var(--radius-md) - 3px);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.account-course-hub-tabs button.is-active {
+  background: var(--bg-card);
+  color: var(--fg);
+  box-shadow: 0 1px 4px rgba(18, 28, 23, 0.08);
+}
+
+.account-course-hub-tabs button span {
+  font-size: 11.5px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-soft);
+  color: var(--fg-muted);
+}
+
+.account-manual-in-modal {
+  padding-top: 0;
+  border-top: none;
+}
+
+.account-manual-in-modal .button {
+  width: 100%;
+  height: 42px;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.account-days-in-modal {
+  max-height: min(56vh, 420px);
+  overflow-y: auto;
+  margin-bottom: 0;
+  padding-right: 2px;
 }
 
 /* ---------- 5. 移动端：左右布局改为上下，避免名称被挤成两行 ---------- */

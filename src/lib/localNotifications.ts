@@ -103,6 +103,16 @@ export async function initLocalNotifications() {
         const extra = (event.notification.extra ?? {}) as {
           threadId?: string
           notificationId?: string
+          kind?: string
+          view?: string
+        }
+        if (extra.kind === 'class-reminder' || extra.view) {
+          window.dispatchEvent(
+            new CustomEvent('shishuo:native-action', {
+              detail: { type: 'navigate', view: extra.view || 'schedule' },
+            }),
+          )
+          return
         }
         window.dispatchEvent(
           new CustomEvent('shishuo:open-thread', {

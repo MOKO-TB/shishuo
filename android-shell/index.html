@@ -3,15 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>师说 · 无法连接</title>
+    <title>师说 · 离线模式</title>
     <style>
       :root {
-        color-scheme: light;
+        color-scheme: light dark;
         --bg: #f4f0e6;
+        --card: #fbf8f1;
         --fg: #17241e;
         --muted: #5d6b64;
         --accent: #146c56;
+        --accent-soft: rgba(20, 108, 86, 0.12);
         --line: #e2dccf;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1714;
+          --card: #16211d;
+          --fg: #f1ece1;
+          --muted: #98a8a0;
+          --accent: #3fb28f;
+          --accent-soft: rgba(63, 178, 143, 0.15);
+          --line: #273730;
+        }
       }
       * {
         box-sizing: border-box;
@@ -31,14 +44,14 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 18px;
-        padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+        gap: 16px;
+        padding: calc(28px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 20px
+          calc(28px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
         text-align: center;
       }
       .mark {
-        width: 84px;
-        height: 84px;
-        margin-bottom: 8px;
+        width: 76px;
+        height: 76px;
       }
       h1 {
         margin: 0;
@@ -47,30 +60,135 @@
       }
       p {
         margin: 0;
-        max-width: 20em;
+        max-width: 22em;
         font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
         font-size: 14px;
-        line-height: 1.8;
+        line-height: 1.7;
         color: var(--muted);
       }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 6px;
+      }
       button {
-        margin-top: 10px;
-        padding: 12px 30px;
+        padding: 11px 24px;
         border: 0;
         border-radius: 999px;
         background: var(--accent);
         color: #f7f1e3;
-        font-family: inherit;
-        font-size: 15px;
-        letter-spacing: 0.08em;
+        font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
         box-shadow: 0 8px 20px rgba(20, 108, 86, 0.22);
+      }
+      button.secondary {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        box-shadow: none;
       }
       button:active {
         transform: translateY(1px);
       }
+      .offline-card {
+        width: 100%;
+        max-width: 420px;
+        margin-top: 10px;
+        padding: 14px;
+        border-radius: 18px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        text-align: left;
+        font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      }
+      .offline-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .offline-head strong {
+        font-size: 14px;
+      }
+      .offline-head span {
+        font-size: 12px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .day-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+        overflow-x: auto;
+      }
+      .day-tab {
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        box-shadow: none;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+      .day-tab.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: transparent;
+        font-weight: 700;
+      }
+      .class-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .class-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 9px 11px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+      }
+      .class-time {
+        min-width: 48px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .class-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .class-body b {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .class-body small {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .empty-day {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 12px 4px;
+        text-align: center;
+      }
       .hint {
         font-size: 12px;
-        color: #77837c;
+        color: var(--muted);
+        opacity: 0.85;
+      }
+      [hidden] {
+        display: none !important;
       }
     </style>
   </head>
@@ -79,7 +197,7 @@
       <svg class="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
         <rect width="64" height="64" rx="18" fill="#14211c" />
         <path
-          d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8h-1a6 6 0 0 1-6-6V18Z"
+          d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8a6 6 0 0 1-4-5.65V18Z"
           fill="#f6f1e5"
         />
         <path
@@ -89,9 +207,184 @@
         <circle cx="50" cy="52" r="5" fill="#d8a52a" />
       </svg>
       <h1>师说</h1>
-      <p>暂时连接不上校园服务器。<br />请检查网络后重试，或稍后再打开。</p>
-      <button type="button" onclick="location.replace('http://121.37.30.147/')">重新连接</button>
+      <p>暂时连接不上校园服务器。<br />请检查网络后重试，离线时仍可查看已同步的课表。</p>
+      <div class="actions">
+        <button type="button" id="retry-btn">重新连接</button>
+        <button type="button" id="toggle-schedule-btn" class="secondary" hidden>离线课表</button>
+      </div>
+
+      <section id="offline-schedule" class="offline-card" hidden>
+        <div class="offline-head">
+          <strong id="offline-title">离线课表</strong>
+          <span id="offline-week"></span>
+        </div>
+        <div class="day-tabs" id="day-tabs"></div>
+        <div class="class-list" id="class-list"></div>
+      </section>
+
       <span class="hint">AI 先答 · 老师精答</span>
     </main>
+
+    <script>
+      (function () {
+        var DEFAULT_URL = 'http://121.37.30.147/'
+        var BELL = {
+          1: ['08:20', '09:05'],
+          2: ['09:10', '09:55'],
+          3: ['10:15', '11:00'],
+          4: ['11:05', '11:50'],
+          5: ['14:30', '15:15'],
+          6: ['15:20', '16:05'],
+          7: ['16:25', '17:10'],
+          8: ['17:15', '18:00'],
+          9: ['19:00', '19:45'],
+          10: ['19:50', '20:35'],
+          11: ['20:40', '21:25'],
+        }
+        var DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        var selectedDay = new Date().getDay() || 7
+        var cachedPayload = null
+
+        function getTargetUrl() {
+          var ctx = window.__shishuoOffline
+          if (ctx && ctx.serverUrl) {
+            return ctx.serverUrl.replace(/\/+$/, '') + '/'
+          }
+          return DEFAULT_URL
+        }
+
+        document.getElementById('retry-btn').addEventListener('click', function () {
+          location.replace(getTargetUrl())
+        })
+
+        function mondayOf(ts) {
+          var d = new Date(ts)
+          var offset = (d.getDay() + 6) % 7
+          d.setDate(d.getDate() - offset)
+          d.setHours(0, 0, 0, 0)
+          return d.getTime()
+        }
+
+        function computeWeek(termStart) {
+          if (!termStart) return null
+          var diff = mondayOf(Date.now()) - mondayOf(termStart)
+          return Math.max(1, Math.floor(diff / (7 * 86400000)) + 1)
+        }
+
+        function runsInWeek(weeks, week) {
+          if (!week || !weeks) return true
+          var text = String(weeks).trim()
+          if (!text) return true
+          if (/单周/.test(text) && week % 2 === 0) return false
+          if (/双周/.test(text) && week % 2 === 1) return false
+          var ranges = text.match(/(\d{1,2})\s*[-–~]\s*(\d{1,2})/g)
+          if (ranges && ranges.length) {
+            return ranges.some(function (r) {
+              var m = /(\d{1,2})\s*[-–~]\s*(\d{1,2})/.exec(r)
+              return m && week >= Number(m[1]) && week <= Number(m[2])
+            })
+          }
+          var singles = text.match(/\d{1,2}/g)
+          if (singles && singles.length) {
+            return singles.map(Number).indexOf(week) >= 0
+          }
+          return true
+        }
+
+        function renderSchedule() {
+          if (!cachedPayload || !Array.isArray(cachedPayload.schedule) || !cachedPayload.schedule.length) {
+            return
+          }
+          var week = computeWeek(cachedPayload.termStart)
+          var section = document.getElementById('offline-schedule')
+          var toggleBtn = document.getElementById('toggle-schedule-btn')
+          var weekEl = document.getElementById('offline-week')
+          var tabsEl = document.getElementById('day-tabs')
+          var listEl = document.getElementById('class-list')
+
+          toggleBtn.hidden = false
+          section.hidden = false
+          weekEl.textContent = week ? '第 ' + week + ' 周' : '已缓存'
+
+          tabsEl.innerHTML = ''
+          DAYS.forEach(function (label, idx) {
+            var dayNum = idx + 1
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.className = 'day-tab' + (dayNum === selectedDay ? ' active' : '')
+            btn.textContent = label
+            btn.addEventListener('click', function () {
+              selectedDay = dayNum
+              renderSchedule()
+            })
+            tabsEl.appendChild(btn)
+          })
+
+          var items = cachedPayload.schedule
+            .filter(function (entry) {
+              return Number(entry.day) === selectedDay && runsInWeek(entry.weeks, week)
+            })
+            .sort(function (a, b) {
+              return (a.startSection || 0) - (b.startSection || 0)
+            })
+
+          listEl.innerHTML = ''
+          if (!items.length) {
+            var empty = document.createElement('div')
+            empty.className = 'empty-day'
+            empty.textContent = DAYS[selectedDay - 1] + '没有课'
+            listEl.appendChild(empty)
+            return
+          }
+
+          items.forEach(function (entry) {
+            var start = entry.startTime || (BELL[entry.startSection] && BELL[entry.startSection][0]) || ''
+            var end = entry.endTime || (BELL[entry.endSection] && BELL[entry.endSection][1]) || ''
+            var row = document.createElement('div')
+            row.className = 'class-item'
+
+            var timeEl = document.createElement('div')
+            timeEl.className = 'class-time'
+            timeEl.textContent = start || '第' + entry.startSection + '节'
+
+            var body = document.createElement('div')
+            body.className = 'class-body'
+            var title = document.createElement('b')
+            title.textContent = entry.course || '未命名课程'
+            var meta = document.createElement('small')
+            var parts = []
+            if (entry.room) parts.push(entry.room)
+            if (start && end) parts.push(start + '-' + end)
+            if (entry.teacher) parts.push(entry.teacher)
+            meta.textContent = parts.join(' · ')
+            body.appendChild(title)
+            body.appendChild(meta)
+
+            row.appendChild(timeEl)
+            row.appendChild(body)
+            listEl.appendChild(row)
+          })
+        }
+
+        function hydrateOffline() {
+          var ctx = window.__shishuoOffline
+          if (!ctx || !ctx.scheduleJson) return
+          try {
+            cachedPayload = JSON.parse(ctx.scheduleJson)
+            renderSchedule()
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        document.getElementById('toggle-schedule-btn').addEventListener('click', function () {
+          var section = document.getElementById('offline-schedule')
+          section.hidden = !section.hidden
+        })
+
+        window.addEventListener('shishuo:offline-ready', hydrateOffline)
+        hydrateOffline()
+      })()
+    </script>
   </body>
 </html>

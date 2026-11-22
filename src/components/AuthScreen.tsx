@@ -2,21 +2,15 @@ import { useEffect, useState, type FormEvent } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
-  Database,
   GraduationCap,
   Loader2,
-  Moon,
-  Monitor,
   Presentation,
   ShieldCheck,
-  Sparkles,
-  Sun,
 } from 'lucide-react'
 import { useAuth } from '../auth'
 import { ApiError, apiGet, apiPost } from '../lib/api'
 import { readRememberedEmail } from '../lib/authStorage'
 import { isNativeApp, setAuthStatusDark } from '../lib/nativeShell'
-import { loadThemePreference, toggleTheme, type ThemePreference } from '../lib/theme'
 import { PILOT_COURSE_LABELS, PILOT_COURSE_IDS } from '../data/pilot'
 import { majorOptions } from '../data/major'
 import { BrandMark } from './ui'
@@ -29,7 +23,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function AuthScreen() {
   const { login, register, error: sessionError } = useAuth()
-  const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference())
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState(() => readRememberedEmail())
   const [password, setPassword] = useState('')
@@ -255,47 +248,13 @@ export function AuthScreen() {
         : '先验证邮箱，再自动登录；教师账号由学校管理员分配。'
       : mode === 'reset'
         ? '输入注册邮箱，获取验证码后设置新密码。'
-        : '学生和教师使用同一个入口，登录后进入各自的工作台。'
+        : ''
 
   return (
     <div className="auth-shell">
-      <button
-        className="auth-theme-toggle"
-        onClick={() => setThemePreference(toggleTheme())}
-        aria-label={
-          themePreference === 'system'
-            ? '当前跟随系统，点击切换到浅色'
-            : themePreference === 'light'
-              ? '当前浅色，点击切换到深色'
-              : '当前深色，点击切换到跟随系统'
-        }
-        title={
-          themePreference === 'system'
-            ? '当前跟随系统，点击切换到浅色'
-            : themePreference === 'light'
-              ? '当前浅色，点击切换到深色'
-              : '当前深色，点击切换到跟随系统'
-        }
-        type="button"
-      >
-        {themePreference === 'system' ? (
-          <Monitor size={16} />
-        ) : themePreference === 'light' ? (
-          <Sun size={16} />
-        ) : (
-          <Moon size={16} />
-        )}
-        <span>
-          {themePreference === 'system'
-            ? '系统'
-            : themePreference === 'light'
-              ? '浅色'
-              : '深色'}
-        </span>
-      </button>
       <section className="auth-story">
         <div className="auth-brand">
-          <BrandMark size={46} />
+          <BrandMark size={40} />
           <div>
             <strong>师说</strong>
             <span>AI 双通道课程答疑</span>
@@ -303,26 +262,17 @@ export function AuthScreen() {
         </div>
 
         <div className="auth-story-main">
-          <span className="auth-eyebrow">
-            <Sparkles size={14} />
-            多用户试点 · 5 门课程做深
-          </span>
           <h1>
-            学生问得清楚，
+            学生问得清楚
             <br />
-            老师答得省力。
+            老师答得省力
           </h1>
-          <p className="auth-lede">
-            知识库先接住重复问题；没把握时自动转交任课老师。学生、教师各用各的账号，
-            在同一个课程空间里完成提问、同题合并、回复与沉淀。
-          </p>
 
           <div className="auth-pilot-row" aria-label="本期试点课程">
             {PILOT_COURSE_IDS.map((id) => (
               <span key={id}>{PILOT_COURSE_LABELS[id]}</span>
             ))}
           </div>
-
         </div>
 
         <p className="auth-story-foot">演示数据均为虚构教师与学生，不冒充任何真实授课老师。</p>
@@ -341,7 +291,7 @@ export function AuthScreen() {
                   : '账号登录'}
             </span>
             <h2>{title}</h2>
-            <p>{lede}</p>
+            {lede && <p>{lede}</p>}
           </div>
 
           {mode === 'reset' ? (
@@ -658,7 +608,6 @@ export function AuthScreen() {
             <div className="auth-demo">
               <div className="auth-demo-head">
                 <span>演示账号</span>
-                <small>一键填入，仅用于本地试点</small>
               </div>
               <div className="auth-demo-actions">
                 <button type="button" onClick={() => fillDemo('student')}>

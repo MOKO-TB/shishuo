@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type TouchEvent,
+} from 'react'
 import {
   BookOpen,
   CalendarDays,
@@ -7,6 +15,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   ExternalLink,
   Library,
   Loader2,
@@ -24,6 +33,7 @@ import {
 import { Badge, Modal } from '../../components/ui'
 import { FandianView } from '../FandianView'
 import { useProfile, scoreStats } from '../../lib/profile'
+import { triggerHaptic } from '../../lib/nativeShell'
 import { excerpt } from '../../lib/utils'
 import {
   libraryLoginComplete,
@@ -44,7 +54,21 @@ import {
 import { resolveCalendarDetail } from '../../data/campusCalendarDetails'
 import { CAMPUS_BOOKS, type CampusBook } from '../../data/campusBooks'
 
-type ToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'canteen' | 'kb' | 'ask'
+export type CampusToolTab = 'gpa' | 'calendar' | 'library' | 'map' | 'canteen' | 'kb' | 'ask'
+type ToolTab = CampusToolTab
+
+const CALENDAR_EVENT_COLORS = [
+  '#146c56',
+  '#c45d3a',
+  '#366aa8',
+  '#c68a18',
+  '#854ba0',
+  '#0e8585',
+  '#c4414a',
+  '#4f5eb8',
+  '#698a2b',
+  '#d46e2b',
+]
 
 type MonthCell = {
   date: Date
@@ -129,7 +153,7 @@ function calendarSourceLabel(source: string) {
     .trim()
 }
 
-/** 事件日期区间；每年重复的事件按当前查看的年份投影。 */
+/** 事件日期区间（不展示年份）；每年重复的事件按当前查看的年份投影。 */
 function formatEventRange(event: CampusCalendarEvent, projectionYear: number) {
   const rawStart = parseDate(event.start)
   if (!rawStart) return '日期待定'
@@ -143,15 +167,13 @@ function formatEventRange(event: CampusCalendarEvent, projectionYear: number) {
       ? new Date(projectionYear, rawEnd.getMonth(), rawEnd.getDate())
       : rawEnd
     : start
-  const startLabel = `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日`
+  const startLabel = `${start.getMonth() + 1}月${start.getDate()}日`
   if (end.getTime() <= start.getTime()) return `${startLabel} · 1 天`
   const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
   const endLabel =
     start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()
       ? `${end.getDate()}日`
-      : start.getFullYear() === end.getFullYear()
-        ? `${end.getMonth() + 1}月${end.getDate()}日`
-        : `${end.getFullYear()}年${end.getMonth() + 1}月${end.getDate()}日`
+      : `${end.getMonth() + 1}月${end.getDate()}日`
   return `${startLabel} - ${endLabel} · ${days} 天`
 }
 
@@ -317,6 +339,8 @@ function LiveBookCard({ book }: { book: LibraryBook }) {
 
 
 export function CampusTools({
+  tab: controlledTab,
+  onTabChange,
   askCount = 0,
   kbCategories = [],
   activeCategory = 'all',
@@ -324,6 +348,10 @@ export function CampusTools({
   askSlot,
   children,
 }: {
+  /** 受控当前选中的工具 tab */
+  tab?: ToolTab
+  /** tab 切换回调 */
+  onTabChange?: (next: ToolTab) => void
   /** 「我的提问」条数，用于 tab 角标 */
   askCount?: number
   /** 知识分类与条数，用于 tab 内分类入口 */
@@ -337,9 +365,18 @@ export function CampusTools({
   /** 工具下方内容（知识卡列表等），放进吸顶作用域内 */
   children?: React.ReactNode
 } = {}) {
-  const [tab, setTab] = useState<ToolTab>('gpa')
+  const [innerTab, setInnerTab] = useState<ToolTab>('gpa')
+  const tab = controlledTab ?? innerTab
+  const setTab = (next: ToolTab) => {
+    setInnerTab(next)
+    onTabChange?.(next)
+  }
+  const [isStuck, setIsStuck] = useState(false)
+  const [manualExpanded, setManualExpanded] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const stickyHostRef = useRef<HTMLElement>(null)
   const toolsBarRef = useRef<HTMLElement>(null)
+  const tabsRowRef = useRef<HTMLDivElement>(null)
   const [mapQuery, setMapQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
   const [liveQuery, setLiveQuery] = useState('')
@@ -417,10 +454,76 @@ export function CampusTools({
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   )
   const [calendarDay, setCalendarDay] = useState<string | null>(null)
+  const [calSwipeOffset, setCalSwipeOffset] = useState(0)
+  const [calSlideState, setCalSlideState] = useState<{ dir: 'next' | 'prev' | null; seq: number }>({
+    dir: null,
+    seq: 0,
+  })
+  const calTouchStartRef = useRef<{ x: number; y: number; locked?: 'x' | 'y' } | null>(null)
+  const calSwipedRef = useRef(false)
   const closeCalendarDay = () => setCalendarDay(null)
-  const changeCalendarMonth = (next: Date) => {
+  const changeCalendarMonth = (next: Date, explicitDir?: 'next' | 'prev') => {
+    const prevKey = calendarMonth.getFullYear() * 12 + calendarMonth.getMonth()
+    const nextKey = next.getFullYear() * 12 + next.getMonth()
+    const dir = explicitDir ?? (nextKey > prevKey ? 'next' : nextKey < prevKey ? 'prev' : null)
     setCalendarMonth(next)
     setCalendarDay(null)
+    if (dir) {
+      triggerHaptic('light')
+      setCalSlideState((prev) => ({ dir, seq: prev.seq + 1 }))
+    }
+  }
+
+  const handleCalTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return
+    const touch = event.touches[0]
+    calTouchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    calSwipedRef.current = false
+  }
+
+  const handleCalTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = calTouchStartRef.current
+    if (!start || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    const dx = touch.clientX - start.x
+    const dy = touch.clientY - start.y
+    if (!start.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      start.locked = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y'
+    }
+    if (start.locked === 'x') {
+      setCalSwipeOffset(Math.max(-68, Math.min(68, dx * 0.45)))
+    }
+  }
+
+  const handleCalTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = calTouchStartRef.current
+    calTouchStartRef.current = null
+    setCalSwipeOffset(0)
+    if (!start || start.locked !== 'x') return
+    const touch = event.changedTouches[0]
+    if (!touch) return
+    const dx = touch.clientX - start.x
+    if (Math.abs(dx) >= 44) {
+      calSwipedRef.current = true
+      const delta = dx < 0 ? 1 : -1
+      changeCalendarMonth(
+        new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta, 1),
+        delta > 0 ? 'next' : 'prev',
+      )
+    }
+  }
+
+  const handleCalTouchCancel = () => {
+    calTouchStartRef.current = null
+    setCalSwipeOffset(0)
+  }
+
+  const handleCalClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    if (calSwipedRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      calSwipedRef.current = false
+    }
   }
 
   const monthCalendar = useMemo(() => {
@@ -492,11 +595,20 @@ export function CampusTools({
         }
       }
     }
+    const eventColors = new Map<string, string>()
     for (const cell of cells) {
       const byKind = (a: CampusCalendarEvent, b: CampusCalendarEvent) =>
         (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9)
       cell.events.sort(byKind)
       cell.allEvents.sort(byKind)
+      for (const ev of cell.allEvents) {
+        if (!eventColors.has(ev.id)) {
+          eventColors.set(
+            ev.id,
+            CALENDAR_EVENT_COLORS[eventColors.size % CALENDAR_EVENT_COLORS.length],
+          )
+        }
+      }
       cell.hasSpan = cell.allEvents.some(
         (event) => event.kind !== 'term' && eventSpanDays(event) > 14,
       )
@@ -504,6 +616,7 @@ export function CampusTools({
     return {
       label: `${year} 年 ${month + 1} 月`,
       cells,
+      eventColors,
     }
   }, [calendarMonth, today])
 
@@ -669,7 +782,12 @@ export function CampusTools({
 
   /** 切换工具后滚到内容区，避免用户停在知识卡列表、看不到新面板 */
   const selectTab = (next: ToolTab) => {
+    if (isCollapsed && next === tab) {
+      setManualExpanded(true)
+      return
+    }
     setTab(next)
+    setManualExpanded(false)
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         stickyHostRef.current
@@ -678,6 +796,45 @@ export function CampusTools({
       })
     })
   }
+
+  // 监测吸顶状态：上滑到吸顶位置时自动收窄为一行，回到顶部自动恢复；哨兵位于吸顶栏上方避免高度变化引起抖动。
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    let stuck = false
+    const check = () => {
+      const topbarHeight =
+        document.querySelector<HTMLElement>('.topbar')?.getBoundingClientRect().height ?? 64
+      const top = sentinel.getBoundingClientRect().top
+      const nextStuck = stuck ? top < topbarHeight + 16 : top < topbarHeight - 4
+      if (nextStuck !== stuck) {
+        stuck = nextStuck
+        setIsStuck(nextStuck)
+        if (!nextStuck) setManualExpanded(false)
+      }
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => {
+      window.removeEventListener('scroll', check)
+      window.removeEventListener('resize', check)
+    }
+  }, [])
+
+  const isCollapsed = isStuck && !manualExpanded
+
+  // 收窄成单行后，把当前激活项滚到视野中间方便辨认。
+  useEffect(() => {
+    if (!isCollapsed) return
+    const row = tabsRowRef.current
+    const activeBtn = row?.querySelector<HTMLElement>('button.is-active')
+    if (!row || !activeBtn) return
+    const rowRect = row.getBoundingClientRect()
+    const btnRect = activeBtn.getBoundingClientRect()
+    const target = row.scrollLeft + btnRect.left - rowRect.left - (rowRect.width - btnRect.width) / 2
+    row.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
+  }, [isCollapsed, tab])
 
   // 点搜索框外部时收起候选
   useEffect(() => {
@@ -742,18 +899,22 @@ export function CampusTools({
 
   return (
     <section className="campus-tools-sticky" ref={stickyHostRef}>
-      {/* 吸顶区：标题 + 选项栏，只有这部分 sticky */}
-      <section className="campus-tools card" ref={toolsBarRef}>
+      <div className="campus-tools-sentinel" ref={sentinelRef} aria-hidden="true" />
+      {/* 吸顶区：标题 + 选项栏，上滑吸顶时收窄为一行，点下方箭头可展开全部选项 */}
+      <section
+        className={`campus-tools card${isCollapsed ? ' is-collapsed' : ''}${
+          isStuck && manualExpanded ? ' is-stuck-expanded' : ''
+        }`}
+        ref={toolsBarRef}
+      >
         <div className="campus-tools-bar">
           <div className="campus-tools-head">
             <div>
               <strong>校园工具</strong>
             </div>
-            <Badge tone="gold">引路学长</Badge>
           </div>
 
-
-          <div className="campus-tool-tabs" role="tablist" aria-label="校园工具">
+          <div className="campus-tool-tabs" role="tablist" aria-label="校园工具" ref={tabsRowRef}>
             <button
               role="tab"
               aria-selected={tab === 'gpa'}
@@ -821,6 +982,17 @@ export function CampusTools({
               </button>
             )}
           </div>
+          {isStuck && (
+            <button
+              type="button"
+              className="campus-tools-collapse-toggle"
+              onClick={() => setManualExpanded((open) => !open)}
+              aria-expanded={manualExpanded}
+              aria-label={manualExpanded ? '收起校园工具选项' : '展开全部校园工具选项'}
+            >
+              {manualExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </button>
+          )}
         </div>
       </section>
 
@@ -1017,25 +1189,33 @@ export function CampusTools({
             </button>
             {agendaCalendarDay.detailEvents.length > 0 ? (
               <div className="campus-month-agenda-list">
-                {agendaCalendarDay.detailEvents.slice(0, 3).map((event) => (
-                  <button
-                    key={event.id}
-                    type="button"
-                    className={`campus-month-agenda-event is-${event.kind}`}
-                    onClick={() => setCalendarDay(agendaCalendarDay.key)}
-                  >
-                    <span className="campus-month-agenda-kind">
-                      {eventKindLabel(event.kind)}
-                    </span>
-                    <strong>{event.name}</strong>
-                    <em>
-                      {formatEventRange(
-                        event,
-                        agendaCalendarDay.date.getFullYear(),
-                      )}
-                    </em>
-                  </button>
-                ))}
+                {agendaCalendarDay.detailEvents.slice(0, 3).map((event) => {
+                  const barColor = monthCalendar.eventColors.get(event.id)
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      className={`campus-month-agenda-event is-${event.kind}`}
+                      style={
+                        barColor
+                          ? ({ '--event-bar-color': barColor } as CSSProperties)
+                          : undefined
+                      }
+                      onClick={() => setCalendarDay(agendaCalendarDay.key)}
+                    >
+                      <span className="campus-month-agenda-kind">
+                        {eventKindLabel(event.kind)}
+                      </span>
+                      <strong>{event.name}</strong>
+                      <em>
+                        {formatEventRange(
+                          event,
+                          agendaCalendarDay.date.getFullYear(),
+                        )}
+                      </em>
+                    </button>
+                  )
+                })}
                 {agendaCalendarDay.detailEvents.length > 3 && (
                   <span className="campus-month-agenda-more">
                     还有 {agendaCalendarDay.detailEvents.length - 3} 项，点日期查看全部
@@ -1055,54 +1235,76 @@ export function CampusTools({
             <span key={day}>{day}</span>
           ))}
         </div>
-        <div className="campus-month-grid">
-          {monthCalendar.cells.map((cell) => (
-            <button
-              type="button"
-              className={`campus-month-day ${cell.inMonth ? '' : 'is-outside'} ${
-                cell.isToday ? 'is-today' : ''
-              } ${cell.events.length > 0 ? 'is-has-events' : ''} ${
-                cell.hasSpan ? 'is-span' : ''
+        <div className="campus-month-swipe-viewport">
+          <div
+            className="campus-month-swipe-zone"
+            onTouchStart={handleCalTouchStart}
+            onTouchMove={handleCalTouchMove}
+            onTouchEnd={handleCalTouchEnd}
+            onTouchCancel={handleCalTouchCancel}
+            onClickCapture={handleCalClickCapture}
+            style={
+              calSwipeOffset !== 0
+                ? {
+                    transform: `translate3d(${calSwipeOffset}px, 0, 0)`,
+                    transition: 'none',
+                  }
+                : undefined
+            }
+          >
+            <div
+              key={`${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}-${calSlideState.seq}`}
+              className={`campus-month-grid${
+                calSlideState.dir === 'next'
+                  ? ' is-slide-next'
+                  : calSlideState.dir === 'prev'
+                    ? ' is-slide-prev'
+                    : ''
               }`}
-              key={cell.key}
-              onClick={() => setCalendarDay(cell.key)}
-              aria-haspopup="dialog"
-              aria-label={calendarDayLabel(cell)}
             >
-              <span className="campus-month-day-num">{cell.date.getDate()}</span>
-              <span className="campus-month-events">
-                {cell.events.slice(0, 2).map((event) => (
-                  <span
-                    className={`campus-month-event is-${event.kind}`}
-                    key={event.id}
-                    title={`${event.name} · ${eventKindLabel(event.kind)}`}
-                  >
-                    {shortEventName(event.name)}
+              {monthCalendar.cells.map((cell) => (
+                <button
+                  type="button"
+                  className={`campus-month-day ${cell.inMonth ? '' : 'is-outside'} ${
+                    cell.isToday ? 'is-today' : ''
+                  } ${cell.events.length > 0 ? 'is-has-events' : ''} ${
+                    cell.hasSpan ? 'is-span' : ''
+                  }`}
+                  key={cell.key}
+                  onClick={() => setCalendarDay(cell.key)}
+                  aria-haspopup="dialog"
+                  aria-label={calendarDayLabel(cell)}
+                >
+                  <span className="campus-month-day-num">{cell.date.getDate()}</span>
+                  <span className="campus-month-events">
+                    {cell.events.slice(0, 3).map((event) => {
+                      const barColor = monthCalendar.eventColors.get(event.id)
+                      return (
+                        <span
+                          className={`campus-month-event is-${event.kind}`}
+                          style={
+                            barColor
+                              ? ({ '--event-bar-color': barColor } as CSSProperties)
+                              : undefined
+                          }
+                          key={event.id}
+                          title={`${event.name} · ${eventKindLabel(event.kind)}`}
+                        >
+                          {shortEventName(event.name)}
+                        </span>
+                      )
+                    })}
+                    {cell.events.length > 3 && (
+                      <span className="campus-month-more">还有 {cell.events.length - 3} 项</span>
+                    )}
                   </span>
-                ))}
-                {cell.events.length > 2 && (
-                  <span className="campus-month-more">还有 {cell.events.length - 2} 项</span>
-                )}
-              </span>
-              {cell.inMonth && cell.week && (
-                <span className="campus-month-week">第{cell.week}周</span>
-              )}
-            </button>
-          ))}
-        </div>
-        <div className="campus-month-legend">
-          {[
-            ['holiday', '放假'],
-            ['exam', '考试'],
-            ['term', '学期'],
-            ['event', '活动'],
-            ['deadline', '截止'],
-          ].map(([kind, label]) => (
-            <span key={kind}>
-              <i className={`is-${kind}`} />
-              {label}
-            </span>
-          ))}
+                  {cell.inMonth && cell.week && (
+                    <span className="campus-month-week">第{cell.week}周</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
       <p className="campus-tool-note">

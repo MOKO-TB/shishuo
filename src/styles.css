@@ -31,7 +31,10 @@
 @import "./styles/consent.css";
 @import "./styles/safe-area.css";
 @import "./styles/cleanup.css";
+@import "./styles/avatar.css";
 @import "./styles/ui-cleanup.css";
 @import "./styles/settings.css";
 @import "./styles/page-sheet.css";
 @import "./styles/fill.css";
+@import "./styles/feedback.css";
+@import "./styles/motion.css";

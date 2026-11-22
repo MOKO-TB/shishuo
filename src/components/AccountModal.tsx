@@ -7,18 +7,21 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
+  LayoutGrid,
   Loader2,
   LogOut,
   MessageSquarePlus,
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Smartphone,
   Trash2,
   UserRound,
   Users,
 } from 'lucide-react'
 import {
-  allCourses,
   allTeachers,
   courseById,
   isSeededCourse,
@@ -79,6 +82,28 @@ import {
   scheduleEventCount,
   scheduleExportReady,
 } from '../lib/export'
+import {
+  downloadNativeUpdate,
+  getNativeAppInfo,
+  installPendingNativeUpdate,
+  isNativeApp,
+  openExternalUrl,
+  openNativeBatterySettings,
+  openNativeInstallPermissionSettings,
+  requestPinScheduleWidget,
+  subscribeUpdateDownload,
+  syncNativeSchedule,
+  triggerHaptic,
+  type NativeAppInfo,
+  type UpdateDownloadProgress,
+} from '../lib/nativeShell'
+import {
+  readClassReminderPrefs,
+  syncClassReminders,
+  writeClassReminderPrefs,
+  type ClassReminderPrefs,
+} from '../lib/classReminders'
+import { checkAndroidAppUpdate, type AppUpdateCheckResult } from '../lib/appUpdate'
 import { makeId } from '../lib/utils'
 import { Avatar, Badge, EmptyState, Modal } from './ui'
 import { PageSheet } from './PageSheet'
@@ -216,10 +241,11 @@ function WeekBoard({
             </button>
           )}
         </div>
-        <span className="week-count">{entries.length} 节课</span>
-        <button className="text-button" onClick={onToggleZoom}>
-          {zoom ? '收起' : '放大查看'}
-        </button>
+        {zoom && (
+          <button className="text-button" onClick={onToggleZoom}>
+            收起
+          </button>
+        )}
       </div>
       <WeekGrid entries={entries} week={week} termStart={termStart} tones={tones} />
       <p className="week-footnote">左栏节次时间是学校标准作息；课程块里的时间来自教务课表，教务没写时按节次推算。「第 X 周」是教务标注的上课周次。</p>
@@ -316,6 +342,307 @@ function JwLoginFields({
         </label>
       </div>
     </div>
+  )
+}
+
+function NativeMobileSettingsGroup({
+  isStudent,
+  schedule,
+  termStart,
+  studentName,
+  appInfo,
+  notify,
+}: {
+  isStudent: boolean
+  schedule: ScheduleEntry[]
+  termStart: number | null
+  studentName?: string
+  appInfo: NativeAppInfo | null
+  notify: (message: string, tone?: 'success' | 'info' | 'danger') => void
+}) {
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateCheckResult | null>(null)
+  const [downloadProgress, setDownloadProgress] = useState<UpdateDownloadProgress | null>(null)
+  const [reminder, setReminder] = useState<ClassReminderPrefs>(() => readClassReminderPrefs())
+
+  useEffect(() => {
+    if (!isNativeApp()) return
+    return subscribeUpdateDownload(setDownloadProgress)
+  }, [])
+
+  useEffect(() => {
+    if (downloadProgress?.status !== 'permission_required') return
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      void installPendingNativeUpdate().then((status) => {
+        if (status === 'installing') {
+          setDownloadProgress((prev) =>
+            prev
+              ? { ...prev, status: 'installing', message: '已调起系统安装界面，请确认安装' }
+              : null,
+          )
+        }
+      })
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [downloadProgress?.status])
+
+  if (!isNativeApp()) return null
+
+  const updateReminder = async (next: ClassReminderPrefs) => {
+    writeClassReminderPrefs(next)
+    setReminder(next)
+    triggerHaptic('light')
+    const result = await syncClassReminders({
+      schedule,
+      termStart,
+      requestPermission: next.enabled,
+    })
+    if (next.enabled && result.permissionDenied) {
+      const reverted = { ...next, enabled: false }
+      writeClassReminderPrefs(reverted)
+      setReminder(reverted)
+      notify('未获得系统通知权限，请在系统设置里允许师说发通知', 'info')
+      return
+    }
+    if (next.enabled) {
+      notify(
+        result.scheduled > 0
+          ? `已开启课前 ${next.leadMinutes} 分钟提醒（已排期未来 7 天 ${result.scheduled} 节课）`
+          : `已开启课前 ${next.leadMinutes} 分钟提醒`,
+      )
+    } else {
+      notify('已关闭上课前本地提醒', 'info')
+    }
+  }
+
+  const handlePinWidget = async () => {
+    triggerHaptic('light')
+    if (appInfo && appInfo.versionCode < 2) {
+      notify('当前版本不支持桌面小组件，请先在上方检查更新到最新版', 'info')
+      return
+    }
+    await syncNativeSchedule({ schedule, termStart, studentName })
+    const status = await requestPinScheduleWidget()
+    if (status === 'requested') {
+      notify('已发起添加；若桌面没有弹窗，请长按桌面空白处 → 小组件 → 搜索「师说」')
+    } else {
+      notify('请长按桌面空白处 → 小组件 → 搜索「师说」；OPPO 若找不到，请选「师说 · 今日课表（兼容版）」', 'info')
+    }
+  }
+
+  const handleCheckUpdate = async () => {
+    if (checkingUpdate) return
+    setCheckingUpdate(true)
+    try {
+      const result = await checkAndroidAppUpdate()
+      setUpdateInfo(result)
+      if (!result) {
+        notify('检查更新失败，请稍后重试', 'danger')
+        return
+      }
+      if (result.hasUpdate) {
+        notify(`发现新版本 v${result.latest.versionName}，点击即可下载安装`)
+      } else {
+        notify(`当前已是最新版 v${result.current.versionName}`, 'info')
+      }
+    } catch {
+      notify('检查更新失败，请检查网络连接', 'danger')
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }
+
+  const handleDownloadUpdate = async () => {
+    if (!updateInfo) return
+    triggerHaptic('medium')
+    if (updateInfo.signatureMismatch) {
+      const url = new URL(updateInfo.latest.downloadUrl, window.location.origin).href
+      await openExternalUrl(url)
+      notify('已开始下载正式版安装包；下载完成后请先卸载当前旧版再安装，以免签名冲突 (-7)')
+      return
+    }
+    setDownloadProgress({
+      status: 'downloading',
+      progress: 0,
+      downloadedBytes: 0,
+      totalBytes: 0,
+      message: '正在准备下载…',
+    })
+    const res = await downloadNativeUpdate(
+      updateInfo.latest.downloadUrl,
+      updateInfo.latest.versionName,
+      updateInfo.latest.fallbackUrl,
+    )
+    if (res.mode === 'browser') {
+      setDownloadProgress(null)
+      notify('当前旧版壳层需通过系统浏览器安装本次更新，升级后支持应用内直接更新', 'info')
+    } else if (res.mode === 'downloadManager') {
+      setDownloadProgress(null)
+      notify('已开始下载安装包，请在系统通知栏查看进度并点击安装')
+    } else if (res.status === 'error') {
+      notify(res.message || '应用内下载失败，请重试', 'danger')
+    }
+  }
+
+  const handleOpenBattery = async () => {
+    const ok = await openNativeBatterySettings()
+    if (!ok) {
+      notify('请到手机「设置 → 应用 → 师说 → 电池」设为无限制，减少后台通知延迟', 'info')
+    }
+  }
+
+  return (
+    <section className="settings-group" aria-labelledby="settings-native-mobile">
+      <h3 className="settings-group-title" id="settings-native-mobile">
+        安卓手机端
+      </h3>
+      <div className="settings-row-list">
+        {isStudent && (
+          <>
+            <label className="settings-row">
+              <span className="settings-row-copy">
+                <strong>上课前本地自动提醒</strong>
+                <small>
+                  按当前课表在本机定时提醒（{reminder.leadMinutes} 分钟前），断网也能按时响。
+                </small>
+              </span>
+              <input
+                className="settings-switch"
+                type="checkbox"
+                checked={reminder.enabled}
+                onChange={(event) =>
+                  void updateReminder({ ...reminder, enabled: event.target.checked })
+                }
+              />
+            </label>
+            {reminder.enabled && (
+              <div className="settings-row">
+                <span className="settings-row-copy">
+                  <strong>提前提醒时间</strong>
+                  <small>修改后会立即重新排期未来 7 天的课程提醒。</small>
+                </span>
+                <select
+                  aria-label="提前提醒时间"
+                  value={reminder.leadMinutes}
+                  onChange={(event) =>
+                    void updateReminder({
+                      ...reminder,
+                      leadMinutes: Number(event.target.value) as ClassReminderPrefs['leadMinutes'],
+                    })
+                  }
+                >
+                  <option value={10}>提前 10 分钟</option>
+                  <option value={15}>提前 15 分钟</option>
+                  <option value={20}>提前 20 分钟</option>
+                  <option value={30}>提前 30 分钟</option>
+                </select>
+              </div>
+            )}
+            <div className="settings-row">
+              <span className="settings-row-copy">
+                <strong>桌面课程表小组件</strong>
+                <small>
+                  把今日课程与教室放到手机桌面；断网时兜底页也会自动显示缓存的离线课表。
+                </small>
+              </span>
+              <button
+                type="button"
+                className="button button-ghost"
+                onClick={() => void handlePinWidget()}
+              >
+                <LayoutGrid size={14} />
+                添加到桌面
+              </button>
+            </div>
+          </>
+        )}
+
+        <div className="settings-row">
+          <span className="settings-row-copy">
+            <strong>后台通知保活</strong>
+            <small>
+              部分国产手机省电策略会延迟后台消息，可在电池设置中把师说设为“无限制”。
+            </small>
+          </span>
+          <button
+            type="button"
+            className="button button-ghost"
+            onClick={() => void handleOpenBattery()}
+          >
+            <ShieldCheck size={14} />
+            去设置
+          </button>
+        </div>
+
+        <div className="settings-row is-keep-hint">
+          <span className="settings-row-copy">
+            <strong>
+              手机端版本号：
+              {appInfo ? `v${appInfo.versionName} (Build ${appInfo.versionCode})` : '读取中…'}
+            </strong>
+            <small>
+              {downloadProgress?.status === 'downloading' ||
+              downloadProgress?.status === 'verifying' ||
+              downloadProgress?.status === 'permission_required'
+                ? downloadProgress.message
+                : updateInfo?.hasUpdate && updateInfo.signatureMismatch
+                  ? `发现正式版 v${updateInfo.latest.versionName}：当前为早期测试签名，请先点右侧下载再卸载旧版安装（避免 -7 签名错误）。`
+                  : updateInfo?.hasUpdate
+                    ? `有新版本 v${updateInfo.latest.versionName}：${updateInfo.latest.notes.replace(/\n+/g, ' ')}`
+                    : appInfo && (appInfo.debuggable || appInfo.versionCode <= 2)
+                      ? '当前为早期内测签名版；网页内容自动热更新。'
+                      : '当前为正式签名版；网页自动热更新，客户端更新可在应用内直接下载安装。'}
+            </small>
+          </span>
+          {downloadProgress?.status === 'permission_required' ? (
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={() => void openNativeInstallPermissionSettings()}
+            >
+              允许安装权限
+            </button>
+          ) : updateInfo?.hasUpdate ? (
+            <button
+              type="button"
+              className="button button-primary"
+              disabled={
+                downloadProgress?.status === 'downloading' ||
+                downloadProgress?.status === 'verifying'
+              }
+              onClick={() => void handleDownloadUpdate()}
+            >
+              <Download size={14} />
+              {downloadProgress?.status === 'downloading'
+                ? downloadProgress.progress >= 0
+                  ? `${downloadProgress.progress}%`
+                  : '下载中'
+                : downloadProgress?.status === 'verifying'
+                  ? '校验中'
+                  : updateInfo.signatureMismatch
+                    ? `下载正式版 v${updateInfo.latest.versionName}`
+                    : `更新 v${updateInfo.latest.versionName}`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="button button-ghost"
+              disabled={checkingUpdate}
+              onClick={() => void handleCheckUpdate()}
+            >
+              {checkingUpdate ? (
+                <Loader2 size={14} className="spin-icon" />
+              ) : (
+                <Smartphone size={14} />
+              )}
+              {checkingUpdate ? '检查中' : '检查更新'}
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -417,7 +744,13 @@ export function AccountModal({
   const { user, logout: logoutAccount } = useAuth()
   const { data } = useStore()
   const [askAttachment, setAskAttachment] = useState(() => shouldAskAttachmentConsent())
+  const [nativeAppInfo, setNativeAppInfo] = useState<NativeAppInfo | null>(null)
   const [tab, setTab] = useState<TabKey>('identity')
+
+  useEffect(() => {
+    if (!isNativeApp()) return
+    void getNativeAppInfo().then(setNativeAppInfo)
+  }, [])
   const [teacherQuery, setTeacherQuery] = useState('')
   const tabsRef = useRef<HTMLDivElement>(null)
   const [form, setForm] = useState(profile)
@@ -439,6 +772,8 @@ export function AccountModal({
   const [autoQuery, setAutoQuery] = useState<JwAutoQuery | null>(null)
   const [semester, setSemester] = useState('all')
   const [manual, setManual] = useState(emptyManual)
+  const [courseHubOpen, setCourseHubOpen] = useState(false)
+  const [courseHubTab, setCourseHubTab] = useState<'add' | 'manage'>('add')
   const [week, setWeek] = useState(1)
   const [pageWeek, setPageWeek] = useState<number | null>(null)
   const [zoom, setZoom] = useState(false)
@@ -539,6 +874,24 @@ export function AccountModal({
     setForm(stored)
   }
 
+  const persistDraft = (draft: StudentProfile, nextTermStart = termStart) => {
+    const visibleCourses = studentCourses(draft)
+    const defaultCourseId = visibleCourses.some((course) => course.id === draft.defaultCourseId)
+      ? draft.defaultCourseId
+      : (visibleCourses[0]?.id ?? 'ds')
+    const next: StudentProfile = {
+      ...draft,
+      name: draft.name.trim() || '林晓',
+      college: draft.college.trim(),
+      major: draft.major.trim(),
+      studentNo: draft.studentNo.trim(),
+      schedule: sortSchedule(draft.schedule),
+      defaultCourseId,
+      termStart: nextTermStart,
+    }
+    persist(next)
+  }
+
   const resetTransient = () => {
     setError(null)
     setUnparsed([])
@@ -556,12 +909,13 @@ export function AccountModal({
       notify(`${name}老师还有 ${waiting} 个待办，处理完再隐藏`, 'info')
       return
     }
-    setForm((current) => ({
-      ...current,
+    const next: StudentProfile = {
+      ...form,
       hiddenTeacherNames: visible
-        ? [...current.hiddenTeacherNames, name]
-        : current.hiddenTeacherNames.filter((item) => item !== name),
-    }))
+        ? [...form.hiddenTeacherNames, name]
+        : form.hiddenTeacherNames.filter((item) => item !== name),
+    }
+    persistDraft(next)
   }
 
   const startLogin = async () => {
@@ -892,6 +1246,9 @@ export function AccountModal({
               <strong>{user.name}</strong>
               <span>{user.email}</span>
             </div>
+            {nativeAppInfo && (
+              <Badge tone="jade">Android v{nativeAppInfo.versionName}</Badge>
+            )}
             <Badge tone="neutral">教师账号</Badge>
           </section>
 
@@ -909,8 +1266,17 @@ export function AccountModal({
             </div>
           </section>
 
-          <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
+          <NativeMobileSettingsGroup
+            isStudent={false}
+            schedule={[]}
+            termStart={null}
+            appInfo={nativeAppInfo}
+            notify={notify}
+          />
+
           <FeedbackSettingsGroup onOpenFeedback={onOpenFeedback} />
+
+          <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
 
           <section className="settings-group is-danger" aria-labelledby="settings-teacher-danger">
             <h3 className="settings-group-title" id="settings-teacher-danger">
@@ -940,45 +1306,8 @@ export function AccountModal({
     )
   }
 
-  const shellProps =
-    variant === 'page'
-      ? {
-          open,
-          onClose,
-          eyebrow: '学生账号 · 服务端同步',
-          title: '设置',
-        }
-      : {
-          open,
-          onClose,
-          eyebrow: '学生账号 · 服务端同步',
-          title: '账号与课表绑定',
-          size: 'lg' as const,
-        }
-  const Shell = variant === 'page' ? PageSheet : Modal
-
-  return (
-    <Shell
-      open={open}
-      onClose={onClose}
-      eyebrow={shellProps.eyebrow}
-      title={shellProps.title}
-      footer={
-        <>
-          <span className="page-sheet-fineprint">
-            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
-          </span>
-          <div className="modal-actions-right">
-            <button className="button button-ghost" onClick={onClose}>
-              取消
-            </button>
-            <button className="button button-primary" onClick={saveProfile}>
-              保存设置
-            </button>
-          </div>
-        </>
-      }
-    >
+  const studentBody = (
+    <>
       <div className="account-tabs" role="tablist" aria-label="账号设置" ref={tabsRef}>
         <button
           role="tab"
@@ -1032,51 +1361,56 @@ export function AccountModal({
               <strong>{form.name || profile.name}</strong>
               <span>{user?.email ?? '未登录'}</span>
             </div>
+            {nativeAppInfo && (
+              <Badge tone="jade">Android v{nativeAppInfo.versionName}</Badge>
+            )}
             <Badge tone="neutral">学生账号</Badge>
           </section>
 
-          <section className="settings-group" aria-labelledby="settings-identity">
+          <section className="settings-group settings-group-identity" aria-labelledby="settings-identity">
             <h3 className="settings-group-title" id="settings-identity">
               身份信息
             </h3>
             <p className="settings-group-lede">老师看到的是这里填的姓名与专业，其余信息只给自己看。</p>
-            <div className="account-fields">
+            <div className="account-fields settings-identity-fields">
               <label className="field">
-                <span className="field-label">姓名（老师看到的提问人）</span>
+                <span className="field-label">姓名</span>
                 <input
                   className="input"
                   value={form.name}
                   onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  onBlur={() => persistDraft(form)}
                   placeholder="例如：林晓"
                 />
               </label>
-              <div className="account-field-row">
-                <label className="field">
-                  <span className="field-label">学院</span>
-                  <input
-                    className="input"
-                    value={form.college}
-                    onChange={(event) => setForm({ ...form, college: event.target.value })}
-                    placeholder="例如：计算机学院"
-                  />
-                </label>
-                <label className="field">
-                  <span className="field-label">年级</span>
-                  <input
-                    className="input"
-                    value={form.grade}
-                    onChange={(event) => setForm({ ...form, grade: event.target.value })}
-                    placeholder="例如：2024级"
-                  />
-                </label>
-              </div>
               <label className="field">
-                <span className="field-label">专业（学习背景）</span>
+                <span className="field-label">学院</span>
+                <input
+                  className="input"
+                  value={form.college}
+                  onChange={(event) => setForm({ ...form, college: event.target.value })}
+                  onBlur={() => persistDraft(form)}
+                  placeholder="例如：计算机学院"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">年级</span>
+                <input
+                  className="input"
+                  value={form.grade}
+                  onChange={(event) => setForm({ ...form, grade: event.target.value })}
+                  onBlur={() => persistDraft(form)}
+                  placeholder="例如：2024级"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">专业</span>
                 <input
                   className="input"
                   list="major-options"
                   value={form.major}
                   onChange={(event) => setForm({ ...form, major: event.target.value })}
+                  onBlur={() => persistDraft(form)}
                   placeholder="例如：计算机科学与技术"
                 />
                 <datalist id="major-options">
@@ -1088,35 +1422,16 @@ export function AccountModal({
                   手动填写或从建议里选；没有演示资料的专业会用通用模式，不编课程地图。
                 </span>
               </label>
-              <div className="account-field-row">
-                <label className="field">
-                  <span className="field-label">学号（可选，仅自己可见）</span>
-                  <input
-                    className="input"
-                    value={form.studentNo}
-                    onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
-                    inputMode="numeric"
-                  />
-                </label>
-                <label className="field">
-                  <span className="field-label">默认课程</span>
-                  <select
-                    className="input"
-                    value={form.defaultCourseId}
-                    onChange={(event) => setForm({ ...form, defaultCourseId: event.target.value })}
-                  >
-                    {allCourses()
-                      .filter((course) =>
-                        studentCourses(form).some((item) => item.id === course.id),
-                      )
-                      .map((course) => (
-                        <option key={course.id} value={course.id}>
-                          {course.name} · {course.teacher}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              </div>
+              <label className="field">
+                <span className="field-label">学号</span>
+                <input
+                  className="input"
+                  value={form.studentNo}
+                  onChange={(event) => setForm({ ...form, studentNo: event.target.value })}
+                  onBlur={() => persistDraft(form)}
+                  inputMode="numeric"
+                />
+              </label>
             </div>
           </section>
 
@@ -1135,82 +1450,51 @@ export function AccountModal({
                   type="checkbox"
                   checked={form.emailOnTeacherReply}
                   onChange={(event) =>
-                    setForm({ ...form, emailOnTeacherReply: event.target.checked })
+                    persistDraft({ ...form, emailOnTeacherReply: event.target.checked })
                   }
                 />
               </label>
             </div>
           </section>
 
-          <AttachmentPrivacyGroup ask={askAttachment} onChange={updateAttachmentAsking} />
+          <NativeMobileSettingsGroup
+            isStudent={true}
+            schedule={profile.schedule}
+            termStart={profile.termStart}
+            studentName={profile.name}
+            appInfo={nativeAppInfo}
+            notify={notify}
+          />
+
           <FeedbackSettingsGroup onOpenFeedback={onOpenFeedback} />
 
-          <section className="settings-group" aria-labelledby="settings-notes">
-            <h3 className="settings-group-title" id="settings-notes">
-              说明
-            </h3>
-            <div className="settings-row-list">
-              <div className="settings-row is-static">
-                <span className="settings-row-copy">
-                  <strong>改名不影响历史提问</strong>
-                  <small>
-                    历史提问仍属于这个身份，「我的提问」不会变空；匿名提问时老师看到的仍然是「匿名同学」。
-                  </small>
-                </span>
-              </div>
-              <div className="settings-row is-static">
-                <span className="settings-row-copy">
-                  <strong>数据归属</strong>
-                  <small>
-                    共享空间的问答、FAQ 和通知由教师账号在「数据备份」中统一导出与恢复；你的个人资料和课表会同步到当前学生账号。
-                  </small>
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* 危险操作单独成组：退出登录收进设置，不再占用侧栏按钮 */}
-          <section className="settings-group is-danger" aria-labelledby="settings-danger">
-            <h3 className="settings-group-title" id="settings-danger">
-              账号操作
-            </h3>
-            <div className="settings-row-list">
-              <div className="settings-row is-static">
-                <span className="settings-row-copy">
-                  <strong>退出登录</strong>
-                  <small>退出后需要重新输入密码；未保存的修改会丢失。</small>
-                </span>
-                <button
-                  className="button button-danger-ghost"
-                  onClick={() => {
-                    onClose()
-                    void logoutAccount()
-                  }}
-                >
-                  <LogOut size={14} />
-                  退出
-                </button>
-              </div>
-            </div>
+          {/* 退出账号 */}
+          <section className="settings-group is-danger" aria-label="退出账号">
+            <button
+              type="button"
+              className="button button-danger-ghost settings-logout-btn"
+              onClick={() => {
+                onClose()
+                void logoutAccount()
+              }}
+            >
+              <LogOut size={17} />
+              退出账号
+            </button>
           </section>
         </div>
       ) : tab === 'schedule' ? (
         <div className="account-schedule">
           <div className="account-browser">
             <div className="account-browser-row">
-              <label className="field account-browser-url">
-                <span className="field-label">教务系统地址</span>
-                <input
-                  className="input"
-                  value={baseUrl}
-                  onChange={(event) => setBaseUrl(event.target.value)}
-                  placeholder="https://jw.educationgroup.cn/gzasc/"
-                />
-              </label>
               {!connected && !loginOpen && (
-                <button className="button button-primary" onClick={startLogin} disabled={busy !== null}>
-                  {busy === 'open' ? <Loader2 size={15} className="spin-icon" /> : <ExternalLink size={15} />}
-                  登录教务（只需一次）
+                <button
+                  className="button button-primary account-jw-login-btn"
+                  onClick={startLogin}
+                  disabled={busy !== null}
+                >
+                  {busy === 'open' ? <Loader2 size={16} className="spin-icon" /> : <ExternalLink size={16} />}
+                  登录教务
                 </button>
               )}
               {loginOpen && (
@@ -1264,7 +1548,7 @@ export function AccountModal({
               </div>
             )}
             <label className="field account-term">
-              <span className="field-label">第一周周一（开学第一周的周一）</span>
+              <span className="field-label">第一周周一</span>
               <input
                 type="date"
                 className="input"
@@ -1272,7 +1556,7 @@ export function AccountModal({
                 onChange={(event) => {
                   const parsed = parseDateInput(event.target.value)
                   setTermStart(parsed)
-                  setForm((current) => ({ ...current, termStart: parsed }))
+                  persistDraft({ ...form, termStart: parsed }, parsed)
                   const computed = teachingWeek(parsed)
                   if (computed) setWeek(computed)
                 }}
@@ -1311,15 +1595,13 @@ export function AccountModal({
           {displayEntries.length > 0 && (
             <div className="account-week">
               <div className="account-current-head">
-                <strong>
-                  {preview ? `读取到 ${preview.length} 节课` : `已绑定 ${form.schedule.length} 节课`}
-                </strong>
-                <span>
+                {preview && <strong>读取到 {preview.length} 节课</strong>}
+                <span className="account-current-updated">
                   {preview
                     ? '确认无误再保存'
-                    : form.scheduleSource === 'jw'
-                      ? `来自教务系统${form.scheduleSyncedAt ? ` · ${new Date(form.scheduleSyncedAt).toLocaleDateString('zh-CN')}` : ''}`
-                      : '手动维护'}
+                    : form.scheduleSyncedAt
+                      ? `最新更新 · ${new Date(form.scheduleSyncedAt).toLocaleDateString('zh-CN')}`
+                      : '最新更新'}
                 </span>
               </div>
               {ownCourseCount > 0 && (
@@ -1440,34 +1722,10 @@ export function AccountModal({
                   </button>
                 </div>
               )}
-              {!preview && (
-                <details className="account-manage">
-                  <summary>管理课程（删除单节）</summary>
-                  <div className="account-days">
-                    {form.schedule.map((entry) => (
-                      <div className="account-class" key={entry.id}>
-                        <span className="account-class-main">
-                          <strong>
-                            {weekdayLabel(entry.day)} · {entry.course}
-                          </strong>
-                          <em>
-                            第 {entry.startSection}
-                            {entry.endSection !== entry.startSection ? `-${entry.endSection}` : ''} 节
-                            {entry.room ? ` · ${entry.room}` : ''}
-                          </em>
-                        </span>
-                        <button className="icon-button" onClick={() => removeClass(entry.id)} aria-label="删除这节课">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
             </div>
           )}
 
-          {error && <div className="inline-note danger">{error}</div>}
+          {error && !courseHubOpen && <div className="inline-note danger">{error}</div>}
           {diagnostics.length > 0 && (
             <details className="account-diagnostics">
               <summary>查看读取诊断（{diagnostics.length} 个帧）</summary>
@@ -1495,57 +1753,154 @@ export function AccountModal({
             </details>
           )}
 
-          <div className="account-manual">
-            <div className="account-manual-head">
-              <strong>手动添加一节课</strong>
-              <span>不想用教务窗口时，用这个入口</span>
+          {!preview && (
+            <div className="account-course-hub-entry">
+              <button
+                type="button"
+                className="button button-ghost account-course-hub-btn"
+                onClick={() => {
+                  setError(null)
+                  setCourseHubTab(form.schedule.length > 0 ? 'manage' : 'add')
+                  setCourseHubOpen(true)
+                }}
+              >
+                <SlidersHorizontal size={15} />
+                管理与添加课程
+              </button>
             </div>
-            <div className="account-manual-grid">
-              <input
-                className="input"
-                value={manual.course}
-                onChange={(event) => setManual({ ...manual, course: event.target.value })}
-                placeholder="课程名，例如 数据结构与算法"
-              />
-              <input
-                className="input"
-                value={manual.teacher}
-                onChange={(event) => setManual({ ...manual, teacher: event.target.value })}
-                placeholder="教师"
-              />
-              <input
-                className="input"
-                value={manual.room}
-                onChange={(event) => setManual({ ...manual, room: event.target.value })}
-                placeholder="教室"
-              />
-              <select className="input" value={manual.day} onChange={(event) => setManual({ ...manual, day: Number(event.target.value) })}>
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                  <option key={day} value={day}>
-                    {weekdayLabel(day)}
-                  </option>
-                ))}
-              </select>
-              <select className="input" value={manual.start} onChange={(event) => setManual({ ...manual, start: Number(event.target.value) })}>
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((section) => (
-                  <option key={section} value={section}>
-                    第 {section} 节起
-                  </option>
-                ))}
-              </select>
-              <select className="input" value={manual.end} onChange={(event) => setManual({ ...manual, end: Number(event.target.value) })}>
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((section) => (
-                  <option key={section} value={section}>
-                    到第 {section} 节
-                  </option>
-                ))}
-              </select>
+          )}
+
+          <Modal
+            open={courseHubOpen}
+            onClose={() => {
+              setCourseHubOpen(false)
+              setError(null)
+            }}
+            title="管理与添加课程"
+            size="md"
+          >
+            <div className="account-course-hub">
+              <div className="account-course-hub-tabs" role="tablist" aria-label="课程操作">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={courseHubTab === 'add'}
+                  className={courseHubTab === 'add' ? 'is-active' : ''}
+                  onClick={() => {
+                    setCourseHubTab('add')
+                    setError(null)
+                  }}
+                >
+                  <Plus size={14} />
+                  添加课程
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={courseHubTab === 'manage'}
+                  className={courseHubTab === 'manage' ? 'is-active' : ''}
+                  onClick={() => {
+                    setCourseHubTab('manage')
+                    setError(null)
+                  }}
+                >
+                  <Trash2 size={14} />
+                  管理课程
+                  {form.schedule.length > 0 && <span>{form.schedule.length}</span>}
+                </button>
+              </div>
+
+              {courseHubTab === 'add' ? (
+                <div className="account-manual account-manual-in-modal">
+                  {error && <div className="inline-note danger">{error}</div>}
+                  <div className="account-manual-grid">
+                    <input
+                      className="input"
+                      value={manual.course}
+                      onChange={(event) => setManual({ ...manual, course: event.target.value })}
+                      placeholder="课程名，例如 数据结构与算法"
+                    />
+                    <input
+                      className="input"
+                      value={manual.teacher}
+                      onChange={(event) => setManual({ ...manual, teacher: event.target.value })}
+                      placeholder="教师"
+                    />
+                    <input
+                      className="input"
+                      value={manual.room}
+                      onChange={(event) => setManual({ ...manual, room: event.target.value })}
+                      placeholder="教室"
+                    />
+                    <select
+                      className="input"
+                      value={manual.day}
+                      onChange={(event) => setManual({ ...manual, day: Number(event.target.value) })}
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                        <option key={day} value={day}>
+                          {weekdayLabel(day)}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="input"
+                      value={manual.start}
+                      onChange={(event) => setManual({ ...manual, start: Number(event.target.value) })}
+                    >
+                      {Array.from({ length: 12 }, (_, index) => index + 1).map((section) => (
+                        <option key={section} value={section}>
+                          第 {section} 节起
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="input"
+                      value={manual.end}
+                      onChange={(event) => setManual({ ...manual, end: Number(event.target.value) })}
+                    >
+                      {Array.from({ length: 12 }, (_, index) => index + 1).map((section) => (
+                        <option key={section} value={section}>
+                          到第 {section} 节
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="button" className="button button-primary" onClick={addManualClass}>
+                    <Plus size={15} />
+                    添加到课程表
+                  </button>
+                </div>
+              ) : form.schedule.length === 0 ? (
+                <p className="account-bind-hint">当前还没有课程，切换到「添加课程」手动添加。</p>
+              ) : (
+                <div className="account-days account-days-in-modal">
+                  {form.schedule.map((entry) => (
+                    <div className="account-class" key={entry.id}>
+                      <span className="account-class-main">
+                        <strong>
+                          {weekdayLabel(entry.day)} · {entry.course}
+                        </strong>
+                        <em>
+                          第 {entry.startSection}
+                          {entry.endSection !== entry.startSection ? `-${entry.endSection}` : ''} 节
+                          {entry.room ? ` · ${entry.room}` : ''}
+                        </em>
+                      </span>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => removeClass(entry.id)}
+                        aria-label="删除这节课"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <button className="button button-secondary" onClick={addManualClass}>
-              <Plus size={15} />
-              添加到课程表
-            </button>
-          </div>
+          </Modal>
 
           {displayEntries.length === 0 && !error && (
             <EmptyState
@@ -1798,7 +2153,7 @@ export function AccountModal({
                 </label>
                 <button
                   className="text-button"
-                  onClick={() => setForm((current) => ({ ...current, hiddenTeacherNames: [] }))}
+                  onClick={() => persistDraft({ ...form, hiddenTeacherNames: [] })}
                   disabled={form.hiddenTeacherNames.length === 0}
                 >
                   全部显示
@@ -1852,12 +2207,47 @@ export function AccountModal({
               </div>
 
               <p className="account-teacher-foot">
-                有未处理待办的老师暂时不能隐藏，处理完会自动解锁。修改后点右下角「保存账号设置」生效。
+                有未处理待办的老师暂时不能隐藏，处理完会自动解锁。修改后会自动同步保存。
               </p>
             </>
           )}
         </div>
       )}
-    </Shell>
+    </>
+  )
+
+  if (variant === 'page') {
+    return (
+      <PageSheet open={open} onClose={onClose} title="设置" hideBack>
+        {studentBody}
+      </PageSheet>
+    )
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      eyebrow="学生账号 · 服务端同步"
+      title="账号与课表绑定"
+      size="lg"
+      footer={
+        <>
+          <span className="page-sheet-fineprint">
+            姓名、学院、专业、学号、课表、成绩与老师显示设置会同步到当前账号；教务账号和密码只在登录时提交给服务器换取登录态，不保存。
+          </span>
+          <div className="modal-actions-right">
+            <button className="button button-ghost" onClick={onClose}>
+              取消
+            </button>
+            <button className="button button-primary" onClick={saveProfile}>
+              保存设置
+            </button>
+          </div>
+        </>
+      }
+    >
+      {studentBody}
+    </Modal>
   )
 }

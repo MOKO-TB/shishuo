@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   BookOpen,
+  Camera,
   FileText,
   ImagePlus,
   Link2,
@@ -15,6 +16,7 @@ import {
   Paperclip,
   Pencil,
   Save,
+  Share2,
   Sparkles,
   Trash2,
   X,
@@ -45,7 +47,7 @@ import { Badge, Modal, RichText, Seal } from './ui'
 import { FaqAttachments } from './FaqAttachments'
 import { useAttachmentConsent } from './AttachmentConsent'
 import { usePhotoAccess } from './PhotoAccess'
-import { isNativeApp } from '../lib/nativeShell'
+import { isNativeApp, shareNativeLink } from '../lib/nativeShell'
 
 export interface FaqModalState {
   mode: 'view' | 'edit' | 'create'
@@ -96,7 +98,7 @@ export function FaqModal({
 }: FaqModalProps) {
   const { data, dispatch } = useStore()
   const { requestConsent } = useAttachmentConsent()
-  const { pickImages } = usePhotoAccess()
+  const { pickImages, takePhoto } = usePhotoAccess()
   const faq = state?.faqId ? data.faqs.find((item) => item.id === state.faqId) : undefined
   const [form, setForm] = useState<FaqForm>(emptyForm)
   const [error, setError] = useState<string | null>(null)
@@ -111,6 +113,7 @@ export function FaqModal({
   const [attachmentDrag, setAttachmentDrag] = useState(false)
   const attachmentBusyRef = useRef(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const teacher = teacherByName(teacherName)
   const inPilot = (courseId: string) => isPilotCourse(courseId) || !isSeededCourse(courseId)
@@ -320,6 +323,16 @@ export function FaqModal({
     if (result?.length) await addAttachments(result, { skipConsent: true })
   }
 
+  const captureFaqPhoto = async () => {
+    if (attachmentBusyRef.current || attachmentBusy) return
+    const result = await takePhoto()
+    if (result === 'unavailable') {
+      cameraInputRef.current?.click()
+      return
+    }
+    if (result) await addAttachments([result], { skipConsent: true })
+  }
+
   const handleAttachmentDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setAttachmentDrag(false)
@@ -501,15 +514,24 @@ export function FaqModal({
                 <button
                   className="button button-ghost"
                   onClick={async () => {
-                    const copied = await copyText(shareLink('faq', faq.id))
+                    const link = shareLink('faq', faq.id)
+                    if (isNativeApp()) {
+                      const status = await shareNativeLink({
+                        title: faq.question.slice(0, 60),
+                        text: faq.answer.slice(0, 80),
+                        url: link,
+                      })
+                      if (status === 'shared' || status === 'cancelled') return
+                    }
+                    const copied = await copyText(link)
                     notify(
                       copied ? '链接已复制，可以发给同学或老师' : '复制失败，请手动复制地址栏链接',
                       copied ? 'success' : 'info',
                     )
                   }}
                 >
-                  <Link2 size={15} />
-                  复制链接
+                  {isNativeApp() ? <Share2 size={15} /> : <Link2 size={15} />}
+                  {isNativeApp() ? '分享知识' : '复制链接'}
                 </button>
               )}
               {canEdit && faq && (
@@ -600,6 +622,16 @@ export function FaqModal({
                   }
                 />
                 <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  hidden
+                  onChange={(event) =>
+                    handleAttachmentInput(event, { skipConsent: isNativeApp() })
+                  }
+                />
+                <input
                   ref={fileInputRef}
                   type="file"
                   accept={FAQ_FILE_ACCEPT}
@@ -607,6 +639,17 @@ export function FaqModal({
                   hidden
                   onChange={handleAttachmentInput}
                 />
+                {isNativeApp() && (
+                  <button
+                    type="button"
+                    className="button button-ghost"
+                    onClick={() => void captureFaqPhoto()}
+                    disabled={attachmentBusy}
+                  >
+                    <Camera size={15} />
+                    拍照
+                  </button>
+                )}
                 <button
                   type="button"
                   className="button button-ghost"
