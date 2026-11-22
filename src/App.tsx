@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Layout } from './components/Layout'
 import { AccountModal } from './components/AccountModal'
 import { FaqModal, type FaqModalState } from './components/FaqModal'
@@ -132,9 +132,9 @@ export default function App() {
     [],
   )
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [view, role, teacherName])
+  }, [view, accountOpen, role, teacherName])
 
   useEffect(() => {
     const onError = (event: Event) => {

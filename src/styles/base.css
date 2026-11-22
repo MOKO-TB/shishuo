@@ -1235,7 +1235,7 @@ select.input {
   inset: 0;
   background: rgba(16, 26, 21, 0.5);
   backdrop-filter: blur(5px);
-  animation: fadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: fadeIn 0.42s linear both;
 }
 
 /* 关闭时先播退场再卸载：遮罩先暗下去，面板轻微下沉/右移。 */
@@ -1246,15 +1246,15 @@ select.input {
 
 .modal-layer.is-closing .modal-backdrop,
 .drawer-layer.is-closing .drawer-backdrop {
-  animation: fadeOut 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: fadeOut 0.3s linear forwards;
 }
 
 .modal-layer.is-closing .modal-panel {
-  animation: modalOut 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: modalOut 0.3s linear forwards;
 }
 
 .drawer-layer.is-closing .drawer-panel {
-  animation: drawerOut 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: drawerOut 0.32s linear forwards;
 }
 
 .modal-panel {
@@ -1270,7 +1270,7 @@ select.input {
   background: var(--paper);
   box-shadow: var(--shadow-float);
   outline: none;
-  animation: modalIn 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalIn 0.46s linear both;
   overflow: hidden;
 }
 
@@ -1363,7 +1363,7 @@ select.input {
   background: var(--paper);
   border-left: 1px solid var(--line-strong);
   box-shadow: -30px 0 80px -40px rgba(16, 26, 21, 0.55);
-  animation: drawerIn var(--dur-2) var(--ease-out);
+  animation: drawerIn 0.44s linear both;
 }
 
 .toast {
@@ -1524,52 +1524,96 @@ select.input {
 }
 
 @keyframes fadeIn {
-  from {
+  0% {
     opacity: 0;
   }
-  to {
+  45% {
+    opacity: 0.48;
+  }
+  80% {
+    opacity: 0.84;
+  }
+  100% {
     opacity: 1;
   }
 }
 
 @keyframes fadeOut {
-  to {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes modalIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.95);
+    transform: translate3d(0, 20px, 0) scale(0.94);
   }
-  to {
+  32% {
+    opacity: 0.4;
+    transform: translate3d(0, 13px, 0) scale(0.962);
+  }
+  66% {
+    opacity: 0.78;
+    transform: translate3d(0, 6px, 0) scale(0.984);
+  }
+  100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes modalOut {
-  to {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate3d(0, 7px, 0) scale(0.978);
+  }
+  100% {
     opacity: 0;
-    transform: translate3d(0, 12px, 0) scale(0.96);
+    transform: translate3d(0, 14px, 0) scale(0.955);
   }
 }
 
 @keyframes drawerIn {
-  from {
-    transform: translate3d(40px, 0, 0);
+  0% {
+    transform: translate3d(52px, 0, 0);
     opacity: 0;
   }
-  to {
+  35% {
+    transform: translate3d(32px, 0, 0);
+    opacity: 0.42;
+  }
+  70% {
+    transform: translate3d(13px, 0, 0);
+    opacity: 0.82;
+  }
+  100% {
     transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
 
 @keyframes drawerOut {
-  to {
-    transform: translate3d(32px, 0, 0);
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(18px, 0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(38px, 0, 0);
     opacity: 0;
   }
 }

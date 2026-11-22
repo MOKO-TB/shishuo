@@ -283,7 +283,7 @@
 
   /* 蒙版与抽屉同一条曲线、同一时长，磨砂随抽屉一起浮现。 */
   .modal-backdrop {
-    animation: fadeIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: fadeIn 0.42s linear;
   }
 
   .modal-panel {
@@ -292,9 +292,9 @@
     margin: 0;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     /* 不能用 both：动画填充会一直压住拖拽时写入的 inline transform。 */
-    animation: sheetIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation: sheetIn 0.46s linear backwards;
     transform: translateY(0);
-    transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.36s linear;
     will-change: transform;
   }
 
@@ -321,11 +321,19 @@
   }
 
   @keyframes sheetIn {
-    from {
-      transform: translate3d(0, 44px, 0);
+    0% {
+      transform: translate3d(0, 52px, 0);
       opacity: 0;
     }
-    to {
+    32% {
+      transform: translate3d(0, 34px, 0);
+      opacity: 0.42;
+    }
+    66% {
+      transform: translate3d(0, 16px, 0);
+      opacity: 0.82;
+    }
+    100% {
       transform: translate3d(0, 0, 0);
       opacity: 1;
     }
@@ -450,20 +458,21 @@
   transform: scale(1.06);
 }
 
-/* 「我的提问」切换筛选时的列表柔和过渡 + 条目交错浮现 */
+/* 「我的提问」切换筛选时的列表线性柔和过渡 */
 .recent-list-stage,
 .invalid-qa-banner {
-  animation: recentStageIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: recentStageIn 0.34s linear both;
 }
 
 @keyframes recentStageIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translate3d(0, 8px, 0);
   }
-  to {
+  45% {
+    opacity: 0.52;
+  }
+  100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -515,19 +524,19 @@
   transform: scale(0.95);
 }
 
-/* 下拉菜单与上浮气泡菜单（方向一致的弹簧展开） */
+/* 下拉菜单与上浮气泡菜单（稳速线性展开） */
 .course-combobox-panel,
 .mentor-course-panel,
 .mentor-switcher-menu,
 .campus-gpa-menu {
   transform-origin: top center;
-  animation: dropdownIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: dropdownIn 0.32s linear both;
 }
 
 .ask-plus-menu,
 .mentor-plus-menu {
   transform-origin: bottom left;
-  animation: popoverUpIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: popoverUpIn 0.32s linear both;
 }
 
 .course-combobox-option,
@@ -536,9 +545,9 @@
 .mentor-plus-option,
 .campus-gpa-menu button {
   transition:
-    transform 0.18s cubic-bezier(0.34, 1.3, 0.64, 1),
-    background 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.22s linear,
+    background 0.22s linear,
+    color 0.22s linear;
 }
 
 .course-combobox-option:active,
@@ -550,22 +559,30 @@
 }
 
 @keyframes dropdownIn {
-  from {
+  0% {
     opacity: 0;
     transform: translate3d(0, -8px, 0) scale(0.96);
   }
-  to {
+  45% {
+    opacity: 0.54;
+    transform: translate3d(0, -3.5px, 0) scale(0.982);
+  }
+  100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes popoverUpIn {
-  from {
+  0% {
     opacity: 0;
     transform: translate3d(0, 8px, 0) scale(0.94);
   }
-  to {
+  45% {
+    opacity: 0.54;
+    transform: translate3d(0, 3.5px, 0) scale(0.974);
+  }
+  100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
   }

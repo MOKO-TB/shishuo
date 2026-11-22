@@ -20,9 +20,9 @@ interface PointerOrigin {
 const TRACKER_FLAG = '__shishuoMorphTracker'
 const ORIGIN_KEY = '__shishuoMorphOrigin'
 const ORIGIN_TTL = 2500
-const FLUID_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
-const DURATION_IN = 360
-const DURATION_RETURN = 260
+const FLUID_EASE = 'linear'
+const DURATION_IN = 460
+const DURATION_RETURN = 320
 
 type MorphWindow = Window & {
   [TRACKER_FLAG]?: boolean
@@ -142,21 +142,42 @@ export function morphIn(
   panel.style.animation = 'none'
   const backdrop = backdropOf(panel)
   if (backdrop) backdrop.style.animation = 'none'
-  backdrop?.animate([{ opacity: 0 }, { opacity: 1 }], {
-    duration: DURATION_IN,
-    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-  })
+  backdrop?.animate(
+    [
+      { opacity: 0, offset: 0 },
+      { opacity: 0.45, offset: 0.4 },
+      { opacity: 0.82, offset: 0.75 },
+      { opacity: 1, offset: 1 },
+    ],
+    {
+      duration: DURATION_IN,
+      easing: 'linear',
+    },
+  )
   const anim = panel.animate(
     [
       {
+        offset: 0,
         opacity: 0,
         transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.92)`,
       },
       {
-        opacity: 1,
-        offset: 0.42,
+        offset: 0.28,
+        opacity: 0.38,
+        transform: `translate3d(${(ox * 0.68).toFixed(1)}px, ${(oy * 0.68).toFixed(1)}px, 0) scale(0.946)`,
       },
       {
+        offset: 0.56,
+        opacity: 0.74,
+        transform: `translate3d(${(ox * 0.38).toFixed(1)}px, ${(oy * 0.38).toFixed(1)}px, 0) scale(0.972)`,
+      },
+      {
+        offset: 0.82,
+        opacity: 0.94,
+        transform: `translate3d(${(ox * 0.14).toFixed(1)}px, ${(oy * 0.14).toFixed(1)}px, 0) scale(0.991)`,
+      },
+      {
+        offset: 1,
         opacity: 1,
         transform: 'translate3d(0, 0, 0) scale(1)',
       },
@@ -168,7 +189,7 @@ export function morphIn(
   }
 }
 
-/** 面板平滑缩放淡出（仅 transform + opacity）。 */
+/** 面板平滑线性缩放淡出（仅 transform + opacity）。 */
 export function morphOut(
   panel: HTMLElement,
   origin: DOMRect,
@@ -191,21 +212,34 @@ export function morphOut(
   panel.closest('.modal-layer')?.classList.add('is-returning')
 
   const backdrop = backdropOf(panel)
-  backdrop?.animate([{ opacity: 1 }, { opacity: 0 }], {
-    duration: DURATION_RETURN,
-    easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    fill: 'forwards',
-  })
+  backdrop?.animate(
+    [
+      { opacity: 1, offset: 0 },
+      { opacity: 0.5, offset: 0.5 },
+      { opacity: 0, offset: 1 },
+    ],
+    {
+      duration: DURATION_RETURN,
+      easing: 'linear',
+      fill: 'forwards',
+    },
+  )
 
   const anim = panel.animate(
     [
-      { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
+      { offset: 0, transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
       {
+        offset: 0.5,
+        transform: `translate3d(${(ox * 0.48).toFixed(1)}px, ${(oy * 0.48).toFixed(1)}px, 0) scale(0.97)`,
+        opacity: 0.52,
+      },
+      {
+        offset: 1,
         transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.94)`,
         opacity: 0,
       },
     ],
-    { duration: DURATION_RETURN, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+    { duration: DURATION_RETURN, easing: 'linear', fill: 'forwards' },
   )
   anim.onfinish = () => onDone()
 }
