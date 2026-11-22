@@ -44,3 +44,6 @@ __pycache__/
 
 # Android 内测 APK（本地产物，不入库）
 dev/builds/
+
+# 介绍站本地 APK 包（正式下载走 Gitee Release）
+public/intro/download/

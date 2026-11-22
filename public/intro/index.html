@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>师说 · 每句有出处，每问有回音｜AI + 教师双通道课后答疑</title>
+    <meta
+      name="description"
+      content="师说是面向高校课程的 AI + 教师双通道答疑平台：每句回答标着课程出处，每个问题都有回音，每门课一年年攒下自己的知识库。Android App 带桌面课表小组件、系统通知与学习通直达。广应科首届黑客松参赛作品。"
+    />
+    <meta name="theme-color" content="#f4f0e6" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="师说" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="师说 · 每句有出处，每问有回音" />
+    <meta
+      property="og:description"
+      content="每句有出处，每问有回音，每课有积累。AI 先答能答的，拿不准的交给任课老师；老师写下的每一句话，都成为 AI 的第一反应。"
+    />
+    <meta property="og:image" content="http://121.37.30.147/intro/assets/og-apple.jpg" />
+    <meta property="og:url" content="http://121.37.30.147/intro/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="./assets/mark.svg" />
+    <link rel="preload" href="./fonts/noto-serif-600.woff2?v=20261122b" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./intro.css?v=20261122b" />
+    <noscript>
+      <style>
+        .reveal { opacity: 1 !important; transform: none !important; }
+        .line > span { transform: none !important; }
+        .story-step-inner { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <div class="scroll-progress" aria-hidden="true"><i></i></div>
+
+    <header class="site-header" id="top">
+      <div class="shell header-inner">
+        <a class="brand" href="#top" aria-label="师说首页">
+          <img src="./assets/mark.svg" width="64" height="64" alt="" />
+          <span class="brand-text">
+            <strong>师说</strong>
+            <small>AI 双通道答疑</small>
+          </span>
+        </a>
+
+        <nav class="nav" aria-label="页面导航">
+          <a href="#story">双通道</a>
+          <a href="#ability">能力</a>
+          <a href="#film">宣传片</a>
+          <a href="#app">手机端</a>
+        </nav>
+
+        <a class="btn btn-primary btn-sm" href="/" data-main-site>
+          进入师说
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M5 10h10M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div class="shell hero-inner">
+          <div class="hero-copy reveal">
+            <p class="eyebrow">
+              <span class="pulse" aria-hidden="true"></span>
+              广应科首届黑客松 · 数字造梦师 · 软件应用赛道
+            </p>
+            <h1>
+              <span class="line"><span>每句有出处</span></span>
+              <span class="line"><span>每问有回音</span></span>
+              <span class="line"><span><em>每课有积累</em></span></span>
+            </h1>
+            <p class="hero-lead">
+              答案标着出处，问题都有回音，一门课一年年攒下自己的知识库。AI 先把有依据的答掉，拿不准的交给任课老师；老师写下的每一句，成为 AI 的下一次第一反应。
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href="/" data-main-site>
+                进入师说
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M5 10h10M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </a>
+              <button class="btn btn-ghost btn-lg" type="button" data-open-film>
+                <span class="play-dot" aria-hidden="true">
+                  <svg viewBox="0 0 20 20"><path d="M8 6.5l6 3.5-6 3.5z" fill="currentColor" /></svg>
+                </span>
+                看完整版 · 3:44
+              </button>
+            </div>
+            <ul class="hero-stats" aria-label="试点数据">
+              <li><strong>5</strong><span>门试点课程</span></li>
+              <li><strong>81</strong><span>条精修 FAQ</span></li>
+              <li><strong>157<em>/157</em></strong><span>检索评测通过</span></li>
+            </ul>
+          </div>
+
+          <div class="hero-visual reveal" style="--delay: 120ms">
+            <div class="hero-orbit" aria-hidden="true"></div>
+            <span class="hero-glow" aria-hidden="true"></span>
+
+            <figure class="device device-desktop">
+              <div class="device-bar">
+                <span class="device-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="device-title">shishuo · 学生端</span>
+                <span class="device-live"><i aria-hidden="true"></i>在线</span>
+              </div>
+              <img
+                src="./assets/hero-student.webp"
+                width="1600"
+                height="1000"
+                alt="师说学生端：选择课程提问，右侧列出正在等待的同题组"
+                fetchpriority="high"
+                decoding="async"
+              />
+            </figure>
+
+            <div class="float-card float-ai" aria-hidden="true">
+              <span class="spark">✦</span>
+              <div class="float-text">
+                <strong>AI 助教</strong>
+                <small>中置信度 · 有出处</small>
+              </div>
+              <span class="confidence"><i></i></span>
+            </div>
+
+            <div class="float-card float-handoff" aria-hidden="true">
+              <span class="avatar">陈</span>
+              <div class="float-text">
+                <strong>已转交 陈砚老师</strong>
+                <small>同题 2 人 · 今天内回复</small>
+              </div>
+            </div>
+
+            <span class="seal" aria-hidden="true">师说</span>
+            <p class="paper-note" aria-hidden="true">师者，所以传道受业解惑也。</p>
+          </div>
+        </div>
+
+        <div class="shell hero-scroll" aria-hidden="true">
+          <span class="scroll-line"></span>
+          向下看一场接力
+        </div>
+      </section>
+
+      <div class="course-band">
+        <div class="shell course-inner">
+          <span class="course-label">本期试点</span>
+          <ul class="course-list">
+            <li>高等数学</li>
+            <li>数据结构</li>
+            <li>电路</li>
+            <li>模电</li>
+            <li>数电</li>
+          </ul>
+          <span class="course-note">5 门课程，做深不做广</span>
+        </div>
+      </div>
+
+      <section class="section story" id="story">
+        <div class="shell">
+          <header class="section-head reveal">
+            <p class="eyebrow"><b>01</b> 双通道</p>
+            <h2>
+              <span class="line"><span>一个问题</span></span>
+              <span class="line"><span>两次接力</span></span>
+            </h2>
+            <p class="lead">
+              AI 和老师不是二选一。先让 AI 把能答的答掉，再把拿不准的交给老师；老师答完，答案留下来。下一次，AI 直接命中。
+            </p>
+          </header>
+
+          <div class="story-stage">
+            <ol class="story-steps">
+              <li class="story-step is-active" data-step="0">
+                <div class="story-step-inner">
+                  <div class="step-head"><span class="step-no">01</span><span class="step-kicker">学生端</span></div>
+                  <h3>学生提问</h3>
+                  <p>选课程、贴题目图片，或者直接语音说。刚打几个字，页面就提示相近 FAQ 和正在等待的同题组。</p>
+                  <div class="tags"><span>图片提问</span><span>语音输入</span><span>相近 FAQ</span></div>
+                </div>
+              </li>
+
+              <li class="story-step" data-step="1">
+                <div class="story-step-inner">
+                  <div class="step-head"><span class="step-no">02</span><span class="step-kicker">AI 先答</span></div>
+                  <h3>有依据，才开口</h3>
+                  <p>先查课程知识库，每条回答都标出处和高 / 中 / 低置信度。证据不足就明确说不知道，不编一个像答案的东西。</p>
+                  <div class="tags"><span>课程出处</span><span>三档置信度</span><span>证据不足拒答</span></div>
+                </div>
+              </li>
+
+              <li class="story-step" data-step="2">
+                <div class="story-step-inner">
+                  <div class="step-head"><span class="step-no">03</span><span class="step-kicker">转交</span></div>
+                  <h3>拿不准，就交给老师</h3>
+                  <p>题目、检索依据、学生追问一起转过去；同题自动合并成一组。老师打开待办，看到的是完整上下文，不是一句干问题。</p>
+                  <div class="tags"><span>同题合并</span><span>完整上下文</span><span>教师待办</span></div>
+                </div>
+              </li>
+
+              <li class="story-step" data-step="3">
+                <div class="story-step-inner">
+                  <div class="step-head"><span class="step-no">04</span><span class="step-kicker">教师精答</span></div>
+                  <h3>一次回复，整组可见</h3>
+                  <p>AI 备好检索依据与回复草稿，老师改完一次发给整组；回复可以撤回，本次沉淀或更新的 FAQ 按快照回滚。</p>
+                  <div class="tags"><span>AI 草稿</span><span>整组回复</span><span>可撤回</span></div>
+                </div>
+              </li>
+
+              <li class="story-step" data-step="4">
+                <div class="story-step-inner">
+                  <div class="step-head"><span class="step-no">05</span><span class="step-kicker">沉淀</span></div>
+                  <h3>答案留下来，成为下一次的第一反应</h3>
+                  <p>老师回复自动生成课程 FAQ。被连续反馈「还不够」的条目自动待完善、降低检索置信度；老师保存后计数清零。</p>
+                  <div class="tags"><span>FAQ 沉淀</span><span>负反馈闭环</span><span>下次直接命中</span></div>
+                </div>
+              </li>
+            </ol>
+
+            <div class="story-visual">
+              <div class="story-frames">
+                <figure class="story-frame is-active" data-frame="0">
+                  <img src="./assets/hero-student.webp" width="1600" height="1000" alt="学生端提问框与右侧的同题组" loading="lazy" decoding="async" />
+                </figure>
+                <figure class="story-frame" data-frame="1">
+                  <img src="./assets/story-ai.webp" width="1600" height="1000" alt="AI 助教回答带中置信度标记，并在下方显示已转交老师" loading="lazy" decoding="async" />
+                </figure>
+                <figure class="story-frame" data-frame="2">
+                  <img src="./assets/story-queue.webp" width="1600" height="1000" alt="教师待办台：同题合并、知识缺口与 AI 观察" loading="lazy" decoding="async" />
+                </figure>
+                <figure class="story-frame" data-frame="3">
+                  <img src="./assets/story-reply.webp" width="1600" height="1000" alt="教师回复抽屉：AI 检索判断、建议回复和沉淀 FAQ" loading="lazy" decoding="async" />
+                </figure>
+                <figure class="story-frame" data-frame="4">
+                  <img src="./assets/story-faq.webp" width="1600" height="1000" alt="课程知识库：老师写下的答案成为 AI 的第一反应" loading="lazy" decoding="async" />
+                </figure>
+              </div>
+              <div class="story-meta">
+                <span class="story-no">01</span>
+                <span class="story-caption">学生端 · 提问与同题组</span>
+              </div>
+              <div class="story-rail" aria-hidden="true">
+                <i class="is-active"></i><i></i><i></i><i></i><i></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-band" aria-label="试点数据">
+        <div class="shell">
+          <div class="stats-inner">
+            <div class="stat reveal"><strong data-count="5">5</strong><span>门试点课程</span></div>
+            <div class="stat reveal" style="--delay: 60ms"><strong data-count="81">81</strong><span>条精修 FAQ</span></div>
+            <div class="stat reveal" style="--delay: 120ms">
+              <strong><span data-count="157">157</span><em>/<span data-count="157">157</span></em></strong>
+              <span>项检索评测全部通过</span>
+            </div>
+            <div class="stat reveal" style="--delay: 180ms"><strong data-count="32">32</strong><span>位 AI 导师</span></div>
+          </div>
+          <p class="stats-note">数据来自当前演示环境 · <code>npm run eval:retrieval</code> 可复跑</p>
+        </div>
+      </section>
+
+      <section class="section ability" id="ability">
+        <div class="shell">
+          <header class="section-head reveal">
+            <p class="eyebrow"><b>02</b> 能力</p>
+            <h2>
+              <span class="line"><span>不是更快的搜索</span></span>
+              <span class="line"><span>是会生长的课程知识库</span></span>
+            </h2>
+            <p class="lead">
+              从一次提问开始，检索、判断、转交、回复、沉淀都在同一个闭环里。每多一位老师回复，AI 就多一条可以引用的依据。
+            </p>
+          </header>
+
+          <div class="bento">
+            <article class="card card-answer span-4 reveal">
+              <div class="card-copy">
+                <h3>有依据，才开口</h3>
+                <p>每条回答都带课程出处和高 / 中 / 低置信度。知识库里找不到可靠依据，就明确说不知道，把问题交给老师。</p>
+              </div>
+              <div class="answer-demo" aria-hidden="true">
+                <div class="answer-head">
+                  <span class="spark">✦</span>
+                  <b>AI 助教</b>
+                  <span class="chip chip-mid">中置信度</span>
+                </div>
+                <p>哈希冲突常用开放定址和链地址法。开放定址在表内探测空位，链地址法把同义词串成链表……</p>
+                <div class="answer-source">
+                  <span>《数据结构》第 6 章 · 哈希表</span>
+                  <em>2 条依据</em>
+                </div>
+              </div>
+            </article>
+
+            <article class="card span-2 card-merge reveal" style="--delay: 60ms">
+              <h3>同题合并</h3>
+              <p>三个同学问同一道题，老师只回一次，整组可见。</p>
+              <div class="merge-demo" aria-hidden="true">
+                <span class="avatar a1">林</span>
+                <span class="avatar a2">宋</span>
+                <span class="avatar a3">周</span>
+                <span class="merge-arrow">→</span>
+                <span class="merge-reply">1 次回复 · 3 人</span>
+              </div>
+            </article>
+
+            <article class="card span-2 reveal">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+              </span>
+              <h3>教师工作台</h3>
+              <p>待办自动合并，AI 备好检索依据与回复草稿；回复可撤回，FAQ 回滚到快照。</p>
+              <div class="mini-stats">
+                <span><b>4</b> 组待办</span>
+                <span><b>3</b> 个知识缺口</span>
+              </div>
+            </article>
+
+            <article class="card span-2 reveal" style="--delay: 60ms">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 5.5h14v13H5zM8 9h8M8 12.5h8M8 16h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </span>
+              <h3>会生长的 FAQ</h3>
+              <p>老师每次回复自动沉淀为 FAQ。被连续反馈「还不够」的，自动标记待完善。</p>
+              <div class="mini-stats">
+                <span><b>20</b> 条已沉淀</span>
+                <span><b>95%</b> 有帮助</span>
+              </div>
+            </article>
+
+            <article class="card span-2 card-mentor reveal" style="--delay: 120ms">
+              <img src="./assets/feature-mentor.webp" width="1000" height="625" alt="AI 导师展示课程知识地图与卡点诊断入口" loading="lazy" decoding="async" />
+              <div class="card-copy">
+                <h3>AI 导师</h3>
+                <p>32 位导师，带着课程地图、卡点诊断和先修检查来答疑。</p>
+              </div>
+            </article>
+
+            <article class="card span-6 card-campus reveal">
+              <div class="card-copy">
+                <h3>课下的事，也能问</h3>
+                <p>校园知识库收录 75 条经验卡：空教室、校历、图书馆、食堂决策，还有教务课表与学习通同步。和课程答疑分开治理，来源可追溯。</p>
+                <ul class="inline-list">
+                  <li>空教室</li>
+                  <li>图书馆</li>
+                  <li>校历</li>
+                  <li>食堂决策</li>
+                  <li>教务课表</li>
+                  <li>学习通</li>
+                </ul>
+              </div>
+              <img src="./assets/feature-campus.webp" width="1400" height="875" alt="校园生活知识库：课上的问题问老师，课下的事问学长" loading="lazy" decoding="async" />
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section film" id="film">
+        <div class="shell film-inner">
+          <div class="film-copy reveal">
+            <p class="eyebrow"><b>03</b> 宣传片</p>
+            <h2>
+              <span class="line"><span>4 分钟</span></span>
+              <span class="line"><span>看完一场接力</span></span>
+            </h2>
+            <p class="lead">从下课后的三个问题，到老师回复被沉淀成 FAQ。画面全部来自实际运行的演示账号，旁白与音乐为本地生成。</p>
+            <button class="btn btn-primary" type="button" data-open-film>
+              <span class="play-dot" aria-hidden="true">
+                <svg viewBox="0 0 20 20"><path d="M8 6.5l6 3.5-6 3.5z" fill="currentColor" /></svg>
+              </span>
+              播放宣传片
+            </button>
+            <p class="film-meta">03:44 · 中文旁白 / 字幕 · 网页压缩版</p>
+          </div>
+
+          <button class="poster reveal" type="button" data-open-film aria-label="播放师说宣传片" style="--delay: 80ms">
+            <img src="./assets/poster-apple.webp" width="1600" height="900" alt="师说宣传片封面：老师写下的每一句话，都成为 AI 的第一反应" loading="lazy" decoding="async" />
+            <span class="poster-glow" aria-hidden="true"></span>
+            <span class="poster-play" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="M13 10.5l10 5.5-10 5.5z" fill="currentColor" /></svg>
+            </span>
+            <span class="poster-time">03:44</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section app" id="app">
+        <div class="shell app-inner">
+          <div class="app-visual reveal">
+            <div class="phone">
+              <img src="./assets/app-mobile.webp" width="780" height="1688" alt="" loading="lazy" decoding="async" />
+            </div>
+            <div class="phone-chip chip-top" aria-hidden="true">390px 起自适应</div>
+            <div class="phone-chip chip-bottom" aria-hidden="true">iPhone · Android 通用</div>
+          </div>
+
+          <div class="app-copy reveal" style="--delay: 80ms">
+            <p class="eyebrow"><b>04</b> 手机端</p>
+            <h2>
+              <span class="line"><span>把师说</span></span>
+              <span class="line"><span>装进口袋</span></span>
+            </h2>
+            <p class="lead">手机浏览器直接可用；Android 安装包已开放下载，iPhone 版仍在筹备。装成 App 之后，课表上桌面、通知进状态栏、学习通一键直达。</p>
+
+            <div class="download-grid">
+              <div
+                class="download-card"
+                id="download-card"
+                data-download-card
+                data-download-url="https://gitee.com/vesper1111/school-hackathon/releases/download/v0.2.5/shishuo-android-0.2.5.apk"
+                data-download-version="0.2.5"
+                data-download-size="1.4 MB"
+                data-download-kind="APK"
+                data-download-label="下载 Android 安装包"
+                data-download-direct="true"
+              >
+                <div class="download-head">
+                  <img class="download-logo" src="./assets/mark.svg" width="64" height="64" alt="" />
+                  <div class="download-title">
+                    <strong>师说 for Android</strong>
+                    <small data-download-meta>APK · v0.2.5 · 1.4 MB</small>
+                  </div>
+                  <span class="badge" data-download-badge>可下载</span>
+                </div>
+                <a class="btn btn-download is-ready" href="https://gitee.com/vesper1111/school-hackathon/releases/download/v0.2.5/shishuo-android-0.2.5.apk" download data-download-button>下载 Android 安装包</a>
+                <p class="download-note">下载后按系统提示安装；微信内请用浏览器打开 · Web 版已上线 → <a href="/" data-main-site>进入师说</a></p>
+              </div>
+
+              <div
+                class="download-card card-ios"
+                id="download-card-ios"
+                data-download-card
+                data-download-url=""
+                data-download-version=""
+                data-download-size=""
+                data-download-kind="App Store"
+                data-download-label="前往 App Store"
+                data-download-empty-badge="计划中"
+                data-download-ready-badge="已上架"
+                data-download-newtab="true"
+              >
+                <div class="download-head">
+                  <img class="download-logo" src="./assets/mark.svg" width="64" height="64" alt="" />
+                  <div class="download-title">
+                    <strong>师说 for iPhone</strong>
+                    <small data-download-meta>App Store · 计划中</small>
+                  </div>
+                  <span class="badge" data-download-badge>计划中</span>
+                </div>
+                <button class="btn btn-download" type="button" disabled data-download-button>iPhone 版筹备中</button>
+                <p class="download-note">与 Web 版同一套账号与课程数据</p>
+              </div>
+            </div>
+
+            <div class="qr-row">
+              <img src="./assets/qr.png" width="88" height="88" alt="师说主站二维码" loading="lazy" decoding="async" />
+              <div>
+                <strong>扫码在手机打开</strong>
+                <small>http://121.37.30.147/</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shell native reveal">
+          <div class="native-head">
+            <span class="native-tag">Android 原生能力</span>
+            <p>装成 App 之后，多出来的四件事</p>
+          </div>
+
+          <div class="native-grid">
+            <article class="native-card">
+              <div class="native-copy">
+                <h3>今日课表，长在桌面上</h3>
+                <p>4×2 桌面小组件按教学周算好今天：正在上的那节写着「上课中」，今天课上完自动翻到明天。点任意一行，直达完整周课表。</p>
+              </div>
+              <div class="widget-demo" aria-hidden="true">
+                <div class="widget-head">
+                  <span>第 12 周 · 周三</span>
+                  <em>待上 3 节</em>
+                </div>
+                <ul class="widget-list">
+                  <li class="is-now">
+                    <time>上课中</time>
+                    <span><b>高等数学</b><small>教三 204 · 08:20-09:55</small></span>
+                  </li>
+                  <li>
+                    <time>10:15</time>
+                    <span><b>数据结构</b><small>实验楼 B204 · 10:15-11:50</small></span>
+                  </li>
+                  <li>
+                    <time>14:30</time>
+                    <span><b>电路</b><small>教一 106 · 14:30-16:05</small></span>
+                  </li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="native-card">
+              <div class="native-copy">
+                <h3>老师回复，弹进通知栏</h3>
+                <p>App 退到后台也能收到提醒：老师回复了你的问题、问题被确认解决。走系统通知，不依赖 Google 服务，国产 ROM 下同样可用。</p>
+              </div>
+              <div class="notify-demo" aria-hidden="true">
+                <div class="notify-item">
+                  <img src="./assets/mark.svg" width="22" height="22" alt="" loading="lazy" decoding="async" />
+                  <div class="notify-body">
+                    <div class="notify-top"><strong>师说</strong><span>刚刚</span></div>
+                    <p>陈砚老师回复了你的问题</p>
+                  </div>
+                </div>
+                <div class="notify-item is-ghost">
+                  <img src="./assets/mark.svg" width="22" height="22" alt="" loading="lazy" decoding="async" />
+                  <div class="notify-body">
+                    <div class="notify-top"><strong>师说</strong><span>14:20</span></div>
+                    <p>「哈希冲突怎么处理」已确认解决</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="native-card">
+              <div class="native-copy">
+                <h3>学习通，一步就到</h3>
+                <p>消息、作业、资料还在学习通里。师说里点一下直接打开学习通 App；反过来，从学习通分享题目图片，也能直接落进提问框。</p>
+              </div>
+              <div class="jump-demo" aria-hidden="true">
+                <div class="jump-row">
+                  <span class="jump-icon">
+                    <svg viewBox="0 0 24 24"><path d="M5 4.5h9.5A2.5 2.5 0 0 1 17 7v12.5H7.5A2.5 2.5 0 0 1 5 17z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H17" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+                  </span>
+                  <span class="jump-copy"><b>学习通</b><small>消息 · 作业 · 资料</small></span>
+                  <span class="jump-open">打开 App</span>
+                </div>
+                <p class="jump-share"><span>从学习通分享</span><b>题目图片</b><span>→ 直接进师说提问</span></p>
+              </div>
+            </article>
+
+            <article class="native-card">
+              <div class="native-copy">
+                <h3>长按图标，直接拍题</h3>
+                <p>四个桌面快捷方式：拍题提问、我的课表、学习通、今天吃什么。相机和相册授权一次，选张原图就能问。</p>
+              </div>
+              <div class="shortcut-demo" aria-hidden="true">
+                <span class="shortcut">
+                  <i><svg viewBox="0 0 24 24"><path d="M4 8.5h3.2l1.3-2h7l1.3 2H20V18H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><circle cx="12" cy="13" r="3.1" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></i>
+                  拍题提问
+                </span>
+                <span class="shortcut">
+                  <i><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M8 4v4M16 4v4M4 10.5h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></i>
+                  我的课表
+                </span>
+                <span class="shortcut">
+                  <i><svg viewBox="0 0 24 24"><path d="M5 4.5h9.5A2.5 2.5 0 0 1 17 7v12.5H7.5A2.5 2.5 0 0 1 5 17z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H17" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></i>
+                  学习通
+                </span>
+                <span class="shortcut">
+                  <i><svg viewBox="0 0 24 24"><path d="M4 11.5h16a8 8 0 0 1-16 0Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M9 8.5c0-1 1-1.4 1-2.4M14 8.5c0-1 1-1.4 1-2.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></i>
+                  今天吃什么
+                </span>
+              </div>
+            </article>
+          </div>
+
+          <ul class="native-extras">
+            <li>跟随系统深色</li>
+            <li>沉浸式状态栏</li>
+            <li>应用内更新</li>
+            <li>课表离线缓存</li>
+          </ul>
+          <p class="native-note">以上能力来自 Android 安装包；iPhone 版仍在筹备。</p>
+        </div>
+      </section>
+
+      <section class="about">
+        <div class="shell about-inner">
+          <div class="about-quote reveal">
+            <p class="eyebrow eyebrow-light"><b>05</b> 为什么叫师说</p>
+            <blockquote>
+              <span class="line"><span>师者</span></span>
+              <span class="line"><span>所以传道受业解惑也</span></span>
+            </blockquote>
+            <cite>韩愈《师说》</cite>
+          </div>
+
+          <div class="about-copy reveal" style="--delay: 80ms">
+            <p class="about-lead">
+              「师说」想做的不是替老师回答，而是让老师的回答被留下。<br />
+              AI 负责即时，老师负责准确；一次精答，喂给下一次提问。
+            </p>
+            <dl class="about-facts">
+              <div>
+                <dt>参赛</dt>
+                <dd>广应科首届「黑客松」· 数字造梦师 · 软件应用赛道<br />开放命题 OP2 · AI 智能助手</dd>
+              </div>
+              <div>
+                <dt>技术</dt>
+                <dd>React + Node.js + SQLite；模型 Key 只存在服务端<br />Capacitor 8 原生壳 · 课表小组件 / 系统通知 / 学习通直达</dd>
+              </div>
+              <div>
+                <dt>试点</dt>
+                <dd>5 门课程 · 81 条精修 FAQ · 32 位 AI 导师<br />157 / 157 项检索评测通过</dd>
+              </div>
+            </dl>
+            <div class="about-actions">
+              <a class="btn btn-cream" href="/" data-main-site>进入师说</a>
+              <button class="btn btn-outline-light" type="button" data-open-film>再看一遍宣传片</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div class="footer-brand">
+          <img src="./assets/mark.svg" width="56" height="56" alt="" />
+          <p>师说 · AI 双通道课后答疑<br /><span>让每个课后问题，都有回响。</span></p>
+        </div>
+        <nav class="footer-nav" aria-label="页脚导航">
+          <a href="#story">双通道</a>
+          <a href="#ability">能力</a>
+          <a href="#film">宣传片</a>
+          <a href="#app">手机端</a>
+          <a href="/" data-main-site>进入师说</a>
+        </nav>
+        <div class="footer-qr">
+          <img src="./assets/qr.png" width="72" height="72" alt="师说主站二维码" loading="lazy" decoding="async" />
+          <span>扫码打开主站</span>
+        </div>
+      </div>
+      <div class="shell footer-bottom">
+        <span>© 2026 师说 · 广应科首届黑客松参赛作品</span>
+        <a href="#top">回到顶部 ↑</a>
+      </div>
+    </footer>
+
+    <div class="lightbox" id="film-lightbox" role="dialog" aria-modal="true" aria-label="师说宣传片" hidden>
+      <button class="lightbox-close" type="button" data-close-film aria-label="关闭宣传片">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+      </button>
+      <div class="lightbox-body">
+        <video id="film-video" controls playsinline preload="none" poster="./assets/poster-apple.webp">
+          <source src="./media/shishuo-apple-720.mp4" type="video/mp4" />
+          你的浏览器不支持视频播放。
+        </video>
+      </div>
+    </div>
+
+    <script src="./intro.js?v=20261121b" defer></script>
+  </body>
+</html>
