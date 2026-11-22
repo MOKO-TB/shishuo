@@ -681,15 +681,15 @@
 .page-wrap {
   min-width: 0;
   flex: 1;
-  animation: pageFade 0.38s linear both;
+  animation: pageFade 0.24s linear both;
 }
 
 .page-wrap.is-nav-next {
-  animation: pageSlideNext 0.38s linear both;
+  animation: pageSlideNext 0.24s linear both;
 }
 
 .page-wrap.is-nav-prev {
-  animation: pageSlidePrev 0.38s linear both;
+  animation: pageSlidePrev 0.24s linear both;
 }
 
 .mobile-nav {
@@ -974,7 +974,7 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.11),
       0 4px 14px -4px rgba(0, 0, 0, 0.34);
     transform: translate3d(calc(var(--nav-index, 0) * 100%), 0, 0);
-    transition: transform 0.34s linear;
+    transition: transform 0.22s linear;
     pointer-events: none;
     z-index: 0;
     will-change: transform;
@@ -1012,19 +1012,19 @@
     font-weight: 500;
     line-height: 1.15;
     letter-spacing: 0.02em;
-    transition: color 0.32s linear;
+    transition: color 0.22s linear;
   }
 
   .mobile-nav button svg {
     transform-origin: center center;
     transition:
-      transform 0.32s linear,
-      color 0.32s linear,
-      filter 0.32s linear;
+      transform 0.22s linear,
+      color 0.22s linear,
+      filter 0.22s linear;
   }
 
   .mobile-nav button span {
-    transition: color 0.32s linear;
+    transition: color 0.22s linear;
   }
 
   .mobile-nav button.is-active {

@@ -283,7 +283,7 @@
 
   /* 蒙版与抽屉同一条曲线、同一时长，磨砂随抽屉一起浮现。 */
   .modal-backdrop {
-    animation: fadeIn 0.42s linear;
+    animation: fadeIn 0.25s linear;
   }
 
   .modal-panel {
@@ -292,9 +292,9 @@
     margin: 0;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     /* 不能用 both：动画填充会一直压住拖拽时写入的 inline transform。 */
-    animation: sheetIn 0.46s linear backwards;
+    animation: sheetIn 0.28s linear backwards;
     transform: translateY(0);
-    transition: transform 0.36s linear;
+    transition: transform 0.24s linear;
     will-change: transform;
   }
 
@@ -461,7 +461,7 @@
 /* 「我的提问」切换筛选时的列表线性柔和过渡 */
 .recent-list-stage,
 .invalid-qa-banner {
-  animation: recentStageIn 0.34s linear both;
+  animation: recentStageIn 0.22s linear both;
 }
 
 @keyframes recentStageIn {
@@ -530,13 +530,13 @@
 .mentor-switcher-menu,
 .campus-gpa-menu {
   transform-origin: top center;
-  animation: dropdownIn 0.32s linear both;
+  animation: dropdownIn 0.2s linear both;
 }
 
 .ask-plus-menu,
 .mentor-plus-menu {
   transform-origin: bottom left;
-  animation: popoverUpIn 0.32s linear both;
+  animation: popoverUpIn 0.2s linear both;
 }
 
 .course-combobox-option,

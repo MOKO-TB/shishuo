@@ -21,8 +21,8 @@ const TRACKER_FLAG = '__shishuoMorphTracker'
 const ORIGIN_KEY = '__shishuoMorphOrigin'
 const ORIGIN_TTL = 2500
 const FLUID_EASE = 'linear'
-const DURATION_IN = 460
-const DURATION_RETURN = 320
+const DURATION_IN = 280
+const DURATION_RETURN = 200
 
 type MorphWindow = Window & {
   [TRACKER_FLAG]?: boolean

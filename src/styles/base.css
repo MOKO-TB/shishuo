@@ -1235,7 +1235,7 @@ select.input {
   inset: 0;
   background: rgba(16, 26, 21, 0.5);
   backdrop-filter: blur(5px);
-  animation: fadeIn 0.42s linear both;
+  animation: fadeIn 0.25s linear both;
 }
 
 /* 关闭时先播退场再卸载：遮罩先暗下去，面板轻微下沉/右移。 */
@@ -1246,15 +1246,15 @@ select.input {
 
 .modal-layer.is-closing .modal-backdrop,
 .drawer-layer.is-closing .drawer-backdrop {
-  animation: fadeOut 0.3s linear forwards;
+  animation: fadeOut 0.2s linear forwards;
 }
 
 .modal-layer.is-closing .modal-panel {
-  animation: modalOut 0.3s linear forwards;
+  animation: modalOut 0.2s linear forwards;
 }
 
 .drawer-layer.is-closing .drawer-panel {
-  animation: drawerOut 0.32s linear forwards;
+  animation: drawerOut 0.2s linear forwards;
 }
 
 .modal-panel {
@@ -1270,7 +1270,7 @@ select.input {
   background: var(--paper);
   box-shadow: var(--shadow-float);
   outline: none;
-  animation: modalIn 0.46s linear both;
+  animation: modalIn 0.28s linear both;
   overflow: hidden;
 }
 
@@ -1363,7 +1363,7 @@ select.input {
   background: var(--paper);
   border-left: 1px solid var(--line-strong);
   box-shadow: -30px 0 80px -40px rgba(16, 26, 21, 0.55);
-  animation: drawerIn 0.44s linear both;
+  animation: drawerIn 0.28s linear both;
 }
 
 .toast {
