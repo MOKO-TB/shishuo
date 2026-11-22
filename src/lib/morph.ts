@@ -20,9 +20,9 @@ interface PointerOrigin {
 const TRACKER_FLAG = '__shishuoMorphTracker'
 const ORIGIN_KEY = '__shishuoMorphOrigin'
 const ORIGIN_TTL = 2500
-const FLUID_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
-const DURATION_IN = 220
-const DURATION_RETURN = 180
+const FLUID_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const DURATION_IN = 360
+const DURATION_RETURN = 260
 
 type MorphWindow = Window & {
   [TRACKER_FLAG]?: boolean
@@ -135,19 +135,26 @@ export function morphIn(
   const originCy = origin.top + origin.height / 2
   const targetCx = target.left + target.width / 2
   const targetCy = target.top + target.height / 2
-  const ox = Math.max(-48, Math.min(48, (originCx - targetCx) * 0.18))
-  const oy = Math.max(-36, Math.min(36, (originCy - targetCy) * 0.18))
+  const ox = Math.max(-72, Math.min(72, (originCx - targetCx) * 0.28))
+  const oy = Math.max(-52, Math.min(52, (originCy - targetCy) * 0.28))
 
+  // 关闭 CSS 自带 modalIn，避免与 WAAPI 双重叠加导致加速过快
+  panel.style.animation = 'none'
   const backdrop = backdropOf(panel)
+  if (backdrop) backdrop.style.animation = 'none'
   backdrop?.animate([{ opacity: 0 }, { opacity: 1 }], {
     duration: DURATION_IN,
-    easing: 'ease-out',
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
   })
   const anim = panel.animate(
     [
       {
         opacity: 0,
-        transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.96)`,
+        transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.92)`,
+      },
+      {
+        opacity: 1,
+        offset: 0.42,
       },
       {
         opacity: 1,
@@ -178,15 +185,15 @@ export function morphOut(
   const originCy = origin.top + origin.height / 2
   const targetCx = target.left + target.width / 2
   const targetCy = target.top + target.height / 2
-  const ox = Math.max(-36, Math.min(36, (originCx - targetCx) * 0.14))
-  const oy = Math.max(-28, Math.min(28, (originCy - targetCy) * 0.14))
+  const ox = Math.max(-56, Math.min(56, (originCx - targetCx) * 0.22))
+  const oy = Math.max(-40, Math.min(40, (originCy - targetCy) * 0.22))
   panel.classList.add('is-returning')
   panel.closest('.modal-layer')?.classList.add('is-returning')
 
   const backdrop = backdropOf(panel)
   backdrop?.animate([{ opacity: 1 }, { opacity: 0 }], {
     duration: DURATION_RETURN,
-    easing: 'ease-in',
+    easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
     fill: 'forwards',
   })
 
@@ -194,11 +201,11 @@ export function morphOut(
     [
       { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
       {
-        transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.96)`,
+        transform: `translate3d(${ox.toFixed(1)}px, ${oy.toFixed(1)}px, 0) scale(0.94)`,
         opacity: 0,
       },
     ],
-    { duration: DURATION_RETURN, easing: 'ease-in', fill: 'forwards' },
+    { duration: DURATION_RETURN, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
   )
   anim.onfinish = () => onDone()
 }

@@ -1235,7 +1235,7 @@ select.input {
   inset: 0;
   background: rgba(16, 26, 21, 0.5);
   backdrop-filter: blur(5px);
-  animation: fadeIn var(--dur-2) var(--ease-out);
+  animation: fadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 关闭时先播退场再卸载：遮罩先暗下去，面板轻微下沉/右移。 */
@@ -1246,15 +1246,15 @@ select.input {
 
 .modal-layer.is-closing .modal-backdrop,
 .drawer-layer.is-closing .drawer-backdrop {
-  animation: fadeOut var(--dur-1) var(--ease-in) forwards;
+  animation: fadeOut 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .modal-layer.is-closing .modal-panel {
-  animation: modalOut var(--dur-1) var(--ease-in) forwards;
+  animation: modalOut 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .drawer-layer.is-closing .drawer-panel {
-  animation: drawerOut var(--dur-1) var(--ease-in) forwards;
+  animation: drawerOut 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .modal-panel {
@@ -1270,7 +1270,7 @@ select.input {
   background: var(--paper);
   box-shadow: var(--shadow-float);
   outline: none;
-  animation: modalIn var(--dur-2) var(--ease-out);
+  animation: modalIn 0.36s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
@@ -1541,35 +1541,35 @@ select.input {
 @keyframes modalIn {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.985);
+    transform: translate3d(0, 18px, 0) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes modalOut {
   to {
     opacity: 0;
-    transform: translateY(8px) scale(0.99);
+    transform: translate3d(0, 12px, 0) scale(0.96);
   }
 }
 
 @keyframes drawerIn {
   from {
-    transform: translateX(28px);
-    opacity: 0.6;
+    transform: translate3d(40px, 0, 0);
+    opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
 
 @keyframes drawerOut {
   to {
-    transform: translateX(24px);
+    transform: translate3d(32px, 0, 0);
     opacity: 0;
   }
 }
