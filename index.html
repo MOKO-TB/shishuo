@@ -3,14 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/mark.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
       content="师说 — AI 先答，老师精答。面向高校课程的 AI + 教师双通道答疑平台。"
     />
     <meta name="theme-color" content="#f4f0e6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="师说" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <script>
-      // 首屏前先按系统/本地偏好写 data-theme，避免深色系统闪白。
+      // 首屏前先按系统/本地偏好写 data-theme 与深浅色图标，避免深色系统闪白。
       (function () {
         try {
           var pref = localStorage.getItem('shishuo.theme.v2')
@@ -21,6 +28,12 @@
               window.matchMedia('(prefers-color-scheme: dark)').matches)
           document.documentElement.dataset.theme = dark ? 'dark' : 'light'
           document.documentElement.dataset.themePreference = pref
+          var themeMeta = document.querySelector('meta[name="theme-color"]')
+          if (themeMeta) themeMeta.setAttribute('content', dark ? '#0f1714' : '#f4f0e6')
+          var touchIcon = document.querySelector('link[rel="apple-touch-icon"]')
+          if (touchIcon) touchIcon.setAttribute('href', dark ? '/apple-touch-icon-dark.png' : '/apple-touch-icon.png')
+          var svgIcon = document.querySelector('link[rel="icon"][type="image/svg+xml"]')
+          if (svgIcon) svgIcon.setAttribute('href', dark ? '/mark-dark.svg' : '/mark.svg')
         } catch (error) {}
       })()
     </script>

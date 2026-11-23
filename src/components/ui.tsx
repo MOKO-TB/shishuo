@@ -35,16 +35,26 @@ export function BrandMark({ size = 40, className }: { size?: number; className?:
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="64" height="64" rx="18" fill="var(--sidebar, #14211c)" />
+      <rect width="64" height="64" rx="18" fill="var(--brand-bg, #14211c)" />
+      <rect
+        x="0.75"
+        y="0.75"
+        width="62.5"
+        height="62.5"
+        rx="17.25"
+        fill="none"
+        stroke="var(--brand-border, transparent)"
+        strokeWidth="1.5"
+      />
       <path
         d="M14 18a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H27l-9 8v-8a6 6 0 0 1-4-5.65V18Z"
-        fill="#f6f1e5"
+        fill="var(--brand-bubble-primary, #f6f1e5)"
       />
       <path
         d="M26 34a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5h-2v6l-7-6H31a5 5 0 0 1-5-5v-9Z"
-        fill="#2f8a70"
+        fill="var(--brand-bubble-reply, #2f8a70)"
       />
-      <circle cx="50" cy="52" r="5" fill="#d8a52a" />
+      <circle cx="50" cy="52" r="5" fill="var(--brand-dot, #d8a52a)" />
     </svg>
   )
 }

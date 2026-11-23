@@ -2,9 +2,13 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/mark.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="theme-color" content="#f4f0e6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="师说 · 管理台" />
     <script>
       (function () {
         try {
@@ -16,6 +20,12 @@
               window.matchMedia('(prefers-color-scheme: dark)').matches)
           document.documentElement.dataset.theme = dark ? 'dark' : 'light'
           document.documentElement.dataset.themePreference = pref
+          var themeMeta = document.querySelector('meta[name="theme-color"]')
+          if (themeMeta) themeMeta.setAttribute('content', dark ? '#0f1714' : '#f4f0e6')
+          var touchIcon = document.querySelector('link[rel="apple-touch-icon"]')
+          if (touchIcon) touchIcon.setAttribute('href', dark ? '/apple-touch-icon-dark.png' : '/apple-touch-icon.png')
+          var svgIcon = document.querySelector('link[rel="icon"][type="image/svg+xml"]')
+          if (svgIcon) svgIcon.setAttribute('href', dark ? '/mark-dark.svg' : '/mark.svg')
         } catch (error) {}
       })()
     </script>
