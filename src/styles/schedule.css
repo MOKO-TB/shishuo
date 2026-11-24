@@ -210,12 +210,33 @@
   white-space: nowrap;
 }
 
+/* 正在上课的时间段与课程块高亮（参照图 P3 风格） */
+.schedule-board .week-grid-period.is-live,
+.schedule-zoom .week-grid-period.is-live {
+  border-radius: var(--radius-sm);
+  background: var(--jade-soft);
+  box-shadow: inset 0 0 0 1px rgba(20, 108, 86, 0.38);
+}
+
+.schedule-board .week-grid-period.is-live strong,
+.schedule-board .week-grid-period.is-live em,
+.schedule-zoom .week-grid-period.is-live strong,
+.schedule-zoom .week-grid-period.is-live em {
+  color: var(--jade);
+  font-weight: 700;
+}
+
 .schedule-board .week-grid-cell,
 .schedule-zoom .week-grid-cell {
   border-radius: var(--radius-sm);
 }
 
-/* 课程块：整块可点，点开看老师、教室与周次 */
+.schedule-board .week-grid-cell.is-live,
+.schedule-zoom .week-grid-cell.is-live {
+  background: var(--jade-soft);
+  box-shadow: inset 0 0 0 1px rgba(20, 108, 86, 0.26);
+}
+
 .schedule-board .week-class,
 .schedule-zoom .week-class {
   font-family: inherit;
@@ -225,6 +246,44 @@
   transition:
     box-shadow 0.2s var(--ease),
     transform 0.2s var(--ease);
+}
+
+.schedule-board .week-class.is-live,
+.schedule-zoom .week-class.is-live {
+  border-color: var(--jade);
+  box-shadow:
+    inset 0 0 0 1px var(--jade),
+    0 6px 16px -8px rgba(20, 108, 86, 0.52);
+}
+
+.week-class-live {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-bottom: 2px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--jade);
+  color: #f8f5ec;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  opacity: 1 !important;
+}
+
+:root[data-theme='dark'] .schedule-board .week-grid-period.is-live,
+:root[data-theme='dark'] .schedule-zoom .week-grid-period.is-live {
+  background: rgba(68, 182, 148, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(68, 182, 148, 0.48);
+}
+
+:root[data-theme='dark'] .schedule-board .week-class.is-live,
+:root[data-theme='dark'] .schedule-zoom .week-class.is-live {
+  border-color: #44b694;
+  box-shadow:
+    inset 0 0 0 1px #44b694,
+    0 6px 18px -6px rgba(68, 182, 148, 0.45);
 }
 
 .schedule-board .week-class strong,
@@ -722,7 +781,14 @@
     display: none;
   }
 
-  /* 手机端课程块也保留老师和教室，时间/周次仍收进详情 */
+  /* 手机端课程块也保留老师、教室与上课中标记，时间/周次仍收进详情 */
+  .schedule-board .week-class .week-class-live,
+  .schedule-zoom .week-class .week-class-live {
+    display: inline-flex;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+
   .schedule-board .week-class .week-class-teacher,
   .schedule-board .week-class .week-class-room {
     display: block;

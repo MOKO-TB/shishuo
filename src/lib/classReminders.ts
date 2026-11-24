@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import {
-  SECTION_BELL,
+  entryStartTime,
   runsInWeek,
   teachingWeek,
   type ScheduleEntry,
@@ -57,7 +57,7 @@ export function writeClassReminderPrefs(next: ClassReminderPrefs) {
 }
 
 function startClockOf(entry: ScheduleEntry): { hour: number; minute: number } | null {
-  const raw = entry.startTime || SECTION_BELL[entry.startSection]?.start || ''
+  const raw = entryStartTime(entry)
   const match = /^(\d{1,2}):(\d{2})/.exec(raw.trim())
   if (!match) return null
   return { hour: Number(match[1]), minute: Number(match[2]) }

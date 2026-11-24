@@ -23,7 +23,9 @@ import {
 } from 'lucide-react'
 import { isSeededCourse } from '../../data/seed'
 import {
+  activeBellSection,
   courseToneMap,
+  isClassOngoing,
   monthDayOf,
   periodTime,
   runsInWeek,
@@ -75,7 +77,12 @@ export function ScheduleView({
   const [emptyOpen, setEmptyOpen] = useState(false)
   const [zoom, setZoom] = useState(false)
   const [detail, setDetail] = useState<ScheduleEntry | null>(null)
+  const [nowTs, setNowTs] = useState(() => Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(() => readClassReminderPrefs().enabled)
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowTs(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [slideState, setSlideState] = useState<{ dir: 'next' | 'prev' | null; seq: number }>({
     dir: null,
@@ -402,6 +409,8 @@ export function ScheduleView({
                 week={selectedWeek}
                 termStart={profile.termStart}
                 tones={tones}
+                isCurrentWeek={!hasCalendar || selectedWeek === currentWeek}
+                nowTs={nowTs}
                 onSelect={handleSelectEntry}
               />
             </div>
@@ -493,6 +502,8 @@ export function ScheduleView({
                     week={selectedWeek}
                     termStart={profile.termStart}
                     tones={tones}
+                    isCurrentWeek={!hasCalendar || selectedWeek === currentWeek}
+                    nowTs={nowTs}
                     zoomed
                     onSelect={handleSelectEntry}
                   />
@@ -515,6 +526,8 @@ function WeekTimetable({
   week,
   termStart,
   tones,
+  isCurrentWeek = true,
+  nowTs,
   zoomed,
   onSelect,
 }: {
@@ -522,10 +535,13 @@ function WeekTimetable({
   week: number
   termStart: number | null
   tones: Map<string, CourseTone>
+  isCurrentWeek?: boolean
+  nowTs: number
   zoomed?: boolean
   onSelect: (entry: ScheduleEntry) => void
 }) {
-  const today = weekdayNumber()
+  const today = weekdayNumber(nowTs)
+  const liveSection = isCurrentWeek ? activeBellSection(nowTs) : null
   const monday = weekMonday(termStart, week)
   const showDates = termStart != null
   const sectionCount = Math.max(
@@ -543,7 +559,7 @@ function WeekTimetable({
       <div className="week-grid-corner" style={{ gridColumn: 1, gridRow: 1 }} />
       {DAYS.map((day) => (
         <div
-          className={cn('week-grid-day', day === today && 'is-today')}
+          className={cn('week-grid-day', isCurrentWeek && day === today && 'is-today')}
           key={day}
           style={{ gridColumn: day + 1, gridRow: 1 }}
         >
@@ -551,43 +567,59 @@ function WeekTimetable({
           {showDates && <span>{monthDayOf(monday + (day - 1) * 86_400_000)}</span>}
         </div>
       ))}
-      {sections.map((section) => (
-        <Fragment key={section}>
-          <div className="week-grid-period" style={{ gridColumn: 1, gridRow: section + 1 }}>
-            <strong>{section}</strong>
-            <em>
-              {sectionBell(section).split('-').map((part, index) =>
-                index === 0 ? part : <Fragment key={part}><br />{part}</Fragment>,
-              )}
-            </em>
-          </div>
-          {DAYS.map((day) => (
+      {sections.map((section) => {
+        const isLiveSection = liveSection === section
+        return (
+          <Fragment key={section}>
             <div
-              className={cn('week-grid-cell', day === today && 'is-today')}
-              key={day}
-              style={{ gridColumn: day + 1, gridRow: section + 1 }}
-            />
-          ))}
-        </Fragment>
-      ))}
+              className={cn('week-grid-period', isLiveSection && 'is-live')}
+              style={{ gridColumn: 1, gridRow: section + 1 }}
+            >
+              <strong>{section}</strong>
+              <em>
+                {sectionBell(section).split('-').map((part, index) =>
+                  index === 0 ? part : <Fragment key={part}><br />{part}</Fragment>,
+                )}
+              </em>
+            </div>
+            {DAYS.map((day) => (
+              <div
+                className={cn(
+                  'week-grid-cell',
+                  isCurrentWeek && day === today && 'is-today',
+                  isCurrentWeek && day === today && isLiveSection && 'is-live',
+                )}
+                key={day}
+                style={{ gridColumn: day + 1, gridRow: section + 1 }}
+              />
+            ))}
+          </Fragment>
+        )
+      })}
       {entries.map((entry) => {
         // 脏数据（第 0 节、星期越界）不能撑破网格。
         const start = Math.min(16, Math.max(1, entry.startSection))
         const end = Math.min(16, Math.max(start, entry.endSection))
         const day = Math.min(7, Math.max(1, entry.day))
+        const ongoing = isCurrentWeek && isClassOngoing(entry, nowTs)
         return (
           <button
             type="button"
-            className={cn('week-class', `tone-${tones.get(entry.course) ?? 'jade'}`)}
+            className={cn(
+              'week-class',
+              `tone-${tones.get(entry.course) ?? 'jade'}`,
+              ongoing && 'is-live',
+            )}
             key={entry.id}
             data-span={end - start + 1}
             style={{
               gridColumn: day + 1,
               gridRow: `${start + 1} / ${end + 2}`,
             }}
-            title={`${entry.course}${entry.teacher ? ` · ${entry.teacher}` : ''}${entry.room ? ` · ${entry.room}` : ''}${entry.weeks ? ` · ${entry.weeks}` : ''}`}
+            title={`${ongoing ? '[上课中] ' : ''}${entry.course}${entry.teacher ? ` · ${entry.teacher}` : ''}${entry.room ? ` · ${entry.room}` : ''}${entry.weeks ? ` · ${entry.weeks}` : ''}`}
             onClick={() => onSelect(entry)}
           >
+            {ongoing && <span className="week-class-live">上课中</span>}
             <strong>{entry.course}</strong>
             {periodTime(entry) && <span className="week-class-time">{periodTime(entry)}</span>}
             {entry.teacher && <span className="week-class-teacher">{entry.teacher}</span>}
