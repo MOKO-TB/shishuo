@@ -45,5 +45,18 @@ __pycache__/
 # Android 内测 APK（本地产物，不入库）
 dev/builds/
 
-# 介绍站本地 APK 包（正式下载走 Gitee Release）
-public/intro/download/
+# 本地临时调试文件
+dev/tmp-*
+
+# 宣传片工程：入库脚本/时间线/字幕，音视频母带与字体不入库（重渲染需另行准备）
+promo/**/audio*/
+promo/**/fonts/
+promo/**/backup*/
+promo/**/preview*/
+promo/**/*qc*/
+promo/**/*.mp4
+
+# deck 渲染中间产物与字体
+deck/assets/fonts/
+deck/pptx_animated_assets/
+deck/pptx_fresh_shots/
