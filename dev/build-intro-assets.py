@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import shutil
+import re
 from pathlib import Path
 
 from PIL import Image
@@ -36,7 +37,7 @@ def main() -> None:
     ASSETS.mkdir(parents=True, exist_ok=True)
     MEDIA.mkdir(parents=True, exist_ok=True)
 
-    print("[1/4] 界面截图 -> WebP")
+    print("[1/5] 界面截图 -> WebP")
     desktop = {
         "student-home.png": ("hero-student.webp", 1600),
         "student-thread.png": ("story-ai.webp", 1600),
@@ -52,6 +53,9 @@ def main() -> None:
     # 只留右侧抽屉上半部分，裁成 16:10，卡片里不用再二次裁切。
     mentor = Image.open(SRC / "assets" / "student-mentor.png").crop((1680, 0, 2880, 750))
     save_webp(mentor, "feature-mentor.webp", 1000)
+
+    # 校园地图截图同时给「课下的事」卡片使用；当前 UI 不再做旧版 804 叠加卡。
+    save_webp(Image.open(SRC / "assets" / "student-campus.png"), "feature-campus-804.webp", 1400)
 
     save_webp(Image.open(SRC / "assets" / "student-mobile.png"), "app-mobile.webp", 780)
 
@@ -71,7 +75,17 @@ def main() -> None:
     shutil.copyfile(SRC / "assets" / "qr.png", ASSETS / "qr.png")
     print("  qr.png 已复制")
 
-    print("[4/4] 苹果旗舰版 720p -> media")
+    print("[4/5] SRT -> VTT")
+    srt = (SRC / "师说宣传片_苹果旗舰版_字幕.srt").read_text(encoding="utf-8-sig")
+    vtt = re.sub(
+        r"(\d{2}:\d{2}:\d{2}),(\d{3})",
+        lambda m: f"{m.group(1)}.{m.group(2)}",
+        srt.strip(),
+    )
+    (MEDIA / "shishuo-apple.vtt").write_text("WEBVTT" + chr(10)*2 + vtt + chr(10), encoding="utf-8")
+    print("  media/shishuo-apple.vtt 已生成")
+
+    print("[5/5] 苹果旗舰版 720p -> media")
     video = SRC / "师说宣传片_苹果旗舰版_720p.mp4"
     shutil.copyfile(video, MEDIA / "shishuo-apple-720.mp4")
     print(f"  media/shishuo-apple-720.mp4  {video.stat().st_size / 1024 / 1024:6.1f} MB")

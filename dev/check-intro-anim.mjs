@@ -22,7 +22,7 @@ async function open(viewport, reducedMotion = 'no-preference') {
   })
   await page.goto(BASE, { waitUntil: 'networkidle' })
   await page.waitForSelector('.hero h1', { timeout: 15000 })
-  await page.addStyleTag({ content: 'html{scroll-behavior:auto !important}' })
+  await page.addStyleTag({ content: 'html{scroll-behavior:auto !important; scroll-snap-type:none !important}' })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(1200)
   return page

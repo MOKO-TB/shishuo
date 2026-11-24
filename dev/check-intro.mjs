@@ -32,7 +32,7 @@ async function prepare(page) {
       '.reveal{opacity:1 !important;transform:none !important;transition:none !important}' +
       '.line > span{transform:none !important;transition:none !important}',
   })
-  await page.addStyleTag({ content: 'html{scroll-behavior:auto !important}' })
+  await page.addStyleTag({ content: 'html{scroll-behavior:auto !important; scroll-snap-type:none !important}' })
   await page.evaluate(async () => {
     await document.fonts.ready
     window.scrollTo(0, document.body.scrollHeight)
@@ -57,12 +57,24 @@ await capture('intro-desktop-hero.png', { width: 1440, height: 900 }, async (pag
 await capture('intro-desktop-full.png', { width: 1440, height: 900 }, async (page) => {
   console.log('desktop overflow:', await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth })))
   await page.screenshot({ path: `${OUT}/intro-desktop-full.png`, fullPage: true })
-  await page.addStyleTag({ content: '.site-header{display:none !important}' })
-  for (const id of ['story', 'ability', 'film', 'app']) {
+  await page.addStyleTag({
+    content:
+      '.site-header,.deck-nav,.skip-link,.scroll-progress{display:none !important}',
+  })
+  for (const id of ['research', 'story', 'ability', 'film', 'team', 'app', 'roadmap', 'faq']) {
     const section = page.locator(`#${id}`)
+    await section.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(350)
     await section.screenshot({ path: `${OUT}/intro-${id}.png` })
   }
+  await page.locator('[data-report-toggle]').click()
+  await page.waitForTimeout(350)
+  await page.locator('.report-bar').first().click()
+  await page.waitForTimeout(200)
+  await page.locator('[data-report-panel]').screenshot({ path: `${OUT}/intro-report.png` })
   const about = page.locator('.about')
+  await about.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(350)
   await about.screenshot({ path: `${OUT}/intro-about.png` })
 })
 
@@ -96,14 +108,23 @@ await capture('intro-mobile', { width: 390, height: 844 }, async (page) => {
   console.log('mobile overflow:', await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth })))
   await page.screenshot({ path: `${OUT}/intro-mobile-hero.png` })
   await page.screenshot({ path: `${OUT}/intro-mobile-full.png`, fullPage: true })
-  await page.addStyleTag({ content: '.site-header{display:none !important}' })
+  await page.addStyleTag({
+    content:
+      '.site-header,.deck-nav,.skip-link,.scroll-progress{display:none !important}',
+  })
   for (const [id, selector] of [
+    ['research', '#research'],
     ['story', '#story'],
     ['ability', '#ability'],
     ['film', '#film'],
+    ['team', '#team'],
     ['app', '#app'],
+    ['roadmap', '#roadmap'],
+    ['faq', '#faq'],
     ['about', '.about'],
   ]) {
+    await page.locator(selector).scrollIntoViewIfNeeded()
+    await page.waitForTimeout(300)
     await page.locator(selector).screenshot({ path: `${OUT}/intro-mobile-${id}.png` })
   }
 })
