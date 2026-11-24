@@ -34,6 +34,31 @@ const MOOD_META: Record<
     label: '小提醒',
     alt: '师说书灵提醒立绘',
   },
+  run: {
+    src: '/avatar/side-body.webp',
+    label: '奔跑中',
+    alt: '师说书灵奔跑立绘',
+  },
+  walk: {
+    src: '/avatar/side-body.webp',
+    label: '漫步中',
+    alt: '师说书灵漫步立绘',
+  },
+  wave: {
+    src: '/avatar/notice.webp',
+    label: '打招呼',
+    alt: '师说书灵挥手立绘',
+  },
+  point: {
+    src: '/avatar/answering.webp',
+    label: '聚焦重点',
+    alt: '师说书灵指路立绘',
+  },
+  celebrate: {
+    src: '/avatar/happy.webp',
+    label: '庆祝中',
+    alt: '师说书灵庆功立绘',
+  },
 }
 
 const INTERACT_TIPS = [
