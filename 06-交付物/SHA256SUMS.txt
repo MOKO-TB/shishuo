@@ -1,2 +1,0 @@
-26851c09bd9b3cd30ed1dfab3b130bcd675b209d2821ed755ac3511086b761d8 *师说-可运行程序包-v1.0.0.zip
-d4b57fee2bfc9ff7dcc76ea89de1beadf7551e21bda94b62cc3a3a8a16512c94 *师说-完整源码包-v1.0.0.zip
