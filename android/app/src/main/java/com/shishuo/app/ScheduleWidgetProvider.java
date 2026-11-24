@@ -226,18 +226,18 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
     }
 
     static String startTimeOf(ClassItem item) {
-        if (item.startTime != null && !item.startTime.isEmpty()) return item.startTime;
         if (item.startSection >= 1 && item.startSection < SECTION_BELL.length) {
             return SECTION_BELL[item.startSection][0];
         }
+        if (item.startTime != null && !item.startTime.isEmpty()) return item.startTime;
         return "";
     }
 
     static String endTimeOf(ClassItem item) {
-        if (item.endTime != null && !item.endTime.isEmpty()) return item.endTime;
         if (item.endSection >= 1 && item.endSection < SECTION_BELL.length) {
             return SECTION_BELL[item.endSection][1];
         }
+        if (item.endTime != null && !item.endTime.isEmpty()) return item.endTime;
         return "";
     }
 

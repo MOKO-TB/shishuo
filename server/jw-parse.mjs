@@ -12,6 +12,20 @@ const DASH_LINE_RE = /^-{3,}$/
 const TIME_RANGE_RE = /\d{1,2}[:：]\d{2}\s*[-~－—]\s*\d{1,2}[:：]\d{2}/g
 const PLACE_RE = /(楼|室|馆|中心|校区|栋|机房|实验|@)/
 
+const SECTION_BELL = {
+  1: { start: '08:20', end: '09:05' },
+  2: { start: '09:10', end: '09:55' },
+  3: { start: '10:15', end: '11:00' },
+  4: { start: '11:05', end: '11:50' },
+  5: { start: '14:30', end: '15:15' },
+  6: { start: '15:20', end: '16:05' },
+  7: { start: '16:25', end: '17:10' },
+  8: { start: '17:15', end: '18:00' },
+  9: { start: '19:00', end: '19:45' },
+  10: { start: '19:50', end: '20:35' },
+  11: { start: '20:40', end: '21:25' },
+}
+
 function linesOf(cell) {
   return cell
     .split('\n')
@@ -101,6 +115,15 @@ function parseCell(lines, day, rowKey, rowBell) {
   }
   name = name.replace(/^[（(]\d{2,4}[-\d]*[)）]/, '').trim()
   if (!name) return undefined
+  // 强智表格经常把 9-11 节合在一个晚间大行（19:00-21:25），单元格里的 [09-10节] 只上到第 10 节，不能沿用大行结尾 21:25。
+  const startTime =
+    periods.start === rowKey.start && rowBell.start
+      ? rowBell.start
+      : (SECTION_BELL[periods.start]?.start ?? rowBell.start ?? '')
+  const endTime =
+    periods.end === rowKey.end && rowBell.end
+      ? rowBell.end
+      : (SECTION_BELL[periods.end]?.end ?? rowBell.end ?? '')
   return {
     course: name.slice(0, 60),
     teacher: teacher.replace(/^@/, '').slice(0, 40),
@@ -109,8 +132,8 @@ function parseCell(lines, day, rowKey, rowBell) {
     startSection: periods.start,
     endSection: periods.end,
     weeks,
-    startTime: rowBell.start,
-    endTime: rowBell.end,
+    startTime,
+    endTime,
     raw,
   }
 }

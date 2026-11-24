@@ -6,6 +6,8 @@
     <!-- 桌面课程表小组件配色（深色） -->
     <color name="widgetBg">#141E1A</color>
     <color name="widgetRowBg">#1C2924</color>
+    <color name="widgetRowActiveBg">#18372D</color>
+    <color name="widgetRowActiveBorder">#3E9B7E</color>
     <color name="widgetBorder">#2A3A33</color>
     <color name="widgetTitle">#F2EDE2</color>
     <color name="widgetText">#E5E0D5</color>

@@ -75,14 +75,21 @@ public class ScheduleWidgetService extends RemoteViewsService {
                 : item.startSection + "-" + item.endSection + "节";
 
             String timeLabel = !start.isEmpty() ? start : section;
+            boolean isOngoing = false;
             if (!isTomorrow && nowMinutes >= 0) {
                 int s = ScheduleWidgetProvider.parseMinutes(start);
                 int e = ScheduleWidgetProvider.parseMinutes(end);
                 if (s >= 0 && e >= 0 && nowMinutes >= s && nowMinutes < e) {
                     timeLabel = "上课中";
+                    isOngoing = true;
                 }
             }
 
+            row.setInt(
+                R.id.widget_item_root,
+                "setBackgroundResource",
+                isOngoing ? R.drawable.widget_row_bg_active : R.drawable.widget_row_bg
+            );
             row.setTextViewText(R.id.widget_item_time, timeLabel);
             row.setTextViewText(R.id.widget_item_name, item.course);
 

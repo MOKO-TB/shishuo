@@ -1322,8 +1322,8 @@ export function createApiHandler({ db, config }) {
       if (pathname === '/api/app/version' && req.method === 'GET') {
         const defaults = {
           platform: 'android',
-          versionCode: Number(process.env.SHISHUO_ANDROID_VERSION_CODE || 8) || 8,
-          versionName: String(process.env.SHISHUO_ANDROID_VERSION_NAME || '0.2.6'),
+          versionCode: Number(process.env.SHISHUO_ANDROID_VERSION_CODE || 9) || 9,
+          versionName: String(process.env.SHISHUO_ANDROID_VERSION_NAME || '0.2.7'),
           minSupportedCode: Number(process.env.SHISHUO_ANDROID_MIN_CODE || 1) || 1,
           releaseSha256: String(
             process.env.SHISHUO_ANDROID_RELEASE_SHA256 ||
@@ -1331,17 +1331,17 @@ export function createApiHandler({ db, config }) {
           ),
           downloadUrl: String(
             process.env.SHISHUO_ANDROID_APK_URL ||
-              'http://121.37.30.147/intro/download/shishuo-android-0.2.6.apk',
+              'http://121.37.30.147/intro/download/shishuo-android-0.2.7.apk',
           ),
           fallbackUrl: String(
             process.env.SHISHUO_ANDROID_FALLBACK_URL ||
-              'http://121.37.30.147/intro/download/shishuo-android-0.2.6.apk',
+              'http://121.37.30.147/intro/download/shishuo-android-0.2.7.apk',
           ),
           notes: String(
             process.env.SHISHUO_ANDROID_RELEASE_NOTES ||
-              '1. 新增兼容版桌面课表小组件，修复 OPPO / ColorOS 等桌面无法添加小组件的问题；\n2. 主小组件补充预览图，桌面选择器里不再空白；\n3. 优化桌面小组件添加引导与旧版本提示。',
+              '1. 修复晚间第 9-10 节等课程受教务大行合并影响错误显示为 21:25 的问题，统一精确显示为 19:00-20:35；\n2. 桌面课表小组件「上课中」行新增青碧高光边框与底色突出显示；\n3. 完整周课表与左侧栏当前上课卡片同步新增「上课中」实时高亮。',
           ),
-          updatedAt: '2026-11-22',
+          updatedAt: '2026-11-23',
         }
         try {
           const releasePath = path.join(ROOT_DIR, 'data', 'app-release.json')
