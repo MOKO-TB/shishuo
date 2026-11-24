@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>师说 · 书灵数字人动作骨骼全集展示</title>
+<link rel="icon" href="/public/mark.svg" type="image/svg+xml" />
+<style>
+  @font-face { font-family: 'NotoSerifSC'; font-weight: 400; src: url('/promo/fonts/noto-serif-sc-chinese-simplified-400-normal.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'NotoSerifSC'; font-weight: 600; src: url('/promo/fonts/noto-serif-sc-chinese-simplified-600-normal.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'NotoSerifSC'; font-weight: 700; src: url('/promo/fonts/noto-serif-sc-chinese-simplified-700-normal.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'NotoSerifSC'; font-weight: 900; src: url('/promo/fonts/noto-serif-sc-chinese-simplified-900-normal.woff2') format('woff2'); font-display: block; }
+
+  :root {
+    --ink: #14211b;
+    --ink-soft: #3f4f48;
+    --muted: #5d6b64;
+    --cream: #f7f1e3;
+    --paper: #f4f0e6;
+    --card: #fbf9f3;
+    --jade: #146c56;
+    --jade-light: #2f8a70;
+    --jade-mist: #e5f1eb;
+    --gold: #ad7f1d;
+    --gold-light: #e4ba59;
+    --gold-soft: #f5ecd3;
+    --clay: #b8613e;
+    --line: rgba(20, 33, 27, 0.12);
+    --line-dark: rgba(247, 241, 227, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #09130f;
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'NotoSerifSC', "Songti SC", serif; }
+
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+  .scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    will-change: opacity, transform;
+  }
+  .dark-bg {
+    background:
+      radial-gradient(1080px 760px at 84% 12%, rgba(47, 138, 112, 0.25) 0%, rgba(47, 138, 112, 0) 62%),
+      radial-gradient(840px 660px at 8% 92%, rgba(173, 127, 29, 0.15) 0%, rgba(173, 127, 29, 0) 60%),
+      linear-gradient(160deg, #0b1511 0%, #101f19 52%, #09120e 100%);
+  }
+  .light-bg {
+    background:
+      radial-gradient(1100px 760px at 88% -4%, #e6f2ec 0%, rgba(230, 242, 236, 0) 62%),
+      radial-gradient(920px 680px at -6% 104%, #efe6d2 0%, rgba(239, 230, 210, 0) 60%),
+      linear-gradient(180deg, #f6f2e8 0%, #f1ebdd 100%);
+  }
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(20, 33, 27, 0.04) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, rgba(20, 33, 27, 0.04) 0 1px, transparent 1px 64px);
+    mask-image: radial-gradient(ellipse at 50% 48%, #000 0%, transparent 82%);
+  }
+  .grid-overlay.is-dark {
+    background-image:
+      repeating-linear-gradient(0deg, rgba(247, 241, 227, 0.05) 0 1px, transparent 1px 68px),
+      repeating-linear-gradient(90deg, rgba(247, 241, 227, 0.05) 0 1px, transparent 1px 68px);
+  }
+
+  /* 顶部角标与页眉 */
+  .top-bar {
+    position: absolute;
+    left: 88px;
+    right: 88px;
+    top: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+  .brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-pill img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  }
+  .brand-pill strong {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .brand-pill span {
+    font-size: 14px;
+    letter-spacing: 0.16em;
+    opacity: 0.65;
+  }
+  .scene-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--line);
+    background: rgba(251, 249, 243, 0.84);
+    color: var(--jade);
+  }
+  .scene-tag.on-dark {
+    border-color: var(--line-dark);
+    background: rgba(247, 241, 227, 0.08);
+    color: #8ee0c2;
+  }
+  .scene-tag i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ---------- Act 1: Opening ---------- */
+  .open-layout {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+    padding: 96px 110px 80px;
+    gap: 40px;
+  }
+  .open-copy { color: var(--cream); }
+  .open-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    letter-spacing: 0.24em;
+    color: #84d9ba;
+    font-weight: 600;
+    margin-bottom: 22px;
+  }
+  .open-kicker::before {
+    content: "";
+    width: 36px;
+    height: 2px;
+    background: var(--gold-light);
+  }
+  .open-title {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 82px;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+  .open-title em {
+    font-style: normal;
+    color: var(--gold-light);
+  }
+  .open-desc {
+    font-size: 24px;
+    line-height: 1.6;
+    color: rgba(247, 241, 227, 0.78);
+    max-width: 780px;
+    margin-bottom: 34px;
+  }
+  .open-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 760px;
+  }
+  .open-chip {
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(142, 224, 194, 0.26);
+    background: rgba(20, 108, 86, 0.22);
+    color: #dcf7ec;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .open-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 760px;
+  }
+  .open-halo {
+    position: absolute;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgba(85, 211, 167, 0.22) 0%, rgba(228, 186, 89, 0.12) 45%, transparent 72%);
+    border: 1px dashed rgba(247, 241, 227, 0.16);
+  }
+  .open-canvas-wrap {
+    position: relative;
+    width: 560px;
+    height: 560px;
+  }
+
+  /* ---------- Act 2: Progress Bar Runner Demo ---------- */
+  .runner-wrap {
+    position: absolute;
+    inset: 0;
+    padding: 112px 96px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .runner-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .runner-head h2 {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 46px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .runner-head h2 span { color: var(--jade); }
+  .runner-head p {
+    font-size: 20px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .runner-pct-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 36px -22px rgba(20, 33, 27, 0.35);
+  }
+  .runner-pct-badge small {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .runner-pct-badge strong {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 38px;
+    color: var(--jade);
+    min-width: 96px;
+    text-align: right;
+  }
+
+  .promo-screen-frame {
+    position: relative;
+    width: 1080px;
+    height: 492px;
+    margin: 10px auto 0;
+    border-radius: 24px;
+    background: #14211b;
+    padding: 12px;
+    box-shadow: 0 36px 80px -28px rgba(20, 33, 27, 0.42);
+    border: 1px solid rgba(20, 33, 27, 0.16);
+  }
+  .promo-screen-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #f4f0e6;
+  }
+  .promo-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    opacity: 0;
+    transition: none;
+  }
+  .promo-caption-pill {
+    position: absolute;
+    left: 24px;
+    bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: rgba(20, 33, 27, 0.86);
+    color: var(--cream);
+    font-size: 18px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+  }
+  .promo-caption-pill b { color: var(--gold-light); }
+
+  /* 底部进度条跑道区 */
+  .progress-arena {
+    position: relative;
+    width: 100%;
+    height: 224px;
+    padding: 0 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .runner-actor {
+    position: absolute;
+    bottom: 66px;
+    left: 56px;
+    width: 168px;
+    height: 168px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 6;
+  }
+  .runner-speech {
+    position: absolute;
+    bottom: 158px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #14211b;
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 24px rgba(20, 33, 27, 0.25);
+  }
+  .runner-speech::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: #14211b;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .progress-vfx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .progress-track-shell {
+    position: relative;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(20, 33, 27, 0.11);
+    overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(20, 33, 27, 0.12);
+  }
+  .progress-track-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #146c56 0%, #2f8a70 68%, #e0b453 100%);
+    box-shadow: 0 0 20px rgba(20, 108, 86, 0.35);
+  }
+  .progress-milestones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  .ms-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .ms-item.is-reached { color: var(--jade); }
+  .ms-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: rgba(20, 33, 27, 0.2);
+  }
+  .ms-item.is-reached .ms-dot {
+    background: var(--jade);
+    box-shadow: 0 0 0 4px rgba(20, 108, 86, 0.18);
+  }
+
+  /* ---------- Act 3 & 4: 5-Card Action Gallery ---------- */
+  .gallery-wrap {
+    position: absolute;
+    inset: 0;
+    padding: 118px 80px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .gallery-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .gallery-head h2 {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 46px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .gallery-head h2 em { font-style: normal; color: var(--jade); }
+  .gallery-head p { font-size: 20px; color: var(--muted); margin-top: 6px; }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+    margin-top: 28px;
+    flex: 1;
+  }
+  .action-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 24px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 50px -30px rgba(20, 33, 27, 0.34);
+    padding: 20px 18px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .action-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .action-num {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .action-cat {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--jade-mist);
+    color: var(--jade);
+  }
+  .action-stage {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 60%, rgba(20, 108, 86, 0.08) 0%, transparent 70%),
+      linear-gradient(180deg, #f6f2e8 0%, #ede7d8 100%);
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .action-stage canvas.rig-canvas {
+    width: 310px;
+    height: 310px;
+  }
+  .mini-track {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 22px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(20, 33, 27, 0.12);
+    overflow: hidden;
+  }
+  .mini-track-dashes {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, var(--jade) 0 24px, transparent 24px 48px);
+    opacity: 0.65;
+  }
+  .action-title {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .action-title code {
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--jade);
+    background: var(--jade-mist);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .action-summary {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin-top: 10px;
+    min-height: 70px;
+  }
+  .action-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .action-tags span {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+
+  /* ---------- Act 5: Close-up Spotlight ---------- */
+  .spot-wrap {
+    position: absolute;
+    inset: 0;
+    padding: 120px 100px 72px;
+    display: grid;
+    grid-template-columns: 620px 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .spot-stage-card {
+    position: relative;
+    width: 620px;
+    height: 720px;
+    border-radius: 32px;
+    background:
+      radial-gradient(circle at 50% 52%, rgba(85, 211, 167, 0.22) 0%, rgba(224, 180, 83, 0.08) 46%, transparent 72%),
+      linear-gradient(160deg, #13251e 0%, #0c1813 100%);
+    border: 1px solid rgba(247, 241, 227, 0.14);
+    box-shadow: 0 36px 90px -28px rgba(0, 0, 0, 0.55);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .spot-canvas-box {
+    position: relative;
+    width: 540px;
+    height: 540px;
+  }
+  .spot-badge {
+    position: absolute;
+    top: 24px;
+    left: 26px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: rgba(247, 241, 227, 0.1);
+    border: 1px solid rgba(247, 241, 227, 0.18);
+    color: var(--gold-light);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .spot-copy { color: var(--cream); }
+  .spot-kicker {
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    color: #84d9ba;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .spot-title {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 64px;
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+  .spot-desc {
+    font-size: 24px;
+    line-height: 1.65;
+    color: rgba(247, 241, 227, 0.8);
+    margin-bottom: 34px;
+    max-width: 960px;
+  }
+  .spot-bones {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .bone-meter {
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: rgba(247, 241, 227, 0.06);
+    border: 1px solid rgba(247, 241, 227, 0.12);
+  }
+  .bone-meter-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--cream);
+  }
+  .bone-meter-top span { color: #84d9ba; }
+  .bone-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(247, 241, 227, 0.12);
+    overflow: hidden;
+  }
+  .bone-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #55d3a7, #e4ba59);
+  }
+  .spot-usage {
+    padding: 18px 24px;
+    border-radius: 18px;
+    background: rgba(228, 186, 89, 0.11);
+    border: 1px solid rgba(228, 186, 89, 0.28);
+    font-size: 19px;
+    color: #f6e7c1;
+    line-height: 1.55;
+  }
+  .spot-usage strong { color: var(--gold-light); }
+
+  /* ---------- Act 6: Outro ---------- */
+  .outro-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--cream);
+    padding: 80px;
+  }
+  .outro-avatar {
+    width: 340px;
+    height: 340px;
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .outro-title {
+    font-family: 'NotoSerifSC', serif;
+    font-size: 68px;
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+  .outro-title em { font-style: normal; color: var(--gold-light); }
+  .outro-sub {
+    font-size: 24px;
+    color: rgba(247, 241, 227, 0.78);
+    margin-bottom: 30px;
+  }
+  .outro-pills {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .outro-pills span {
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(247, 241, 227, 0.18);
+    background: rgba(247, 241, 227, 0.07);
+    font-size: 17px;
+    color: #dff5ec;
+  }
+
+  /* 单动作绿幕/透明导出模式 */
+  body.export-mode {
+    width: 720px;
+    height: 720px;
+    display: grid;
+    place-items: center;
+  }
+  body.export-mode #stage { display: none; }
+  #export-canvas-wrap {
+    display: none;
+    position: relative;
+    width: 720px;
+    height: 720px;
+  }
+  body.export-mode #export-canvas-wrap { display: block; }
+  canvas.rig-canvas, canvas.vfx-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div id="export-canvas-wrap">
+  <canvas id="export-rig" class="rig-canvas"></canvas>
+  <canvas id="export-vfx" class="vfx-canvas"></canvas>
+</div>
+
+<div id="stage">
+  <!-- ACT 1: 开场亮相 (0 - 3.5s) -->
+  <section id="sc-open" class="scene dark-bg">
+    <div class="grid-overlay is-dark"></div>
+    <div class="top-bar">
+      <div class="brand-pill" style="color: var(--cream);">
+        <img src="/public/mark.svg" alt="师说" />
+        <div>
+          <strong>师说 · 书灵数字人</strong>
+          <div><span>2D SKELETAL MOTION KIT</span></div>
+        </div>
+      </div>
+      <span class="scene-tag on-dark"><i></i>宣传片活感升级版</span>
+    </div>
+    <div class="open-layout">
+      <div class="open-copy">
+        <div class="open-kicker">SHISHUO VIRTUAL COMPANION</div>
+        <h1 class="open-title">10 套骨骼动作<br />让书灵真正<em>活起来</em></h1>
+        <p class="open-desc">
+          基于 WebGL 2D 分层骨骼与表情帧混合，支持独立双腿跨步、反相摆臂、
+          进度条同步奔跑、自然眨眼与说话嘴型开合，可直接叠加进宣传片任意画面。
+        </p>
+        <div class="open-chips">
+          <span class="open-chip">进度条双腿奔跑</span>
+          <span class="open-chip">轻快漫步巡游</span>
+          <span class="open-chip">热情挥手开场</span>
+          <span class="open-chip">魔杖开口讲解</span>
+          <span class="open-chip">指路聚焦重点</span>
+          <span class="open-chip">蓄力魔法庆功</span>
+        </div>
+      </div>
+      <div class="open-stage">
+        <div class="open-halo"></div>
+        <div class="open-canvas-wrap">
+          <canvas id="rig-open" class="rig-canvas"></canvas>
+          <canvas id="vfx-open" class="vfx-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 2: 宣传片进度条奔跑实战模拟 (3.5 - 11.5s) -->
+  <section id="sc-runner" class="scene light-bg">
+    <div class="grid-overlay"></div>
+    <div class="top-bar">
+      <div class="brand-pill">
+        <img src="/public/mark.svg" alt="师说" />
+        <div>
+          <strong>师说 · 宣传片实战模拟</strong>
+          <div><span>PROGRESS BAR RUNNER</span></div>
+        </div>
+      </div>
+      <span class="scene-tag"><i></i>进度条联动奔跑演示</span>
+    </div>
+    <div class="runner-wrap">
+      <div class="runner-head">
+        <div>
+          <h2>放在宣传片底部：随进度条<span>一路奔跑</span>到终点</h2>
+          <p>独立双腿交替迈步 + 反相摆臂 + 长发后飘 + 头顶书本防滑晃动 + 脚底扬尘星光尾迹</p>
+        </div>
+        <div class="runner-pct-badge">
+          <small>视频进度</small>
+          <strong id="runner-pct">0%</strong>
+        </div>
+      </div>
+
+      <div class="promo-screen-frame">
+        <div class="promo-screen-inner">
+          <img class="promo-slide" id="slide-0" src="/promo/showcase/latest_assets/02_student_light.png" alt="学生答疑" />
+          <img class="promo-slide" id="slide-1" src="/promo/showcase/latest_assets/06_student_mentor.png" alt="AI 导师" />
+          <img class="promo-slide" id="slide-2" src="/promo/showcase/latest_assets/08_teacher_queue.png" alt="教师待办" />
+          <img class="promo-slide" id="slide-3" src="/promo/showcase/latest_assets/14_campus_home.png" alt="校园生活" />
+          <div class="promo-caption-pill">
+            <b id="slide-no">01</b>
+            <span id="slide-label">课后提问 · AI 检索课程知识库秒答</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-arena" id="progress-arena">
+        <canvas id="vfx-runner" class="progress-vfx"></canvas>
+        <div class="runner-actor" id="runner-actor">
+          <div class="runner-speech" id="runner-speech">冲呀！带你看下一站～</div>
+          <canvas id="rig-runner" class="rig-canvas"></canvas>
+        </div>
+        <div class="progress-track-shell">
+          <div class="progress-track-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-milestones">
+          <div class="ms-item" id="ms-0"><span class="ms-dot"></span>01 课后答疑 (0%)</div>
+          <div class="ms-item" id="ms-1"><span class="ms-dot"></span>02 AI 导师 (33%)</div>
+          <div class="ms-item" id="ms-2"><span class="ms-dot"></span>03 教师待办 (66%)</div>
+          <div class="ms-item" id="ms-3"><span class="ms-dot"></span>04 终点庆功 (100%)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 3: 全套动作 1-5 (11.5 - 16.5s) -->
+  <section id="sc-gal1" class="scene light-bg">
+    <div class="grid-overlay"></div>
+    <div class="top-bar">
+      <div class="brand-pill">
+        <img src="/public/mark.svg" alt="师说" />
+        <div><strong>师说 · 动作骨骼总览</strong><div><span>PART 1 / 2 · 基础与走位</span></div></div>
+      </div>
+      <span class="scene-tag"><i></i>动作 01 – 05 同屏实测</span>
+    </div>
+    <div class="gallery-wrap">
+      <div class="gallery-head">
+        <div>
+          <h2>全套骨骼动作总览 · <em>基础陪伴 &amp; 走位步态</em></h2>
+          <p>每套动作均内置独立头颈、双耳、发丝、书本、肢体与尾巴物理驱动</p>
+        </div>
+      </div>
+      <div class="gallery-grid" id="grid-1"></div>
+    </div>
+  </section>
+
+  <!-- ACT 4: 全套动作 6-10 (16.5 - 21.5s) -->
+  <section id="sc-gal2" class="scene light-bg">
+    <div class="grid-overlay"></div>
+    <div class="top-bar">
+      <div class="brand-pill">
+        <img src="/public/mark.svg" alt="师说" />
+        <div><strong>师说 · 动作骨骼总览</strong><div><span>PART 2 / 2 · 讲解与高潮</span></div></div>
+      </div>
+      <span class="scene-tag"><i></i>动作 06 – 10 同屏实测</span>
+    </div>
+    <div class="gallery-wrap">
+      <div class="gallery-head">
+        <div>
+          <h2>全套骨骼动作总览 · <em>讲解互动 &amp; 情绪高潮</em></h2>
+          <p>融入迪士尼 Squash &amp; Stretch 挤压拉伸法则，跳跃、讲解与指路更有生命力</p>
+        </div>
+      </div>
+      <div class="gallery-grid" id="grid-2"></div>
+    </div>
+  </section>
+
+  <!-- ACT 5: 重点动作高清特写 (21.5 - 29.5s) -->
+  <section id="sc-spot" class="scene dark-bg">
+    <div class="grid-overlay is-dark"></div>
+    <div class="top-bar">
+      <div class="brand-pill" style="color: var(--cream);">
+        <img src="/public/mark.svg" alt="师说" />
+        <div><strong>师说 · 骨骼细节特写</strong><div><span>CLOSE-UP RIG SPOTLIGHT</span></div></div>
+      </div>
+      <span class="scene-tag on-dark"><i></i>高频宣传片动作放大检视</span>
+    </div>
+    <div class="spot-wrap">
+      <div class="spot-stage-card">
+        <span class="spot-badge" id="spot-badge">ACTION 03 · RUN</span>
+        <div class="spot-canvas-box">
+          <canvas id="rig-spot" class="rig-canvas"></canvas>
+          <canvas id="vfx-spot" class="vfx-canvas"></canvas>
+        </div>
+      </div>
+      <div class="spot-copy">
+        <div class="spot-kicker" id="spot-kicker">PROGRESS BAR MOTION</div>
+        <h2 class="spot-title" id="spot-title">进度条冲刺奔跑</h2>
+        <p class="spot-desc" id="spot-desc"></p>
+        <div class="spot-bones" id="spot-bones"></div>
+        <div class="spot-usage" id="spot-usage"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 6: 片尾 (29.5 - 33.0s) -->
+  <section id="sc-outro" class="scene dark-bg">
+    <div class="grid-overlay is-dark"></div>
+    <div class="outro-wrap">
+      <div class="outro-avatar">
+        <canvas id="rig-outro" class="rig-canvas"></canvas>
+        <canvas id="vfx-outro" class="vfx-canvas"></canvas>
+      </div>
+      <h2 class="outro-title">全部 10 套骨骼动作<em>已就绪</em></h2>
+      <p class="outro-sub">可直接嵌入宣传片 HTML 进度条，或按需导出单动作透明 / 绿幕素材</p>
+      <div class="outro-pills">
+        <span>src/lib/avatarRig.ts</span>
+        <span>promo/avatar-showcase.html</span>
+        <span>1920×1080 · 30fps · 零外部依赖</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+import { AvatarMeshRig, AVATAR_ACTIONS } from './avatarRig.js'
+
+const params = new URLSearchParams(window.location.search)
+const exportMood = params.get('export')
+const exportBg = params.get('bg') || 'transparent'
+const TOTAL_DURATION = 35.0
+
+function clamp(v, a = 0, b = 1) { return Math.max(a, Math.min(b, v)) }
+function easeOutCubic(x) { return 1 - Math.pow(1 - clamp(x), 3) }
+
+function setupCanvasHiDpi(canvas, cssW, cssH) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  canvas.width = Math.round(cssW * dpr)
+  canvas.height = Math.round(cssH * dpr)
+  return dpr
+}
+
+/** 确定性粒子特效绘制（扬尘 / 金星 / 魔法光点） */
+function drawSparkles(ctx, w, h, t, mode, intensity = 1) {
+  ctx.clearRect(0, 0, w, h)
+  if (intensity <= 0.01) return
+  ctx.save()
+
+  if (mode === 'celebrate' || mode === 'happy') {
+    const count = mode === 'celebrate' ? 16 : 9
+    for (let i = 0; i < count; i++) {
+      const seed = i * 1.6180339
+      const cycle = ((t * (0.9 + (i % 4) * 0.22) + seed) % 1 + 1) % 1
+      const angle = (i / count) * Math.PI * 2 + Math.sin(t * 1.3 + i) * 0.2
+      const dist = (0.18 + cycle * 0.34) * Math.min(w, h)
+      const cx = w * 0.5 + Math.cos(angle) * dist
+      const cy = h * 0.44 + Math.sin(angle) * dist * 0.85 - cycle * 26
+      const alpha = Math.sin(cycle * Math.PI) * intensity * 0.92
+      const size = (4 + (i % 3) * 3) * (1 - cycle * 0.35)
+      ctx.save()
+      ctx.translate(cx, cy)
+      ctx.rotate(t * 2.5 + i)
+      ctx.fillStyle = i % 2 === 0 ? `rgba(228, 186, 89, ${alpha})` : `rgba(85, 211, 167, ${alpha})`
+      // 4角星
+      ctx.beginPath()
+      for (let k = 0; k < 8; k++) {
+        const r = k % 2 === 0 ? size : size * 0.36
+        const a = (k * Math.PI) / 4
+        const px = Math.cos(a) * r
+        const py = Math.sin(a) * r
+        if (k === 0) ctx.moveTo(px, py)
+        else ctx.lineTo(px, py)
+      }
+      ctx.closePath()
+      ctx.fill()
+      ctx.restore()
+    }
+  } else if (mode === 'answering' || mode === 'point') {
+    const originX = mode === 'point' ? w * 0.78 : w * 0.22
+    const originY = h * 0.42
+    for (let i = 0; i < 8; i++) {
+      const cycle = ((t * 1.15 + i * 0.19) % 1 + 1) % 1
+      const angle = -Math.PI * 0.8 + i * 0.75 + Math.sin(t * 2 + i) * 0.2
+      const r = (14 + cycle * 58) * (w / 540)
+      const px = originX + Math.cos(angle) * r
+      const py = originY + Math.sin(angle) * r - cycle * 18
+      const alpha = Math.sin(cycle * Math.PI) * 0.85 * intensity
+      const s = (5 + (i % 3) * 2.2) * (w / 540)
+      ctx.fillStyle = i % 2 === 0 ? `rgba(118, 232, 206, ${alpha})` : `rgba(232, 195, 98, ${alpha})`
+      ctx.beginPath()
+      ctx.arc(px, py, s * 0.45, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  } else if (mode === 'run') {
+    // 脚底奔跑小尘烟
+    for (let i = 0; i < 6; i++) {
+      const cycle = ((t * 2.8 + i * 0.166) % 1 + 1) % 1
+      const px = w * (0.44 - cycle * 0.32)
+      const py = h * (0.87 - Math.sin(cycle * Math.PI) * 0.06)
+      const rad = (6 + cycle * 16) * (w / 540)
+      const alpha = (1 - cycle) * 0.38 * intensity
+      ctx.fillStyle = `rgba(235, 228, 210, ${alpha})`
+      ctx.beginPath()
+      ctx.arc(px, py, rad, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  ctx.restore()
+}
+
+/** 进度条赛道专用脚底尘烟与金星尾迹 */
+function drawRunnerTrackVfx(ctx, w, h, t, runnerX, isCelebrate) {
+  ctx.clearRect(0, 0, w, h)
+  ctx.save()
+  if (!isCelebrate) {
+    for (let i = 0; i < 14; i++) {
+      const cycle = ((t * 3.2 + i * 0.071) % 1 + 1) % 1
+      const px = runnerX - 24 - cycle * 180
+      if (px < 48) continue
+      const py = h - 72 - Math.sin(cycle * Math.PI) * 18 - (i % 3) * 5
+      const alpha = (1 - cycle) * 0.52
+      if (i % 3 === 0) {
+        ctx.fillStyle = `rgba(224, 180, 83, ${alpha * 1.3})`
+        ctx.beginPath()
+        ctx.arc(px, py - 8, 3.5 * (1 - cycle * 0.4), 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.fillStyle = `rgba(20, 108, 86, ${alpha * 0.32})`
+        ctx.beginPath()
+        ctx.arc(px, py, 6 + cycle * 11, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+  } else {
+    // 到达终点烟花金星
+    for (let i = 0; i < 22; i++) {
+      const cycle = ((t * 1.4 + i * 0.13) % 1 + 1) % 1
+      const ang = (i / 22) * Math.PI * 2
+      const dist = 26 + cycle * 130
+      const px = runnerX + Math.cos(ang) * dist
+      const py = h - 138 + Math.sin(ang) * dist * 0.72 - cycle * 20
+      const alpha = Math.sin(cycle * Math.PI) * 0.95
+      ctx.fillStyle = i % 2 === 0 ? `rgba(224, 180, 83, ${alpha})` : `rgba(47, 138, 112, ${alpha})`
+      ctx.beginPath()
+      ctx.arc(px, py, 4.5 * (1 - cycle * 0.4), 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  ctx.restore()
+}
+
+// ============================================================
+// 单动作导出模式 (?export=run&bg=green)
+// ============================================================
+if (exportMood) {
+  document.body.classList.add('export-mode')
+  document.body.style.background = exportBg === 'green' ? '#00ff00' : 'transparent'
+  const rigCanvas = document.getElementById('export-rig')
+  const vfxCanvas = document.getElementById('export-vfx')
+  setupCanvasHiDpi(rigCanvas, 720, 720)
+  setupCanvasHiDpi(vfxCanvas, 720, 720)
+  const vfxCtx = vfxCanvas.getContext('2d')
+  const rig = new AvatarMeshRig(rigCanvas, '/public/avatar')
+  const flipX = params.get('flip') === '1' ? true : undefined
+
+  window.__render = (t) => {
+    rig.render(t, 1 / 30, { mood: exportMood, pointerX: 0, pointerY: 0, flipX })
+    drawSparkles(vfxCtx, vfxCanvas.width, vfxCanvas.height, t, exportMood, 1)
+  }
+
+  rig.preloadAll().then(() => {
+    window.__render(0)
+    window.__ready = true
+    if (!params.get('manual')) {
+      const t0 = performance.now()
+      const loop = (now) => {
+        window.__render((now - t0) / 1000)
+        requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    }
+  })
+} else {
+  // ============================================================
+  // 完整 33 秒 1080p 展示片模式
+  // ============================================================
+  const rigs = []
+  function createRig(canvasId, cssW, cssH) {
+    const canvas = document.getElementById(canvasId)
+    setupCanvasHiDpi(canvas, cssW, cssH)
+    const rig = new AvatarMeshRig(canvas, '/public/avatar')
+    rigs.push(rig)
+    return { rig, canvas }
+  }
+
+  // 构建 10 张画廊卡片
+  const gal1Rigs = []
+  const gal2Rigs = []
+  function buildGallery(containerId, list, offsetNum, targetArr) {
+    const root = document.getElementById(containerId)
+    list.forEach((act, idx) => {
+      const card = document.createElement('article')
+      card.className = 'action-card'
+      const hasTrack = act.id === 'run' || act.id === 'walk'
+      card.innerHTML = `
+        <div class="action-card-top">
+          <span class="action-num">${String(offsetNum + idx + 1).padStart(2, '0')}</span>
+          <span class="action-cat">${act.category}</span>
+        </div>
+        <div class="action-stage">
+          <canvas class="rig-canvas" id="rig-card-${act.id}"></canvas>
+          ${hasTrack ? `<div class="mini-track"><div class="mini-track-dashes" id="dash-${act.id}"></div></div>` : ''}
+        </div>
+        <div class="action-title">
+          <span>${act.label}</span>
+          <code>${act.id}</code>
+        </div>
+        <p class="action-summary">${act.summary}</p>
+        <div class="action-tags">
+          ${act.rigFeatures.slice(0, 4).map((f) => `<span>${f}</span>`).join('')}
+        </div>
+      `
+      root.appendChild(card)
+      const { rig } = createRig(`rig-card-${act.id}`, 310, 310)
+      targetArr.push({
+        id: act.id,
+        rig,
+        dashEl: hasTrack ? document.getElementById(`dash-${act.id}`) : null,
+      })
+    })
+  }
+  buildGallery('grid-1', AVATAR_ACTIONS.slice(0, 5), 0, gal1Rigs)
+  buildGallery('grid-2', AVATAR_ACTIONS.slice(5, 10), 5, gal2Rigs)
+
+  const openRig = createRig('rig-open', 560, 560)
+  const openVfx = document.getElementById('vfx-open')
+  setupCanvasHiDpi(openVfx, 560, 560)
+  const openVfxCtx = openVfx.getContext('2d')
+
+  const runnerRig = createRig('rig-runner', 168, 168)
+  const runnerVfx = document.getElementById('vfx-runner')
+  const arenaEl = document.getElementById('progress-arena')
+  setupCanvasHiDpi(runnerVfx, 1728, 224)
+  const runnerVfxCtx = runnerVfx.getContext('2d')
+
+  const spotRig = createRig('rig-spot', 540, 540)
+  const spotVfx = document.getElementById('vfx-spot')
+  setupCanvasHiDpi(spotVfx, 540, 540)
+  const spotVfxCtx = spotVfx.getContext('2d')
+
+  const outroRig = createRig('rig-outro', 340, 340)
+  const outroVfx = document.getElementById('vfx-outro')
+  setupCanvasHiDpi(outroVfx, 340, 340)
+  const outroVfxCtx = outroVfx.getContext('2d')
+
+  const scenes = {
+    open: document.getElementById('sc-open'),
+    runner: document.getElementById('sc-runner'),
+    gal1: document.getElementById('sc-gal1'),
+    gal2: document.getElementById('sc-gal2'),
+    spot: document.getElementById('sc-spot'),
+    outro: document.getElementById('sc-outro'),
+  }
+
+  const SLIDE_INFO = [
+    { no: '01', label: '学生课后提问 · AI 检索课程知识库秒答', speech: '出发！先看学生课后答疑～' },
+    { no: '02', label: 'AI 学科导师 · 32 位学科导师定位卡点', speech: '下一站：AI 学科导师抽屉！' },
+    { no: '03', label: '教师待办台 · 同题自动归并、一次回复整组', speech: '老师精答沉淀 FAQ，冲刺中！' },
+    { no: '04', label: '校园生活全场景 · 课表、地图与食堂决策', speech: '到达终点啦！师说全场景搞定✨' },
+  ]
+
+  const SPOTLIGHTS = [
+    {
+      mood: 'wave',
+      badge: 'ACTION 02 · WAVE (肘腕柔顺分臂)',
+      kicker: 'HIERARCHICAL ARM RIG',
+      title: '亲切挥手问好',
+      desc: '肩部袖口锁死零割裂，前臂绕肘关节克制摆动并叠加手腕二次弹性滞后；背面补全原画长发，大特写下脸颊与袖口都自然柔顺！',
+      bones: [
+        { name: '肘腕二级柔顺挥动', val: '前臂 -9°~+4.5° + 手腕滞后', pct: 95 },
+        { name: '肩缝与面部双隔离', val: '肩部锁缝 + 零拉扯脸颊', pct: 100 },
+        { name: '亲切歪头与眨眼', val: '自然双连眨眼', pct: 86 },
+        { name: '双耳欢抖与摇尾', val: '5.8 rad/s 轻快节拍', pct: 84 },
+      ],
+      usage: '<strong>宣传片建议用法：</strong>片头开场亮相或片尾挥手致谢，大特写下肩袖贴合、五官零变形，亲和力拉满。',
+    },
+    {
+      mood: 'run',
+      badge: 'ACTION 03 · RUN',
+      kicker: 'PROGRESS BAR SPRINT',
+      title: '进度条冲刺奔跑',
+      desc: '4 层独立侧身骨骼协同：后臂、后腿（景深暗化）、前腿、身体网格与前臂实时反相驱动，搭配前倾弹跳、长发后飘与书本防滑惯性。',
+      bones: [
+        { name: '双腿独立跨步', val: '±39° 反相循环', pct: 96 },
+        { name: '前后手臂摆动', val: '±37° 步态同步', pct: 90 },
+        { name: '长发与尾巴飘动', val: '风阻波浪滞后', pct: 86 },
+        { name: '头顶书本平衡', val: '惯性防滑微晃', pct: 78 },
+      ],
+      usage: '<strong>宣传片建议用法：</strong>固定在底部或顶部进度条进度点上方，随视频播放时间从 0% 跑到 100%，大幅提升整片活感与趣味记忆点。',
+    },
+    {
+      mood: 'answering',
+      badge: 'ACTION 06 · ANSWERING',
+      kicker: 'LIVE EXPLANATION',
+      title: '魔杖挥舞讲解',
+      desc: '结合拟人讲话嘴型节奏开合与同步眨眼，星形魔杖划出魔法讲解弧线，笔记本随节拍轻晃，自然呼应旁白配音。',
+      bones: [
+        { name: '拟人说话嘴型', val: '多频顿挫开合', pct: 95 },
+        { name: '星形魔杖挥舞', val: '弧线节奏引导', pct: 88 },
+        { name: '讲课头部点头', val: '重音微幅强调', pct: 80 },
+        { name: '自然双连眨眼', val: '3.6s 拟真周期', pct: 84 },
+      ],
+      usage: '<strong>宣传片建议用法：</strong>叠加在旁白解说功能原理的画面角落（如 AI 检索原理、双通道架构页），让旁白有“会说话的主讲人”。',
+    },
+    {
+      mood: 'point',
+      badge: 'ACTION 07 · POINT',
+      kicker: 'FEATURE CALLOUT',
+      title: '界面指路聚焦',
+      desc: '面向右侧产品展示区自然探身前倾，魔杖做双连点指节奏聚焦界面亮点，同时开口解说并伴随柔和星光提示。',
+      bones: [
+        { name: '向右探身前倾', val: '视线与身体引导', pct: 92 },
+        { name: '双连点指魔杖', val: '精准聚焦重点', pct: 94 },
+        { name: '同步解说嘴型', val: '自然口型节奏', pct: 88 },
+        { name: '尾巴与狼耳互动', val: '情绪活力反馈', pct: 76 },
+      ],
+      usage: '<strong>宣传片建议用法：</strong>放在左侧字幕或卡片旁，指向右侧放大的产品截图高亮区（如置信度徽标、同题合并按钮）。',
+    },
+    {
+      mood: 'celebrate',
+      badge: 'ACTION 10 · CELEBRATE',
+      kicker: 'FINALE & MILESTONE',
+      title: '魔法跃起庆功',
+      desc: '引入迪士尼动画 Squash & Stretch 挤压拉伸法则：先蓄力下蹲压缩、再高高跃起拉伸、空中欢呼甩头并伴随书本凌空回弹与金星撒花。',
+      bones: [
+        { name: '蓄力挤压与高跃', val: 'Squash & Stretch', pct: 98 },
+        { name: '长发裙摆飞扬', val: '腾空离心展开', pct: 90 },
+        { name: '尾巴极限快摇', val: '9.2 rad/s 欢腾', pct: 96 },
+        { name: '头顶书本滞后', val: '凌空浮落回弹', pct: 85 },
+      ],
+      usage: '<strong>宣传片建议用法：</strong>用于数据里程碑揭晓（如 157/157 评测全通过）、进度条到达 100% 终点或片尾收束高潮。',
+    },
+  ]
+
+  function setSceneOpacity(el, op) {
+    el.style.opacity = op.toFixed(3)
+    el.style.visibility = op > 0.004 ? 'visible' : 'hidden'
+  }
+
+  function bandAlpha(t, start, end, fade = 0.35) {
+    if (t < start || t > end) return 0
+    const fadeIn = clamp((t - start) / fade)
+    const fadeOut = clamp((end - t) / fade)
+    return Math.min(fadeIn, fadeOut)
+  }
+
+  let lastSpotIndex = -1
+
+  window.__render = (t) => {
+    const dt = 1 / 30
+
+    // Act 1: 0.0 - 3.6s
+    const aOpen = t < 0.2 ? 1 : bandAlpha(t, -0.5, 3.65, 0.38)
+    setSceneOpacity(scenes.open, aOpen)
+    if (aOpen > 0) {
+      openRig.rig.render(t, dt, {
+        mood: 'wave',
+        pointerX: Math.sin(t * 1.4) * 0.4,
+        pointerY: Math.cos(t * 1.1) * 0.15,
+      })
+      drawSparkles(openVfxCtx, openVfx.width, openVfx.height, t, 'happy', 0.85)
+    }
+
+    // Act 2: 3.35 - 11.65s (Progress Bar Runner Demo)
+    const aRun = bandAlpha(t, 3.3, 11.65, 0.38)
+    setSceneOpacity(scenes.runner, aRun)
+    if (aRun > 0) {
+      const localT = clamp(t - 3.6, 0, 8.0)
+      // 0..6.3s 奔跑 0% -> 100%, 6.3..8.0s 到达终点庆功！
+      const runProgress = clamp(localT / 6.3, 0, 1)
+      const easedProg = runProgress < 1 ? runProgress : 1
+      const pct = Math.round(easedProg * 100)
+      document.getElementById('runner-pct').textContent = `${pct}%`
+      document.getElementById('progress-fill').style.width = `${easedProg * 100}%`
+
+      // 跑道像素范围：左 56px 到右 1672px (arena width 1728)
+      const trackLeft = 56
+      const trackW = 1728 - 112
+      const runnerX = trackLeft + easedProg * trackW
+      const actor = document.getElementById('runner-actor')
+      actor.style.left = `${runnerX}px`
+
+      const isCelebrate = localT >= 6.25
+      runnerRig.rig.render(t, dt, {
+        mood: isCelebrate ? 'celebrate' : 'run',
+        pointerX: 0,
+        pointerY: 0,
+      })
+
+      const dpr = runnerVfx.width / 1728
+      drawRunnerTrackVfx(runnerVfxCtx, runnerVfx.width, runnerVfx.height, t, runnerX * dpr, isCelebrate)
+
+      const slideIdx = isCelebrate ? 3 : Math.min(3, Math.floor(easedProg * 3.15))
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`slide-${i}`).style.opacity = i === slideIdx ? '1' : '0'
+        document.getElementById(`ms-${i}`).classList.toggle('is-reached', easedProg >= i / 3 - 0.01)
+      }
+      document.getElementById('slide-no').textContent = SLIDE_INFO[slideIdx].no
+      document.getElementById('slide-label').textContent = SLIDE_INFO[slideIdx].label
+      document.getElementById('runner-speech').textContent = SLIDE_INFO[slideIdx].speech
+    }
+
+    // Act 3: 11.35 - 16.65s (Gallery 1-5)
+    const aGal1 = bandAlpha(t, 11.35, 16.65, 0.36)
+    setSceneOpacity(scenes.gal1, aGal1)
+    if (aGal1 > 0) {
+      for (const item of gal1Rigs) {
+        item.rig.render(t, dt, {
+          mood: item.id,
+          pointerX: item.id === 'idle' ? Math.sin(t * 1.8) * 0.75 : 0,
+          pointerY: item.id === 'idle' ? Math.cos(t * 1.3) * 0.25 : 0,
+        })
+        if (item.dashEl) {
+          const speed = item.id === 'run' ? 210 : 88
+          item.dashEl.style.backgroundPosition = `${-((t * speed) % 48)}px 0`
+        }
+      }
+    }
+
+    // Act 4: 16.35 - 21.65s (Gallery 6-10)
+    const aGal2 = bandAlpha(t, 16.35, 21.65, 0.36)
+    setSceneOpacity(scenes.gal2, aGal2)
+    if (aGal2 > 0) {
+      for (const item of gal2Rigs) {
+        item.rig.render(t, dt, { mood: item.id, pointerX: 0, pointerY: 0 })
+      }
+    }
+
+    // Act 5: 21.35 - 31.65s (Spotlight 5 × 2.0s)
+    const aSpot = bandAlpha(t, 21.35, 31.65, 0.36)
+    setSceneOpacity(scenes.spot, aSpot)
+    if (aSpot > 0) {
+      const spT = clamp(t - 21.5, 0, 9.99)
+      const spIdx = Math.min(4, Math.floor(spT / 2.0))
+      const sp = SPOTLIGHTS[spIdx]
+      if (spIdx !== lastSpotIndex) {
+        lastSpotIndex = spIdx
+        document.getElementById('spot-badge').textContent = sp.badge
+        document.getElementById('spot-kicker').textContent = sp.kicker
+        document.getElementById('spot-title').textContent = sp.title
+        document.getElementById('spot-desc').textContent = sp.desc
+        document.getElementById('spot-usage').innerHTML = sp.usage
+        document.getElementById('spot-bones').innerHTML = sp.bones
+          .map(
+            (b) => `
+            <div class="bone-meter">
+              <div class="bone-meter-top"><b>${b.name}</b><span>${b.val}</span></div>
+              <div class="bone-bar"><i style="width:${b.pct}%"></i></div>
+            </div>`,
+          )
+          .join('')
+      }
+      spotRig.rig.render(t, dt, { mood: sp.mood, pointerX: 0, pointerY: 0 })
+      drawSparkles(spotVfxCtx, spotVfx.width, spotVfx.height, t, sp.mood === 'wave' ? 'happy' : sp.mood, 1)
+    }
+
+    // Act 6: 31.35 - 35.0s (Outro)
+    const aOutro = bandAlpha(t, 31.35, 36.0, 0.38)
+    setSceneOpacity(scenes.outro, aOutro)
+    if (aOutro > 0) {
+      outroRig.rig.render(t, dt, {
+        mood: t > 33.3 ? 'celebrate' : 'wave',
+        pointerX: Math.sin(t * 1.6) * 0.3,
+        pointerY: 0,
+      })
+      drawSparkles(outroVfxCtx, outroVfx.width, outroVfx.height, t, t > 33.3 ? 'celebrate' : 'happy', 0.9)
+    }
+  }
+
+  window.__TOTAL__ = TOTAL_DURATION
+
+  // 预加载全部贴图与截图
+  const imgPromises = Array.from(document.querySelectorAll('img')).map(
+    (img) =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise((res) => {
+            img.onload = res
+            img.onerror = res
+          }),
+  )
+
+  Promise.all([...rigs.map((r) => r.preloadAll()), ...imgPromises, document.fonts.ready]).then(() => {
+    window.__render(0)
+    window.__ready = true
+    if (!params.get('manual')) {
+      const t0 = performance.now()
+      const loop = (now) => {
+        const sec = ((now - t0) / 1000) % TOTAL_DURATION
+        window.__render(sec)
+        requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    }
+  })
+}
+</script>
+</body>
+</html>

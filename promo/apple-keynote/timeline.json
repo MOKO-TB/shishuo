@@ -1,0 +1,616 @@
+{
+  "title": "师说 · 苹果发布会旗舰版宣传片",
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "fps": 30,
+  "total": 231.022,
+  "acts": [
+    {
+      "id": "act1",
+      "name": "深夜的沉默",
+      "start": 0.0,
+      "end": 17.886,
+      "dur": 17.886,
+      "lead_in": 1.0,
+      "line_ids": [
+        "a1_1",
+        "a1_2",
+        "a1_3",
+        "a1_4"
+      ]
+    },
+    {
+      "id": "act2",
+      "name": "师说登场",
+      "start": 17.886,
+      "end": 36.039,
+      "dur": 18.153,
+      "lead_in": 0.7,
+      "line_ids": [
+        "a2_1",
+        "a2_2",
+        "a2_3",
+        "a2_4"
+      ]
+    },
+    {
+      "id": "act3",
+      "name": "双通道接力引擎",
+      "start": 36.039,
+      "end": 56.449,
+      "dur": 20.41,
+      "lead_in": 0.65,
+      "line_ids": [
+        "a3_1",
+        "a3_2",
+        "a3_3",
+        "a3_4"
+      ]
+    },
+    {
+      "id": "act4",
+      "name": "学生端体验",
+      "start": 56.449,
+      "end": 82.21,
+      "dur": 25.761,
+      "lead_in": 0.6,
+      "line_ids": [
+        "a4_1",
+        "a4_2",
+        "a4_3",
+        "a4_4",
+        "a4_5",
+        "a4_6"
+      ]
+    },
+    {
+      "id": "act5",
+      "name": "AI 导师 · 文理都能问",
+      "start": 82.21,
+      "end": 112.486,
+      "dur": 30.276,
+      "lead_in": 0.6,
+      "line_ids": [
+        "a5_1",
+        "a5_2",
+        "a5_3",
+        "a5_4",
+        "a5_5"
+      ]
+    },
+    {
+      "id": "act6",
+      "name": "教师端工作台",
+      "start": 112.486,
+      "end": 147.029,
+      "dur": 34.543,
+      "lead_in": 0.7,
+      "line_ids": [
+        "a6_1",
+        "a6_2",
+        "a6_3",
+        "a6_4",
+        "a6_5",
+        "a6_6",
+        "a6_7"
+      ]
+    },
+    {
+      "id": "act7",
+      "name": "不止课堂 · 校园生态",
+      "start": 147.029,
+      "end": 171.056,
+      "dur": 24.027,
+      "lead_in": 0.6,
+      "line_ids": [
+        "a7_1",
+        "a7_2",
+        "a7_3",
+        "a7_4",
+        "a7_5"
+      ]
+    },
+    {
+      "id": "act8",
+      "name": "手机客户端与可信底座",
+      "start": 171.056,
+      "end": 198.923,
+      "dur": 27.867,
+      "lead_in": 0.6,
+      "line_ids": [
+        "a8_1",
+        "a8_2",
+        "a8_3",
+        "a8_4"
+      ]
+    },
+    {
+      "id": "act9",
+      "name": "硬核实证 · Bento 全景",
+      "start": 198.923,
+      "end": 217.4,
+      "dur": 18.477,
+      "lead_in": 0.6,
+      "line_ids": [
+        "a9_1",
+        "a9_2",
+        "a9_3",
+        "a9_4"
+      ]
+    },
+    {
+      "id": "act10",
+      "name": "终章 · 让问题有回响",
+      "start": 217.4,
+      "end": 231.022,
+      "dur": 13.622,
+      "lead_in": 0.8,
+      "line_ids": [
+        "a10_1",
+        "a10_2",
+        "a10_3"
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "id": "a1_1",
+      "act": "act1",
+      "scene": "opening_void",
+      "text": "下课铃响，真正的思考才刚开始。",
+      "start": 1.0,
+      "end": 3.648,
+      "dur": 2.648,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a1_2",
+      "act": "act1",
+      "scene": "opening_pain",
+      "text": "深夜推导卡壳，代码报错，波形对不上。",
+      "start": 4.098,
+      "end": 7.351,
+      "dur": 3.252,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a1_3",
+      "act": "act1",
+      "scene": "opening_three",
+      "text": "问同学没人回，问通用 AI 怕编造又对不上课本，找老师又怕打扰。",
+      "start": 7.801,
+      "end": 13.525,
+      "dur": 5.724,
+      "pause_after": 0.6
+    },
+    {
+      "id": "a1_4",
+      "act": "act1",
+      "scene": "opening_silence",
+      "text": "无数本该被点亮的瞬间，留在了沉默里。",
+      "start": 14.125,
+      "end": 17.236,
+      "dur": 3.111,
+      "pause_after": 0.65
+    },
+    {
+      "id": "a2_1",
+      "act": "act2",
+      "scene": "brand_beam",
+      "text": "于是，我们重构了高校课后答疑。",
+      "start": 18.586,
+      "end": 21.118,
+      "dur": 2.533,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a2_2",
+      "act": "act2",
+      "scene": "brand_reveal",
+      "text": "这就是，师说。",
+      "start": 21.518,
+      "end": 22.885,
+      "dur": 1.367,
+      "pause_after": 0.75
+    },
+    {
+      "id": "a2_3",
+      "act": "act2",
+      "scene": "brand_tagline",
+      "text": "课后敢问，课上讲透。不是替老师回答，而是让老师看见全班没弄懂的地方，然后讲得更准。",
+      "start": 23.635,
+      "end": 31.368,
+      "dur": 7.732,
+      "pause_after": 0.7
+    },
+    {
+      "id": "a2_4",
+      "act": "act2",
+      "scene": "brand_stage",
+      "text": "每句有出处，每问有回音，每课有积累。",
+      "start": 32.068,
+      "end": 35.289,
+      "dur": 3.221,
+      "pause_after": 0.75
+    },
+    {
+      "id": "a3_1",
+      "act": "act3",
+      "scene": "engine_overview",
+      "text": "我们打造了一条严谨的双通道接力引擎。",
+      "start": 36.689,
+      "end": 39.484,
+      "dur": 2.796,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a3_2",
+      "act": "act3",
+      "scene": "engine_retrieve",
+      "text": "学生发问，先检索课程知识库，标明出处与三档置信度。",
+      "start": 39.934,
+      "end": 44.761,
+      "dur": 4.826,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a3_3",
+      "act": "act3",
+      "scene": "engine_honest",
+      "text": "有依据立刻答；证据不足绝不编造，诚实拒答并转交老师。",
+      "start": 45.211,
+      "end": 50.256,
+      "dur": 5.045,
+      "pause_after": 0.5
+    },
+    {
+      "id": "a3_4",
+      "act": "act3",
+      "scene": "engine_courses",
+      "text": "已深耕高数、数据结构、电路、模电、数电五门核心课。",
+      "start": 50.756,
+      "end": 55.749,
+      "dur": 4.993,
+      "pause_after": 0.7
+    },
+    {
+      "id": "a4_1",
+      "act": "act4",
+      "scene": "stu_home",
+      "text": "学生端，一切围绕专注与效率。",
+      "start": 57.049,
+      "end": 59.521,
+      "dur": 2.472,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a4_2",
+      "act": "act4",
+      "scene": "stu_input",
+      "text": "支持文字、语音、拍照识题与讲义文档提问。",
+      "start": 59.921,
+      "end": 63.783,
+      "dur": 3.862,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a4_3",
+      "act": "act4",
+      "scene": "stu_privacy",
+      "text": "文件先在浏览器本机解析，经你确认才发送。",
+      "start": 64.183,
+      "end": 67.708,
+      "dur": 3.525,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a4_4",
+      "act": "act4",
+      "scene": "stu_thread",
+      "text": "输入即匹配相近知识与同题组，轻点同问，少排一次队。",
+      "start": 68.158,
+      "end": 72.749,
+      "dur": 4.591,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a4_5",
+      "act": "act4",
+      "scene": "stu_archive",
+      "text": "回答以公式精排流式呈现，追问上下文连贯。",
+      "start": 73.199,
+      "end": 76.871,
+      "dur": 3.672,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a4_6",
+      "act": "act4",
+      "scene": "stu_review",
+      "text": "问答自动归档并支持导出，错题汇入复习卡自测。",
+      "start": 77.321,
+      "end": 81.56,
+      "dur": 4.239,
+      "pause_after": 0.65
+    },
+    {
+      "id": "a5_1",
+      "act": "act5",
+      "scene": "avatar_stage",
+      "text": "这是书灵，常驻桌面的伴学助教，也是 AI 导师的入口。",
+      "start": 82.81,
+      "end": 87.151,
+      "dur": 4.341,
+      "pause_after": 0.35
+    },
+    {
+      "id": "a5_2",
+      "act": "act5",
+      "scene": "mentor_library",
+      "text": "内置三十三位学科导师，五位试点默认开启，其余随选随加；近现代史、艺术概论、心理学、微观经济学，都能问。",
+      "start": 87.501,
+      "end": 97.334,
+      "dur": 9.832,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a5_3",
+      "act": "act5",
+      "scene": "mentor_method",
+      "text": "它展开知识地图，定位卡点、查先修，点破关键一步。",
+      "start": 97.784,
+      "end": 102.222,
+      "dur": 4.438,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a5_4",
+      "act": "act5",
+      "scene": "tool_kmap",
+      "text": "针对工科难点，更内置了交互式学科实验室。",
+      "start": 102.672,
+      "end": 106.192,
+      "dur": 3.52,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a5_5",
+      "act": "act5",
+      "scene": "tool_analog",
+      "text": "数电卡诺图化简与时序波形，模电静态工作点，步步可视验证。",
+      "start": 106.592,
+      "end": 111.786,
+      "dur": 5.194,
+      "pause_after": 0.7
+    },
+    {
+      "id": "a6_1",
+      "act": "act6",
+      "scene": "tea_intro",
+      "text": "切换视角，来到教师工作台。",
+      "start": 113.186,
+      "end": 115.487,
+      "dur": 2.301,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a6_2",
+      "act": "act6",
+      "scene": "tea_queue",
+      "text": "老师的时间，不该耗在重复回答基础题上。",
+      "start": 115.937,
+      "end": 119.236,
+      "dur": 3.3,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a6_3",
+      "act": "act6",
+      "scene": "tea_drawer",
+      "text": "相似提问自动合并同题组，AI 备齐依据与回复草稿。",
+      "start": 119.636,
+      "end": 124.322,
+      "dur": 4.686,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a6_4",
+      "act": "act6",
+      "scene": "tea_precipitate",
+      "text": "精答一次即同步整组并沉淀为 FAQ，下次 AI 直接命中。",
+      "start": 124.772,
+      "end": 130.216,
+      "dur": 5.444,
+      "pause_after": 0.5
+    },
+    {
+      "id": "a6_5",
+      "act": "act6",
+      "scene": "tea_kb",
+      "text": "回复支持一键撤回，知识库按快照安全回滚。",
+      "start": 130.716,
+      "end": 134.458,
+      "dur": 3.742,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a6_6",
+      "act": "act6",
+      "scene": "tea_feedback",
+      "text": "支持资料正文解析与口语别名；两次负反馈自动降权提醒。",
+      "start": 134.858,
+      "end": 139.801,
+      "dur": 4.943,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a6_7",
+      "act": "act6",
+      "scene": "tea_insights",
+      "text": "答疑洞察呈现 AI 解决率、首响与章节卡点热力，帮老师把课讲得更准。",
+      "start": 140.251,
+      "end": 146.279,
+      "dur": 6.028,
+      "pause_after": 0.75
+    },
+    {
+      "id": "a7_1",
+      "act": "act7",
+      "scene": "campus_intro",
+      "text": "大学生的困惑，从不止于课本。",
+      "start": 147.629,
+      "end": 149.93,
+      "dur": 2.301,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a7_2",
+      "act": "act7",
+      "scene": "campus_kb",
+      "text": "课上问老师，课下问引路学长。",
+      "start": 150.33,
+      "end": 152.884,
+      "dur": 2.553,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a7_3",
+      "act": "act7",
+      "scene": "campus_map",
+      "text": "八百零四条校园经验卡明标可信度，盲区直转校园主理人。",
+      "start": 153.284,
+      "end": 158.134,
+      "dur": 4.85,
+      "pause_after": 0.5
+    },
+    {
+      "id": "a7_4",
+      "act": "act7",
+      "scene": "campus_tools",
+      "text": "三十六栋手绘地图、图书馆找书、GPA 试算与三千七百多道食堂菜品推荐一应俱全。",
+      "start": 158.634,
+      "end": 165.702,
+      "dur": 7.068,
+      "pause_after": 0.5
+    },
+    {
+      "id": "a7_5",
+      "act": "act7",
+      "scene": "campus_chaoxing",
+      "text": "扫码只读同步学习通消息作业与课表，零密码留存。",
+      "start": 166.202,
+      "end": 170.406,
+      "dur": 4.204,
+      "pause_after": 0.65
+    },
+    {
+      "id": "a8_1",
+      "act": "act8",
+      "scene": "plat_dark",
+      "text": "师说不仅有网页端，更打造了原生 Android 手机客户端。",
+      "start": 171.656,
+      "end": 175.989,
+      "dur": 4.333,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a8_2",
+      "act": "act8",
+      "scene": "plat_mobile",
+      "text": "桌面课程表小组件实时高亮当前课程；后台系统级消息通知及时推送老师回复，更有隐私拍题与学习通一键直达。",
+      "start": 176.439,
+      "end": 185.988,
+      "dur": 9.549,
+      "pause_after": 0.55
+    },
+    {
+      "id": "a8_3",
+      "act": "act8",
+      "scene": "plat_admin",
+      "text": "独立管理台集九大模块，覆盖角色隔离、操作审计与内容核实。",
+      "start": 186.538,
+      "end": 192.06,
+      "dur": 5.522,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a8_4",
+      "act": "act8",
+      "scene": "plat_security",
+      "text": "密钥仅存服务端 AI 网关，提示词自动脱敏，严守风控与安全底线。",
+      "start": 192.51,
+      "end": 198.223,
+      "dur": 5.713,
+      "pause_after": 0.7
+    },
+    {
+      "id": "a9_1",
+      "act": "act9",
+      "scene": "bento_intro",
+      "text": "一切设计，以真实数据为证。",
+      "start": 199.523,
+      "end": 201.751,
+      "dur": 2.228,
+      "pause_after": 0.4
+    },
+    {
+      "id": "a9_2",
+      "act": "act9",
+      "scene": "bento_numbers",
+      "text": "五门核心课，八十一条精修 FAQ，一百五十七道评测全部通过。",
+      "start": 202.151,
+      "end": 207.478,
+      "dur": 5.327,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a9_3",
+      "act": "act9",
+      "scene": "bento_ecosystem",
+      "text": "三十三位 AI 导师，八百零四条校园经验卡，九大管理治理模块。",
+      "start": 207.928,
+      "end": 213.18,
+      "dur": 5.252,
+      "pause_after": 0.45
+    },
+    {
+      "id": "a9_4",
+      "act": "act9",
+      "scene": "bento_summary",
+      "text": "真实部署、全端协同的教学协作系统。",
+      "start": 213.63,
+      "end": 216.7,
+      "dur": 3.07,
+      "pause_after": 0.7
+    },
+    {
+      "id": "a10_1",
+      "act": "act10",
+      "scene": "outro_quote1",
+      "text": "课后敢问，课上讲透。",
+      "start": 218.2,
+      "end": 220.006,
+      "dur": 1.806,
+      "pause_after": 0.6
+    },
+    {
+      "id": "a10_2",
+      "act": "act10",
+      "scene": "outro_quote2",
+      "text": "老师写下的每一句话，都成为 AI 的第一反应。",
+      "start": 220.606,
+      "end": 224.0,
+      "dur": 3.394,
+      "pause_after": 0.75
+    },
+    {
+      "id": "a10_3",
+      "act": "act10",
+      "scene": "outro_brand",
+      "text": "师说。让每个课后问题，都有回响。",
+      "start": 224.75,
+      "end": 228.022,
+      "dur": 3.272,
+      "pause_after": 3.0
+    }
+  ]
+}

@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>师说 · 功能演示</title>
+<style>
+@font-face {
+  font-family: 'DemoSans';
+  src: url('/promo/apple-keynote/fonts/NotoSansSC-VF.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: 'DemoSerif';
+  src: url('/promo/apple-keynote/fonts/NotoSerifSC-VF.ttf') format('truetype');
+  font-weight: 200 900;
+  font-display: block;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body {
+  width: 1920px; height: 1080px; overflow: hidden;
+  background: #030806;
+  font-family: 'DemoSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #F5F1E8; user-select: none;
+}
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+#bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(1100px 760px at 82% -8%, rgba(16,185,129,.16), transparent 62%),
+    radial-gradient(900px 680px at -6% 108%, rgba(13,148,136,.10), transparent 58%),
+    linear-gradient(145deg, #07130E 0%, #040A07 55%, #020604 100%);
+}
+#grid {
+  position: absolute; inset: 0; opacity: .055;
+  background-image:
+    linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 20%, transparent 78%);
+}
+#vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 46%, transparent 46%, rgba(0,0,0,.52) 100%);
+}
+#topbar {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 3px;
+  background: rgba(255,255,255,.07); z-index: 30;
+}
+#progress {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #0F766E, #10B981 55%, #A7F3D0);
+  box-shadow: 0 0 18px rgba(52,211,153,.55);
+}
+
+/* ---------- screen frame ---------- */
+#screen-frame {
+  position: absolute; left: 40px; top: 40px; width: 1440px; height: 940px;
+  border-radius: 18px; overflow: hidden; z-index: 10;
+  background: #0B1511;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 44px 120px rgba(0,0,0,.62), 0 6px 22px rgba(0,0,0,.35);
+}
+#chrome {
+  height: 40px; background: #EDE8DE;
+  display: flex; align-items: center; padding: 0 14px; gap: 10px;
+  border-bottom: 1px solid rgba(24,39,33,.10);
+}
+.traffic { display: flex; gap: 7px; align-items: center; }
+.traffic i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.traffic .r { background: #E8998D; }
+.traffic .y { background: #E7C27A; }
+.traffic .g { background: #8FC9A8; }
+#url {
+  flex: 1; height: 25px; margin-left: 8px; border-radius: 7px;
+  background: rgba(255,255,255,.52);
+  border: 1px solid rgba(24,39,33,.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #5A6B63; letter-spacing: .02em;
+}
+#url b { font-weight: 600; color: #233C33; }
+#role-chip {
+  font-size: 11px; color: #315347; padding: 4px 9px; border-radius: 999px;
+  background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.20);
+  white-space: nowrap;
+}
+#viewport { position: relative; width: 1440px; height: 900px; overflow: hidden; background: #F6F1E7; }
+
+.screen {
+  position: absolute; left: 0; top: 0; width: 1600px; height: 1000px;
+  object-fit: cover; transform-origin: 0 0; will-change: transform;
+}
+#screen-a { opacity: 0; }
+#screen-b { opacity: 1; }
+
+#content-layer {
+  position: absolute; left: 0; top: 0; width: 1600px; height: 1000px;
+  transform-origin: 0 0; pointer-events: none; z-index: 6;
+}
+#fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 8; }
+#focus-mask {
+  position: absolute; border-radius: 14px; opacity: 0;
+  box-shadow: 0 0 0 2200px rgba(3,9,6,.54), 0 0 0 2px rgba(110,231,183,.55) inset;
+  transition: none;
+}
+.hl {
+  position: absolute; border-radius: 10px; opacity: 0;
+  border: 2px solid rgba(52,211,153,.92);
+  background: rgba(16,185,129,.06);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.16), 0 0 20px rgba(16,185,129,.18);
+}
+.hl .hl-label {
+  position: absolute; left: -2px; top: -28px;
+  padding: 3px 9px; border-radius: 7px;
+  background: #0F766E; color: #ECFDF5;
+  font-size: 12px; font-weight: 600; letter-spacing: .03em; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+}
+.hl.warm { border-color: rgba(251,146,60,.95); background: rgba(251,146,60,.10); box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 0 24px rgba(251,146,60,.20); }
+.hl.warm .hl-label { background: #B45309; color: #FFF7ED; }
+
+#mask-layer { position: absolute; inset: 0; z-index: 7; }
+.mask { position: absolute; border-radius: 4px; display: flex; align-items: center; }
+
+#typing-cover {
+  position: absolute; z-index: 8; border-radius: 5px;
+}
+
+#typing-box {
+  position: absolute; z-index: 9; padding: 3px 8px; border-radius: 5px;
+  line-height: 1.35; white-space: nowrap; overflow: hidden; font-weight: 500;
+}
+
+#cursor {
+  position: absolute; width: 27px; height: 31px; z-index: 12;
+  opacity: 0; transform-origin: 6px 4px;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.45));
+}
+#cursor svg { width: 27px; height: 31px; display: block; }
+#cursor-ring {
+  position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  border-radius: 50%; border: 2px solid rgba(110,231,183,.55);
+  opacity: 0; z-index: 11;
+}
+.ripple {
+  position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border-radius: 50%; border: 2px solid rgba(110,231,183,.95);
+  background: rgba(16,185,129,.18); opacity: 0; z-index: 10;
+}
+
+#callout {
+  position: absolute; z-index: 14; opacity: 0;
+  padding: 14px 16px 13px; border-radius: 12px;
+  background: rgba(5,14,10,.93);
+  border: 1px solid rgba(110,231,183,.28);
+  box-shadow: 0 18px 50px rgba(0,0,0,.42);
+  backdrop-filter: blur(10px);
+}
+#callout .c-kicker { font-size: 10px; letter-spacing: .18em; color: #6EE7B7; font-weight: 700; margin-bottom: 5px; }
+#callout .c-title { font-size: 18px; font-weight: 700; color: #F7F4EC; line-height: 1.35; }
+#callout .c-body { margin-top: 5px; font-size: 13px; line-height: 1.6; color: #B9C6BF; }
+#callout.warm { border-color: rgba(251,146,60,.35); }
+#callout.warm .c-kicker { color: #FDBA74; }
+
+#toast {
+  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+  z-index: 18; opacity: 0;
+  padding: 10px 18px; border-radius: 999px;
+  background: rgba(5,14,10,.92); border: 1px solid rgba(110,231,183,.30);
+  box-shadow: 0 12px 36px rgba(0,0,0,.38);
+  font-size: 14px; color: #D1FAE5; white-space: nowrap;
+}
+
+/* ---------- rail ---------- */
+#rail {
+  position: absolute; left: 1512px; top: 40px; width: 368px; height: 1000px;
+  border-radius: 18px; padding: 28px 26px 24px;
+  background: linear-gradient(165deg, rgba(15,32,25,.94), rgba(5,12,9,.97));
+  border: 1px solid rgba(110,231,183,.16);
+  box-shadow: 0 34px 90px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.05);
+  z-index: 20; display: flex; flex-direction: column;
+}
+#rail-act {
+  font-size: 11px; font-weight: 700; letter-spacing: .19em; color: #6EE7B7;
+  text-transform: uppercase;
+}
+#rail-title {
+  margin-top: 8px; font-family: 'DemoSerif', serif; font-size: 38px; line-height: 1.18;
+  font-weight: 700; color: #F8F4EA; letter-spacing: -.01em;
+}
+#rail-rule { height: 1px; background: linear-gradient(90deg, rgba(110,231,183,.5), rgba(110,231,183,0)); margin: 20px 0 18px; }
+#rail-text {
+  font-size: 24px; line-height: 1.72; color: #F3EFE5; font-weight: 450;
+  min-height: 288px; letter-spacing: .005em;
+}
+#rail-note {
+  margin-top: 10px; padding-left: 12px; border-left: 2px solid #10B981;
+  font-size: 13px; line-height: 1.6; color: #9FB4AA; min-height: 42px;
+}
+#rail-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.step { display: flex; align-items: center; gap: 10px; opacity: .32; transition: none; }
+.step .n { width: 22px; font-size: 10px; letter-spacing: .08em; color: #6EE7B7; font-weight: 700; }
+.step .t { font-size: 13px; color: #D7E1DB; }
+.step.active { opacity: 1; }
+.step.active .t { color: #6EE7B7; font-weight: 600; }
+.step.done { opacity: .55; }
+#rail-foot { margin-top: auto; padding-top: 18px; }
+#rail-time { display: flex; justify-content: space-between; font-size: 11px; color: #7E938A; letter-spacing: .05em; }
+#rail-bar { margin-top: 8px; height: 2px; background: rgba(255,255,255,.10); border-radius: 2px; overflow: hidden; }
+#rail-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#0F766E,#6EE7B7); }
+
+/* ---------- chapter card ---------- */
+#chapter {
+  position: absolute; inset: 0; z-index: 25; opacity: 0;
+  background:
+    radial-gradient(900px 600px at 72% 18%, rgba(16,185,129,.13), transparent 60%),
+    linear-gradient(145deg, #07130E, #030806 70%);
+  display: flex; align-items: center; justify-content: center;
+}
+#chapter .inner { width: 1440px; display: flex; align-items: flex-end; gap: 46px; }
+#chapter .num {
+  font-family: 'DemoSerif', serif; font-size: 190px; line-height: .82; font-weight: 600;
+  color: rgba(110,231,183,.20); letter-spacing: -.05em;
+}
+#chapter .meta { padding-bottom: 10px; }
+#chapter .kicker { font-size: 12px; letter-spacing: .22em; color: #6EE7B7; font-weight: 700; margin-bottom: 14px; }
+#chapter .title { font-family: 'DemoSerif', serif; font-size: 88px; line-height: 1.12; font-weight: 700; color: #F8F4EA; }
+#chapter .sub { margin-top: 14px; font-size: 24px; color: #9FB4AA; letter-spacing: .01em; }
+#chapter .line { width: 180px; height: 2px; background: linear-gradient(90deg,#10B981,transparent); margin-top: 26px; }
+
+/* ---------- custom screens ---------- */
+#custom-screen {
+  position: absolute; inset: 0; z-index: 7; pointer-events: none;
+}
+#intro-custom, #datawall-custom {
+  position: absolute; inset: 0; display: none;
+}
+#intro-custom {
+  background:
+    radial-gradient(700px 540px at 78% 16%, rgba(16,185,129,.16), transparent 62%),
+    linear-gradient(145deg, #07130E 0%, #04100B 55%, #020705 100%);
+  padding: 74px 78px;
+  overflow: hidden;
+}
+#intro-custom .brandline { display: flex; align-items: center; gap: 12px; font-size: 15px; color: #9FB4AA; letter-spacing: .08em; }
+#intro-custom .brandline img { width: 34px; height: 34px; border-radius: 9px; }
+#intro-custom h1 {
+  margin-top: 58px; font-family: 'DemoSerif', serif; font-size: 106px; line-height: 1.06;
+  letter-spacing: -.04em; font-weight: 700; color: #FAF6EC;
+}
+#intro-custom h1 em { font-style: normal; color: #6EE7B7; }
+#intro-custom .sub { margin-top: 24px; font-size: 30px; color: #B7C7BF; letter-spacing: .02em; }
+#intro-custom .flow { position: absolute; left: 78px; bottom: 92px; display: flex; align-items: center; gap: 0; }
+#intro-custom .flow .node {
+  opacity: 0; transform: translateY(10px);
+  padding: 13px 18px; border-radius: 10px;
+  border: 1px solid rgba(110,231,183,.24); background: rgba(9,22,16,.78);
+  font-size: 17px; color: #E6F2EB; white-space: nowrap;
+}
+#intro-custom .flow .node b { color: #6EE7B7; font-size: 11px; letter-spacing: .10em; margin-right: 8px; }
+#intro-custom .flow .arrow { width: 34px; height: 1px; background: rgba(110,231,183,.30); opacity: 0; }
+#intro-custom .hint { position: absolute; right: 78px; bottom: 98px; font-size: 13px; color: #6F857B; letter-spacing: .08em; }
+
+#datawall-custom {
+  background: #F3EEE4;
+  padding: 54px 60px;
+  color: #19352B;
+  overflow: hidden;
+}
+#datawall-custom:before {
+  content: ''; position: absolute; inset: 0; opacity: .45;
+  background-image: linear-gradient(rgba(24,58,46,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(24,58,46,.055) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+#datawall-custom .dw-top { position: relative; display: flex; justify-content: space-between; align-items: flex-end; }
+#datawall-custom .dw-kicker { font-size: 11px; letter-spacing: .20em; color: #0F766E; font-weight: 700; }
+#datawall-custom h2 { margin-top: 8px; font-family: 'DemoSerif', serif; font-size: 44px; line-height: 1.25; letter-spacing: -.02em; color: #142E25; }
+#datawall-custom .dw-date { font-size: 12px; color: #6B7F75; letter-spacing: .06em; }
+#datawall-custom .bento {
+  position: relative; margin-top: 34px; display: grid; grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 238px; gap: 16px;
+}
+#datawall-custom .cell {
+  border-radius: 16px; padding: 22px 24px; background: rgba(255,253,248,.78);
+  border: 1px solid rgba(24,58,46,.10); box-shadow: 0 10px 30px rgba(24,58,46,.06);
+  opacity: .42; transform: translateY(8px);
+}
+#datawall-custom .cell.on { opacity: 1; transform: translateY(0); }
+#datawall-custom .cell.dark { background: #123A2D; border-color: rgba(16,185,129,.35); color: #ECFDF5; }
+#datawall-custom .cell .label { font-size: 13px; letter-spacing: .06em; color: #5C756A; }
+#datawall-custom .cell.dark .label { color: #8CC7B3; }
+#datawall-custom .cell .num { margin-top: 18px; font-family: 'DemoSerif', serif; font-size: 76px; line-height: 1; font-weight: 700; color: #0F5B44; letter-spacing: -.04em; }
+#datawall-custom .cell.dark .num { color: #A7F3D0; }
+#datawall-custom .cell .num small { font-size: 30px; color: #6B8C7C; margin-left: 4px; letter-spacing: 0; }
+#datawall-custom .cell.dark .num small { color: #6EE7B7; }
+#datawall-custom .cell .desc { margin-top: 14px; font-size: 13px; line-height: 1.6; color: #647D71; }
+#datawall-custom .cell.dark .desc { color: #B9D8CB; }
+
+#humanities-panel {
+  position: absolute; left: 545px; top: 110px; width: 840px; height: 680px;
+  display: none; z-index: 16; padding: 28px 30px;
+  border-radius: 18px; background: rgba(5,14,10,.95);
+  border: 1px solid rgba(110,231,183,.28);
+  box-shadow: 0 30px 90px rgba(0,0,0,.55);
+  backdrop-filter: blur(12px);
+}
+#humanities-panel .hp-kicker { font-size: 10px; letter-spacing: .20em; color: #6EE7B7; font-weight: 700; }
+#humanities-panel h3 { margin-top: 8px; font-family: 'DemoSerif', serif; font-size: 38px; color: #F8F4EA; letter-spacing: -.01em; }
+#humanities-panel .hp-sub { margin-top: 6px; font-size: 13px; color: #9FB4AA; }
+#humanities-panel .hp-grid { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#humanities-panel .hp-card {
+  padding: 17px 17px 16px; min-height: 118px; border-radius: 12px;
+  background: rgba(16,34,27,.72); border: 1px solid rgba(110,231,183,.16);
+}
+#humanities-panel .hp-card .tag { font-size: 10px; color: #6EE7B7; letter-spacing: .12em; font-weight: 700; }
+#humanities-panel .hp-card .name { margin-top: 6px; font-size: 21px; color: #F6F1E7; font-weight: 700; }
+#humanities-panel .hp-card .field { margin-top: 3px; font-size: 12px; color: #93AFA2; }
+#humanities-panel .hp-card .line { margin-top: 8px; font-size: 12px; color: #C7D8CF; line-height: 1.5; }
+#humanities-panel .hp-foot { position: absolute; left: 30px; right: 30px; bottom: 22px; font-size: 12px; color: #7E9A8D; border-top: 1px solid rgba(110,231,183,.14); padding-top: 14px; }
+
+#campus-panel {
+  position: absolute; left: 780px; top: 105px; width: 590px; height: 600px;
+  display: none; z-index: 16; padding: 26px 28px;
+  border-radius: 18px; background: rgba(255,252,246,.96);
+  border: 1px solid rgba(24,58,46,.14);
+  box-shadow: 0 26px 80px rgba(0,0,0,.34);
+}
+#campus-panel .cp-kicker { font-size: 10px; letter-spacing: .18em; color: #0F766E; font-weight: 700; }
+#campus-panel .cp-big { margin-top: 12px; font-family: 'DemoSerif', serif; font-size: 104px; line-height: .95; color: #0F5B44; letter-spacing: -.05em; }
+#campus-panel .cp-big small { font-size: 28px; color: #4E7264; letter-spacing: 0; }
+#campus-panel .cp-title { margin-top: 6px; font-size: 22px; color: #183A2E; font-weight: 700; }
+#campus-panel .cp-desc { margin-top: 8px; font-size: 13px; line-height: 1.65; color: #5C756A; }
+#campus-panel .cp-grid { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#campus-panel .cp-cell { padding: 12px 14px; border-radius: 10px; background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.16); }
+#campus-panel .cp-cell .n { font-family: 'DemoSerif', serif; font-size: 30px; color: #0F5B44; font-weight: 700; }
+#campus-panel .cp-cell .l { margin-top: 3px; font-size: 11px; color: #5C756A; }
+
+#food-panel {
+  position: absolute; left: 780px; top: 118px; width: 590px; height: 540px;
+  display: none; z-index: 16; padding: 26px 28px;
+  border-radius: 18px; background: rgba(255,252,246,.97);
+  border: 1px solid rgba(24,58,46,.14);
+  box-shadow: 0 26px 80px rgba(0,0,0,.34);
+}
+#food-panel .fp-kicker { font-size: 10px; letter-spacing: .18em; color: #0F766E; font-weight: 700; }
+#food-panel .fp-big { margin-top: 10px; font-family: 'DemoSerif', serif; font-size: 92px; line-height: .95; color: #0F5B44; letter-spacing: -.05em; }
+#food-panel .fp-big small { font-size: 26px; color: #4E7264; letter-spacing: 0; }
+#food-panel .fp-title { margin-top: 4px; font-size: 22px; color: #183A2E; font-weight: 700; }
+#food-panel .fp-sub { margin-top: 6px; font-size: 13px; line-height: 1.6; color: #5C756A; }
+#food-panel .fp-list { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+#food-panel .fp-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; border-radius: 10px; background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.15); }
+#food-panel .fp-row b { font-size: 14px; color: #183A2E; }
+#food-panel .fp-row span { font-size: 12px; color: #0F766E; font-weight: 700; }
+#food-panel .fp-foot { margin-top: 14px; font-size: 11px; color: #7A9186; }
+
+#security-panel, #selfcheck-panel {
+  position: absolute; left: 780px; top: 535px; width: 590px; height: 330px;
+  display: none; z-index: 16; padding: 24px 26px;
+  border-radius: 16px; background: rgba(5,14,10,.95);
+  border: 1px solid rgba(110,231,183,.26);
+  box-shadow: 0 24px 70px rgba(0,0,0,.46);
+}
+#security-panel .sp-kicker, #selfcheck-panel .sp-kicker { font-size: 10px; letter-spacing: .18em; color: #6EE7B7; font-weight: 700; }
+#security-panel h4, #selfcheck-panel h4 { margin-top: 6px; font-size: 22px; color: #F7F3E9; font-weight: 700; }
+#security-panel .rows, #selfcheck-panel .rows { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+#security-panel .row, #selfcheck-panel .row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #C7D8CF; }
+#security-panel .dot, #selfcheck-panel .dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(16,185,129,.16); border: 1px solid rgba(16,185,129,.42); display: flex; align-items: center; justify-content: center; color: #6EE7B7; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+#selfcheck-panel { background: rgba(255,252,246,.97); border-color: rgba(24,58,46,.14); color: #183A2E; }
+#selfcheck-panel .sp-kicker { color: #0F766E; }
+#selfcheck-panel h4 { color: #183A2E; }
+#selfcheck-panel .row { color: #49665A; }
+#selfcheck-panel .dot { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); color: #0F766E; }
+
+#mobile-layer { position: absolute; inset: 0; display: none; z-index: 15; }
+#phone {
+  position: absolute; left: 1000px; top: 105px; width: 310px; height: 670px;
+  border-radius: 40px; padding: 8px; background: #101512;
+  border: 1px solid rgba(255,255,255,.18); box-shadow: 0 34px 80px rgba(0,0,0,.52);
+}
+#phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 32px; display: block; }
+#widget {
+  position: absolute; left: 735px; top: 150px; width: 250px; height: 150px;
+  border-radius: 18px; padding: 16px 18px;
+  background: rgba(255,252,246,.97); color: #183A2E;
+  border: 1px solid rgba(24,58,46,.12); box-shadow: 0 18px 50px rgba(0,0,0,.28);
+}
+#widget .wk { font-size: 10px; letter-spacing: .14em; color: #0F766E; font-weight: 700; }
+#widget .wt { margin-top: 8px; font-size: 17px; font-weight: 700; }
+#widget .ws { margin-top: 3px; font-size: 12px; color: #5C756A; }
+#widget .wbadge { margin-top: 10px; display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(16,185,129,.14); color: #0F5B44; font-size: 10px; font-weight: 700; }
+
+/* ---------- outro ---------- */
+#outro-layer {
+  position: absolute; inset: 0; z-index: 40; opacity: 0; display: none;
+  background:
+    radial-gradient(820px 620px at 70% 28%, rgba(16,185,129,.16), transparent 62%),
+    linear-gradient(145deg, #07130E 0%, #030806 70%);
+}
+#outro-inner { position: absolute; left: 130px; top: 120px; width: 1660px; display: flex; justify-content: space-between; align-items: center; }
+#outro-left { width: 980px; }
+#outro-left .brand { display: flex; align-items: center; gap: 20px; }
+#outro-left .brand img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 14px 40px rgba(0,0,0,.34); }
+#outro-left .brand .name { font-family: 'DemoSerif', serif; font-size: 108px; line-height: 1; font-weight: 700; color: #FAF6EC; letter-spacing: -.03em; }
+#outro-left h2 { margin-top: 46px; font-family: 'DemoSerif', serif; font-size: 58px; line-height: 1.3; font-weight: 600; color: #F6F1E7; letter-spacing: -.02em; }
+#outro-left h2 em { font-style: normal; color: #6EE7B7; }
+#outro-left .sub { margin-top: 22px; font-size: 19px; color: #9FB4AA; letter-spacing: .02em; }
+#outro-left .stats { margin-top: 34px; display: flex; gap: 26px; font-size: 12px; color: #6F8B7E; letter-spacing: .05em; }
+#outro-left .stats b { color: #A7F3D0; font-weight: 700; }
+#qr-card {
+  width: 388px; border-radius: 24px; padding: 30px 30px 26px;
+  background: #F6F1E7; color: #183A2E; text-align: center;
+  box-shadow: 0 30px 90px rgba(0,0,0,.42);
+}
+#qr-card .qk { font-size: 10px; letter-spacing: .18em; color: #0F766E; font-weight: 700; }
+#qr-card img { width: 286px; height: 286px; margin: 18px auto 12px; display: block; border-radius: 8px; }
+#qr-card .qt { font-family: 'DemoSerif', serif; font-size: 28px; font-weight: 700; color: #142E25; }
+#qr-card .qu { margin-top: 8px; font-size: 11px; color: #5C756A; letter-spacing: .02em; }
+#qr-card .qb { margin-top: 16px; display: inline-block; padding: 7px 14px; border-radius: 999px; background: #0F5B44; color: #ECFDF5; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+
+#chapter-sub { max-width: 980px; }
+
+/* ---------- helpers ---------- */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div id="grid"></div>
+  <div id="vignette"></div>
+  <div id="topbar"><div id="progress"></div></div>
+
+  <div id="screen-frame">
+    <div id="chrome">
+      <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+      <div id="url"><b>shishuo.local</b>&nbsp;/&nbsp;<span id="url-path">我的答疑</span></div>
+      <div id="role-chip">学生端 · 林晓</div>
+    </div>
+    <div id="viewport">
+      <img id="screen-a" class="screen" alt="" />
+      <img id="screen-b" class="screen" alt="" />
+      <div id="custom-screen">
+        <div id="intro-custom">
+          <div class="brandline"><img src="/assets/icon-only.png" alt="" />师说 · 功能演示</div>
+          <h1>一次完整的<br /><em>课后答疑</em></h1>
+          <div class="sub">从学生提问，到 AI 有据回答，再到老师接手与知识沉淀。</div>
+          <div class="flow">
+            <div class="node" data-i="0"><b>01</b>学生提问</div><div class="arrow" data-a="0"></div>
+            <div class="node" data-i="1"><b>02</b>有据回答</div><div class="arrow" data-a="1"></div>
+            <div class="node" data-i="2"><b>03</b>转交老师</div><div class="arrow" data-a="2"></div>
+            <div class="node" data-i="3"><b>04</b>教师处理</div><div class="arrow" data-a="3"></div>
+            <div class="node" data-i="4"><b>05</b>FAQ 沉淀</div>
+          </div>
+          <div class="hint">真实界面 · 真实操作 · 可现场复现</div>
+        </div>
+
+        <div id="datawall-custom">
+          <div class="dw-top">
+            <div>
+              <div class="dw-kicker">SHISHUO · 实证</div>
+              <h2>不是概念演示，<br />是已经跑起来的数据。</h2>
+            </div>
+            <div class="dw-date">2026-11-22 · 生产环境</div>
+          </div>
+          <div class="bento">
+            <div class="cell dark" data-cell="0"><div class="label">试点课程</div><div class="num">5<small>门</small></div><div class="desc">高等数学 · 数据结构 · 电路 · 模电 · 数电</div></div>
+            <div class="cell" data-cell="1"><div class="label">精修 FAQ</div><div class="num">81<small>条</small></div><div class="desc">老师逐条确认，带章节、别名与出处</div></div>
+            <div class="cell" data-cell="2"><div class="label">检索评测</div><div class="num">157<small>/157</small></div><div class="desc">应命中与低置信拒答全部通过</div></div>
+            <div class="cell" data-cell="3"><div class="label">AI 学科导师</div><div class="num">33<small>位</small></div><div class="desc">文、理、工、法、艺，各有知识地图</div></div>
+            <div class="cell" data-cell="4"><div class="label">校园经验卡</div><div class="num">804<small>条</small></div><div class="desc">7 大分类 · 来源与可信度分级</div></div>
+            <div class="cell" data-cell="5"><div class="label">管理模块</div><div class="num">9<small>大</small></div><div class="desc">账号 · 风控 · 审计 · 核实 · 系统</div></div>
+          </div>
+        </div>
+
+        <div id="humanities-panel">
+          <div class="hp-kicker">AI MENTOR LIBRARY · 33</div>
+          <h3>文理法艺，都能问</h3>
+          <div class="hp-sub">5 位试点导师默认开启，其余随选随加。</div>
+          <div class="hp-grid">
+            <div class="hp-card"><div class="tag">文学</div><div class="name">古代文学</div><div class="field">中国古代文学史</div><div class="line">按朝代梳理，先看脉络，再读作品。</div></div>
+            <div class="hp-card"><div class="tag">历史</div><div class="name">近现代史</div><div class="field">中国近现代史纲要</div><div class="line">拉时间线，串事件，辨因果。</div></div>
+            <div class="hp-card"><div class="tag">艺术</div><div class="name">艺术概论</div><div class="field">艺术学理论</div><div class="line">作品、流派、观念，一层层拆。</div></div>
+            <div class="hp-card"><div class="tag">法学</div><div class="name">刑法学</div><div class="field">刑法总论与分论</div><div class="line">构成要件、案例、争点，按步骤走。</div></div>
+            <div class="hp-card"><div class="tag">心理</div><div class="name">心理学</div><div class="field">普通心理学</div><div class="line">概念、实验、结论，先分清再记。</div></div>
+            <div class="hp-card"><div class="tag">经管</div><div class="name">微观经济学</div><div class="field">微观经济学</div><div class="line">图形、均衡、弹性，先画图再算。</div></div>
+          </div>
+          <div class="hp-foot">导师不会直接灌答案：先定位卡点，再查先修，最后只点破关键一步。</div>
+        </div>
+
+        <div id="campus-panel">
+          <div class="cp-kicker">CAMPUS KNOWLEDGE · 校园经验库</div>
+          <div class="cp-big">804<small> 条</small></div>
+          <div class="cp-title">校园经验卡</div>
+          <div class="cp-desc">七大分类，每条都标来源与可信度；涉及政策、金额、截止日期，提示以学校官方通知为准。</div>
+          <div class="cp-grid">
+            <div class="cp-cell"><div class="n">7</div><div class="l">大分类</div></div>
+            <div class="cp-cell"><div class="n">36</div><div class="l">栋手绘地图</div></div>
+            <div class="cp-cell"><div class="n">107</div><div class="l">个食堂档口</div></div>
+            <div class="cp-cell"><div class="n">3,758</div><div class="l">道菜品</div></div>
+          </div>
+        </div>
+
+        <div id="food-panel">
+          <div class="fp-kicker">CAMPUS CANTEEN · 食堂决策</div>
+          <div class="fp-big">107<small> 个档口</small></div>
+          <div class="fp-title">3,758 道菜，按口味和预算推荐</div>
+          <div class="fp-sub">位置、餐类、预算、口味四项设置，推荐、榜单、盲盒实时联动。</div>
+          <div class="fp-list">
+            <div class="fp-row"><b>吉列猪扒</b><span>¥4.8 · 620 kcal</span></div>
+            <div class="fp-row"><b>鱼肉卷</b><span>¥2.88 · 620 kcal</span></div>
+            <div class="fp-row"><b>鲜虾鲜肉云吞</b><span>¥4 · 620 kcal</span></div>
+          </div>
+          <div class="fp-foot">按预算、口味、位置实时推荐 · 数据以食堂当日供应为准</div>
+        </div>
+
+        <div id="security-panel">
+          <div class="sp-kicker">TRUST &amp; SAFETY</div>
+          <h4>安全边界，放在服务端</h4>
+          <div class="rows">
+            <div class="row"><span class="dot">✓</span>AI 密钥只存在服务端网关</div>
+            <div class="row"><span class="dot">✓</span>提示词自动脱敏，不落前端</div>
+            <div class="row"><span class="dot">✓</span>敏感词、禁言、封禁服务端执行</div>
+            <div class="row"><span class="dot">✓</span>图片事后审核与操作审计</div>
+          </div>
+        </div>
+
+        <div id="selfcheck-panel">
+          <div class="sp-kicker">REPLY CHECK</div>
+          <h4>发送前，先自检</h4>
+          <div class="rows">
+            <div class="row"><span class="dot">✓</span>引用是否对齐课程知识库</div>
+            <div class="row"><span class="dot">✓</span>结论是否超出已有依据</div>
+            <div class="row"><span class="dot">✓</span>语气是否适合学生阅读</div>
+          </div>
+        </div>
+
+        <div id="mobile-layer">
+          <div id="widget">
+            <div class="wk">今日课程</div>
+            <div class="wt">数据结构 · 第 6 章</div>
+            <div class="ws">19:00–20:40 · 教学楼 A302</div>
+            <div class="wbadge">正在上课</div>
+          </div>
+          <div id="phone"><img src="/promo/assets/student-mobile.png" alt="" /></div>
+        </div>
+      </div>
+
+      <div id="content-layer"><div id="mask-layer"></div><div id="typing-cover"></div><div id="typing-box"></div></div>
+      <div id="fx">
+        <div id="focus-mask"></div>
+        <div class="hl" id="hl0"><span class="hl-label"></span></div>
+        <div class="hl" id="hl1"><span class="hl-label"></span></div>
+        <div class="hl" id="hl2"><span class="hl-label"></span></div>
+        <div class="hl" id="hl3"><span class="hl-label"></span></div>
+        <div id="cursor-ring"></div>
+        <div id="cursor"><svg viewBox="0 0 27 31"><path d="M4 2.2 L23.2 15.1 L13.4 17.1 L9.1 27.8 Z" fill="#FFFFFF" stroke="#0B1511" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="ripple" id="rip0"></div>
+        <div class="ripple" id="rip1"></div>
+        <div id="callout"><div class="c-kicker"></div><div class="c-title"></div><div class="c-body"></div></div>
+        <div id="toast"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rail">
+    <div id="rail-act">ACT 01 · 开场</div>
+    <div id="rail-title">功能演示</div>
+    <div id="rail-rule"></div>
+    <div id="rail-text"></div>
+    <div id="rail-note"></div>
+    <div id="rail-steps"></div>
+    <div id="rail-foot">
+      <div id="rail-time"><span id="rail-clock">00:00</span><span id="rail-total">06:15</span></div>
+      <div id="rail-bar"><i></i></div>
+    </div>
+  </div>
+
+  <div id="chapter">
+    <div class="inner">
+      <div class="num">01</div>
+      <div class="meta">
+        <div class="kicker">SHISHUO · FEATURE DEMO</div>
+        <div class="title">功能演示</div>
+        <div class="sub" id="chapter-sub">一次完整的课后答疑</div>
+        <div class="line"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="outro-layer">
+    <div id="outro-inner">
+      <div id="outro-left">
+        <div class="brand"><img src="/assets/icon-only.png" alt="" /><div class="name">师说</div></div>
+        <h2>让每个课后问题，<br /><em>都有回响。</em></h2>
+        <div class="sub">课后敢问，课上讲透。老师写下的每一句话，都成为 AI 的第一反应。</div>
+        <div class="stats"><span><b>5</b> 门试点课</span><span><b>81</b> 条精修 FAQ</span><span><b>157/157</b> 检索评测</span><span><b>33</b> 位导师</span><span><b>804</b> 条校园卡</span></div>
+      </div>
+      <div id="qr-card">
+        <div class="qk">SCAN TO EXPLORE</div>
+        <img src="/promo/full/assets/qr-intro.png" alt="" />
+        <div class="qt">扫码体验全部功能</div>
+        <div class="qu">http://121.37.30.147/intro/</div>
+        <div class="qb">项目介绍站 · 在线体验</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TL = window.__TIMELINE__;
+const FPS = TL.fps || 30;
+const LINES = TL.lines;
+const ACTS = TL.acts;
+const TOTAL = TL.total;
+
+const SRC_W = 1600, SRC_H = 1000;
+const VIEW_W = 1440, VIEW_H = 900;
+const BASE = VIEW_W / SRC_W;
+
+const IMG = {
+  home: '/promo/assets/student-home.png',
+  thread: '/promo/assets/student-thread.png',
+  file: '/promo/full/assets/ask-file.png',
+  consent: '/promo/full/assets/file-consent-crop.png',
+  archive: '/promo/full/assets/archive.png',
+  review: '/promo/full/assets/review.png',
+  notify: '/promo/full/assets/notifications.png',
+  mentor: '/promo/assets/student-mentor.png',
+  mentorMgr: '/promo/full/assets/mentor-manager.png',
+  kmap: '/promo/full/assets/digital-kmap.png',
+  analog: '/promo/full/assets/analog-q.png',
+  queue: '/promo/assets/teacher-queue.png',
+  drawer: '/promo/assets/teacher-drawer.png',
+  kb: '/promo/full/assets/teacher-kb.png',
+  imp: '/promo/full/assets/teacher-import.png',
+  insights: '/promo/full/assets/teacher-insights.png',
+  campus: '/promo/full/assets/campus-map.png',
+  lib: '/promo/full/assets/campus-library.png',
+  canteen: '/promo/full/assets/canteen.png',
+  calendar: '/promo/full/assets/campus-calendar.png',
+  cx: '/promo/full/assets/chaoxing.png',
+  dark: '/promo/full/assets/dark-home.png',
+  adminAcc: '/promo/full/assets/admin-accounts.png',
+  adminAudit: '/promo/full/assets/admin-audit.png',
+};
+
+const ACT_SUB = {
+  act1: '一次完整的课后答疑',
+  act2: '选中课程，把卡住的地方原样问出来。',
+  act3: '每一次提问都有记录，没弄懂还能再练。',
+  act4: '三十三位导师，文理法艺，各有知识地图。',
+  act5: 'AI 不编，老师接手；一次回复，整组收到。',
+  act6: '知识库越用越准，洞察告诉老师卡在哪。',
+  act7: '课下的事，也能在一个地方问清楚。',
+  act8: '角色隔离、操作审计、服务端安全边界。',
+  act9: '用真实数据收尾，扫码即可体验。',
+};
+
+const H = (t0, t1, x, y, w, h, label, warm) => ({ t0, t1, x, y, w, h, label, warm: !!warm });
+const C = (t0, t1, x, y, w, title, body, warm) => ({ t0, t1, x, y, w, title, body, warm: !!warm });
+
+const V = {
+  /* ---------- act 1 ---------- */
+  a1_1: { custom: 'intro', note: '功能演示 · 一次完整的课后答疑' },
+  a1_2: { custom: 'intro', note: '提问 → 有据回答 → 转交 → 处理 → 沉淀' },
+  a1_3: { img: IMG.home, z: [1.00, 800, 500], note: '学生端 · 我的答疑', cursor: [[0.3, 780, 700], [1.6, 760, 600]] },
+  a1_4: { img: IMG.home, z: [1.06, 760, 460], note: '真实界面，不是动效占位',
+    hl: [H(0.2, 99, 338, 282, 765, 300, '真实输入区')],
+    call: C(0.6, 99, 1040, 640, 360, '真实界面', '接下来每一步，都可以在师说里现场操作。') },
+
+  /* ---------- act 2 ---------- */
+  a2_1: { img: IMG.home, z: [1.14, 470, 252], note: '点击「数据结构」课程',
+    cursor: [[0.2, 470, 520], [1.2, 470, 250], [2.0, 470, 250]],
+    clicks: [{ at: 1.25, x: 470, y: 250 }],
+    hl: [H(1.1, 99, 430, 226, 110, 50, '数据结构')],
+    call: C(1.5, 99, 940, 330, 330, '五门试点课', '高数、数据结构、电路、模电、数电，点一下就能切换。') },
+  a2_2: { img: IMG.home, z: [1.10, 720, 420], note: '输入问题，支持文字 / 语音 / 图片 / 文档',
+    cursor: [[0.2, 470, 250], [0.9, 640, 405], [1.2, 640, 405]],
+    clicks: [{ at: 1.0, x: 640, y: 405 }],
+    typing: { t0: 1.3, x: 362, y: 372, w: 740, cover: { x: 342, y: 360, w: 760, h: 58 }, text: 'SPFA 判负环，为什么入队次数超过 n-1 就说明有负环？', size: 18, cps: 18 },
+    hl: [H(0.2, 3.2, 338, 282, 765, 300, '输入区'), H(3.4, 99, 360, 510, 735, 50, '图片 / 文件 / 匿名')],
+    call: C(4.6, 99, 930, 640, 350, '多种提问方式', '文字、语音、拍照识题、讲义文档，都可以。') },
+  a2_3: { img: IMG.home, z: [1.14, 720, 420], note: '问题原样输入，不用先学会怎么问',
+    typing: { t0: -1, x: 362, y: 372, w: 740, cover: { x: 342, y: 360, w: 760, h: 58 }, text: 'SPFA 判负环，为什么入队次数超过 n-1 就说明有负环？', size: 18, cps: 999 },
+    hl: [H(0.1, 99, 356, 385, 745, 58, '学生原话')],
+    call: C(0.4, 99, 930, 640, 360, '先检索，再回答', '点击「交给 AI」，系统会先在课程知识库里找依据。') },
+  a2_4: { img: IMG.home, z: [1.22, 770, 470], note: '点击「交给 AI」，先检索课程知识库',
+    cursor: [[0.2, 900, 480], [1.0, 1050, 550], [1.6, 1050, 550]],
+    clicks: [{ at: 1.05, x: 1050, y: 550 }],
+    typing: { t0: -1, x: 362, y: 372, w: 740, cover: { x: 342, y: 360, w: 760, h: 58 }, text: 'SPFA 判负环，为什么入队次数超过 n-1 就说明有负环？', size: 18, cps: 999 },
+    hl: [H(1.0, 99, 1002, 524, 105, 52, '交给 AI')],
+    call: C(1.8, 99, 850, 300, 380, '检索优先', '不是让模型自由发挥，而是先找课程里的可靠依据。'),
+    toast: { t0: 2.4, t1: 7.2, text: '正在检索课程知识库 · 数据结构 · 第 6 章' } },
+  a2_5: { img: IMG.thread, z: [1.20, 800, 400], note: '回答先给判断，再分三步推导',
+    hl: [H(0.1, 99, 485, 258, 660, 335, '带出处的回答')], },
+  a2_6: { img: IMG.thread, z: [1.36, 700, 360], note: '置信度 + 出处，决定是否转交',
+    hl: [H(0.1, 99, 573, 270, 68, 30, '', true), H(0.1, 99, 500, 545, 215, 34, '')], },
+  a2_7: { img: IMG.thread, z: [1.16, 800, 700], note: '追问、补充、老师回复都在同一线程',
+    hl: [H(0.2, 99, 500, 638, 650, 42, '老师请补充'), H(2.0, 99, 500, 682, 650, 62, '学生补充'), H(3.8, 99, 500, 748, 650, 145, '老师回复')], },
+  a2_8: { img: IMG.file, z: [1.10, 720, 500], note: '文件先在浏览器本机解析，确认后才发送',
+    hl: [H(0.1, 99, 360, 468, 725, 118, '讲义 / 习题 DOCX'), H(1.2, 99, 360, 588, 725, 58, '本机解析摘要')],
+    inset: { img: IMG.consent, x: 1120, y: 480, w: 330, label: '隐私授权' },
+    call: C(2.6, 99, 700, 690, 390, '本机解析', '文件内容先在浏览器里读，确认后才发给 AI。') },
+  a2_9: { img: IMG.home, z: [1.22, 1370, 450], note: '同题组：点一下同问，少排一次队',
+    cursor: [[0.2, 1200, 740], [1.0, 1522, 386], [1.5, 1522, 386]],
+    clicks: [{ at: 1.05, x: 1522, y: 386 }],
+    hl: [H(0.1, 99, 1135, 288, 415, 272, '正在等老师'), H(1.0, 99, 1484, 360, 78, 50, '同问')],
+    call: C(1.7, 99, 900, 620, 360, '同题组', '已经有同学问过，点同问，老师回复时一起收到。') },
+  a2_10: { img: IMG.thread, z: [1.12, 800, 520], note: '一个线程，完整上下文',
+    hl: [H(0.1, 99, 480, 250, 675, 650, '完整答疑记录')] },
+
+  /* ---------- act 3 ---------- */
+  a3_1: { img: IMG.archive, z: [1.16, 800, 330], note: '按课程 / 状态 / 时间筛选，也能搜关键词',
+    cursor: [[0.2, 700, 420], [0.9, 620, 208], [1.2, 620, 208]],
+    clicks: [{ at: 1.0, x: 620, y: 208 }],
+    typing: { t0: 1.3, x: 410, y: 196, w: 430, cover: { x: 398, y: 188, w: 455, h: 40 }, text: '动态规划', size: 17, cps: 14 },
+    hl: [H(0.1, 99, 398, 186, 465, 44, '搜索'), H(3.2, 99, 875, 186, 240, 44, '筛选')], },
+  a3_2: { img: IMG.archive, z: [1.20, 800, 420], note: '收藏 / 复制深链 / 导出 CSV',
+    cursor: [[0.2, 800, 380], [1.0, 1010, 512], [1.4, 1010, 512]],
+    clicks: [{ at: 1.05, x: 1010, y: 512 }],
+    hl: [H(0.1, 99, 398, 288, 810, 110, '当前筛选结果'), H(1.0, 99, 930, 490, 170, 46, '导出 CSV')], },
+  a3_3: { img: IMG.review, z: [1.16, 800, 300], note: '复习卡：先自己想，再看答案',
+    cursor: [[0.2, 800, 500], [1.0, 810, 432], [1.4, 810, 432]],
+    clicks: [{ at: 1.05, x: 810, y: 432 }],
+    hl: [H(0.1, 99, 458, 192, 685, 125, '错题卡'), H(1.0, 99, 720, 408, 460, 50, '自测按钮')], },
+  a3_4: { img: IMG.notify, z: [1.14, 800, 380], note: '转交 / 回复 / 补充请求，都有通知',
+    hl: [H(0.1, 99, 448, 158, 705, 92, '转交通知'), H(1.3, 99, 448, 252, 705, 98, '老师回复')], },
+  a3_5: { img: IMG.notify, z: [1.10, 800, 500], note: '记录只属于当前账号，不改老师待办',
+    hl: [H(0.1, 99, 448, 700, 520, 40, '共享课程空间')] },
+
+  /* ---------- act 4 ---------- */
+  a4_1: { img: IMG.mentorMgr, z: [1.16, 800, 380], note: '33 位学科导师，5 位试点默认开启',
+    hl: [H(0.1, 99, 388, 182, 860, 50, '5 / 33 位已添加')], },
+  a4_2: { img: IMG.mentorMgr, z: [1.16, 800, 430], note: '搜索「古代文学」，随选随加',
+    cursor: [[0.2, 800, 700], [0.9, 720, 255], [1.2, 720, 255]],
+    clicks: [{ at: 1.0, x: 720, y: 255 }],
+    typing: { t0: 1.3, x: 410, y: 248, w: 760, cover: { x: 398, y: 238, w: 790, h: 42 }, text: '古代文学', size: 18, cps: 14 },
+    hl: [H(0.1, 99, 398, 234, 810, 48, '搜索导师 / 课程 / 主题')], },
+  a4_3: { img: IMG.mentorMgr, z: [1.10, 800, 430], note: '文、史、艺、法、心理、经管', panel: 'humanities' },
+  a4_4: { img: IMG.mentor, z: [1.05, 1265, 500], note: '先定位卡点，再查先修，最后点破一步',
+    hl: [H(0.1, 99, 958, 148, 612, 395, '导师诊断'), H(2.4, 99, 985, 348, 575, 95, '知识地图')], },
+  a4_5: { img: IMG.kmap, z: [1.14, 800, 410], note: '数电：卡诺图一步步化简',
+    cursor: [[0.2, 800, 600], [0.9, 500, 375], [1.3, 500, 375]],
+    clicks: [{ at: 1.0, x: 500, y: 375 }],
+    hl: [H(0.1, 99, 388, 272, 575, 48, '填图 / 圈组 / 消变量 / 写式'), H(1.0, 99, 440, 405, 405, 170, '卡诺图')], },
+  a4_6: { img: IMG.analog, z: [1.00, 800, 500], note: '模电：改参数，看静态工作点',
+    hl: [H(0.1, 99, 388, 272, 845, 125, '分压偏置参数'), H(1.8, 99, 388, 620, 845, 310, 'Q 点与负载线')], },
+  a4_7: { img: IMG.mentor, z: [1.05, 1265, 500], note: '导师与工具，一个入口',
+    hl: [H(0.1, 99, 955, 72, 612, 46, '导师切换'), H(1.0, 99, 1480, 78, 95, 38, '管理导师')] },
+
+  /* ---------- act 5 ---------- */
+  a5_1: { img: IMG.thread, z: [1.26, 800, 690], note: '证据不足：不编造，转交任课老师',
+    hl: [H(0.1, 99, 500, 592, 650, 42, '已自动转交', true), H(2.8, 99, 500, 640, 650, 98, '老师请补充')], },
+  a5_2: { img: IMG.queue, z: [1.00, 800, 500], note: '教师待办台：4 组 5 个问题',
+    hl: [H(0.1, 99, 320, 228, 930, 122, '关键指标'), H(2.0, 99, 320, 462, 830, 198, '待处理问题')],
+    call: C(0.8, 99, 1000, 720, 360, '老师看到什么', '学生原话、AI 检索记录、置信度，一起送到待办台。') },
+  a5_3: { img: IMG.queue, z: [1.20, 700, 760], note: '语义同题合并，一次处理整组',
+    hl: [H(0.1, 99, 320, 688, 830, 195, '同题组'), H(0.1, 99, 486, 696, 105, 30, '同题 2 人')],
+    call: C(0.8, 99, 1000, 720, 350, '合并同题', '相似问题自动成组，老师只需要处理一次。') },
+  a5_4: { img: IMG.drawer, z: [1.14, 1265, 450], note: 'AI 只给相关线索，不生成答案',
+    hl: [H(0.1, 99, 948, 320, 635, 190, '', true), H(1.3, 99, 1380, 345, 125, 30, '', true)], },
+  a5_5: { img: IMG.drawer, z: [1.22, 1265, 700], note: 'AI 草稿可直接改，也可请学生补充',
+    cursor: [[0.2, 1100, 800], [0.9, 1330, 935], [1.3, 1330, 935]],
+    clicks: [{ at: 1.0, x: 1330, y: 935 }],
+    hl: [H(0.1, 99, 948, 620, 635, 250, ''), H(1.0, 99, 1248, 915, 155, 45, '')], },
+  a5_6: { img: IMG.drawer, z: [1.28, 1440, 920], note: '发送给整组，同时沉淀课程 FAQ',
+    cursor: [[0.2, 1250, 860], [1.2, 1490, 940], [1.7, 1490, 940]],
+    clicks: [{ at: 1.25, x: 1490, y: 940 }],
+    hl: [H(0.1, 99, 1402, 915, 178, 50, '')],
+    toast: { t0: 3.0, t1: 8.0, text: '已发送给 1 位同学 · 新增 1 条课程 FAQ' } },
+  a5_7: { img: IMG.kb, z: [1.00, 800, 500], note: '撤回回复，知识库按快照回滚',
+    hl: [H(0.1, 99, 1232, 108, 330, 150, '知识库健康度'), H(1.8, 99, 320, 282, 1240, 195, '知识缺口')],
+    call: C(0.8, 99, 900, 760, 370, '可撤回，可回滚', '发错了能撤回，知识库有快照，不会越改越乱。') },
+  a5_8: { img: IMG.adminAudit, z: [1.06, 800, 500], note: '回复、撤回、修改，全部进审计',
+    hl: [H(0.1, 99, 95, 360, 1410, 190, '操作审计记录')],
+    call: C(0.7, 99, 980, 620, 370, '谁做了什么', '账号、动作、课程、时间，全部留痕。') },
+
+  /* ---------- act 6 ---------- */
+  a6_1: { img: IMG.kb, z: [1.00, 800, 500], note: '新增 / 编辑 / 停用 FAQ，维护章节与别名',
+    cursor: [[0.2, 800, 780], [1.0, 1180, 820], [1.4, 1180, 820]],
+    clicks: [{ at: 1.05, x: 1180, y: 820 }],
+    hl: [H(0.1, 99, 320, 780, 1240, 80, '搜索 / 体检 / 导入导出 / 新增'), H(1.0, 99, 1080, 792, 150, 55, '导入 / 导出')],
+    call: C(2.2, 99, 900, 600, 370, '知识库工作台', '章节、别名、停用状态，都能在这里维护。') },
+  a6_2: { img: IMG.imp, z: [1.20, 800, 300], note: 'CSV / JSON 批量导入导出，导入前校验',
+    hl: [H(0.1, 99, 385, 260, 700, 50, '选择课程'), H(1.2, 99, 385, 338, 830, 100, 'CSV / JSON 文件')],
+    call: C(0.8, 99, 560, 560, 390, '批量维护', '单次最多 200 条，重复问题会自动跳过。') },
+  a6_3: { img: IMG.drawer, z: [1.22, 1265, 700], note: '发送前自检：引用 / 结论 / 语气',
+    hl: [H(0.1, 99, 948, 620, 635, 250, '')] },
+  a6_4: { img: IMG.kb, z: [1.00, 800, 500], note: '两次负反馈：降权 + 提醒老师',
+    hl: [H(0.1, 99, 1232, 108, 330, 150, '1 条待完善', true), H(1.6, 99, 320, 282, 1240, 195, 'SPFA 知识缺口', true)],
+    call: C(0.8, 99, 900, 600, 370, '负反馈闭环', '学生点“还不够”，相关知识会自动降权并提醒老师。', true) },
+  a6_5: { img: IMG.insights, z: [1.00, 800, 500], note: 'AI 解决率、首响、合并、章节热力',
+    hl: [H(0.1, 99, 1218, 108, 345, 238, 'AI 独立解决率 78%'), H(1.6, 99, 320, 372, 1240, 125, '83 个 / 25.8 小时 / 5.5 小时')],
+    call: C(0.8, 99, 930, 760, 370, '一屏看清', 'AI 接住多少，老师花了多久，哪里最卡。') },
+  a6_6: { img: IMG.insights, z: [1.18, 800, 660], note: '每日 AI 接住 / 转人工',
+    hl: [H(0.1, 99, 320, 518, 1240, 390, '每日去向')],
+    call: C(0.7, 99, 930, 300, 360, '不只看数量', '老师看到的是全班卡在哪，而不是答了多少。') },
+  a6_7: { img: IMG.insights, z: [1.00, 800, 500], note: '按课程与演示空间隔离',
+    hl: [H(0.1, 99, 318, 168, 700, 55, '近 7 天 · 全域试点')],
+    call: C(0.7, 99, 930, 760, 370, '数据隔离', '每个老师只看到自己课程的洞察。') },
+
+  /* ---------- act 7 ---------- */
+  a7_1: { img: IMG.campus, z: [1.00, 800, 500], note: '校园经验库 + 校园工具',
+    hl: [H(0.1, 99, 332, 142, 1235, 55, '校园工具'), H(1.6, 99, 332, 225, 1235, 470, '地图 / 图书馆 / 食堂')],
+    call: C(0.8, 99, 930, 780, 370, '课下的事', '校园经验、地图、图书馆、食堂，都在校园生活里。') },
+  a7_2: { img: IMG.campus, z: [1.00, 800, 500], note: '804 条经验卡，7 大分类，标来源与可信度', panel: 'campus',
+    call: C(0.8, 99, 620, 700, 330, '先看可信度', '官方来源、老师回复、待核实，分开标注。') },
+  a7_3: { img: IMG.campus, z: [1.08, 850, 430], note: '36 栋手绘地图，起点到终点',
+    cursor: [[0.2, 900, 700], [1.4, 760, 400], [2.6, 900, 520]],
+    hl: [H(0.1, 99, 332, 225, 840, 50, '搜建筑名或别名'), H(0.8, 99, 332, 280, 840, 410, '手绘校园地图')],
+    call: C(0.8, 99, 930, 760, 360, '不用问路', '输入起点和终点，直接给路线。') },
+  a7_4: { img: IMG.lib, z: [1.00, 800, 500], note: '图书馆找书 + 食堂 107 档口 3,758 道菜', panel: 'food' },
+
+  a7_5: { img: IMG.calendar, z: [1.00, 800, 500], note: '校历 / 空教室 / GPA / 课表成绩',
+    hl: [H(0.1, 99, 332, 142, 1235, 55, 'GPA / 校历 / 图书馆 / 地图 / 食堂'), H(1.4, 99, 332, 295, 1235, 85, '今天 · 第 12 周')],
+    call: C(0.8, 99, 930, 780, 360, '一个入口', '校历、空教室、GPA、教务课表与成绩。') },
+  a7_6: { img: IMG.cx, z: [1.00, 800, 500], note: '学习通扫码只读同步，不保存密码',
+    hl: [H(0.1, 99, 322, 305, 1245, 375, '扫码绑定学习通'), H(1.8, 99, 770, 538, 535, 60, '二维码 / 账号登录')],
+    call: C(0.8, 99, 930, 780, 370, '只读同步', '消息、作业、资料、章节；不保存密码。') },
+  a7_7: { img: IMG.dark, z: [1.04, 800, 500], note: '手机端与 Android 客户端', custom: 'mobile',
+    call: C(0.8, 99, 700, 560, 360, '桌面小组件', '当前课程高亮，老师回复系统级推送。') },
+
+  /* ---------- act 8 ---------- */
+  a8_1: { img: IMG.adminAcc, z: [1.00, 800, 500], note: '独立管理台，9 大模块',
+    cursor: [[0.2, 500, 210], [3.5, 1200, 210]],
+    hl: [H(0.1, 99, 95, 182, 1410, 58, '9 大管理模块')],
+    call: C(0.8, 99, 980, 680, 380, '独立 /admin/', '账号、风控、审计、用量、运营、核实、系统。') },
+  a8_2: { img: IMG.adminAcc, z: [1.00, 800, 500], note: '角色隔离，教师只操作自己的课程',
+    hl: [H(0.1, 99, 95, 312, 620, 535, '账号与角色'), H(1.4, 99, 768, 545, 310, 50, '课程分配')],
+    call: C(0.8, 99, 980, 720, 370, '权限边界', '学生、教师、管理员；课程级写入校验。') },
+  a8_3: { img: IMG.adminAudit, z: [1.00, 800, 500], note: '服务端 AI 网关与风控', panel: 'security',
+    hl: [H(0.1, 99, 95, 520, 1410, 130, '越权操作被拒绝')],
+    call: C(0.8, 99, 600, 760, 360, '安全边界', '密钥、脱敏、敏感词、禁言、封禁、图片审核。') },
+  a8_4: { img: IMG.adminAudit, z: [1.00, 800, 500], note: '已部署、可复现、可审计',
+    hl: [H(0.1, 99, 95, 360, 1410, 190, '操作审计')],
+    call: C(0.7, 99, 980, 620, 370, '不是演示壳', '生产已部署，操作有审计，数据可复现。') },
+
+  /* ---------- act 9 ---------- */
+  a9_1: { custom: 'datawall', note: '真实数据 · 生产环境' },
+  a9_2: { custom: 'datawall', note: '5 门课 / 81 条 FAQ / 157 道评测' },
+  a9_3: { custom: 'datawall', note: '33 位导师 / 804 条校园卡 / 9 大模块' },
+  a9_4: { custom: 'outro', note: '让每个课后问题，都有回响。' },
+  a9_5: { custom: 'outro', note: '扫码进入项目介绍站' },
+};
+
+/* ---------- preload ---------- */
+const PRELOAD = [...new Set([
+  ...Object.values(IMG),
+  '/assets/icon-only.png',
+  '/promo/full/assets/qr-intro.png',
+])];
+const imageReady = Promise.all(PRELOAD.map(src => new Promise(res => {
+  const im = new Image();
+  im.onload = im.onerror = () => res();
+  im.src = src;
+})));
+
+/* ---------- dom ---------- */
+const $ = id => document.getElementById(id);
+const screenA = $('screen-a'), screenB = $('screen-b');
+const contentLayer = $('content-layer');
+const focusMask = $('focus-mask');
+const cursorEl = $('cursor'), cursorRing = $('cursor-ring');
+const calloutEl = $('callout');
+const toastEl = $('toast');
+const hlEls = [0,1,2,3].map(i => $('hl' + i));
+const ripples = [0,1].map(i => $('rip' + i));
+const typingBox = $('typing-box');
+const typingCover = $('typing-cover');
+const maskLayer = $('mask-layer');
+const maskEls = [0,1,2,3].map(() => { const d = document.createElement('div'); d.className = 'mask'; maskLayer.appendChild(d); return d; });
+const intro = $('intro-custom');
+const datawall = $('datawall-custom');
+const humanities = $('humanities-panel');
+const campusPanel = $('campus-panel');
+const foodPanel = $('food-panel');
+const securityPanel = $('security-panel');
+const selfcheckPanel = $('selfcheck-panel');
+const mobileLayer = $('mobile-layer');
+const outroLayer = $('outro-layer');
+const frame = $('screen-frame');
+const rail = $('rail');
+const chapter = $('chapter');
+const chapterNum = chapter.querySelector('.num');
+const chapterTitle = chapter.querySelector('.title');
+const chapterSub = $('chapter-sub');
+
+/* rail steps */
+const railSteps = $('rail-steps');
+ACTS.forEach((a, i) => {
+  const d = document.createElement('div');
+  d.className = 'step';
+  d.dataset.i = String(i);
+  d.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${a.display || a.name}</span>`;
+  railSteps.appendChild(d);
+});
+const stepEls = [...railSteps.children];
+
+/* ---------- math ---------- */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = t => t * t * (3 - 2 * t);
+const lerp = (a, b, k) => a + (b - a) * k;
+
+function cameraFor(z, cx, cy) {
+  const s = BASE * z;
+  let tx = VIEW_W / 2 - cx * s;
+  let ty = VIEW_H / 2 - cy * s;
+  tx = clamp(tx, VIEW_W - SRC_W * s, 0);
+  ty = clamp(ty, VIEW_H - SRC_H * s, 0);
+  return { s, tx, ty };
+}
+
+function lineIndexAt(t) {
+  let idx = 0;
+  for (let i = 0; i < LINES.length; i++) {
+    if (LINES[i].start <= t && t <= LINES[i].end + (LINES[i].pause_after || 0)) idx = i;
+    if (LINES[i].start > t) break;
+  }
+  return idx;
+}
+
+function actIndexAt(t) {
+  let idx = 0;
+  for (let i = 0; i < ACTS.length; i++) {
+    if (ACTS[i].start <= t) idx = i;
+  }
+  return idx;
+}
+
+function fmt(sec) {
+  sec = Math.max(0, sec);
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function setText(el, txt) { if (el.textContent !== txt) el.textContent = txt; }
+
+function setNode(el, html) { if (el.innerHTML !== html) el.innerHTML = html; }
+
+function setScreenSrc(imgEl, src) {
+  if (imgEl.dataset.src !== src) {
+    imgEl.dataset.src = src;
+    imgEl.src = src;
+  }
+}
+
+function applyCam(cam) {
+  const tr = `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.s})`;
+  screenA.style.transform = tr;
+  screenB.style.transform = tr;
+  contentLayer.style.transform = tr;
+}
+
+function local(lt, t0, t1) {
+  return lt >= t0 && lt <= t1;
+}
+
+function fadeWindow(lt, t0, t1, inDur = 0.24, outDur = 0.2) {
+  if (lt < t0 || lt > t1) return 0;
+  const a = clamp((lt - t0) / inDur, 0, 1);
+  const b = clamp((t1 - lt) / outDur, 0, 1);
+  return Math.min(a, b);
+}
+
+/* ---------- render ---------- */
+window.__render = function(t) {
+  const T = clamp(t, 0, TOTAL);
+  const ai = actIndexAt(T);
+  const act = ACTS[ai];
+  const li = lineIndexAt(T);
+  const line = LINES[li];
+  const prev = li > 0 ? LINES[li - 1] : null;
+  const v = V[line.id] || { img: IMG.home, z: [1, 800, 500] };
+  const lt = T - line.start;
+  const dur = line.dur;
+
+  /* progress + rail header */
+  $('progress').style.width = `${(T / TOTAL) * 100}%`;
+  $('rail-act').textContent = `ACT ${String(ai + 1).padStart(2, '0')} · ${act.display || act.name}`;
+  $('rail-title').textContent = act.display || act.name;
+  $('rail-clock').textContent = fmt(T);
+  $('rail-total').textContent = fmt(TOTAL);
+  rail.querySelector('#rail-bar i').style.width = `${(T / TOTAL) * 100}%`;
+  setText($('rail-text'), line.text);
+  setText($('rail-note'), v.note || '');
+  stepEls.forEach((el, i) => {
+    el.classList.toggle('active', i === ai);
+    el.classList.toggle('done', i < ai);
+  });
+
+  /* chapter card: all acts except act1 */
+  const inLead = T < act.start + act.lead_in + 0.22;
+  const showChapter = ai > 0 && inLead;
+  chapter.style.opacity = showChapter ? '1' : '0';
+  chapter.style.display = showChapter ? 'flex' : 'none';
+  if (showChapter) {
+    chapterNum.textContent = String(ai + 1).padStart(2, '0');
+    chapterTitle.textContent = ACT_SUB[act.id] ? (act.display || act.name) : (act.display || act.name);
+    chapterSub.textContent = ACT_SUB[act.id] || '';
+  }
+
+  const isOutro = v.custom === 'outro';
+  const isIntro = v.custom === 'intro';
+  const isData = v.custom === 'datawall';
+  const frameVisible = !showChapter && !isOutro;
+  frame.style.opacity = frameVisible ? '1' : '0';
+  rail.style.opacity = (!showChapter && !isOutro) ? '1' : '0';
+  outroLayer.style.display = isOutro ? 'block' : 'none';
+  outroLayer.style.opacity = isOutro ? '1' : '0';
+
+  /* custom layers */
+  intro.style.display = (isIntro && !showChapter) ? 'block' : 'none';
+  datawall.style.display = (isData && !showChapter) ? 'block' : 'none';
+  humanities.style.display = (v.panel === 'humanities' && !showChapter) ? 'block' : 'none';
+  campusPanel.style.display = (v.panel === 'campus' && !showChapter) ? 'block' : 'none';
+  foodPanel.style.display = (v.panel === 'food' && !showChapter) ? 'block' : 'none';
+  securityPanel.style.display = (v.panel === 'security' && !showChapter) ? 'block' : 'none';
+  selfcheckPanel.style.display = (v.panel === 'selfcheck' && !showChapter) ? 'block' : 'none';
+  mobileLayer.style.display = (v.custom === 'mobile' && !showChapter) ? 'block' : 'none';
+
+  /* chrome */
+  let urlPath = '我的答疑', role = '学生端 · 林晓';
+  if (ai === 4 || ai === 5) { urlPath = '教师工作台'; role = '教师端 · 陈砚'; }
+  if (ai === 6) { urlPath = '校园生活'; role = '学生端 · 林晓'; }
+  if (ai === 7 || line.id === 'a5_8') { urlPath = '管理台'; role = '管理台 · 管理员'; }
+  if (isIntro) { urlPath = '功能演示'; role = '师说 · 双通道答疑'; }
+  if (isData) { urlPath = '数据实证'; role = '师说 · 生产环境'; }
+  setText($('url-path'), urlPath);
+  setText($('role-chip'), role);
+
+  /* intro animation */
+  if (isIntro) {
+    const it = T - ACTS[0].start;
+    intro.querySelectorAll('.node').forEach((el) => {
+      const i = Number(el.dataset.i);
+      const at = 1.4 + i * 1.15;
+      const k = clamp((it - at) / 0.55, 0, 1);
+      el.style.opacity = String(smooth(k));
+      el.style.transform = `translateY(${(1 - smooth(k)) * 12}px)`;
+    });
+    intro.querySelectorAll('.arrow').forEach((el) => {
+      const i = Number(el.dataset.a);
+      const at = 1.9 + i * 1.15;
+      const k = clamp((it - at) / 0.45, 0, 1);
+      el.style.opacity = String(smooth(k));
+    });
+  }
+
+  /* datawall animation */
+  if (isData) {
+    const dt = T - LINES.find(l => l.id === 'a9_1').start;
+    const startAt = [0.5, 2.2, 4.0, 6.2, 8.0, 9.8];
+    datawall.querySelectorAll('.cell').forEach((el) => {
+      const i = Number(el.dataset.cell);
+      const k = clamp((dt - startAt[i]) / 0.5, 0, 1);
+      el.classList.toggle('on', k > 0.55);
+    });
+  }
+
+  /* screen images + camera */
+  if (!isIntro && !isData && !isOutro) {
+    const img = v.img || IMG.home;
+    const prevImg = prev ? (V[prev.id]?.img || IMG.home) : img;
+    const changed = prevImg !== img;
+    setScreenSrc(screenA, prevImg);
+    setScreenSrc(screenB, img);
+    let mix = 1;
+    if (changed) mix = clamp(lt / 0.45, 0, 1);
+    screenA.style.opacity = String(1 - mix);
+    screenB.style.opacity = String(mix);
+
+    const cur = cameraFor(...(v.z || [1, 800, 500]));
+    let cam = cur;
+    if (!changed && prev) {
+      const pc = cameraFor(...(V[prev.id]?.z || [1, 800, 500]));
+      const k = smooth(clamp(lt / 0.85, 0, 1));
+      cam = { s: lerp(pc.s, cur.s, k), tx: lerp(pc.tx, cur.tx, k), ty: lerp(pc.ty, cur.ty, k) };
+    }
+    applyCam(cam);
+
+    /* focus mask */
+    let focus = null;
+    if (v.focus) {
+      const k = fadeWindow(lt, v.focus.t0 ?? 0, v.focus.t1 ?? 99);
+      if (k > 0) focus = { ...v.focus, k, cam };
+    }
+    renderFocus(focus);
+
+    /* highlights */
+    renderHighlights(v.hl || [], lt, cam);
+
+    /* masks + typing */
+    renderMasks(v.masks);
+    renderTyping(v.typing, lt, T);
+
+    /* inset (consent) */
+    renderInset(v.inset, cam);
+
+    /* cursor + clicks */
+    renderCursor(v, prev, lt, cam);
+
+    /* callout */
+    renderCallout(v.call, lt, cam);
+
+    /* toast */
+    renderToast(v.toast, lt);
+  } else {
+    screenA.style.opacity = '0';
+    screenB.style.opacity = '0';
+    contentLayer.style.transform = 'translate(0,0) scale(1)';
+    focusMask.style.opacity = '0';
+    hlEls.forEach(el => el.style.opacity = '0');
+    cursorEl.style.opacity = '0';
+    cursorRing.style.opacity = '0';
+    ripples.forEach(el => el.style.opacity = '0');
+    calloutEl.style.opacity = '0';
+    toastEl.style.opacity = '0';
+    typingBox.style.display = 'none';
+    const oldInset = document.getElementById('inset-img');
+    if (oldInset) oldInset.remove();
+  }
+};
+
+function renderMasks(masks) {
+  maskEls.forEach((el, i) => {
+    const m = masks && masks[i];
+    if (!m) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.style.left = `${m.x}px`;
+    el.style.top = `${m.y}px`;
+    el.style.width = `${m.w}px`;
+    el.style.height = `${m.h}px`;
+    el.style.background = m.bg || '#F8F4EC';
+    el.style.justifyContent = m.align === 'right' ? 'flex-end' : (m.align === 'center' ? 'center' : 'flex-start');
+    el.style.paddingRight = m.align === 'right' ? '8px' : '0';
+    el.style.fontSize = `${m.size || 12}px`;
+    el.style.color = m.color || '#5C756A';
+    el.textContent = m.text || '';
+  });
+}
+
+function renderFocus(focus) {
+  if (!focus) { focusMask.style.opacity = '0'; return; }
+  const { cam } = focus;
+  const x = focus.x * cam.s + cam.tx;
+  const y = focus.y * cam.s + cam.ty;
+  const w = focus.w * cam.s;
+  const h = focus.h * cam.s;
+  focusMask.style.left = `${x}px`;
+  focusMask.style.top = `${y}px`;
+  focusMask.style.width = `${w}px`;
+  focusMask.style.height = `${h}px`;
+  focusMask.style.opacity = String(focus.k);
+}
+
+function renderHighlights(list, lt, cam) {
+  let slot = 0;
+  for (const h of list) {
+    if (slot >= 4) break;
+    const k = fadeWindow(lt, h.t0 ?? 0, h.t1 ?? 99, 0.22, 0.18);
+    const el = hlEls[slot];
+    if (k <= 0) { el.style.opacity = '0'; continue; }
+    el.style.opacity = String(k);
+    el.classList.toggle('warm', !!h.warm);
+    const x = h.x * cam.s + cam.tx;
+    const y = h.y * cam.s + cam.ty;
+    const w = h.w * cam.s;
+    const hh = h.h * cam.s;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.width = `${w}px`;
+    el.style.height = `${hh}px`;
+    el.querySelector('.hl-label').style.display = 'none';
+    slot++;
+  }
+  for (let i = slot; i < 4; i++) hlEls[i].style.opacity = '0';
+}
+
+function renderCallout(c, lt, cam) {
+  // 演示版用右侧讲解栏承载解释，画面上只保留高亮与光标，避免遮挡真实界面。
+  calloutEl.style.opacity = '0';
+}
+
+function renderToast(t, lt) {
+  if (!t) { toastEl.style.opacity = '0'; return; }
+  const k = fadeWindow(lt, t.t0 ?? 0, t.t1 ?? 99, 0.25, 0.25);
+  toastEl.style.opacity = String(k);
+  if (k > 0) toastEl.textContent = t.text;
+}
+
+function renderTyping(ty, lt, T) {
+  if (!ty) { typingBox.style.display = 'none'; typingCover.style.display = 'none'; return; }
+  const elapsed = lt - (ty.t0 ?? 0);
+  if (elapsed < 0) { typingBox.style.display = 'none'; typingCover.style.display = 'none'; return; }
+  const n = Math.min(ty.text.length, Math.floor(elapsed * (ty.cps || 18)));
+  const shown = ty.text.slice(0, n);
+  if (ty.cover) {
+    typingCover.style.display = 'block';
+    typingCover.style.left = `${ty.cover.x}px`;
+    typingCover.style.top = `${ty.cover.y}px`;
+    typingCover.style.width = `${ty.cover.w}px`;
+    typingCover.style.height = `${ty.cover.h}px`;
+    typingCover.style.background = ty.bg || '#FBF9F3';
+  } else {
+    typingCover.style.display = 'none';
+  }
+  typingBox.style.display = 'flex';
+  typingBox.style.left = `${ty.x}px`;
+  typingBox.style.top = `${ty.y}px`;
+  typingBox.style.width = `${ty.w}px`;
+  typingBox.style.height = '36px';
+  typingBox.style.alignItems = 'center';
+  typingBox.style.fontSize = `${ty.size || 18}px`;
+  typingBox.style.color = ty.color || '#173B33';
+  typingBox.style.background = ty.cover ? 'transparent' : (ty.bg || '#FBF9F3');
+  const caretOn = (Math.floor(T * 2.2) % 2) === 0;
+  typingBox.innerHTML = `${escapeHtml(shown)}<span style="display:inline-block;width:1.5px;height:${(ty.size || 18) * 1.05}px;background:#0F766E;vertical-align:-2px;opacity:${caretOn ? 1 : 0};margin-left:1px"></span>`;
+}
+
+function renderInset(inset, cam) {
+  let el = document.getElementById('inset-img');
+  if (!inset) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('img');
+    el.id = 'inset-img';
+    el.style.position = 'absolute';
+    el.style.zIndex = '9';
+    el.style.borderRadius = '10px';
+    el.style.boxShadow = '0 18px 50px rgba(0,0,0,.38)';
+    el.style.border = '1px solid rgba(255,255,255,.25)';
+    contentLayer.appendChild(el);
+  }
+  el.src = inset.img;
+  el.style.left = `${inset.x}px`;
+  el.style.top = `${inset.y}px`;
+  el.style.width = `${inset.w}px`;
+  el.style.height = 'auto';
+}
+
+function renderCursor(v, prev, lt, cam) {
+  const path = v.cursor;
+  if (!path || !path.length) {
+    cursorEl.style.opacity = '0';
+    cursorRing.style.opacity = '0';
+    ripples.forEach(el => el.style.opacity = '0');
+    return;
+  }
+  let x, y;
+  if (lt <= path[0][0]) {
+    const p0 = prev && V[prev.id]?.cursor;
+    const start = p0 && p0.length ? p0[p0.length - 1] : path[0];
+    const k = smooth(clamp(lt / Math.max(0.2, path[0][0]), 0, 1));
+    x = lerp(start[1], path[0][1], k);
+    y = lerp(start[2], path[0][2], k);
+  } else if (lt >= path[path.length - 1][0]) {
+    const p = path[path.length - 1];
+    x = p[1]; y = p[2];
+  } else {
+    let i = 0;
+    while (i < path.length - 1 && path[i + 1][0] < lt) i++;
+    const p0 = path[Math.max(0, i)], p1 = path[Math.min(path.length - 1, i + 1)];
+    const k = smooth(clamp((lt - p0[0]) / Math.max(0.001, p1[0] - p0[0]), 0, 1));
+    x = lerp(p0[1], p1[1], k);
+    y = lerp(p0[2], p1[2], k);
+  }
+  const sx = x * cam.s + cam.tx;
+  const sy = y * cam.s + cam.ty;
+  let press = 0;
+  for (const c of (v.clicks || [])) {
+    if (lt >= c.at - 0.12 && lt <= c.at + 0.18) press = Math.max(press, 1 - Math.abs(lt - c.at) / 0.18);
+  }
+  cursorEl.style.left = `${sx - 6}px`;
+  cursorEl.style.top = `${sy - 4}px`;
+  cursorEl.style.opacity = '1';
+  cursorEl.style.transform = `scale(${1 - press * 0.18}) rotate(${press ? -4 : 0}deg)`;
+  cursorRing.style.left = `${sx}px`;
+  cursorRing.style.top = `${sy}px`;
+  cursorRing.style.opacity = String(0.55 * (1 - press));
+
+  ripples.forEach((el, i) => {
+    const c = (v.clicks || [])[i];
+    if (!c) { el.style.opacity = '0'; return; }
+    const dt = lt - c.at;
+    if (dt < 0 || dt > 0.75) { el.style.opacity = '0'; return; }
+    const cx = c.x * cam.s + cam.tx;
+    const cy = c.y * cam.s + cam.ty;
+    const k = dt / 0.75;
+    el.style.left = `${cx}px`;
+    el.style.top = `${cy}px`;
+    el.style.opacity = String((1 - k) * 0.9);
+    el.style.transform = `scale(${0.7 + k * 2.6})`;
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  await imageReady;
+  try { await document.fonts.ready; } catch (e) {}
+  // 预置镜头，避免首帧闪
+  applyCam(cameraFor(1, 800, 500));
+  window.__render(0);
+  window.__ready = true;
+}
+boot();
+</script>
+</body>
+</html>

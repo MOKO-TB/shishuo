@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>师说 · 苹果发布会旗舰版宣传片</title>
+<style>
+@font-face {
+  font-family: 'AppleSans';
+  src: url('/promo/apple-keynote/fonts/NotoSansSC-VF.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: 'AppleSerif';
+  src: url('/promo/apple-keynote/fonts/NotoSerifSC-VF.ttf') format('truetype');
+  font-weight: 200 900;
+  font-display: block;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #000000;
+  font-family: 'AppleSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #F5F5F7;
+  user-select: none;
+}
+
+#stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  perspective: 2200px;
+}
+
+#bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+  z-index: 0;
+}
+
+/* Scene containers */
+.act {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  will-change: opacity, transform;
+}
+
+/* Typography helpers */
+.serif { font-family: 'AppleSerif', serif; }
+.sans  { font-family: 'AppleSans', sans-serif; }
+
+.grad-silver {
+  background: linear-gradient(180deg, #FFFFFF 15%, #B8C0C8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.grad-jade {
+  background: linear-gradient(125deg, #ECFFF7 0%, #5EEAD4 48%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.grad-forest {
+  background: linear-gradient(135deg, #064E3B 0%, #0F766E 65%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.grad-amber {
+  background: linear-gradient(135deg, #FEF3C7 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.eyebrow {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #34D399;
+  margin-bottom: 18px;
+}
+.eyebrow-light {
+  color: #0F766E;
+}
+
+.h1-hero {
+  font-size: 96px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+.h1-display {
+  font-size: 74px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.16;
+}
+.h2-section {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.22;
+}
+.lead-copy {
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.62;
+  color: rgba(245, 245, 247, 0.72);
+}
+.lead-copy-light {
+  color: rgba(29, 29, 31, 0.70);
+}
+
+/* Apple Top Chapter Indicator */
+#chapter-hud {
+  position: absolute;
+  top: 40px;
+  left: 64px;
+  right: 64px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0;
+}
+.hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  backdrop-filter: blur(20px);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.hud-dark {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 247, 0.85);
+}
+.hud-light {
+  background: rgba(15, 23, 20, 0.05);
+  border: 1px solid rgba(15, 23, 20, 0.10);
+  color: rgba(20, 30, 26, 0.82);
+}
+.hud-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 12px #10B981;
+}
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  opacity: 0.62;
+}
+.hud-brand img {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* Apple Pro Display / MacBook Hardware Frame */
+.mac-frame {
+  position: relative;
+  border-radius: 24px;
+  padding: 12px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.14) 100%);
+  box-shadow:
+    0 55px 120px rgba(0, 0, 0, 0.68),
+    0 18px 42px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform-style: preserve-3d;
+}
+.mac-frame-light {
+  background: linear-gradient(145deg, #FFFFFF 0%, #E7ECEA 55%, #D9E2DE 100%);
+  box-shadow:
+    0 46px 105px rgba(15, 35, 28, 0.18),
+    0 14px 32px rgba(15, 35, 28, 0.10),
+    0 0 0 1px rgba(15, 35, 28, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.mac-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0A0D0C;
+}
+.mac-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.mac-list-fade{position:absolute;left:18%;bottom:0;width:52%;height:26%;z-index:3;pointer-events:none;background:linear-gradient(to bottom,rgba(251,249,243,0),#FBF9F3 58%)}
+.mac-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 28%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.03) 56%, transparent 72%);
+  mix-blend-mode: screen;
+}
+
+/* Titanium iPhone Frame */
+.iphone-frame {
+  position: relative;
+  width: 316px;
+  height: 646px;
+  border-radius: 52px;
+  padding: 13px;
+  background: linear-gradient(150deg, #525B58 0%, #1F2422 35%, #3B4340 70%, #151817 100%);
+  box-shadow:
+    0 45px 100px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.85);
+}
+.iphone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 40px;
+  overflow: hidden;
+  background: #F4F1E8;
+  padding-top: 40px;
+}
+.iphone-screen img {
+  width: 100%;
+  height: calc(100% - 40px);
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.iphone-island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92px;
+  height: 24px;
+  border-radius: 16px;
+  background: #080A09;
+  z-index: 4;
+}
+
+/* Glass Feature Pills / Callouts */
+.glass-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 22px;
+  backdrop-filter: blur(26px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+}
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(15, 45, 34, 0.10);
+  border-radius: 22px;
+  backdrop-filter: blur(22px);
+  box-shadow: 0 24px 60px rgba(15, 35, 28, 0.10);
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 19px;
+  font-weight: 500;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.32);
+  color: #D1FAE5;
+}
+.feature-chip-light {
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  color: #065F46;
+}
+
+/* Subtitle Bar (Ultra-clean Apple Cinema Caption, raised cleanly above bottom Shuling progress runner) */
+#subtitle-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 64px;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+#subtitle-pill {
+  max-width: 1440px;
+  padding: 9px 28px;
+  border-radius: 999px;
+  background: rgba(8, 12, 11, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(20px);
+  color: #F8FAFC;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+/* Progress bar at very bottom + Shuling runner track */
+#progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.09);
+  z-index: 69;
+  pointer-events: none;
+}
+#progress-track.track-light {
+  background: rgba(15, 23, 20, 0.10);
+}
+#progress-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 0%;
+  background: linear-gradient(90deg, #059669 0%, #34D399 72%, #A7F3D0 100%);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.65);
+  z-index: 70;
+  opacity: 0.92;
+}
+#progress-bar.bar-light {
+  background: linear-gradient(90deg, #047857 0%, #10B981 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.38);
+}
+
+/* ===================== ACT 1: OPENING ===================== */
+.a1-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 140px;
+}
+.a1-cards {
+  position: absolute;
+  inset: 0;
+}
+.pain-card {
+  position: absolute;
+  width: 440px;
+  padding: 28px 32px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
+}
+.pain-tag {
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: #34D399;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.pain-title {
+  font-size: 26px;
+  font-weight: 600;
+  color: #F5F5F7;
+  line-height: 1.42;
+  margin-bottom: 10px;
+}
+.pain-sub {
+  font-size: 17px;
+  color: rgba(255,255,255,0.48);
+  font-family: 'Consolas', 'AppleSans', monospace;
+}
+.impact-word {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: 0;
+}
+.impact-big {
+  font-size: 158px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #FFFFFF 10%, #FCA5A5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.impact-sub {
+  margin-top: 20px;
+  font-size: 30px;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+/* ===================== ACT 2: BRAND REVEAL ===================== */
+#a2-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 3px;
+  width: 0px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(90deg, transparent, #34D399, #FFFFFF, #34D399, transparent);
+  box-shadow: 0 0 60px 14px rgba(16, 185, 129, 0.55);
+}
+#a2-brand-lockup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.brand-icon-wrap {
+  width: 148px;
+  height: 148px;
+  border-radius: 36px;
+  padding: 6px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.28), rgba(16,185,129,0.25));
+  box-shadow: 0 0 90px rgba(16, 185, 129, 0.42), 0 30px 70px rgba(0,0,0,0.75);
+  margin-bottom: 34px;
+}
+.brand-icon-wrap img {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  display: block;
+}
+.brand-title-cn {
+  font-size: 136px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em;
+  line-height: 1.08;
+}
+.brand-sub-en {
+  margin-top: 18px;
+  font-size: 20px;
+  letter-spacing: 0.36em;
+  color: rgba(167, 243, 208, 0.78);
+  font-weight: 500;
+}
+.pillars-row {
+  display: flex;
+  gap: 28px;
+  margin-top: 44px;
+}
+.pillar-item {
+  padding: 18px 34px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #FFFFFF;
+}
+
+/* ===================== ACT 3: DUAL-CHANNEL ENGINE ===================== */
+.course-grid {
+  position: absolute;
+  bottom: 118px;
+  left: 110px;
+  right: 110px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+.course-pill {
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.11);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.course-pill-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+.course-pill-meta {
+  font-size: 15px;
+  color: rgba(167, 243, 208, 0.72);
+}
+
+/* ===================== SPLIT LAYOUTS (ACTS 4-8) ===================== */
+.split-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 90px 84px 104px;
+  gap: 64px;
+}
+.copy-col {
+  width: 540px;
+  flex-shrink: 0;
+  z-index: 5;
+}
+.visual-col {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 2000px;
+}
+.spec-list {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.spec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.spec-item-light {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 45, 34, 0.09);
+  box-shadow: 0 8px 24px rgba(15, 35, 28, 0.05);
+}
+.spec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10B981;
+  margin-top: 9px;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(16,185,129,0.7);
+}
+.spec-title {
+  font-size: 21px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+.spec-title-light { color: #111816; }
+.spec-desc {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(245,245,247,0.62);
+}
+.spec-desc-light { color: rgba(20,30,26,0.62); }
+
+/* Floating badge on hardware */
+.float-badge {
+  position: absolute;
+  padding: 16px 24px;
+  border-radius: 18px;
+  z-index: 12;
+  backdrop-filter: blur(22px);
+}
+.float-badge-dark {
+  background: rgba(9, 18, 15, 0.86);
+  border: 1px solid rgba(52, 211, 153, 0.38);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+  color: #ECFDF5;
+}
+.float-badge-light {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 118, 110, 0.24);
+  box-shadow: 0 24px 60px rgba(15, 35, 28, 0.16);
+  color: #0F231C;
+}
+
+/* ===================== ACT 9: APPLE BENTO GRID ===================== */
+#bento-grid {
+  position: absolute;
+  left: 88px;
+  right: 88px;
+  top: 230px;
+  bottom: 130px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px;
+}
+.bento-card {
+  position: relative;
+  border-radius: 28px;
+  padding: 34px 36px;
+  background: linear-gradient(155deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.03) 100%);
+  border: 1px solid rgba(255,255,255,0.13);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+}
+.bento-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 24px; right: 24px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.55), transparent);
+}
+.bento-card.accent {
+  background: linear-gradient(145deg, rgba(6, 78, 59, 0.68) 0%, rgba(16, 185, 129, 0.16) 100%);
+  border-color: rgba(52, 211, 153, 0.36);
+}
+.bento-kicker {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #6EE7B7;
+  text-transform: uppercase;
+}
+.bento-num {
+  font-size: 92px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+}
+.bento-num-md {
+  font-size: 74px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.bento-label {
+  font-size: 22px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-top: 8px;
+}
+.bento-sub {
+  font-size: 16px;
+  color: rgba(245,245,247,0.60);
+  line-height: 1.48;
+  margin-top: 6px;
+}
+
+/* ===================== ACT 10: OUTRO ===================== */
+.outro-qr-card {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 20px 30px 20px 20px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 44px;
+}
+.outro-qr-box {
+  width: 132px;
+  height: 132px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #FFFFFF;
+}
+.outro-qr-box img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ===================== ACT 5: 书灵助教 AVATAR ===================== */
+#a5-avatar{position:absolute;inset:0;z-index:35;opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:space-between;padding:96px 96px 92px;
+  background:radial-gradient(900px 680px at 78% 42%,rgba(16,185,129,.15),transparent 65%),linear-gradient(135deg,#07130E 0%,#040A07 55%,#020604 100%)}
+#a5-avatar .av-copy{width:760px}
+#a5-avatar .av-copy .lead-copy{margin-top:20px;font-size:23px}
+#a5-avatar .av-copy .spec-list{margin-top:30px}
+#a5-avatar .av-stage{position:relative;width:660px;height:800px;display:flex;align-items:center;justify-content:center}
+#a5-avatar .av-glow{position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,.30),transparent 66%);filter:blur(18px)}
+#a5-avatar .av-card{position:relative;width:600px;height:770px;border-radius:38px;background:#FFFFFF;
+  box-shadow:0 60px 140px rgba(0,0,0,.72),0 0 0 1px rgba(255,255,255,.4);transform-origin:50% 60%}
+#a5-avatar .av-art{position:absolute;left:50%;top:24px;width:560px;height:560px;transform:translateX(-50%)}
+#a5-avatar .av-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0}
+#a5-avatar .av-bubble{position:absolute;left:-54px;bottom:188px;width:340px;padding:16px 18px;border-radius:18px;background:#F7F3EA;
+  border:1px solid rgba(15,118,110,.18);box-shadow:0 18px 48px rgba(0,0,0,.24)}
+#a5-avatar .av-bubble strong{display:block;font-size:17px;font-weight:800;color:#14211C}
+#a5-avatar .av-bubble span{display:block;margin-top:6px;font-size:13px;line-height:1.55;color:#5F6E67}
+#a5-avatar .av-states{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;gap:8px}
+#a5-avatar .av-state{padding:8px 13px;border-radius:999px;background:#F3F0E8;color:#6B7F75;font-size:12px;font-weight:700;white-space:nowrap}
+#a5-avatar .av-state.on{background:#0F766E;color:#ECFDF5;box-shadow:0 8px 20px rgba(15,118,110,.28)}
+
+/* ===================== ACT 5: HUMANITIES MENTORS OVERLAY ===================== */
+#a5-humanities{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding:110px 84px 90px 0;opacity:0;z-index:30;pointer-events:none}
+.hp-shell{width:1040px;padding:38px 40px 32px;border-radius:30px;background:linear-gradient(155deg,rgba(11,19,16,.975),rgba(7,13,10,.99));border:1px solid rgba(255,255,255,.14);box-shadow:0 60px 150px -40px rgba(0,0,0,.92)}
+.hp-kicker{font-size:13px;letter-spacing:.22em;color:#6EE7B7;font-weight:700}
+.hp-title{font-family:'Noto Serif SC',serif;font-size:42px;line-height:1.3;font-weight:700;color:#F5F5F7;margin-top:14px}
+.hp-title span{color:#6EE7B7}
+.hp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:24px}
+.hp-card{padding:24px 26px;border-radius:16px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);opacity:0;will-change:opacity,transform}
+.hp-card b{display:block;font-family:'Noto Serif SC',serif;font-size:24px;font-weight:700;color:#FFFFFF;letter-spacing:.02em}
+.hp-card span{display:block;margin-top:5px;font-size:12px;letter-spacing:.06em;color:#6EE7B7}
+.hp-card em{display:block;margin-top:9px;font-style:normal;font-size:14px;line-height:1.55;color:rgba(245,245,247,.48)}
+.hp-foot{margin-top:22px;display:flex;align-items:center;justify-content:space-between;font-size:12px;letter-spacing:.1em;color:rgba(245,245,247,.36)}
+.hp-foot b{font-weight:500;color:rgba(110,231,183,.8)}
+
+/* ===================== SHULING SKELETAL INTEGRATION ===================== */
+#shuling-bottom-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 82px;
+  z-index: 74;
+  pointer-events: none;
+  opacity: 0;
+}
+#shuling-bottom-wrap .bottom-vfx {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1920px;
+  height: 82px;
+  display: block;
+}
+#shuling-bottom-wrap .bottom-glow-dot {
+  position: absolute;
+  bottom: -2px;
+  left: 0%;
+  width: 14px;
+  height: 8px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #D1FAE5 0%, #34D399 55%, transparent 100%);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.9);
+}
+#shuling-bottom-wrap.rail-light .bottom-glow-dot {
+  background: radial-gradient(circle, #34D399 0%, #059669 65%, transparent 100%);
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.55);
+}
+#shuling-bottom-wrap .bottom-runner {
+  position: absolute;
+  bottom: -3px;
+  left: 0%;
+  width: 68px;
+  height: 68px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+#shuling-bottom-wrap.rail-light .bottom-runner {
+  filter: drop-shadow(0 4px 9px rgba(15, 35, 28, 0.22));
+}
+#shuling-bottom-wrap .bottom-runner canvas {
+  width: 68px;
+  height: 68px;
+  display: block;
+}
+
+#a2-shuling {
+  position: absolute;
+  right: 112px;
+  bottom: 120px;
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 25;
+  opacity: 0;
+  pointer-events: none;
+}
+#a2-shuling .a2-av-wrap {
+  position: relative;
+  width: 224px;
+  height: 224px;
+}
+#a2-shuling .a2-av-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 168px;
+  height: 36px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(52, 211, 153, 0.42), transparent 72%);
+  filter: blur(8px);
+}
+#a2-shuling canvas {
+  position: relative;
+  width: 224px;
+  height: 224px;
+  display: block;
+  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.55));
+}
+#a2-shuling .a2-av-pill {
+  margin-top: -6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.36);
+  color: #A7F3D0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(12px);
+}
+
+#a5-avatar .av-art canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.outro-qr-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  margin-top: 38px;
+}
+.outro-qr-row .outro-qr-card {
+  margin-top: 0;
+}
+#a10-shuling {
+  position: relative;
+  width: 228px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#a10-shuling .a10-av-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  width: 176px;
+  height: 36px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(52, 211, 153, 0.45), transparent 70%);
+  filter: blur(10px);
+}
+#a10-shuling canvas {
+  position: relative;
+  width: 222px;
+  height: 222px;
+  display: block;
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.6));
+}
+#a10-shuling .a10-av-tag {
+  margin-top: -8px;
+  padding: 5px 15px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.34);
+  color: #A7F3D0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg-canvas" width="1920" height="1080"></canvas>
+
+  <!-- TOP CHAPTER HUD -->
+  <div id="chapter-hud">
+    <div id="hud-pill" class="hud-pill hud-dark">
+      <span class="hud-dot"></span>
+      <span id="hud-chapter-text">01 · 深夜的沉默</span>
+    </div>
+    <div id="hud-brand" class="hud-brand">
+      <img src="/assets/icon-only.png" alt="师说" />
+      <span>师说 SHISHUO</span>
+    </div>
+  </div>
+
+  <!-- ================= ACT 1: OPENING ================= -->
+  <section id="act1" class="act">
+    <div id="a1-title-block" class="a1-center">
+      <div class="eyebrow">AFTER CLASS · 23:42</div>
+      <div class="h1-hero grad-silver">下课以后<br/>思考才刚刚开始</div>
+    </div>
+
+    <div id="a1-pain-block" class="a1-cards">
+      <div id="pain-1" class="pain-card" style="left: 180px; top: 210px;">
+        <div class="pain-tag">高等数学 · 深夜 23:18</div>
+        <div class="pain-title">洛必达法则用完，极限为什么还是 0/0？</div>
+        <div class="pain-sub">lim (x→0) (tan x - sin x) / x³ = ?</div>
+      </div>
+      <div id="pain-2" class="pain-card" style="left: 740px; top: 410px;">
+        <div class="pain-tag">数据结构 · 深夜 23:39</div>
+        <div class="pain-title">动态规划的 dp[i] 到底该怎么定义状态转移？</div>
+        <div class="pain-sub">RuntimeError · 状态边界越界</div>
+      </div>
+      <div id="pain-3" class="pain-card" style="left: 1280px; top: 230px;">
+        <div class="pain-tag">数字电子技术 · 凌晨 00:06</div>
+        <div class="pain-title">卡诺图化简少圈了一个相邻项，时序波形对不上</div>
+        <div class="pain-sub">F(A,B,C) = Σm(1,3,5,7) · 竞争冒险？</div>
+      </div>
+    </div>
+
+    <div id="imp-1" class="impact-word">
+      <div class="impact-big">没人回</div>
+      <div class="impact-sub">问同学 · 聊天框停在半小时前</div>
+    </div>
+    <div id="imp-2" class="impact-word">
+      <div class="impact-big">对不上</div>
+      <div class="impact-sub">问通用 AI · 脱离课程大纲，容易编造幻觉</div>
+    </div>
+    <div id="imp-3" class="impact-word">
+      <div class="impact-big">怕打扰</div>
+      <div class="impact-sub">找老师 · 写好的长消息又删掉</div>
+    </div>
+
+    <div id="a1-silence" class="a1-center" style="opacity:0;">
+      <div class="serif" style="font-size: 56px; font-weight: 500; letter-spacing: 0.06em; color: rgba(255,255,255,0.88); line-height: 1.5;">
+        无数本该被点亮的瞬间<br/>
+        <span style="color: rgba(255,255,255,0.42);">就这样，被留在了沉默里</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 2: BRAND REVEAL ================= -->
+  <section id="act2" class="act">
+    <div id="a2-beam"></div>
+    <div id="a2-pre" class="a1-center" style="opacity:0;">
+      <div class="h1-display grad-silver">我们重新构想了高校课后答疑</div>
+    </div>
+
+    <div id="a2-brand-lockup" style="opacity:0;">
+      <div class="brand-icon-wrap" id="a2-icon">
+        <img src="/assets/icon-only.png" alt="师说" />
+      </div>
+      <div class="serif brand-title-cn grad-silver" id="a2-title">师说</div>
+      <div class="brand-sub-en" id="a2-en">DUAL-CHANNEL AI TUTORING PLATFORM</div>
+      <div class="pillars-row" id="a2-pillars">
+        <div class="pillar-item" id="pil-1">每句有出处</div>
+        <div class="pillar-item" id="pil-2">每问有回音</div>
+        <div class="pillar-item" id="pil-3" style="border-color: rgba(52,211,153,0.45); color:#6EE7B7;">每课有积累</div>
+      </div>
+    </div>
+
+    <!-- User Manifesto Highlight (p2) -->
+    <div id="a2-manifesto" class="a1-center" style="opacity:0; padding: 0 180px;">
+      <div class="eyebrow" style="margin-bottom:26px;">OUR BELIEF · 师说理念</div>
+      <div class="serif grad-jade" style="font-size: 86px; font-weight: 800; letter-spacing: 0.06em; line-height: 1.25;">
+        课后敢问，课上讲透
+      </div>
+      <div style="margin-top: 34px; font-size: 38px; font-weight: 500; line-height: 1.65; color: rgba(245,245,247,0.88); letter-spacing: 0.03em;">
+        不是替老师回答，而是让老师看见全班没弄懂的地方<br/>
+        <span class="grad-silver" style="font-weight:700;">——然后讲得更准。</span>
+      </div>
+    </div>
+
+    <div id="a2-stage-wrap" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; perspective: 2200px;">
+      <div id="a2-mac-main" class="mac-frame" style="width: 1180px; height: 720px; position: relative;">
+        <div class="mac-screen">
+          <img id="a2-img-light" src="/promo/apple-keynote/assets/fresh-student.png" style="position:absolute; inset:0;" />
+          <img id="a2-img-dark" src="/promo/full/assets/dark-home.png" style="position:absolute; inset:0; opacity:0;" />
+          <div class="mac-list-fade" id="a2-list-fade"></div>
+          <div class="mac-sheen" id="a2-sheen"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 书灵首次挥手登场 -->
+    <div id="a2-shuling">
+      <div class="a2-av-wrap">
+        <div class="a2-av-glow"></div>
+        <canvas id="rig-a2" width="448" height="448"></canvas>
+      </div>
+      <div class="a2-av-pill">书灵助教 · 伴学登场</div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 3: DUAL-CHANNEL ENGINE ================= -->
+  <section id="act3" class="act">
+    <div style="position:absolute; top: 108px; left: 0; right: 0; text-align:center;">
+      <div class="eyebrow">ARCHITECTURE · 双通道接力引擎</div>
+      <div class="h1-display grad-silver" id="a3-heading">有依据才作答，没把握就诚实转交</div>
+    </div>
+
+    <!-- High-precision Apple Silicon style animated optical diagram -->
+    <svg id="a3-svg" viewBox="0 0 1920 620" style="position:absolute; top: 235px; left: 0; width: 1920px; height: 620px;">
+      <defs>
+        <linearGradient id="g-jade" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
+          <stop offset="50%" stop-color="#34D399" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#A7F3D0" stop-opacity="0.9"/>
+        </linearGradient>
+        <linearGradient id="g-amber" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.25"/>
+          <stop offset="50%" stop-color="#FBBF24" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#FDE68A" stop-opacity="0.9"/>
+        </linearGradient>
+        <linearGradient id="g-loop" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#34D399" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#059669" stop-opacity="0.25"/>
+        </linearGradient>
+        <filter id="glow-jade" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="8" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-amber" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="8" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Track 1: Student -> Core Engine -->
+      <path d="M 355 260 L 660 260" stroke="rgba(255,255,255,0.12)" stroke-width="3" fill="none"/>
+      <path id="path-in" d="M 355 260 L 660 260" stroke="url(#g-jade)" stroke-width="4" fill="none" stroke-dasharray="310" stroke-dashoffset="310"/>
+
+      <!-- Track 2: Core -> High/Med Confidence Direct Answer -->
+      <path d="M 1010 220 C 1130 220, 1140 120, 1270 120" stroke="rgba(255,255,255,0.10)" stroke-width="3" fill="none"/>
+      <path id="path-hi" d="M 1010 220 C 1130 220, 1140 120, 1270 120" stroke="url(#g-jade)" stroke-width="4" fill="none" stroke-dasharray="360" stroke-dashoffset="360"/>
+
+      <!-- Track 3: Core -> Low Confidence Honest Refuse -> Teacher -->
+      <path d="M 1010 300 C 1130 300, 1140 390, 1270 390" stroke="rgba(255,255,255,0.10)" stroke-width="3" fill="none"/>
+      <path id="path-lo" d="M 1010 300 C 1130 300, 1140 390, 1270 390" stroke="url(#g-amber)" stroke-width="4" fill="none" stroke-dasharray="360" stroke-dashoffset="360"/>
+
+      <!-- Track 4: Feedback Loop Teacher -> FAQ Knowledge Base -->
+      <path d="M 1490 462 C 1490 555, 835 555, 835 375" stroke="rgba(52,211,153,0.14)" stroke-width="2.5" stroke-dasharray="8 8" fill="none"/>
+      <path id="path-loop" d="M 1490 462 C 1490 555, 835 555, 835 375" stroke="url(#g-loop)" stroke-width="4" fill="none" stroke-dasharray="920" stroke-dashoffset="920"/>
+
+      <!-- Animated Pulses -->
+      <circle id="pulse-in" cx="355" cy="260" r="7" fill="#A7F3D0" filter="url(#glow-jade)" opacity="0"/>
+      <circle id="pulse-hi" cx="1010" cy="220" r="7" fill="#34D399" filter="url(#glow-jade)" opacity="0"/>
+      <circle id="pulse-lo" cx="1010" cy="300" r="7" fill="#FBBF24" filter="url(#glow-amber)" opacity="0"/>
+      <circle id="pulse-loop" cx="1490" cy="462" r="7" fill="#6EE7B7" filter="url(#glow-jade)" opacity="0"/>
+
+      <!-- Node 1: Student Ask -->
+      <g id="node-ask" opacity="0">
+        <rect x="115" y="182" width="240" height="156" rx="26" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+        <text x="235" y="232" text-anchor="middle" fill="#6EE7B7" font-size="15" font-weight="600" letter-spacing="2">INPUT</text>
+        <text x="235" y="274" text-anchor="middle" fill="#FFFFFF" font-size="28" font-weight="700">学生提问</text>
+        <text x="235" y="308" text-anchor="middle" fill="rgba(255,255,255,0.58)" font-size="16">文字 · 语音 · 图片 · 文档</text>
+      </g>
+
+      <!-- Node 2: Central Core Engine -->
+      <g id="node-core" opacity="0">
+        <rect x="660" y="146" width="350" height="228" rx="34" fill="rgba(6,78,59,0.52)" stroke="rgba(52,211,153,0.55)" stroke-width="2"/>
+        <text x="835" y="196" text-anchor="middle" fill="#6EE7B7" font-size="15" font-weight="600" letter-spacing="3">DUAL-CHANNEL CORE</text>
+        <text x="835" y="242" text-anchor="middle" fill="#FFFFFF" font-size="32" font-weight="800">课程知识库检索</text>
+        <text x="835" y="278" text-anchor="middle" fill="rgba(236,253,245,0.78)" font-size="18">出处匹配 · 三档置信度评估</text>
+        <!-- Confidence bars -->
+        <rect x="712" y="308" width="74" height="32" rx="16" fill="rgba(16,185,129,0.28)" stroke="#34D399"/>
+        <text x="749" y="329" text-anchor="middle" fill="#D1FAE5" font-size="14" font-weight="600">高置信</text>
+        <rect x="798" y="308" width="74" height="32" rx="16" fill="rgba(52,211,153,0.16)" stroke="rgba(110,231,183,0.55)"/>
+        <text x="835" y="329" text-anchor="middle" fill="#A7F3D0" font-size="14" font-weight="600">中置信</text>
+        <rect x="884" y="308" width="74" height="32" rx="16" fill="rgba(245,158,11,0.22)" stroke="#FBBF24"/>
+        <text x="921" y="329" text-anchor="middle" fill="#FEF3C7" font-size="14" font-weight="600">低置信</text>
+      </g>
+
+      <!-- Node 3: Direct AI Answer -->
+      <g id="node-hi" opacity="0">
+        <rect x="1270" y="48" width="490" height="146" rx="26" fill="rgba(16,185,129,0.12)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
+        <text x="1308" y="92" fill="#34D399" font-size="15" font-weight="700" letter-spacing="2">CHANNEL 01 · AI 秒级直答</text>
+        <text x="1308" y="132" fill="#FFFFFF" font-size="27" font-weight="700">带课程出处与章节依据作答</text>
+        <text x="1308" y="166" fill="rgba(255,255,255,0.65)" font-size="17">Markdown + KaTeX 公式流式排版 · 绝不脱离大纲</text>
+      </g>
+
+      <!-- Node 4: Honest Refuse + Teacher Relay -->
+      <g id="node-lo" opacity="0">
+        <rect x="1270" y="316" width="490" height="146" rx="26" fill="rgba(245,158,11,0.11)" stroke="rgba(251,191,36,0.48)" stroke-width="1.5"/>
+        <text x="1308" y="360" fill="#FBBF24" font-size="15" font-weight="700" letter-spacing="2">CHANNEL 02 · 诚实拒答 · 老师接力</text>
+        <text x="1308" y="400" fill="#FFFFFF" font-size="27" font-weight="700">同题自动合并，转交任课教师精答</text>
+        <text x="1308" y="434" fill="rgba(255,255,255,0.68)" font-size="17">不编“像答案”的幻觉 · 回复后一键沉淀为新 FAQ</text>
+      </g>
+
+      <!-- Loop caption -->
+      <g id="node-loop-label" opacity="0">
+        <rect x="1030" y="518" width="320" height="38" rx="19" fill="rgba(6,78,59,0.9)" stroke="#34D399"/>
+        <text x="1190" y="542" text-anchor="middle" fill="#D1FAE5" font-size="16" font-weight="600">知识沉淀反哺 · 下一次 AI 直接命中</text>
+      </g>
+    </svg>
+
+    <div class="course-grid" id="a3-courses">
+      <div class="course-pill" id="c-0"><div class="course-pill-title">高等数学</div><div class="course-pill-meta">李芸老师 · 极限 / 微积分 / 级数</div></div>
+      <div class="course-pill" id="c-1"><div class="course-pill-title">数据结构</div><div class="course-pill-meta">陈砚老师 · 树 / 图 / 排序 / DP</div></div>
+      <div class="course-pill" id="c-2"><div class="course-pill-title">电路</div><div class="course-pill-meta">石岩老师 · KCL / 戴维南 / 动态</div></div>
+      <div class="course-pill" id="c-3"><div class="course-pill-title">模拟电子技术</div><div class="course-pill-meta">陆衡老师 · Q点 / 小信号 / 反馈</div></div>
+      <div class="course-pill" id="c-4"><div class="course-pill-title">数字电子技术</div><div class="course-pill-meta">顾明老师 · 卡诺图 / 时序逻辑</div></div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 4: STUDENT EXPERIENCE ================= -->
+  <section id="act4" class="act">
+    <div class="split-stage">
+      <div class="copy-col">
+        <div class="eyebrow" id="a4-eye">STUDENT WORKSPACE · 学生端</div>
+        <div class="h2-section grad-silver" id="a4-title">随时发问<br/>步步有据可依</div>
+        <div class="lead-copy" id="a4-desc" style="margin-top:20px;">
+          文字、语音、视觉识题与文档解析融于同一空间，输入瞬间即提示相近知识与同题组。
+        </div>
+        <div class="spec-list" id="a4-specs">
+          <div class="spec-item" id="a4-s1">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">多模态输入 · 本机先解析</div><div class="spec-desc">讲义/习题先在浏览器本地提取，经授权后发送</div></div>
+          </div>
+          <div class="spec-item" id="a4-s2">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">实时「同问」与完整上下文</div><div class="spec-desc">Markdown + KaTeX 公式流式精排，追问连贯不断档</div></div>
+          </div>
+          <div class="spec-item" id="a4-s3">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">问答档案与「复习卡」错题闭环</div><div class="spec-desc">收藏、CSV 导出、深链分享、站内铃铛与邮件双提醒</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-col">
+        <!-- Main screen container -->
+        <div id="a4-mac" class="mac-frame" style="width: 1120px; height: 700px; position: relative;">
+          <div class="mac-screen">
+            <img id="a4-img-home" src="/promo/apple-keynote/assets/fresh-student.png" style="position:absolute; inset:0; opacity:1;" />
+            <img id="a4-img-file" src="/promo/apple-keynote/assets/fresh-ask-file.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a4-img-thread" src="/promo/assets/student-thread.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a4-img-archive" src="/promo/full/assets/archive.png" style="position:absolute; inset:0; opacity:0;" />
+            <div class="mac-list-fade" id="a4-list-fade"></div>
+            <div class="mac-sheen" id="a4-sheen"></div>
+          </div>
+        </div>
+
+        <!-- Privacy consent floating pop -->
+        <div id="a4-consent-pop" class="float-badge float-badge-dark" style="right: 12px; bottom: 52px; width: 470px; padding: 14px; opacity:0;">
+          <div style="font-size:13px; color:#34D399; font-weight:700; letter-spacing:0.14em; margin-bottom:10px;">PRIVACY FIRST · 本地解析授权</div>
+          <img src="/promo/full/assets/file-consent-crop.png" style="width:100%; border-radius:12px; display:block;" />
+        </div>
+
+        <!-- Review card floating pop -->
+        <div id="a4-review-pop" class="float-badge float-badge-dark" style="right: -6px; bottom: 36px; width: 540px; padding: 14px; opacity:0;">
+          <div style="font-size:13px; color:#34D399; font-weight:700; letter-spacing:0.14em; margin-bottom:10px;">SPACED REVIEW · 错题复习卡自测</div>
+          <img src="/promo/full/assets/review.png" style="width:100%; border-radius:12px; display:block;" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 5: AI MENTORS & LAB TOOLS ================= -->
+  <section id="act5" class="act">
+    <div class="split-stage">
+      <div class="copy-col">
+        <div class="eyebrow" id="a5-eye">AI MENTORS · HUMANITIES &amp; STEM</div>
+        <div class="h2-section grad-silver" id="a5-title">懂教学法的 AI 导师<br/>文理都能问</div>
+        <div class="lead-copy" id="a5-desc" style="margin-top:20px;">
+          不止给出结果，更带你画清课程地图、定位卡点；文科、理科、工科、艺术、经管，都有对应的 AI 导师。
+        </div>
+        <div class="spec-list">
+          <div class="spec-item" id="a5-s1">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">33 位学科 AI 导师库</div><div class="spec-desc">文科 · 理科 · 工科 · 艺术 · 经管，随选随加</div></div>
+          </div>
+          <div class="spec-item" id="a5-s2">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">四步苏格拉底式诊断</div><div class="spec-desc">课程地图 · 先修检查 · 点破关键一步 · 迁移巩固题</div></div>
+          </div>
+          <div class="spec-item" id="a5-s3">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">数电 &amp; 模电交互式实验工具</div><div class="spec-desc">卡诺图化简、数制补码、时序波形、静态工作点 Q 点分析</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-col">
+        <div id="a5-mac" class="mac-frame" style="width: 1120px; height: 700px; position: relative;">
+          <div class="mac-screen">
+            <img id="a5-img-mentor" src="/promo/apple-keynote/assets/fresh-mentor.png" style="position:absolute; inset:0; opacity:1;" />
+            <img id="a5-img-mgr" src="/promo/full/assets/mentor-manager.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a5-img-kmap" src="/promo/apple-keynote/assets/fresh-kmap.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a5-img-analog" src="/promo/full/assets/analog-q.png" style="position:absolute; inset:0; opacity:0;" />
+            <div class="mac-sheen" id="a5-sheen"></div>
+          </div>
+        </div>
+
+        <div id="a5-badge" class="float-badge float-badge-dark" style="left: 20px; bottom: 48px; opacity:0;">
+          <div id="a5-badge-kicker" style="font-size:13px; color:#34D399; font-weight:700; letter-spacing:0.16em;">DIGITAL LOGIC LAB</div>
+          <div id="a5-badge-title" style="font-size:23px; font-weight:700; margin-top:4px;">3/4 变量卡诺图实时圈组化简</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a5-avatar">
+      <div class="av-copy">
+        <div class="eyebrow">DIGITAL COMPANION · 书灵助教</div>
+        <div class="h2-section grad-silver">书灵助教<br/>常驻桌面的伴学搭子</div>
+        <div class="lead-copy">她不只是头像：会看课程、会想卡点，也会把你交给对应的学科导师。</div>
+        <div class="spec-list">
+          <div class="spec-item"><div class="spec-dot"></div><div><div class="spec-title">会看 · 跟着当前课程</div><div class="spec-desc">打开哪门课，书灵就跟着哪门课的重点和卡点</div></div></div>
+          <div class="spec-item"><div class="spec-dot"></div><div><div class="spec-title">会想 · 待命 / 思考 / 讲解</div><div class="spec-desc">不同状态有不同立绘与动作，不是一张静态贴纸</div></div></div>
+          <div class="spec-item"><div class="spec-dot"></div><div><div class="spec-title">会叫导师 · 一键打开</div><div class="spec-desc">点她或点气泡，直接进入对应学科导师</div></div></div>
+        </div>
+      </div>
+      <div class="av-stage">
+        <div class="av-glow"></div>
+        <div class="av-card" id="av-card">
+          <div class="av-art">
+            <canvas id="rig-a5" width="1120" height="1120"></canvas>
+            <canvas id="vfx-a5" width="560" height="560"></canvas>
+          </div>
+          <div class="av-bubble">
+            <strong>书灵助教 · 在线伴学</strong>
+            <span>卡在某一步？点我打开 AI 导师</span>
+          </div>
+          <div class="av-states">
+            <span class="av-state on" data-s="wave">挥手问好</span>
+            <span class="av-state" data-s="thinking">梳理思路中</span>
+            <span class="av-state" data-s="answering">讲解中</span>
+            <span class="av-state" data-s="celebrate">真棒</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a5-humanities">
+      <div class="hp-shell">
+        <div class="hp-kicker">AI MENTORS · 文科 / 社科 / 经管</div>
+        <div class="hp-title">不止理工科，<span>文科也能问。</span></div>
+        <div class="hp-grid">
+          <div class="hp-card"><b>史纲导师</b><span>中国近现代史纲要</span><em>先分阶段，再抓主要矛盾和因果</em></div>
+          <div class="hp-card"><b>艺术导师</b><span>艺术概论</span><em>本质—创作—作品—鉴赏，一套线串起来</em></div>
+          <div class="hp-card"><b>心理导师</b><span>普通心理学</span><em>先分流派，再讲实验与结论</em></div>
+          <div class="hp-card"><b>微观经济导师</b><span>微观经济学</span><em>先画供需，再算弹性与均衡</em></div>
+        </div>
+        <div class="hp-foot"><span>33 位学科导师 · 文 / 理 / 工 / 艺 / 经管</span><b>不止一条赛道</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 6: TEACHER WORKBENCH (CERAMIC IVORY LIGHT THEME) ================= -->
+  <section id="act6" class="act" style="color:#111816;">
+    <div class="split-stage">
+      <div class="copy-col">
+        <div class="eyebrow eyebrow-light">TEACHER WORKBENCH · 教师端</div>
+        <div class="h2-section grad-forest" id="a6-title">把时间，还给<br/>真正有深度的教学</div>
+        <div class="lead-copy lead-copy-light" id="a6-desc" style="margin-top:20px;">
+          语义同题自动合并，AI 备好依据与回复草稿；一次精答，整组同步，知识永续沉淀。
+        </div>
+        <div class="spec-list">
+          <div class="spec-item spec-item-light" id="a6-s1">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">一次回复整组 · 一键沉淀 FAQ</div><div class="spec-desc spec-desc-light">支持撤回与快照回滚，下次同学再问 AI 直接命中</div></div>
+          </div>
+          <div class="spec-item spec-item-light" id="a6-s2">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">知识库体检与负反馈闭环</div><div class="spec-desc spec-desc-light">附件正文解析、AI 口语别名；两次负反馈自动降权提醒</div></div>
+          </div>
+          <div class="spec-item spec-item-light" id="a6-s3">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">答疑洞察与章节卡点热力</div><div class="spec-desc spec-desc-light">AI 独立解决率、教师首响、节省工时，一屏洞见教学难点</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-col">
+        <div id="a6-mac" class="mac-frame mac-frame-light" style="width: 1120px; height: 700px; position: relative;">
+          <div class="mac-screen" style="background:#F7F5EE;">
+            <img id="a6-img-queue" src="/promo/apple-keynote/assets/fresh-teacher.png" style="position:absolute; inset:0; opacity:1;" />
+            <img id="a6-img-drawer" src="/promo/apple-keynote/assets/fresh-reply.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a6-img-kb" src="/promo/apple-keynote/assets/fresh-kb.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a6-img-insights" src="/promo/full/assets/teacher-insights.png" style="position:absolute; inset:0; opacity:0;" />
+            <div class="mac-sheen" id="a6-sheen"></div>
+          </div>
+        </div>
+
+        <div id="a6-badge" class="float-badge float-badge-light" style="left: 24px; bottom: 38px; opacity:0;">
+          <div id="a6-badge-kicker" style="font-size:13px; color:#0F766E; font-weight:700; letter-spacing:0.15em;">KNOWLEDGE FLYWHEEL</div>
+          <div id="a6-badge-title" style="font-size:22px; font-weight:700; margin-top:4px; color:#0F231C;">同题合并 · 一次精答 · AI 学会</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 7: CAMPUS ECOSYSTEM (CERAMIC LIGHT THEME) ================= -->
+  <section id="act7" class="act" style="color:#111816;">
+    <div class="split-stage">
+      <div class="copy-col">
+        <div class="eyebrow eyebrow-light">CAMPUS ECOSYSTEM · 校园生态</div>
+        <div class="h2-section grad-forest">课上问老师<br/>课下问引路学长</div>
+        <div class="lead-copy lead-copy-light" style="margin-top:20px;">
+          从校园经验、手绘地图、图书馆与食堂决策，到学习通只读同步，把碎片入口收拢于一处。
+        </div>
+        <div class="spec-list">
+          <div class="spec-item spec-item-light" id="a7-s1">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">804 条校园经验卡 · 可信度分级</div><div class="spec-desc spec-desc-light">7 大分类明标官方来源 / 教师回复 / 待核实，盲区直转主理人</div></div>
+          </div>
+          <div class="spec-item spec-item-light" id="a7-s2">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">全能校园工具箱</div><div class="spec-desc spec-desc-light">36 栋手绘地图 · 图书馆找书 · GPA 试算 · 3,758 道食堂菜品</div></div>
+          </div>
+          <div class="spec-item spec-item-light" id="a7-s3">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title spec-title-light">学习通 &amp; 教务只读同步</div><div class="spec-desc spec-desc-light">扫码同步课程消息、作业与课表，不保存密码，不代交作业</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-col">
+        <div id="a7-mac" class="mac-frame mac-frame-light" style="width: 1120px; height: 700px; position: relative;">
+          <div class="mac-screen" style="background:#F7F5EE;">
+            <img id="a7-img-map" src="/promo/full/assets/campus-map.png" style="position:absolute; inset:0; opacity:1;" />
+            <img id="a7-img-lib" src="/promo/full/assets/campus-library.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a7-img-canteen" src="/promo/apple-keynote/assets/fresh-canteen.png" style="position:absolute; inset:0; opacity:0;" />
+            <img id="a7-img-cx" src="/promo/full/assets/chaoxing.png" style="position:absolute; inset:0; opacity:0;" />
+            <div class="mac-sheen" id="a7-sheen"></div>
+          </div>
+        </div>
+
+        <!-- Latest 804 Campus Experience Cards Floating Callout -->
+        <div id="a7-kb-pop" class="float-badge float-badge-light" style="left: 24px; bottom: 38px; width: 480px; opacity:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:13px; color:#0F766E; font-weight:700; letter-spacing:0.14em;">YINLU XUEZHANG · 引路学长知识库</div>
+            <div style="font-size:13px; padding:3px 10px; border-radius:999px; background:rgba(16,185,129,0.14); color:#065F46; font-weight:700;">7 大分类</div>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:12px; margin-top:8px;">
+            <span style="font-size:44px; font-weight:800; color:#064E3B; line-height:1;">804</span>
+            <span style="font-size:20px; font-weight:700; color:#0F231C;">条校园经验与官方资讯卡</span>
+          </div>
+          <div style="font-size:15px; color:rgba(15,35,28,0.68); margin-top:6px;">考研 · 实习 · 竞赛 · 生活 · 官方来源与待核实分层</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 8: MOBILE APP & GOVERNANCE ================= -->
+  <section id="act8" class="act">
+    <!-- Part A: Native Android App Showcase (Desktop Dark + Titanium Phone + Schedule Widget + Push Notification) -->
+    <div id="a8-devices-stage" style="position:absolute; inset:0; display:flex; align-items:center; padding: 88px 78px 104px; gap: 48px;">
+      <div class="copy-col" style="width: 500px;">
+        <div class="eyebrow">ANDROID APP &amp; CROSS-PLATFORM</div>
+        <div class="h2-section grad-silver">原生手机客户端<br/>课表回复装进口袋</div>
+        <div class="lead-copy" style="margin-top:18px; font-size:23px;">
+          深浅双模式自由切换，原生 4×2 桌面课程表小组件与后台系统级消息推送，无需谷歌服务即可及时触达。
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:28px;">
+          <div class="feature-chip">4×2 桌面课表小组件</div>
+          <div class="feature-chip">后台系统消息通知</div>
+          <div class="feature-chip">最小权限隐私拍题</div>
+          <div class="feature-chip">学习通一键直达</div>
+        </div>
+      </div>
+
+      <div class="visual-col" style="position:relative;">
+        <!-- Subtle desktop dark backdrop for cross-platform depth -->
+        <div id="a8-mac-dark" class="mac-frame" style="width: 820px; height: 520px; position:absolute; left: 0px; top: 90px; opacity:0.86;">
+          <div class="mac-screen">
+            <img src="/promo/full/assets/dark-home.png" />
+            <div class="mac-sheen"></div>
+          </div>
+        </div>
+
+        <!-- Hero Titanium Phone -->
+        <div id="a8-iphone" class="iphone-frame" style="position:absolute; right: 24px; top: 96px; z-index: 6;">
+          <div class="iphone-screen">
+            <div class="iphone-island"></div>
+            <img src="/promo/apple-keynote/assets/fresh-mobile.png" />
+          </div>
+        </div>
+
+        <!-- Authentic Android 4x2 Schedule Widget (styled faithfully from widget_schedule.xml & colors.xml) -->
+        <div id="a8-widget" style="position:absolute; left: 26px; bottom: 52px; width: 472px; z-index: 12; opacity:0;
+             background:#FAF7F0; border:1.5px solid #E3DCCD; border-radius:26px; padding:18px 20px;
+             box-shadow: 0 34px 80px rgba(0,0,0,0.68), 0 0 0 1px rgba(255,255,255,0.22); color:#14211C;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div style="font-size:17px; font-weight:800; color:#14211C; letter-spacing:0.02em;">师说 · 今日课表</div>
+            <div style="font-size:13px; font-weight:700; color:#146C56; background:rgba(20,108,86,0.10); padding:4px 10px; border-radius:999px;">第 12 周 · 周五</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:12px; background:#E6F2ED; border:1px solid rgba(20,108,86,0.28); border-radius:14px; padding:9px 12px;">
+              <div style="width:52px; font-size:14px; font-weight:800; color:#146C56;">08:20</div>
+              <div style="flex:1;">
+                <div style="font-size:15px; font-weight:800; color:#14211C;">数据结构与算法</div>
+                <div style="font-size:12.5px; color:#5F6E67;">实验楼 305 · 08:20–09:55</div>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#FFFFFF; background:#146C56; padding:3px 9px; border-radius:999px;">上课中</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; background:#F0EAE0; border-radius:14px; padding:9px 12px;">
+              <div style="width:52px; font-size:14px; font-weight:800; color:#146C56;">10:15</div>
+              <div style="flex:1;">
+                <div style="font-size:15px; font-weight:700; color:#1D2C25;">高等数学</div>
+                <div style="font-size:12.5px; color:#5F6E67;">教三 204 · 10:15–11:50</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; background:#F0EAE0; border-radius:14px; padding:9px 12px;">
+              <div style="width:52px; font-size:14px; font-weight:800; color:#146C56;">14:30</div>
+              <div style="flex:1;">
+                <div style="font-size:15px; font-weight:700; color:#1D2C25;">数字电子技术基础</div>
+                <div style="font-size:12.5px; color:#5F6E67;">教二 108 · 14:30–16:05</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authentic Android System Notification Banner (NotificationPollWorker.java) -->
+        <div id="a8-notif" style="position:absolute; left: 264px; top: 44px; width: 510px; z-index: 14; opacity:0;
+             background: rgba(16, 26, 22, 0.92); border: 1px solid rgba(52, 211, 153, 0.42);
+             border-radius: 22px; padding: 16px 20px; backdrop-filter: blur(24px);
+             box-shadow: 0 28px 68px rgba(0,0,0,0.72); display:flex; align-items:center; gap:16px;">
+          <img src="/assets/icon-only.png" style="width:46px; height:46px; border-radius:12px; flex-shrink:0;" />
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="font-size:14px; font-weight:700; color:#34D399; letter-spacing:0.06em;">师说 · 系统消息通知</div>
+              <div style="font-size:13px; color:rgba(255,255,255,0.48);">刚刚</div>
+            </div>
+            <div style="font-size:18px; font-weight:700; color:#FFFFFF; margin-top:4px;">陈砚老师回复了你的提问</div>
+            <div style="font-size:14px; color:rgba(245,245,247,0.70); margin-top:3px;">动态规划状态转移方程已精答，点击直达详情 →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part B: Admin Console & Enterprise Security -->
+    <div id="a8-admin-stage" style="position:absolute; inset:0; opacity:0; display:flex; align-items:center; padding: 88px 84px 104px; gap: 56px;">
+      <div class="copy-col" style="width: 520px;">
+        <div class="eyebrow">GOVERNANCE &amp; SECURITY · 可信底座</div>
+        <div class="h2-section grad-silver">独立管理台<br/>与企业级安全边界</div>
+        <div class="spec-list" style="margin-top: 28px;">
+          <div class="spec-item" id="a8-sec1">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">独立 /admin/ 九大治理模块</div><div class="spec-desc">多角色课程隔离 · 全链路操作审计 · 内容周期复核提醒</div></div>
+          </div>
+          <div class="spec-item" id="a8-sec2">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">服务端统一 AI 网关</div><div class="spec-desc">模型 Key 永不下发浏览器，分角色额度精细可控</div></div>
+          </div>
+          <div class="spec-item" id="a8-sec3">
+            <div class="spec-dot"></div>
+            <div><div class="spec-title">隐私脱敏与服务端风控</div><div class="spec-desc">学号/邮箱/手机号自动脱敏，敏感词过滤与图片审核</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-col">
+        <div id="a8-mac-admin" class="mac-frame" style="width: 1120px; height: 700px; position:relative;">
+          <div class="mac-screen">
+            <img id="a8-img-acc" src="/promo/full/assets/admin-accounts.png" style="position:absolute; inset:0; opacity:1;" />
+            <img id="a8-img-audit" src="/promo/full/assets/admin-audit.png" style="position:absolute; inset:0; opacity:0;" />
+            <div class="mac-sheen"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 9: APPLE BENTO SUMMARY WALL ================= -->
+  <section id="act9" class="act">
+    <div style="position:absolute; top: 96px; left: 88px; right: 88px; display:flex; align-items:flex-end; justify-content:space-between;">
+      <div>
+        <div class="eyebrow">PROVEN IN PRODUCTION · 工程实证</div>
+        <div class="h1-display grad-silver">真实部署，全指标可复跑验证</div>
+      </div>
+      <div style="font-size:18px; color:rgba(167,243,208,0.72); letter-spacing:0.08em; padding-bottom: 12px;">
+        npm run eval:retrieval · 157 / 157 PASS
+      </div>
+    </div>
+
+    <div id="bento-grid">
+      <!-- Row 1: 3 + 4 + 5 -->
+      <div class="bento-card" id="b-1" style="grid-column: span 3;">
+        <div class="bento-kicker">PILOT COURSES</div>
+        <div>
+          <div class="bento-num grad-jade" id="cnt-5">5</div>
+          <div class="bento-label">门核心理工试点课</div>
+          <div class="bento-sub">高等数学 · 数据结构 · 电路 · 模电 · 数电</div>
+        </div>
+      </div>
+
+      <div class="bento-card" id="b-2" style="grid-column: span 4;">
+        <div class="bento-kicker">CURATED KNOWLEDGE</div>
+        <div>
+          <div class="bento-num grad-silver" id="cnt-81">81</div>
+          <div class="bento-label">条精修课程 FAQ</div>
+          <div class="bento-sub">每条均附章节、标签、口语别名与出处依据，支持负反馈自愈</div>
+        </div>
+      </div>
+
+      <div class="bento-card accent" id="b-3" style="grid-column: span 5;">
+        <div class="bento-kicker">RETRIEVAL BENCHMARK</div>
+        <div>
+          <div style="display:flex; align-items:baseline; gap:18px;">
+            <div class="bento-num grad-jade" id="cnt-157">157 / 157</div>
+            <div style="font-size:32px; font-weight:800; color:#A7F3D0;">100%</div>
+          </div>
+          <div class="bento-label">自动化检索评测全部通过</div>
+          <div class="bento-sub">132 道应命中课程问题 + 25 道低置信边界拒答，精准不编造幻觉</div>
+        </div>
+      </div>
+
+      <!-- Row 2: 4 + 4 + 4 -->
+      <div class="bento-card" id="b-4" style="grid-column: span 4;">
+        <div class="bento-kicker">AI MENTORS &amp; LAB</div>
+        <div>
+          <div class="bento-num-md grad-silver" id="cnt-33">33</div>
+          <div class="bento-label">位学科 AI 导师库</div>
+          <div class="bento-sub">5 位默认试点 + 28 位扩展学科，内置数电卡诺图与模电 Q 点工具</div>
+        </div>
+      </div>
+
+      <div class="bento-card" id="b-5" style="grid-column: span 4;">
+        <div class="bento-kicker">CAMPUS LIFE</div>
+        <div>
+          <div class="bento-num-md grad-jade" id="cnt-804">804</div>
+          <div class="bento-label">条引路学长校园经验卡</div>
+          <div class="bento-sub">7 大分类 · 36 栋手绘地图 · 107 档口 3,758 菜品 · 学习通</div>
+        </div>
+      </div>
+
+      <div class="bento-card" id="b-6" style="grid-column: span 4;">
+        <div class="bento-kicker">MOBILE &amp; GOVERNANCE</div>
+        <div>
+          <div class="bento-num-md grad-silver">9</div>
+          <div class="bento-label">大独立服务器管理模块</div>
+          <div class="bento-sub">Android 课表小组件与通知推送 · 统一 AI 网关 · 全链路操作审计</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACT 10: OUTRO ================= -->
+  <section id="act10" class="act">
+    <div id="a10-q1" class="a1-center" style="opacity:0;">
+      <div class="serif" style="font-size: 74px; font-weight: 700; line-height: 1.45; letter-spacing: 0.06em;">
+        <span class="grad-jade">课后敢问，课上讲透</span><br/>
+        <span style="font-size: 40px; font-weight: 400; color: rgba(255,255,255,0.78);">让全班没弄懂的地方，都被老师清晰看见</span>
+      </div>
+    </div>
+
+    <div id="a10-q2" class="a1-center" style="opacity:0;">
+      <div class="eyebrow" style="margin-bottom:26px;">CORE PHILOSOPHY</div>
+      <div class="serif" style="font-size: 76px; font-weight: 700; line-height: 1.38; letter-spacing: 0.04em;">
+        <span class="grad-silver">老师写下的每一句话</span><br/>
+        <span class="grad-jade">都成为 AI 的第一反应</span>
+      </div>
+    </div>
+
+    <div id="a10-brand" class="a1-center" style="opacity:0;">
+      <div class="brand-icon-wrap" style="width:124px; height:124px; border-radius:30px; margin-bottom:24px;">
+        <img src="/assets/icon-only.png" style="border-radius:24px;" />
+      </div>
+      <div class="serif grad-silver" style="font-size: 112px; font-weight: 800; letter-spacing: 0.24em; padding-left: 0.24em; line-height: 1.05;">师说</div>
+      <div style="margin-top: 22px; font-size: 32px; font-weight: 400; letter-spacing: 0.14em; color: rgba(236, 253, 245, 0.86);">
+        让每个课后问题，都有回响
+      </div>
+      <div class="outro-qr-row">
+        <div class="outro-qr-card">
+          <div class="outro-qr-box">
+            <img src="/promo/full/assets/qr-intro.png" alt="扫码访问师说项目介绍站" />
+          </div>
+          <div style="text-align:left;">
+            <div style="font-size:14px; letter-spacing:0.18em; color:#34D399; font-weight:700;">PROJECT SHOWCASE</div>
+            <div style="font-size:26px; font-weight:700; color:#FFFFFF; margin-top:6px;">扫码访问师说项目介绍站</div>
+            <div style="font-size:17px; color:rgba(255,255,255,0.68); margin-top:8px;">121.37.30.147/intro/ · 功能全景与 5 门试点课程</div>
+            <div style="font-size:15px; color:rgba(167,243,208,0.68); margin-top:6px;">广应科黑客松 · 数字造梦师 · 软件应用赛道</div>
+          </div>
+        </div>
+        <div id="a10-shuling">
+          <div class="a10-av-glow"></div>
+          <canvas id="rig-outro" width="444" height="444"></canvas>
+          <div class="a10-av-tag">书灵等你来问</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CINEMA SUBTITLE -->
+  <div id="subtitle-wrap">
+    <div id="subtitle-pill"></div>
+  </div>
+  <div id="progress-track"></div>
+  <div id="progress-bar"></div>
+  <!-- SHULING BOTTOM PROGRESS-BAR RUNNER -->
+  <div id="shuling-bottom-wrap">
+    <canvas id="bottom-vfx" class="bottom-vfx" width="1920" height="82"></canvas>
+    <div id="bottom-glow-dot" class="bottom-glow-dot"></div>
+    <div id="bottom-runner" class="bottom-runner">
+      <canvas id="rig-runner" width="144" height="144"></canvas>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { AvatarMeshRig } from '/promo/avatarRig.js';
+(function () {
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const invLerp = (a, b, v) => (b <= a ? (v >= b ? 1 : 0) : clamp((v - a) / (b - a)));
+  const easeOutCubic = t => 1 - Math.pow(1 - clamp(t), 3);
+  const easeOutExpo = t => (t >= 1 ? 1 : t <= 0 ? 0 : 1 - Math.pow(2, -10 * t));
+  const easeInOutQuart = t => {
+    t = clamp(t);
+    return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+  };
+  const springOut = t => {
+    t = clamp(t);
+    if (t === 0 || t === 1) return t;
+    return 1 - Math.pow(2, -9 * t) * Math.cos(t * Math.PI * 1.65);
+  };
+  const fadeWin = (t, s, e, fi = 0.55, fo = 0.55) => {
+    if (t < s || t > e) return 0;
+    const a = fi > 0 ? easeOutCubic(clamp((t - s) / fi)) : 1;
+    const b = fo > 0 ? easeOutCubic(clamp((e - t) / fo)) : 1;
+    return Math.min(a, b);
+  };
+
+  // Pre-build deterministic starfield particles for obsidian ambient background
+  const particles = Array.from({ length: 54 }, (_, i) => {
+    const s = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    const r1 = s - Math.floor(s);
+    const s2 = Math.sin(i * 269.5 + 183.3) * 43758.5453;
+    const r2 = s2 - Math.floor(s2);
+    const s3 = Math.sin(i * 419.2 + 97.1) * 43758.5453;
+    const r3 = s3 - Math.floor(s3);
+    return { x: r1 * 1920, y: r2 * 1080, rad: 1.0 + r3 * 2.2, speed: 4 + r3 * 12, phase: r1 * 6.28 };
+  });
+
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const $ = id => document.getElementById(id);
+
+  let TL = window.__TIMELINE__ || null;
+  let acts = {};
+  let lines = {};
+
+  function bindTimeline(tl) {
+    TL = tl;
+    acts = {};
+    lines = {};
+    for (const a of tl.acts) acts[a.id] = a;
+    for (const l of tl.lines) lines[l.id] = l;
+  }
+
+  function drawBackground(t, lightBlend) {
+    // Interpolate base color between Deep Obsidian (#030505) and Ceramic Ivory (#F4F3EE)
+    const r = Math.round(lerp(3, 244, lightBlend));
+    const g = Math.round(lerp(6, 243, lightBlend));
+    const b = Math.round(lerp(6, 238, lightBlend));
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0, 0, 1920, 1080);
+
+    // Volumetric Apple ambient glows (drifting smoothly with time)
+    const g1x = 960 + Math.sin(t * 0.17) * 340;
+    const g1y = 460 + Math.cos(t * 0.13) * 180;
+    const grad1 = ctx.createRadialGradient(g1x, g1y, 40, g1x, g1y, 920);
+    if (lightBlend < 0.5) {
+      const a = 0.22 * (1 - lightBlend * 1.4);
+      grad1.addColorStop(0, `rgba(16, 185, 129, ${Math.max(0, a)})`);
+      grad1.addColorStop(0.45, `rgba(6, 78, 59, ${Math.max(0, a * 0.55)})`);
+      grad1.addColorStop(1, 'rgba(0,0,0,0)');
+    } else {
+      const a = 0.14 * (lightBlend - 0.5) * 2;
+      grad1.addColorStop(0, `rgba(16, 185, 129, ${a})`);
+      grad1.addColorStop(0.55, `rgba(217, 242, 231, ${a * 0.7})`);
+      grad1.addColorStop(1, 'rgba(244,243,238,0)');
+    }
+    ctx.fillStyle = grad1;
+    ctx.fillRect(0, 0, 1920, 1080);
+
+    // Secondary cool titanium / warm gold rim light
+    const g2x = 1480 + Math.cos(t * 0.14) * 260;
+    const g2y = 220 + Math.sin(t * 0.19) * 150;
+    const grad2 = ctx.createRadialGradient(g2x, g2y, 20, g2x, g2y, 680);
+    if (lightBlend < 0.5) {
+      grad2.addColorStop(0, `rgba(45, 212, 191, ${0.11 * (1 - lightBlend)})`);
+      grad2.addColorStop(1, 'rgba(0,0,0,0)');
+    } else {
+      grad2.addColorStop(0, `rgba(245, 195, 110, ${0.12 * lightBlend})`);
+      grad2.addColorStop(1, 'rgba(244,243,238,0)');
+    }
+    ctx.fillStyle = grad2;
+    ctx.fillRect(0, 0, 1920, 1080);
+
+    // Subtle floating dust / stardust in dark scenes
+    if (lightBlend < 0.85) {
+      const pAlpha = (1 - lightBlend) * 0.42;
+      for (const p of particles) {
+        const py = (p.y - t * p.speed + 10800) % 1080;
+        const px = p.x + Math.sin(t * 0.45 + p.phase) * 18;
+        const twinkle = 0.45 + 0.55 * Math.sin(t * 1.4 + p.phase);
+        ctx.fillStyle = `rgba(180, 245, 224, ${pAlpha * twinkle * 0.65})`;
+        ctx.beginPath();
+        ctx.arc(px, py, p.rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Subtle hairline architectural grid in light scenes
+    if (lightBlend > 0.15) {
+      ctx.strokeStyle = `rgba(15, 45, 34, ${0.032 * lightBlend})`;
+      ctx.lineWidth = 1;
+      for (let x = 96; x < 1920; x += 128) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1080); ctx.stroke();
+      }
+      for (let y = 96; y < 1080; y += 128) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1920, y); ctx.stroke();
+      }
+    }
+
+    // Soft cinema vignette
+    const vig = ctx.createRadialGradient(960, 540, 520, 960, 540, 1220);
+    if (lightBlend < 0.5) {
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, `rgba(0,0,0,${0.62 * (1 - lightBlend)})`);
+    } else {
+      vig.addColorStop(0, 'rgba(244,243,238,0)');
+      vig.addColorStop(1, `rgba(215,212,200,${0.32 * lightBlend})`);
+    }
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, 1920, 1080);
+  }
+
+  function setActOpacity(id, op) {
+    const el = $(id);
+    el.style.opacity = op.toFixed(4);
+    el.style.visibility = op > 0.002 ? 'visible' : 'hidden';
+  }
+
+  function renderSubtitle(t, isLight) {
+    const pill = $('subtitle-pill');
+    let active = null;
+    for (const ln of TL.lines) {
+      if (t >= ln.start - 0.12 && t <= ln.end + 0.25) {
+        active = ln;
+        break;
+      }
+    }
+    if (!active) {
+      pill.style.opacity = '0';
+      return;
+    }
+    pill.textContent = active.text;
+    const op = fadeWin(t, active.start - 0.12, active.end + 0.25, 0.22, 0.24);
+    pill.style.opacity = op.toFixed(3);
+    if (isLight) {
+      pill.style.background = 'rgba(14, 24, 20, 0.84)';
+      pill.style.color = '#F8FAFC';
+      pill.style.borderColor = 'rgba(255,255,255,0.14)';
+    } else {
+      pill.style.background = 'rgba(10, 15, 14, 0.72)';
+      pill.style.color = '#F8FAFC';
+      pill.style.borderColor = 'rgba(255,255,255,0.14)';
+    }
+  }
+
+  function renderHUD(t, lightBlend) {
+    const hud = $('chapter-hud');
+    const pill = $('hud-pill');
+    const txt = $('hud-chapter-text');
+    const brand = $('hud-brand');
+
+    // Show HUD gently from Act 2 through Act 9
+    const showOp = fadeWin(t, acts.act2.start + 1.5, acts.act9.end - 0.4, 0.8, 0.8);
+    hud.style.opacity = showOp.toFixed(3);
+    if (showOp <= 0.005) return;
+
+    const labels = [
+      ['act1', '01 · 深夜的沉默'],
+      ['act2', '02 · 师说登场'],
+      ['act3', '03 · 双通道接力引擎'],
+      ['act4', '04 · 学生端体验'],
+      ['act5', '05 · AI 导师 · 文理都能问'],
+      ['act6', '06 · 教师端工作台'],
+      ['act7', '07 · 校园生活生态'],
+      ['act8', '08 · 手机客户端与可信底座'],
+      ['act9', '09 · 工程实证与全景'],
+      ['act10', '10 · 让问题有回响'],
+    ];
+    for (const [id, label] of labels) {
+      if (t >= acts[id].start && t < acts[id].end) {
+        txt.textContent = label;
+        break;
+      }
+    }
+    if (lightBlend > 0.5) {
+      pill.className = 'hud-pill hud-light';
+      brand.style.color = '#0F231C';
+    } else {
+      pill.className = 'hud-pill hud-dark';
+      brand.style.color = '#F5F5F7';
+    }
+  }
+
+  function renderAct1(t) {
+    const a = acts.act1;
+    const op = fadeWin(t, a.start, a.end, 0.6, 0.7);
+    setActOpacity('act1', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a1_1, l2 = lines.a1_2, l3 = lines.a1_3, l4 = lines.a1_4;
+
+    // Title block
+    const tOp = fadeWin(t, a.start + 0.5, l2.start + 0.2, 1.0, 0.65);
+    const tScale = lerp(0.95, 1.03, invLerp(a.start, l2.start, t));
+    $('a1-title-block').style.opacity = tOp;
+    $('a1-title-block').style.transform = `scale(${tScale.toFixed(4)})`;
+
+    // Three floating pain cards during a1_2
+    const pWrapOp = fadeWin(t, l2.start - 0.15, l3.start + 0.1, 0.5, 0.45);
+    $('a1-pain-block').style.opacity = pWrapOp;
+    ['pain-1', 'pain-2', 'pain-3'].forEach((id, i) => {
+      const p = springOut(invLerp(l2.start + i * 0.9, l2.start + i * 0.9 + 1.0, t));
+      const drift = Math.sin(t * 0.9 + i * 2.1) * 8;
+      $(id).style.opacity = p;
+      $(id).style.transform = `translateY(${((1 - p) * 42 + drift).toFixed(1)}px) scale(${(0.94 + p * 0.06).toFixed(4)})`;
+    });
+
+    // Three high-impact Apple Kinetic Typography punches during a1_3
+    const d3 = (l3.end - l3.start) / 3;
+    ['imp-1', 'imp-2', 'imp-3'].forEach((id, i) => {
+      const s = l3.start + i * d3;
+      const e = s + d3 + (i === 2 ? 0.55 : 0.08);
+      const wOp = fadeWin(t, s, e, 0.16, 0.22);
+      const sc = lerp(0.86, 1.04, easeOutExpo(invLerp(s, e, t)));
+      $(id).style.opacity = wOp;
+      $(id).style.transform = `scale(${sc.toFixed(4)})`;
+    });
+
+    // Silence epilogue during a1_4
+    const sOp = fadeWin(t, l4.start - 0.1, a.end, 0.7, 0.7);
+    const sY = (1 - easeOutCubic(invLerp(l4.start - 0.1, l4.start + 0.9, t))) * 26;
+    $('a1-silence').style.opacity = sOp;
+    $('a1-silence').style.transform = `translateY(${sY.toFixed(1)}px)`;
+  }
+
+  function renderAct2(t) {
+    const a = acts.act2;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.65, 0.65);
+    setActOpacity('act2', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a2_1, l2 = lines.a2_2, l3 = lines.a2_3, l4 = lines.a2_4;
+
+    // Pre-reveal title + horizontal jade light beam
+    const preOp = fadeWin(t, a.start + 0.2, l2.start - 0.05, 0.6, 0.45);
+    $('a2-pre').style.opacity = preOp;
+    $('a2-pre').style.transform = `translateY(${((1 - easeOutCubic(invLerp(a.start + 0.2, a.start + 1.2, t))) * 24).toFixed(1)}px)`;
+
+    const beamP = invLerp(l2.start - 0.85, l2.start + 0.55, t);
+    const beamW = easeOutExpo(clamp(beamP * 1.4)) * 1680;
+    const beamOp = fadeWin(t, l2.start - 0.85, l2.start + 0.95, 0.25, 0.55);
+    $('a2-beam').style.width = `${beamW.toFixed(1)}px`;
+    $('a2-beam').style.opacity = beamOp;
+
+    // Brand lockup ("这就是，师说") -> Manifesto ("课后敢问，课上讲透...") -> 3D Hardware Stage
+    const lockOp = fadeWin(t, l2.start - 0.15, l3.start + 0.15, 0.45, 0.45);
+    const lockScale = lerp(0.90, 1.0, easeOutExpo(invLerp(l2.start - 0.15, l2.start + 0.9, t)));
+    $('a2-brand-lockup').style.opacity = lockOp;
+    $('a2-brand-lockup').style.transform = `scale(${lockScale.toFixed(4)})`;
+
+    ['pil-1', 'pil-2', 'pil-3'].forEach((id, i) => {
+      const p = springOut(invLerp(l2.start + 0.25 + i * 0.2, l2.start + 0.85 + i * 0.2, t));
+      $(id).style.opacity = p;
+      $(id).style.transform = `translateY(${((1 - p) * 24).toFixed(1)}px)`;
+    });
+
+    // User Manifesto screen during a2_3
+    const manOp = fadeWin(t, l3.start - 0.1, l4.start + 0.1, 0.50, 0.50);
+    const manScale = lerp(0.94, 1.02, easeOutCubic(invLerp(l3.start, l4.start, t)));
+    $('a2-manifesto').style.opacity = manOp.toFixed(3);
+    $('a2-manifesto').style.transform = `scale(${manScale.toFixed(4)})`;
+
+    // 3D Hardware Stage rising up during a2_4 (Light -> Dark crossfade)
+    const stOp = fadeWin(t, l4.start - 0.1, a.end, 0.75, 0.65);
+    const stP = easeOutExpo(invLerp(l4.start - 0.1, l4.start + 1.5, t));
+    const stRotX = lerp(24, 3, stP);
+    const stRotY = lerp(-8, 5, invLerp(l4.start, a.end, t));
+    const stY = lerp(160, 0, stP);
+    const stScale = lerp(0.86, 1.02, invLerp(l4.start, a.end, t));
+    $('a2-stage-wrap').style.opacity = stOp;
+    $('a2-mac-main').style.transform = `translateY(${stY.toFixed(1)}px) rotateX(${stRotX.toFixed(2)}deg) rotateY(${stRotY.toFixed(2)}deg) scale(${stScale.toFixed(4)})`;
+
+    const darkStart = lerp(l4.start, a.end, 0.36);
+    const darkMix = easeInOutQuart(invLerp(darkStart, darkStart + 1.0, t));
+    $('a2-img-dark').style.opacity = darkMix.toFixed(3);
+    $('a2-list-fade').style.opacity = (1 - darkMix).toFixed(3);
+    const sheenX = lerp(-40, 110, invLerp(l4.start, a.end, t));
+    $('a2-sheen').style.transform = `translateX(${sheenX.toFixed(1)}%)`;
+
+    // 书灵助教在品牌揭示 & 理念页右下角亲切挥手亮相
+    const a2AvOp = fadeWin(t, l2.start + 0.25, l4.start - 0.08, 0.55, 0.45);
+    const a2AvEl = $('a2-shuling');
+    a2AvEl.style.opacity = a2AvOp.toFixed(3);
+    if (a2AvOp > 0.005 && rigA2) {
+      const a2P = springOut(invLerp(l2.start + 0.25, l2.start + 1.05, t));
+      a2AvEl.style.transform = `translateY(${((1 - a2P) * 32).toFixed(1)}px) scale(${lerp(0.92, 1.0, a2P).toFixed(4)})`;
+      rigA2.render(t, 1 / 30, { mood: 'wave', pointerX: -0.25, pointerY: -0.05 });
+    }
+  }
+
+  function renderAct3(t) {
+    const a = acts.act3;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.6, 0.65);
+    setActOpacity('act3', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a3_1, l2 = lines.a3_2, l3 = lines.a3_3, l4 = lines.a3_4;
+
+    // Nodes progressive reveal
+    $('node-ask').setAttribute('opacity', easeOutCubic(invLerp(a.start + 0.3, a.start + 1.2, t)).toFixed(3));
+    $('node-core').setAttribute('opacity', easeOutCubic(invLerp(l1.start + 0.6, l1.start + 1.8, t)).toFixed(3));
+    $('node-hi').setAttribute('opacity', easeOutCubic(invLerp(l2.start + 0.4, l2.start + 1.5, t)).toFixed(3));
+    $('node-lo').setAttribute('opacity', easeOutCubic(invLerp(l3.start + 0.2, l3.start + 1.4, t)).toFixed(3));
+    const l3Mid = lerp(l3.start, l3.end, 0.45);
+    $('node-loop-label').setAttribute('opacity', easeOutCubic(invLerp(l3Mid, l3Mid + 0.9, t)).toFixed(3));
+
+    // Optical light paths draw-in
+    const pIn = easeOutCubic(invLerp(l1.start + 0.15, l1.start + 1.1, t));
+    $('path-in').setAttribute('stroke-dashoffset', (310 * (1 - pIn)).toFixed(1));
+
+    const pHi = easeOutCubic(invLerp(l2.start + 0.1, l2.start + 1.2, t));
+    $('path-hi').setAttribute('stroke-dashoffset', (360 * (1 - pHi)).toFixed(1));
+
+    const pLo = easeOutCubic(invLerp(l3.start, l3.start + 1.1, t));
+    $('path-lo').setAttribute('stroke-dashoffset', (360 * (1 - pLo)).toFixed(1));
+
+    const pLoop = easeOutCubic(invLerp(l3Mid - 0.2, l3.end + 0.2, t));
+    $('path-loop').setAttribute('stroke-dashoffset', (920 * (1 - pLoop)).toFixed(1));
+
+    // Flowing optical particles along tracks
+    const cycle = (t * 0.65) % 1;
+    if (pIn > 0.9) {
+      $('pulse-in').setAttribute('opacity', '0.95');
+      $('pulse-in').setAttribute('cx', lerp(355, 660, cycle).toFixed(1));
+    } else $('pulse-in').setAttribute('opacity', '0');
+
+    if (pHi > 0.9) {
+      const u = (t * 0.55 + 0.2) % 1;
+      $('pulse-hi').setAttribute('opacity', '0.95');
+      $('pulse-hi').setAttribute('cx', lerp(1010, 1270, u).toFixed(1));
+      $('pulse-hi').setAttribute('cy', lerp(220, 120, easeInOutQuart(u)).toFixed(1));
+    } else $('pulse-hi').setAttribute('opacity', '0');
+
+    if (pLo > 0.9) {
+      const u = (t * 0.52 + 0.5) % 1;
+      $('pulse-lo').setAttribute('opacity', '0.95');
+      $('pulse-lo').setAttribute('cx', lerp(1010, 1270, u).toFixed(1));
+      $('pulse-lo').setAttribute('cy', lerp(300, 390, easeInOutQuart(u)).toFixed(1));
+    } else $('pulse-lo').setAttribute('opacity', '0');
+
+    if (pLoop > 0.85) {
+      const u = (t * 0.42) % 1;
+      $('pulse-loop').setAttribute('opacity', '0.95');
+      // Smooth quadratic approximation along bottom arc
+      const x = (1 - u) * (1 - u) * 1490 + 2 * (1 - u) * u * 1160 + u * u * 835;
+      const y = (1 - u) * (1 - u) * 462 + 2 * (1 - u) * u * 585 + u * u * 375;
+      $('pulse-loop').setAttribute('cx', x.toFixed(1));
+      $('pulse-loop').setAttribute('cy', y.toFixed(1));
+    } else $('pulse-loop').setAttribute('opacity', '0');
+
+    // 5 Pilot courses reveal during a3_4
+    for (let i = 0; i < 5; i++) {
+      const cp = springOut(invLerp(l4.start + i * 0.35, l4.start + i * 0.35 + 0.85, t));
+      const el = $(`c-${i}`);
+      el.style.opacity = cp.toFixed(3);
+      el.style.transform = `translateY(${((1 - cp) * 32).toFixed(1)}px)`;
+    }
+  }
+
+  function renderAct4(t) {
+    const a = acts.act4;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.6, 0.65);
+    setActOpacity('act4', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a4_1, l2 = lines.a4_2, l3 = lines.a4_3, l4 = lines.a4_4, l5 = lines.a4_5, l6 = lines.a4_6;
+
+    // 3D gentle continuous camera movement on hardware frame
+    const pAll = invLerp(a.start, a.end, t);
+    const ry = lerp(-9, -3, Math.sin(pAll * Math.PI));
+    const rx = lerp(5, 1.5, easeOutCubic(invLerp(a.start, a.start + 2.0, t)));
+    const sc = lerp(0.96, 1.02, pAll);
+    $('a4-mac').style.transform = `rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
+
+    // Crossfade real screenshots cleanly across lines
+    const fFile = easeInOutQuart(invLerp(l2.start + 0.4, l2.start + 1.2, t));
+    const fThread = easeInOutQuart(invLerp(l4.start - 0.1, l4.start + 0.8, t));
+    const fArchive = easeInOutQuart(invLerp(l6.start - 0.2, l6.start + 0.7, t));
+
+    $('a4-img-home').style.opacity = (1 - fFile).toFixed(3);
+    $('a4-img-file').style.opacity = (fFile * (1 - fThread)).toFixed(3);
+    $('a4-img-thread').style.opacity = (fThread * (1 - fArchive)).toFixed(3);
+    $('a4-img-archive').style.opacity = fArchive.toFixed(3);
+    $('a4-list-fade').style.opacity = (1 - fFile).toFixed(3);
+
+    // Highlight active spec item on left
+    const highlightSpec = (id, active) => {
+      const el = $(id);
+      el.style.borderColor = active ? 'rgba(52,211,153,0.48)' : 'rgba(255,255,255,0.09)';
+      el.style.background = active ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)';
+    };
+    highlightSpec('a4-s1', t < l4.start);
+    highlightSpec('a4-s2', t >= l4.start && t < l6.start);
+    highlightSpec('a4-s3', t >= l6.start);
+
+    // Privacy consent popup during a4_3
+    const cOp = fadeWin(t, l3.start - 0.1, l4.start - 0.1, 0.45, 0.45);
+    const cY = (1 - springOut(invLerp(l3.start - 0.1, l3.start + 0.7, t))) * 46;
+    $('a4-consent-pop').style.opacity = cOp.toFixed(3);
+    $('a4-consent-pop').style.transform = `translateY(${cY.toFixed(1)}px)`;
+
+    // Review card popup during second half of a4_6
+    const revStart = l6.start + (l6.end - l6.start) * 0.46;
+    const rOp = fadeWin(t, revStart, a.end, 0.45, 0.55);
+    const rY = (1 - springOut(invLerp(revStart, revStart + 0.75, t))) * 48;
+    $('a4-review-pop').style.opacity = rOp.toFixed(3);
+    $('a4-review-pop').style.transform = `translateY(${rY.toFixed(1)}px)`;
+  }
+
+  function renderAct5(t) {
+    const a = acts.act5;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.6, 0.65);
+    setActOpacity('act5', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a5_1, l2 = lines.a5_2, l3 = lines.a5_3, l4 = lines.a5_4, l5 = lines.a5_5;
+
+    // 书灵助教：a5_1 实时 WebGL 骨骼动画主场（挥手 -> 翻书思考 -> 魔杖讲解 -> 欢呼真棒）
+    const avOp = fadeWin(t, a.start - 0.1, l2.start - 0.12, 0.55, 0.45);
+    const avEl = $('a5-avatar');
+    avEl.style.opacity = avOp.toFixed(3);
+    if (avOp > 0.002) {
+      const avT = t - l1.start;
+      const stage = avT < 1.15 ? 'wave' : avT < 2.25 ? 'thinking' : avT < 3.40 ? 'answering' : 'celebrate';
+      if (rigA5) {
+        rigA5.render(t, 1 / 30, {
+          mood: stage,
+          pointerX: Math.sin(t * 1.4) * 0.25,
+          pointerY: Math.cos(t * 1.1) * 0.12,
+        });
+      }
+      drawA5Sparkles(t, stage);
+      Array.from(document.querySelectorAll('#a5-avatar .av-state')).forEach(el => {
+        el.classList.toggle('on', el.dataset.s === stage);
+      });
+      const avP = easeOutCubic(clamp((t - (a.start - 0.1)) / 0.8, 0, 1));
+      avEl.style.transform = `translateY(${((1 - avP) * 18).toFixed(1)}px)`;
+      $('av-card').style.transform = `scale(${lerp(0.96, 1.0, avP).toFixed(4)})`;
+    }
+
+    const pAll = invLerp(a.start, a.end, t);
+    const ry = lerp(-8, -2, pAll);
+    const sc = lerp(0.96, 1.03, pAll);
+    $('a5-mac').style.transform = `rotateY(${ry.toFixed(2)}deg) rotateX(2.5deg) scale(${sc.toFixed(4)})`;
+
+    const fMgr = easeInOutQuart(invLerp(l2.start - 0.1, l2.start + 0.8, t));
+    const fBackMentor = easeInOutQuart(invLerp(l3.start, l3.start + 0.7, t));
+    const fKmap = easeInOutQuart(invLerp(l4.start + 0.1, l4.start + 1.0, t));
+    const fAnalog = easeInOutQuart(invLerp(l5.start + (l5.end - l5.start) * 0.45, l5.start + (l5.end - l5.start) * 0.45 + 0.9, t));
+
+    // Sequence: mentor -> mentor-manager -> mentor -> digital-kmap -> analog-q
+    const opMentor = clamp((1 - fMgr) + fBackMentor * (1 - fKmap));
+    const opMgr = clamp(fMgr * (1 - fBackMentor));
+    const opKmap = clamp(fKmap * (1 - fAnalog));
+    const opAnalog = fAnalog;
+
+    $('a5-img-mentor').style.opacity = opMentor.toFixed(3);
+    $('a5-img-mgr').style.opacity = opMgr.toFixed(3);
+    $('a5-img-kmap').style.opacity = opKmap.toFixed(3);
+    $('a5-img-analog').style.opacity = opAnalog.toFixed(3);
+
+    const hpOp = fadeWin(t, l2.start - .35, l3.start - .15, .55, .5);
+    const hpEl = $('a5-humanities');
+    hpEl.style.opacity = hpOp.toFixed(3);
+    $('a5-mac').style.opacity = (1 - hpOp * .55).toFixed(3);
+    hpEl.style.transform = `translateY(${(1 - easeOutCubic(invLerp(l2.start - .35, l2.start + .5, t))) * 20}px)`;
+    Array.from(hpEl.querySelectorAll('.hp-card')).forEach((el, i) => {
+      const p = springOut(invLerp(l2.start + .05 + i * .07, l2.start + .45 + i * .07, t));
+      el.style.opacity = p;
+      el.style.transform = `translateY(${(1 - p) * 14}px)`;
+    });
+
+    const setS = (id, active) => {
+      $(id).style.borderColor = active ? 'rgba(52,211,153,0.48)' : 'rgba(255,255,255,0.09)';
+      $(id).style.background = active ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)';
+    };
+    setS('a5-s1', t < l3.start);
+    setS('a5-s2', t >= l3.start && t < l4.start);
+    setS('a5-s3', t >= l4.start);
+
+    // Floating lab badge for kmap / analog
+    const bOp = fadeWin(t, l4.start + 0.6, a.end - 0.2, 0.45, 0.5);
+    $('a5-badge').style.opacity = bOp.toFixed(3);
+    if (fAnalog > 0.5) {
+      $('a5-badge-kicker').textContent = 'ANALOG ELECTRONICS LAB';
+      $('a5-badge-title').textContent = '静态工作点 Q 点 · 直流负载线实时计算';
+    } else {
+      $('a5-badge-kicker').textContent = 'DIGITAL LOGIC LAB';
+      $('a5-badge-title').textContent = '3/4 变量卡诺图化简 · 数制补码 · 时序波形';
+    }
+  }
+
+  function renderAct6(t) {
+    const a = acts.act6;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.65, 0.65);
+    setActOpacity('act6', op);
+    if (op <= 0.002) return;
+
+    const l2 = lines.a6_2, l3 = lines.a6_3, l5 = lines.a6_5, l7 = lines.a6_7;
+
+    const pAll = invLerp(a.start, a.end, t);
+    const ry = lerp(-7, -2.5, Math.sin(pAll * Math.PI));
+    const sc = lerp(0.96, 1.025, pAll);
+    $('a6-mac').style.transform = `rotateY(${ry.toFixed(2)}deg) rotateX(2deg) scale(${sc.toFixed(4)})`;
+
+    const fDrawer = easeInOutQuart(invLerp(l3.start, l3.start + 0.85, t));
+    const fKb = easeInOutQuart(invLerp(l5.start, l5.start + 0.85, t));
+    const fIns = easeInOutQuart(invLerp(l7.start - 0.1, l7.start + 0.85, t));
+
+    $('a6-img-queue').style.opacity = (1 - fDrawer).toFixed(3);
+    $('a6-img-drawer').style.opacity = (fDrawer * (1 - fKb)).toFixed(3);
+    $('a6-img-kb').style.opacity = (fKb * (1 - fIns)).toFixed(3);
+    $('a6-img-insights').style.opacity = fIns.toFixed(3);
+
+    const setS = (id, active) => {
+      $(id).style.borderColor = active ? 'rgba(15,118,110,0.42)' : 'rgba(15,45,34,0.09)';
+      $(id).style.background = active ? 'rgba(209,250,229,0.58)' : 'rgba(255,255,255,0.78)';
+    };
+    setS('a6-s1', t < l5.start);
+    setS('a6-s2', t >= l5.start && t < l7.start);
+    setS('a6-s3', t >= l7.start);
+
+    const bOp = fadeWin(t, l3.start + 0.5, a.end - 0.3, 0.5, 0.5);
+    $('a6-badge').style.opacity = bOp.toFixed(3);
+    if (fIns > 0.5) {
+      $('a6-badge-kicker').textContent = 'TEACHING INSIGHTS · 演示空间近 7 天';
+      $('a6-badge-title').textContent = '78% AI 独立解决 · 每周节省 5.5 小时';
+    } else if (fKb > 0.5) {
+      $('a6-badge-kicker').textContent = 'SELF-HEALING KNOWLEDGE BASE';
+      $('a6-badge-title').textContent = '95% 知识库健康度 · 负反馈自动降权提醒';
+    } else {
+      $('a6-badge-kicker').textContent = 'KNOWLEDGE FLYWHEEL';
+      $('a6-badge-title').textContent = '同题合并 · 一次回复整组 · 一键沉淀 FAQ';
+    }
+  }
+
+  function renderAct7(t) {
+    const a = acts.act7;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.6, 0.65);
+    setActOpacity('act7', op);
+    if (op <= 0.002) return;
+
+    const l3 = lines.a7_3, l4 = lines.a7_4, l5 = lines.a7_5;
+    const pAll = invLerp(a.start, a.end, t);
+    const ry = lerp(-7, -2, pAll);
+    const sc = lerp(0.96, 1.025, pAll);
+    $('a7-mac').style.transform = `rotateY(${ry.toFixed(2)}deg) rotateX(2deg) scale(${sc.toFixed(4)})`;
+
+    const mid4 = l4.start + (l4.end - l4.start) * 0.34;
+    const late4 = l4.start + (l4.end - l4.start) * 0.68;
+
+    const fLib = easeInOutQuart(invLerp(mid4, mid4 + 0.70, t));
+    const fCan = easeInOutQuart(invLerp(late4, late4 + 0.70, t));
+    const fCx = easeInOutQuart(invLerp(l5.start - 0.1, l5.start + 0.70, t));
+
+    $('a7-img-map').style.opacity = (1 - fLib).toFixed(3);
+    $('a7-img-lib').style.opacity = (fLib * (1 - fCan)).toFixed(3);
+    $('a7-img-canteen').style.opacity = (fCan * (1 - fCx)).toFixed(3);
+    $('a7-img-cx').style.opacity = fCx.toFixed(3);
+
+    // 804 Campus Experience Cards floating callout during a7_1 - a7_3
+    const kbOp = fadeWin(t, a.start + 0.5, l4.start + 0.2, 0.5, 0.45);
+    const kbY = (1 - springOut(invLerp(a.start + 0.5, a.start + 1.3, t))) * 40;
+    $('a7-kb-pop').style.opacity = kbOp.toFixed(3);
+    $('a7-kb-pop').style.transform = `translateY(${kbY.toFixed(1)}px)`;
+
+    const setS = (id, active) => {
+      $(id).style.borderColor = active ? 'rgba(15,118,110,0.42)' : 'rgba(15,45,34,0.09)';
+      $(id).style.background = active ? 'rgba(209,250,229,0.58)' : 'rgba(255,255,255,0.78)';
+    };
+    setS('a7-s1', t < l4.start);
+    setS('a7-s2', t >= l4.start && t < l5.start);
+    setS('a7-s3', t >= l5.start);
+  }
+
+  function renderAct8(t) {
+    const a = acts.act8;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.65, 0.65);
+    setActOpacity('act8', op);
+    if (op <= 0.002) return;
+
+    const l2 = lines.a8_2, l3 = lines.a8_3, l4 = lines.a8_4;
+
+    // Crossfade between Part A (Native Android App Showcase) and Part B (Admin Console & Security)
+    const sw = easeInOutQuart(invLerp(l3.start - 0.35, l3.start + 0.50, t));
+    $('a8-devices-stage').style.opacity = (1 - sw).toFixed(3);
+    $('a8-admin-stage').style.opacity = sw.toFixed(3);
+
+    // Part A motion: Desktop backdrop + Titanium Phone + Schedule Widget + Push Notification
+    const dP = easeOutExpo(invLerp(a.start, a.start + 1.5, t));
+    $('a8-mac-dark').style.transform = `rotateY(${lerp(-12, -6, dP).toFixed(2)}deg) scale(${lerp(0.92, 0.98, dP).toFixed(4)})`;
+
+    const phP = springOut(invLerp(a.start + 0.2, a.start + 1.35, t));
+    $('a8-iphone').style.opacity = phP.toFixed(3);
+    $('a8-iphone').style.transform = `translateY(${((1 - phP) * 76).toFixed(1)}px) rotateY(-10deg) rotateZ(-1.2deg)`;
+
+    // 4x2 Schedule Widget pops in at start of a8_2
+    const wP = springOut(invLerp(l2.start - 0.15, l2.start + 0.85, t));
+    $('a8-widget').style.opacity = wP.toFixed(3);
+    $('a8-widget').style.transform = `translateY(${((1 - wP) * 52).toFixed(1)}px) scale(${(0.92 + wP * 0.08).toFixed(4)})`;
+
+    // System Push Notification banner drops in during second half of a8_2
+    const notifStart = lerp(l2.start, l2.end, 0.38);
+    const nP = springOut(invLerp(notifStart, notifStart + 0.85, t));
+    $('a8-notif').style.opacity = nP.toFixed(3);
+    $('a8-notif').style.transform = `translateY(${((1 - nP) * -42).toFixed(1)}px) scale(${(0.93 + nP * 0.07).toFixed(4)})`;
+
+    // Part B motion & screenshots (accounts -> audit)
+    const pB = invLerp(l3.start, a.end, t);
+    $('a8-mac-admin').style.transform = `rotateY(${lerp(-8, -2.5, pB).toFixed(2)}deg) scale(${lerp(0.96, 1.02, pB).toFixed(4)})`;
+
+    const fAudit = easeInOutQuart(invLerp(l3.end - 0.3, l4.start + 0.65, t));
+    $('a8-img-acc').style.opacity = (1 - fAudit).toFixed(3);
+    $('a8-img-audit').style.opacity = fAudit.toFixed(3);
+
+    const setS = (id, active) => {
+      $(id).style.borderColor = active ? 'rgba(52,211,153,0.48)' : 'rgba(255,255,255,0.09)';
+      $(id).style.background = active ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)';
+    };
+    setS('a8-sec1', t < l4.start);
+    setS('a8-sec2', t >= l4.start && t < lerp(l4.start, l4.end, 0.52));
+    setS('a8-sec3', t >= lerp(l4.start, l4.end, 0.52));
+  }
+
+  function renderAct9(t) {
+    const a = acts.act9;
+    const op = fadeWin(t, a.start - 0.2, a.end, 0.65, 0.7);
+    setActOpacity('act9', op);
+    if (op <= 0.002) return;
+
+    const l2 = lines.a9_2, l3 = lines.a9_3;
+    const cues = [
+      a.start + 0.45,
+      lerp(l2.start, l2.end, 0.25),
+      lerp(l2.start, l2.end, 0.62),
+      l3.start + 0.05,
+      lerp(l3.start, l3.end, 0.36),
+      lerp(l3.start, l3.end, 0.68),
+    ];
+    for (let i = 0; i < 6; i++) {
+      const p = springOut(invLerp(cues[i], cues[i] + 0.78, t));
+      const el = $(`b-${i + 1}`);
+      el.style.opacity = p.toFixed(3);
+      el.style.transform = `translateY(${((1 - p) * 44).toFixed(1)}px) scale(${(0.94 + p * 0.06).toFixed(4)})`;
+    }
+
+    // Smooth count-up numbers (all aligned with live repository metrics)
+    const n5 = Math.round(lerp(1, 5, easeOutCubic(invLerp(cues[0], cues[0] + 0.75, t))));
+    const n81 = Math.round(lerp(12, 81, easeOutCubic(invLerp(cues[1], cues[1] + 0.85, t))));
+    const n157 = Math.round(lerp(36, 157, easeOutCubic(invLerp(cues[2], cues[2] + 0.95, t))));
+    const n33 = Math.round(lerp(5, 33, easeOutCubic(invLerp(cues[3], cues[3] + 0.85, t))));
+    const n804 = Math.round(lerp(75, 804, easeOutCubic(invLerp(cues[4], cues[4] + 0.95, t))));
+    $('cnt-5').textContent = String(n5);
+    $('cnt-81').textContent = String(n81);
+    $('cnt-157').textContent = `${n157} / 157`;
+    $('cnt-33').textContent = String(n33);
+    $('cnt-804').textContent = String(n804);
+  }
+
+  function renderAct10(t) {
+    const a = acts.act10;
+    const op = fadeWin(t, a.start - 0.2, TL.total + 1, 0.8, 0.0);
+    setActOpacity('act10', op);
+    if (op <= 0.002) return;
+
+    const l1 = lines.a10_1, l2 = lines.a10_2, l3 = lines.a10_3;
+
+    const q1Op = fadeWin(t, a.start + 0.4, l2.start - 0.05, 0.9, 0.55);
+    $('a10-q1').style.opacity = q1Op.toFixed(3);
+    $('a10-q1').style.transform = `translateY(${((1 - easeOutCubic(invLerp(a.start + 0.4, a.start + 1.6, t))) * 22).toFixed(1)}px)`;
+
+    const q2Op = fadeWin(t, l2.start - 0.05, l3.start - 0.1, 0.65, 0.6);
+    $('a10-q2').style.opacity = q2Op.toFixed(3);
+    $('a10-q2').style.transform = `scale(${lerp(0.96, 1.02, invLerp(l2.start, l3.start, t)).toFixed(4)})`;
+
+    const bOp = easeOutCubic(invLerp(l3.start - 0.15, l3.start + 0.95, t));
+    const bScale = lerp(0.94, 1.0, easeOutExpo(invLerp(l3.start - 0.15, l3.start + 1.3, t)));
+    // Gentle fade to pure black in final 1.2s
+    const endFade = 1 - easeInOutQuart(invLerp(TL.total - 1.1, TL.total, t));
+    $('a10-brand').style.opacity = (bOp * endFade).toFixed(3);
+    $('a10-brand').style.transform = `scale(${bScale.toFixed(4)})`;
+    if (bOp * endFade > 0.005 && rigOutro) {
+      rigOutro.render(t, 1 / 30, { mood: 'wave', pointerX: -0.18, pointerY: -0.05 });
+    }
+  }
+
+  // ===================== SHULING SKELETAL RIGS & BOTTOM PROGRESS RUNNER =====================
+  let rigRunner = null;
+  let rigA2 = null;
+  let rigA5 = null;
+  let rigOutro = null;
+  const bottomVfxCtx = $('bottom-vfx').getContext('2d');
+  const a5VfxCtx = $('vfx-a5').getContext('2d');
+
+  function drawBottomParticles(t, runPct, mood, isLight) {
+    const ctx = bottomVfxCtx;
+    const w = 1920, h = 82;
+    ctx.clearRect(0, 0, w, h);
+    const rx = runPct * w;
+    if (mood === 'celebrate') {
+      for (let i = 0; i < 12; i++) {
+        const cyc = ((t * 1.45 + i * 0.15) % 1 + 1) % 1;
+        const ang = (i / 12) * Math.PI * 2;
+        const dist = 12 + cyc * 34;
+        const px = rx + Math.cos(ang) * dist;
+        const py = 46 + Math.sin(ang) * dist * 0.65;
+        const a = Math.sin(cyc * Math.PI) * 0.92;
+        ctx.fillStyle = i % 2 === 0 ? `rgba(251, 191, 36, ${a.toFixed(3)})` : `rgba(52, 211, 153, ${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(px, py, 2.6 * (1 - cyc * 0.35), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      const count = mood === 'run' ? 9 : 5;
+      const speed = mood === 'run' ? 3.0 : 1.6;
+      for (let i = 0; i < count; i++) {
+        const cyc = ((t * speed + i * (1 / count)) % 1 + 1) % 1;
+        const px = rx - 16 - cyc * (mood === 'run' ? 78 : 38);
+        const py = 74 - Math.sin(cyc * Math.PI) * (mood === 'run' ? 16 : 7) + Math.sin(i * 4.3) * 2.5;
+        const a = (1 - cyc) * (isLight ? 0.52 : 0.78);
+        if (px < 0) continue;
+        ctx.fillStyle = isLight ? `rgba(5, 150, 105, ${a.toFixed(3)})` : `rgba(110, 231, 183, ${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(px, py, (1 - cyc) * (mood === 'run' ? 3.4 : 2.2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawA5Sparkles(t, stage) {
+    const ctx = a5VfxCtx;
+    ctx.clearRect(0, 0, 560, 560);
+    const n = stage === 'celebrate' ? 12 : stage === 'answering' ? 9 : 6;
+    for (let i = 0; i < n; i++) {
+      const cyc = ((t * 0.95 + i * (1 / n)) % 1 + 1) % 1;
+      const ang = i * 2.1 + t * 0.35;
+      const rad = 175 + Math.sin(i * 3.7) * 48 + cyc * 24;
+      const x = 280 + Math.cos(ang) * rad;
+      const y = 265 + Math.sin(ang) * rad * 0.78 - cyc * 18;
+      const a = Math.sin(cyc * Math.PI) * 0.8;
+      const r = (stage === 'celebrate' ? 6.5 : 4.8) * (0.7 + 0.3 * Math.sin(cyc * Math.PI));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = i % 2 === 0 ? `rgba(16, 185, 129, ${a.toFixed(3)})` : `rgba(245, 158, 11, ${a.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(r * 0.2, -r * 0.2, r, 0);
+      ctx.quadraticCurveTo(r * 0.2, r * 0.2, 0, r);
+      ctx.quadraticCurveTo(-r * 0.2, r * 0.2, -r, 0);
+      ctx.quadraticCurveTo(-r * 0.2, -r * 0.2, 0, -r);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function renderBottomRunner(t, lightBlend) {
+    const wrap = $('shuling-bottom-wrap');
+    const isLight = lightBlend > 0.5;
+    $('progress-track').classList.toggle('track-light', isLight);
+    $('progress-bar').classList.toggle('bar-light', isLight);
+
+    const prog = clamp(t / TL.total, 0, 1);
+    $('progress-bar').style.width = `${(prog * 100).toFixed(3)}%`;
+
+    // Fade in gently at opening, stay alive across Acts 1-9, gracefully hide before Act 10 QR finale
+    const baseShow = fadeWin(t, 0.8, acts.act10.start + 2.0, 0.8, 0.9);
+    // Avoid showing two Shulings at once during Act 02 corner wave or Act 05 solo avatar showcase
+    const hideA2 = fadeWin(t, lines.a2_2.start + 0.1, lines.a2_4.start - 0.15, 0.45, 0.45);
+    const hideA5 = fadeWin(t, acts.act5.start - 0.2, lines.a5_2.start - 0.05, 0.45, 0.45);
+    const finalOp = clamp(baseShow * (1 - hideA2) * (1 - hideA5));
+    wrap.style.opacity = finalOp.toFixed(3);
+    if (finalOp <= 0.005) return;
+
+    wrap.classList.toggle('rail-light', isLight);
+    const runPct = clamp(prog, 0.018, 0.982);
+    $('bottom-runner').style.left = `${(runPct * 100).toFixed(3)}%`;
+    $('bottom-glow-dot').style.left = `${(prog * 100).toFixed(3)}%`;
+
+    let mood = 'run';
+    if (t < acts.act2.start) {
+      mood = 'walk';
+    } else if (t >= acts.act6.start && t < acts.act8.start) {
+      mood = 'walk';
+    } else if (t >= acts.act9.end - 5.5) {
+      mood = 'celebrate';
+    }
+    if (rigRunner) {
+      rigRunner.render(t, 1 / 30, { mood, pointerX: 0, pointerY: 0 });
+    }
+    drawBottomParticles(t, runPct, mood, isLight);
+  }
+
+  window.__render = function (t) {
+    if (!TL) return;
+
+    // Smooth light/dark theme blending: Act 6 & Act 7 use Apple Ceramic Ivory light stage
+    const lightIn = easeInOutQuart(invLerp(acts.act6.start - 0.45, acts.act6.start + 0.45, t));
+    const lightOut = easeInOutQuart(invLerp(acts.act8.start - 0.45, acts.act8.start + 0.45, t));
+    const lightBlend = clamp(lightIn - lightOut);
+
+    drawBackground(t, lightBlend);
+    renderHUD(t, lightBlend);
+
+    renderAct1(t);
+    renderAct2(t);
+    renderAct3(t);
+    renderAct4(t);
+    renderAct5(t);
+    renderAct6(t);
+    renderAct7(t);
+    renderAct8(t);
+    renderAct9(t);
+    renderAct10(t);
+
+    renderSubtitle(t, lightBlend > 0.5);
+    renderBottomRunner(t, lightBlend);
+  };
+
+  async function init() {
+    if (!TL) {
+      const resp = await fetch('/promo/apple-keynote/timeline.json');
+      TL = await resp.json();
+    }
+    bindTimeline(TL);
+
+    rigRunner = new AvatarMeshRig($('rig-runner'), '/public/avatar');
+    rigA2 = new AvatarMeshRig($('rig-a2'), '/public/avatar');
+    rigA5 = new AvatarMeshRig($('rig-a5'), '/public/avatar');
+    rigOutro = new AvatarMeshRig($('rig-outro'), '/public/avatar');
+
+    // Wait for fonts, every image, and all 4 WebGL skeletal rigs to preload cleanly
+    await document.fonts.ready;
+    const imgs = Array.from(document.querySelectorAll('img'));
+    await Promise.all([
+      ...imgs.map(img => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise(res => {
+          img.addEventListener('load', res, { once: true });
+          img.addEventListener('error', res, { once: true });
+        });
+      }),
+      rigRunner.preloadAll(),
+      rigA2.preloadAll(),
+      rigA5.preloadAll(),
+      rigOutro.preloadAll(),
+    ]);
+
+    window.__render(0);
+    window.__ready = true;
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
