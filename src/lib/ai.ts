@@ -88,8 +88,8 @@ function isQwenModel(model: string) {
   return /qwen/i.test(model)
 }
 
-function readText(value: unknown): string {
-  if (typeof value === 'string') return value.trim()
+function readRawText(value: unknown): string {
+  if (typeof value === 'string') return value
   if (Array.isArray(value)) {
     return value
       .map((part) => {
@@ -100,12 +100,15 @@ function readText(value: unknown): string {
         return ''
       })
       .join('')
-      .trim()
   }
   if (value && typeof value === 'object' && 'text' in value) {
-    return String((value as { text?: unknown }).text ?? '').trim()
+    return String((value as { text?: unknown }).text ?? '')
   }
   return ''
+}
+
+function readText(value: unknown): string {
+  return readRawText(value).trim()
 }
 
 interface ChatResult {
@@ -231,10 +234,12 @@ async function requestChatStream(
       }
       const choice = json.choices?.[0]
       if (choice?.finish_reason) result.finishReason = choice.finish_reason
-      const delta = readText(choice?.delta?.content)
+      const delta = readRawText(choice?.delta?.content)
       if (delta) {
         result.content += delta
-        onUpdate?.(result.content)
+        if (result.content.trim()) {
+          onUpdate?.(result.content)
+        }
       }
     } catch {
       // Ignore malformed SSE chunks.
@@ -327,17 +332,20 @@ async function callChatStream(
   onUpdate?: (partial: string) => void,
 ) {
   try {
-    let result = await streamOnce(messages, maxTokens, false, onUpdate)
-    if (!result.content && isQwenModel(result.model)) {
-      result = await streamOnce(messages, maxTokens, true, onUpdate)
+    const emitUpdate = onUpdate
+      ? (partial: string) => onUpdate(partial.trimStart())
+      : undefined
+    let result = await streamOnce(messages, maxTokens, false, emitUpdate)
+    if (!result.content.trim() && isQwenModel(result.model)) {
+      result = await streamOnce(messages, maxTokens, true, emitUpdate)
     }
-    if (!result.content) {
+    if (!result.content.trim()) {
       throw new Error('模型没有返回文字内容。请联系管理员检查网关模型配置。')
     }
 
     // 模型因 token 上限或上游连接中断停在半句话时，自动接着写完一次。
     if ((result.finishReason === 'length' || result.streamError) && result.content.trim()) {
-      const prefix = result.content
+      const prefix = result.content.trimStart()
       try {
         const continued = await streamOnce(
           [
@@ -364,6 +372,7 @@ async function callChatStream(
     if ((result.finishReason === 'length' || result.streamError) && result.content.trim()) {
       result.content = `${result.content.trimEnd()}\n\n（回答未完整生成，请重新发送或点「继续追问」接着问。）`
     }
+    result.content = result.content.trim()
     return result
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

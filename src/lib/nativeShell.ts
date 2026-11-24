@@ -2,6 +2,7 @@ import { Capacitor, registerPlugin, SystemBarType, SystemBars, SystemBarsStyle }
 import { Browser } from '@capacitor/browser'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { entryEndTime, entryStartTime, type ScheduleEntry } from './profile'
 
 /**
  * 原生壳桥接层：只在 Capacitor 里生效，网页端与旧版 APK 全部安全降级。
@@ -153,9 +154,19 @@ export async function syncNativeSchedule(payload: {
 }) {
   if (!isNativeApp() || !Capacitor.isPluginAvailable('ScheduleBridge')) return false
   try {
+    const normalized = payload.schedule.map((item) => {
+      if (!item || typeof item !== 'object') return item
+      const entry = item as ScheduleEntry
+      return {
+        ...entry,
+        startTime: entryStartTime(entry) || entry.startTime,
+        endTime: entryEndTime(entry) || entry.endTime,
+      }
+    })
     await ScheduleBridge.syncSchedule({
       payload: JSON.stringify({
         ...payload,
+        schedule: normalized,
         updatedAt: Date.now(),
       }),
     })

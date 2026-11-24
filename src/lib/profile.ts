@@ -393,11 +393,18 @@ export function sectionBell(section: number) {
   return bell ? `${bell.start}-${bell.end}` : ''
 }
 
+export function entryStartTime(entry: ScheduleEntry) {
+  return SECTION_BELL[entry.startSection]?.start ?? entry.startTime ?? ''
+}
+
+export function entryEndTime(entry: ScheduleEntry) {
+  return SECTION_BELL[entry.endSection]?.end ?? entry.endTime ?? ''
+}
+
 export function periodTime(entry: ScheduleEntry) {
-  if (entry.startTime && entry.endTime) return `${entry.startTime}-${entry.endTime}`
-  const start = SECTION_BELL[entry.startSection]
-  const end = SECTION_BELL[entry.endSection]
-  return start && end ? `${start.start}-${end.end}` : ''
+  const start = entryStartTime(entry)
+  const end = entryEndTime(entry)
+  return start && end ? `${start}-${end}` : ''
 }
 
 export const COURSE_TONES = [
@@ -533,8 +540,37 @@ function timeToMinutes(value: string | undefined) {
   return match ? Number(match[1]) * 60 + Number(match[2]) : null
 }
 
+function entryStartMinutes(entry: ScheduleEntry) {
+  return timeToMinutes(entryStartTime(entry))
+}
+
 function entryEndMinutes(entry: ScheduleEntry) {
-  return timeToMinutes(entry.endTime) ?? timeToMinutes(SECTION_BELL[entry.endSection]?.end)
+  return timeToMinutes(entryEndTime(entry))
+}
+
+/** 此时此刻正在上课（当天且命中开始-结束分钟区间，不含教学周过滤）。 */
+export function isClassOngoing(entry: ScheduleEntry, ts = Date.now()) {
+  if (entry.day !== weekdayNumber(ts)) return false
+  const start = entryStartMinutes(entry)
+  const end = entryEndMinutes(entry)
+  if (start === null || end === null) return false
+  const now = new Date(ts)
+  const minutes = now.getHours() * 60 + now.getMinutes()
+  return minutes >= start && minutes < end
+}
+
+/** 此时此刻处于哪一节课的作息区间内（用于课程表左栏高亮当前时间行）。 */
+export function activeBellSection(ts = Date.now()): number | null {
+  const now = new Date(ts)
+  const minutes = now.getHours() * 60 + now.getMinutes()
+  for (const [secStr, bell] of Object.entries(SECTION_BELL)) {
+    const start = timeToMinutes(bell.start)
+    const end = timeToMinutes(bell.end)
+    if (start !== null && end !== null && minutes >= start && minutes < end) {
+      return Number(secStr)
+    }
+  }
+  return null
 }
 
 /** 今天还没下课的课程；教务没写时间时按学校节次表推算。 */

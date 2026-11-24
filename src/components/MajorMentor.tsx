@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from 'react'
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
@@ -970,6 +971,14 @@ export function MajorMentorDrawer({
     <Drawer open={open} onClose={onClose} ariaLabel={`${mentor.title} AI 导师`}>
       <div className="mentor-drawer">
         <header className="mentor-drawer-head">
+          <button
+            type="button"
+            className="icon-button mentor-drawer-back"
+            onClick={onClose}
+            aria-label="返回"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <div className="mentor-drawer-head-main">
             <div className="mentor-drawer-head-copy">
               <MentorCourseSelect
@@ -984,6 +993,7 @@ export function MajorMentorDrawer({
             </div>
           </div>
           <button
+            type="button"
             className="icon-button mentor-drawer-close"
             onClick={onClose}
             aria-label="关闭 AI 导师"

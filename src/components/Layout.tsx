@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   BarChart3,
   Bell,
@@ -26,6 +26,7 @@ import {
   profileMeta,
   courseGlyph,
   courseToneMap,
+  isClassOngoing,
   periodTime,
   runsInWeek,
   teachingWeek,
@@ -102,6 +103,11 @@ export function Layout({
   const studentProfile = useProfile();
   const { mentor } = useMentorSelection();
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowTs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const syncLabel =
     syncState === "saving"
       ? "共享空间 · 保存中"
@@ -117,13 +123,14 @@ export function Layout({
     10,
     ...weekEntries.map((entry) => entry.endSection),
   );
-  const today = weekdayNumber();
+  const today = weekdayNumber(nowTs);
   const todayClassesList = weekEntries.filter((entry) => entry.day === today);
   const todayCount = todayClassesList.length;
-  const upcomingToday = upcomingTodayClasses(studentProfile).filter((entry) =>
+  const upcomingToday = upcomingTodayClasses(studentProfile, nowTs).filter((entry) =>
     runsInWeek(entry.weeks, teachingWeekNow),
   );
   const nextToday = upcomingToday[0];
+  const nextOngoing = Boolean(nextToday && isClassOngoing(nextToday, nowTs));
   /** 教师侧栏分组：教学工具与校园生活分开，食堂决策不再混在「教学空间」里 */
   const teacherNavGroups: { label: string; items: NavItem[] }[] = [
     {
@@ -314,7 +321,11 @@ export function Layout({
                       <button
                         key={entry.id}
                         type="button"
-                        className={`side-week-block tone-${courseTones.get(entry.course) ?? "jade"}`}
+                        className={cn(
+                          "side-week-block",
+                          `tone-${courseTones.get(entry.course) ?? "jade"}`,
+                          isClassOngoing(entry, nowTs) && "is-live",
+                        )}
                         style={{
                           gridColumn: entry.day + 1,
                           gridRow: `${entry.startSection + 1} / ${entry.endSection + 2}`,
@@ -334,15 +345,18 @@ export function Layout({
                   </p>
                   <button
                     type="button"
-                    className="side-timetable-compact"
+                    className={cn("side-timetable-compact", nextOngoing && "is-live")}
                     onClick={() => onNavigate("schedule")}
                   >
                     <strong>
-                      {nextToday
-                        ? `${nextToday.course}`
-                        : todayCount > 0
-                          ? "今日课程已上完"
-                          : "今日无课"}
+                      {nextOngoing && <em className="side-timetable-live">上课中</em>}
+                      <span>
+                        {nextToday
+                          ? `${nextToday.course}`
+                          : todayCount > 0
+                            ? "今日课程已上完"
+                            : "今日无课"}
+                      </span>
                     </strong>
                     <span>
                       {nextToday

@@ -23,6 +23,7 @@ import { groupPendingThreads } from './lib/engine'
 import { TEACHERS, allCourses, courseById, isSeededCourse } from './data/seed'
 import { isPilotCourse } from './data/pilot'
 import {
+  isClassOngoing,
   periodTime,
   runsInWeek,
   studentCourses,
@@ -63,14 +64,20 @@ export default function App() {
   const { user } = useAuth()
   const profile = useProfile()
   const { mentor } = useMentorSelection()
+  const [clockTick, setClockTick] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const nextClassHint = useMemo(() => {
     const weekNow = teachingWeek(profile.termStart) ?? 1
-    const nextClass = upcomingTodayClasses(profile).find((entry) =>
+    const nextClass = upcomingTodayClasses(profile, clockTick).find((entry) =>
       runsInWeek(entry.weeks, weekNow),
     )
     if (!nextClass) return undefined
-    return `下一节 ${nextClass.course} · ${periodTime(nextClass)}`
-  }, [profile])
+    const ongoing = isClassOngoing(nextClass, clockTick)
+    return `${ongoing ? '上课中' : '下一节'} ${nextClass.course} · ${periodTime(nextClass)}`
+  }, [clockTick, profile])
   const accountRole: Role = user?.role === 'teacher' ? 'teacher' : 'student'
   const [role, setRole] = useState<Role>(accountRole)
   const [view, setView] = useState<ViewKey>(accountRole === 'teacher' ? 'teacher' : 'student')

@@ -2,6 +2,7 @@ import {
   Fragment,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -165,51 +166,359 @@ export function ConfidenceMeter({
   )
 }
 
-function MathSpan({ source, displayMode = false }: { source: string; displayMode?: boolean }) {
-  const ref = useRef<HTMLSpanElement>(null)
+// 按长度降序排列的常见 LaTeX 数学命令前缀，仅在 KaTeX 首次解析报 Undefined control sequence 时做兜底修复
+// （例如历史消息或模型偶发漏空格导致的 \forallx、\existsx、\negP、\wedgeQ 等）。
+const LATEX_COMMAND_PREFIXES = [
+  'Longleftrightarrow',
+  'longrightarrow',
+  'longleftarrow',
+  'Leftrightarrow',
+  'leftrightarrow',
+  'leftrightharpoons',
+  'twoheadrightarrow',
+  'hookrightarrow',
+  'rightharpoonup',
+  'rightharpoons',
+  'Rightarrow',
+  'Leftarrow',
+  'rightarrow',
+  'leftarrow',
+  'subseteq',
+  'supseteq',
+  'subsetneq',
+  'supsetneq',
+  'setminus',
+  'emptyset',
+  'varnothing',
+  'triangle',
+  'parallel',
+  'bigoplus',
+  'bigotimes',
+  'bigwedge',
+  'bigcup',
+  'bigcap',
+  'bigvee',
+  'implies',
+  'nexists',
+  'forall',
+  'exists',
+  'subset',
+  'supset',
+  'notin',
+  'wedge',
+  'approx',
+  'equiv',
+  'simeq',
+  'propto',
+  'mapsto',
+  'otimes',
+  'oplus',
+  'ominus',
+  'models',
+  'vDash',
+  'vdash',
+  'nvdash',
+  'angle',
+  'nabla',
+  'partial',
+  'infty',
+  'cdots',
+  'ldots',
+  'vdots',
+  'ddots',
+  'times',
+  'cdot',
+  'circ',
+  'star',
+  'bullet',
+  'land',
+  'lnot',
+  'neg',
+  'vee',
+  'lor',
+  'cup',
+  'cap',
+  'geq',
+  'leq',
+  'neq',
+  'iff',
+  'arcsin',
+  'arccos',
+  'arctan',
+  'sinh',
+  'cosh',
+  'tanh',
+  'coth',
+  'sin',
+  'cos',
+  'tan',
+  'cot',
+  'sec',
+  'csc',
+  'log',
+  'exp',
+  'lim',
+  'max',
+  'min',
+  'sup',
+  'inf',
+  'det',
+  'dim',
+  'gcd',
+  'deg',
+  'ker',
+  'arg',
+  'hom',
+  'pmod',
+  'bmod',
+  'mod',
+  'div',
+  'nmid',
+  'mid',
+  'perp',
+  'cong',
+  'sim',
+  'preceq',
+  'succeq',
+  'prec',
+  'succ',
+  'varepsilon',
+  'vartheta',
+  'varsigma',
+  'varphi',
+  'varpi',
+  'varrho',
+  'epsilon',
+  'upsilon',
+  'lambda',
+  'alpha',
+  'gamma',
+  'delta',
+  'theta',
+  'kappa',
+  'sigma',
+  'omega',
+  'beta',
+  'zeta',
+  'iota',
+  'eta',
+  'rho',
+  'tau',
+  'phi',
+  'chi',
+  'psi',
+  'mu',
+  'nu',
+  'xi',
+  'pi',
+  'Upsilon',
+  'Lambda',
+  'Gamma',
+  'Delta',
+  'Theta',
+  'Sigma',
+  'Omega',
+  'Phi',
+  'Psi',
+  'Xi',
+  'Pi',
+  'aleph',
+  'hbar',
+  'ell',
+  'top',
+  'bot',
+  'ge',
+  'le',
+  'ne',
+  'in',
+  'ni',
+  'to',
+  'pm',
+  'mp',
+  'ln',
+  'lg',
+  'll',
+  'gg',
+].sort((a, b) => b.length - a.length)
 
-  useEffect(() => {
-    const node = ref.current
-    if (!node) return
-    node.textContent = ''
-    try {
-      katex.render(source, node, {
-        throwOnError: true,
-        displayMode,
-        strict: 'ignore',
-        trust: false,
-        output: 'html',
-      })
-    } catch {
-      node.textContent = displayMode ? `$$${source}$$` : `$${source}$`
+const undefinedCommandCache = new Map<string, boolean>()
+
+function isUndefinedKatexCommand(word: string): boolean {
+  const cached = undefinedCommandCache.get(word)
+  if (cached !== undefined) return cached
+  let isUndefined = false
+  try {
+    katex.renderToString(`\\${word}`, {
+      throwOnError: true,
+      strict: 'ignore',
+      trust: false,
+      output: 'html',
+    })
+  } catch (error) {
+    isUndefined =
+      error instanceof Error && error.message.includes('Undefined control sequence')
+  }
+  undefinedCommandCache.set(word, isUndefined)
+  return isUndefined
+}
+
+function repairLatex(source: string): string {
+  // 1) 修复因缺失空格粘连的命令：\forallx -> \forall x、\negP -> \neg P、\wedgeQ -> \wedge Q
+  // 匹配 \\\\ 以跳过合法换行符，确保只检查单个 \ 引导的控制序列。
+  let fixed = source.replace(/(\\\\)|\\([A-Za-z]+)/g, (full, doubleSlash: string, word: string) => {
+    if (doubleSlash || !word) return full
+    if (!isUndefinedKatexCommand(word)) return full
+    for (const prefix of LATEX_COMMAND_PREFIXES) {
+      if (word.length > prefix.length && word.startsWith(prefix)) {
+        return `\\${prefix} ${word.slice(prefix.length)}`
+      }
     }
-  }, [source, displayMode])
+    return full
+  })
+  // 2) 转义公式内未转义的 %，防止 KaTeX 把后半段公式当成注释吞掉
+  fixed = fixed.replace(/(^|[^\\])%/g, '$1\\%')
+  return fixed
+}
 
-  return <span ref={ref} className={displayMode ? 'math-span is-display' : 'math-span'} />
+function renderKatexHtml(source: string, displayMode: boolean): string | null {
+  const options = {
+    throwOnError: true,
+    displayMode,
+    strict: 'ignore' as const,
+    trust: false,
+    output: 'html' as const,
+  }
+  try {
+    return katex.renderToString(source, options)
+  } catch {
+    const repaired = repairLatex(source)
+    if (repaired !== source) {
+      try {
+        return katex.renderToString(repaired, options)
+      } catch {
+        // Fall through to raw fallback
+      }
+    }
+    return null
+  }
+}
+
+function MathSpan({ source, displayMode = false }: { source: string; displayMode?: boolean }) {
+  const html = useMemo(() => renderKatexHtml(source, displayMode), [source, displayMode])
+
+  if (html === null) {
+    return (
+      <span className={displayMode ? 'math-span is-display' : 'math-span'}>
+        {displayMode ? `$$${source}$$` : `$${source}$`}
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className={displayMode ? 'math-span is-display' : 'math-span'}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
 }
 
 type InlinePart = { kind: 'text' | 'math' | 'display'; value: string }
 
+function isEscapedAt(text: string, index: number): boolean {
+  let slashes = 0
+  for (let i = index - 1; i >= 0 && text[i] === '\\'; i -= 1) slashes += 1
+  return slashes % 2 === 1
+}
+
+function findClosingDelimiter(
+  text: string,
+  from: number,
+  delimiter: string,
+  allowNewline: boolean,
+): number {
+  let i = from
+  while (i < text.length) {
+    if (!allowNewline && text[i] === '\n') return -1
+    if (text.startsWith(delimiter, i) && !isEscapedAt(text, i)) {
+      // Single $ must not close on $$
+      if (delimiter === '$' && text[i + 1] === '$') {
+        i += 2
+        continue
+      }
+      return i
+    }
+    i += 1
+  }
+  return -1
+}
+
 function splitMath(text: string): InlinePart[] {
   const parts: InlinePart[] = []
-  // 兼容模型常见的四种公式写法：$...$、$$...$$、\(...\)、\[...\]。
-  // 显示公式放在前面，避免 $$ 被当成两个行内 $。
-  const pattern = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^$\n]+?\$)/g
-  let cursor = 0
-  for (const match of text.matchAll(pattern)) {
-    const index = match.index ?? 0
-    if (index > cursor) parts.push({ kind: 'text', value: text.slice(cursor, index) })
-    const token = match[0]
-    if (token.startsWith('$$') || token.startsWith('\\[')) {
-      parts.push({ kind: 'display', value: token.slice(2, -2) })
-    } else if (token.startsWith('\\(')) {
-      parts.push({ kind: 'math', value: token.slice(2, -2) })
-    } else {
-      parts.push({ kind: 'math', value: token.slice(1, -1) })
+  let textStart = 0
+  let i = 0
+
+  const flushText = (end: number) => {
+    if (end > textStart) {
+      parts.push({ kind: 'text', value: text.slice(textStart, end) })
     }
-    cursor = index + token.length
   }
-  if (cursor < text.length) parts.push({ kind: 'text', value: text.slice(cursor) })
+
+  // 兼容模型常见的四种公式写法：$...$、$$...$$、\(...\)、\[...\]，
+  // 同时跳过转义 \$ 且不使用正则后行断言，保证低版本 iOS Safari 兼容。
+  while (i < text.length) {
+    if (text[i] === '\\' && !isEscapedAt(text, i)) {
+      const next = text[i + 1]
+      if (next === '[' || next === '(') {
+        const closing = next === '[' ? '\\]' : '\\)'
+        const closeIndex = findClosingDelimiter(text, i + 2, closing, true)
+        if (closeIndex > i + 2) {
+          const inner = text.slice(i + 2, closeIndex)
+          if (inner.trim()) {
+            flushText(i)
+            parts.push({ kind: next === '[' ? 'display' : 'math', value: inner.trim() })
+            i = closeIndex + 2
+            textStart = i
+            continue
+          }
+        }
+      }
+      i += next ? 2 : 1
+      continue
+    }
+
+    if (text[i] === '$' && !isEscapedAt(text, i)) {
+      if (text[i + 1] === '$') {
+        const closeIndex = findClosingDelimiter(text, i + 2, '$$', true)
+        if (closeIndex > i + 2) {
+          const inner = text.slice(i + 2, closeIndex)
+          if (inner.trim()) {
+            flushText(i)
+            parts.push({ kind: 'display', value: inner.trim() })
+            i = closeIndex + 2
+            textStart = i
+            continue
+          }
+        }
+        i += 2
+        continue
+      }
+      const closeIndex = findClosingDelimiter(text, i + 1, '$', false)
+      if (closeIndex > i + 1) {
+        const inner = text.slice(i + 1, closeIndex)
+        if (inner.trim()) {
+          flushText(i)
+          parts.push({ kind: 'math', value: inner.trim() })
+          i = closeIndex + 1
+          textStart = i
+          continue
+        }
+      }
+    }
+
+    i += 1
+  }
+
+  flushText(text.length)
   return parts.length > 0 ? parts : [{ kind: 'text', value: text }]
 }
 
@@ -253,14 +562,75 @@ function renderLinks(text: string) {
   })
 }
 
-function renderBold(line: string) {
-  return line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, index) =>
-    part.startsWith('**') && part.endsWith('**') ? (
-      <strong key={index}>{renderLinks(part.slice(2, -2))}</strong>
-    ) : (
-      <Fragment key={index}>{renderLinks(part)}</Fragment>
-    ),
-  )
+type FormatToken =
+  | { kind: 'bold-delim' }
+  | { kind: 'text'; value: string }
+  | { kind: 'math'; value: string }
+  | { kind: 'display'; value: string }
+
+function renderFormattedSegment(segment: string): ReactNode[] {
+  const tokens: FormatToken[] = []
+  for (const part of splitMath(segment)) {
+    if (part.kind === 'math' || part.kind === 'display') {
+      tokens.push(part)
+      continue
+    }
+    for (const chunk of part.value.split(/(\*\*)/g)) {
+      if (!chunk) continue
+      if (chunk === '**') tokens.push({ kind: 'bold-delim' })
+      else tokens.push({ kind: 'text', value: chunk })
+    }
+  }
+
+  const output: ReactNode[] = []
+  let boldBuffer: ReactNode[] | null = null
+  let keyCounter = 0
+  const nextKey = () => {
+    keyCounter += 1
+    return keyCounter
+  }
+
+  const hasClosingBold = (fromIndex: number) => {
+    let hasContent = false
+    for (let j = fromIndex + 1; j < tokens.length; j += 1) {
+      if (tokens[j].kind === 'display') return false
+      if (tokens[j].kind === 'bold-delim') return hasContent
+      hasContent = true
+    }
+    return false
+  }
+
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i]
+    if (token.kind === 'bold-delim') {
+      if (boldBuffer !== null) {
+        output.push(<strong key={nextKey()}>{boldBuffer}</strong>)
+        boldBuffer = null
+      } else if (hasClosingBold(i)) {
+        boldBuffer = []
+      } else {
+        output.push(<Fragment key={nextKey()}>**</Fragment>)
+      }
+      continue
+    }
+    if (token.kind === 'display') {
+      output.push(<MathSpan key={nextKey()} source={token.value} displayMode />)
+      continue
+    }
+    const node =
+      token.kind === 'math' ? (
+        <MathSpan key={nextKey()} source={token.value} />
+      ) : (
+        <Fragment key={nextKey()}>{renderLinks(token.value)}</Fragment>
+      )
+    if (boldBuffer !== null) boldBuffer.push(node)
+    else output.push(node)
+  }
+
+  if (boldBuffer !== null) {
+    output.push(<Fragment key={nextKey()}>**</Fragment>, ...boldBuffer)
+  }
+  return output
 }
 
 function renderInline(text: string) {
@@ -275,17 +645,7 @@ function renderInline(text: string) {
           </code>
         )
       }
-      return (
-        <Fragment key={segmentIndex}>
-          {splitMath(segment).map((part, index) => {
-            if (part.kind === 'math') return <MathSpan key={index} source={part.value} />
-            if (part.kind === 'display') {
-              return <MathSpan key={index} source={part.value} displayMode />
-            }
-            return <span key={index}>{renderBold(part.value)}</span>
-          })}
-        </Fragment>
-      )
+      return <Fragment key={segmentIndex}>{renderFormattedSegment(segment)}</Fragment>
     })
 }
 
@@ -300,13 +660,16 @@ type RichBlock =
   | { kind: 'ordered'; index: number; value: string }
   | { kind: 'quote'; value: string }
   | { kind: 'code'; value: string }
+  | { kind: 'math'; value: string }
   | { kind: 'paragraph'; value: string }
 
 function buildRichBlocks(text: string): RichBlock[] {
   const blocks: RichBlock[] = []
   let orderedIndex = 0
   let codeBuffer: string[] | null = null
-  for (const raw of text.split('\n')) {
+  let mathBuffer: { closing: '$$' | '\\]'; lines: string[] } | null = null
+
+  for (const raw of text.replace(/\r\n/g, '\n').split('\n')) {
     const line = raw.trim()
     if (codeBuffer) {
       if (line.startsWith('```')) {
@@ -317,10 +680,61 @@ function buildRichBlocks(text: string): RichBlock[] {
       }
       continue
     }
+    if (mathBuffer) {
+      if (line === mathBuffer.closing) {
+        const expr = mathBuffer.lines.join('\n').trim()
+        if (expr) blocks.push({ kind: 'math', value: expr })
+        mathBuffer = null
+      } else if (line.endsWith(mathBuffer.closing)) {
+        mathBuffer.lines.push(line.slice(0, -mathBuffer.closing.length))
+        const expr = mathBuffer.lines.join('\n').trim()
+        if (expr) blocks.push({ kind: 'math', value: expr })
+        mathBuffer = null
+      } else {
+        mathBuffer.lines.push(raw)
+      }
+      continue
+    }
     if (line.startsWith('```')) {
       orderedIndex = 0
       codeBuffer = []
       continue
+    }
+    if (line === '$$' || (line.startsWith('$$') && !line.slice(2).includes('$$'))) {
+      orderedIndex = 0
+      mathBuffer = { closing: '$$', lines: line.length > 2 ? [line.slice(2)] : [] }
+      continue
+    }
+    if (line === '\\[' || (line.startsWith('\\[') && !line.includes('\\]'))) {
+      orderedIndex = 0
+      mathBuffer = { closing: '\\]', lines: line.length > 2 ? [line.slice(2)] : [] }
+      continue
+    }
+    if (
+      line.startsWith('$$') &&
+      line.endsWith('$$') &&
+      line.length > 4 &&
+      !line.slice(2, -2).includes('$$')
+    ) {
+      orderedIndex = 0
+      const expr = line.slice(2, -2).trim()
+      if (expr) {
+        blocks.push({ kind: 'math', value: expr })
+        continue
+      }
+    }
+    if (
+      line.startsWith('\\[') &&
+      line.endsWith('\\]') &&
+      line.length > 4 &&
+      !line.slice(2, -2).includes('\\]')
+    ) {
+      orderedIndex = 0
+      const expr = line.slice(2, -2).trim()
+      if (expr) {
+        blocks.push({ kind: 'math', value: expr })
+        continue
+      }
     }
     if (!line) {
       orderedIndex = 0
@@ -357,6 +771,11 @@ function buildRichBlocks(text: string): RichBlock[] {
   }
   if (codeBuffer && codeBuffer.length > 0) {
     blocks.push({ kind: 'code', value: codeBuffer.join('\n') })
+  }
+  if (mathBuffer) {
+    const opener = mathBuffer.closing === '$$' ? '$$' : '\\['
+    const rawUnclosed = [opener, ...mathBuffer.lines].filter(Boolean).join(' ')
+    if (rawUnclosed) blocks.push({ kind: 'paragraph', value: rawUnclosed })
   }
   return blocks
 }
@@ -401,6 +820,13 @@ export function RichText({ text, className }: { text: string; className?: string
             <pre key={index} className="rich-code">
               <code>{block.value}</code>
             </pre>
+          )
+        }
+        if (block.kind === 'math') {
+          return (
+            <div key={index} className="rich-math-block">
+              <MathSpan source={block.value} displayMode />
+            </div>
           )
         }
         return (

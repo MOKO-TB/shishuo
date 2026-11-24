@@ -235,6 +235,11 @@
   background: var(--surface);
 }
 
+.mentor-drawer-back {
+  display: none;
+  flex: 0 0 auto;
+}
+
 .mentor-drawer-head-main {
   display: flex;
   align-items: center;
@@ -1418,8 +1423,26 @@
   }
 
   .mentor-drawer-head {
-    padding: 16px 16px 12px;
+    padding: 14px 16px 12px;
+    gap: 10px;
     align-items: center;
+  }
+
+  .mentor-drawer-back {
+    display: inline-grid;
+    width: 38px;
+    height: 38px;
+    color: var(--ink);
+  }
+
+  .mentor-head-select-trigger {
+    margin-left: 0;
+    padding-left: 4px;
+  }
+
+  .mentor-head-select-menu {
+    left: -48px;
+    width: min(300px, calc(100vw - 32px));
   }
 
   .mentor-drawer-close {
